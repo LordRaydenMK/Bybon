@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon
+package dev.sanastasov.bybon.onermcalc
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -52,9 +51,7 @@ fun OneRmCalculatorContent() {
                 TextField("", {})
             }
 
-            Button({}) {
-                Text("Calculate")
-            }
+            Text("Estimated 1RM: 55kg")
         }
     }
 }
