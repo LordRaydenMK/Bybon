@@ -35,18 +35,21 @@ import androidx.compose.ui.unit.sp
 fun OneRmCalculatorScreen() {
     var weight by rememberSaveable { mutableStateOf("50") }
     var reps by rememberSaveable { mutableStateOf("10") }
-    val oneRm by remember {
+    val entry by remember {
         derivedStateOf {
-            if (weight.isBlank() || reps.isBlank()) null
-            else calculate1Rm(weight.toFloat(), reps.toInt())
+            weight.toFloatOrNull()?.let { weight ->
+                reps.toIntOrNull()?.let { reps ->
+                    OneRmEntry(weight, reps)
+                }
+            }
         }
     }
     OneRmCalculatorContent(
         weight,
-        { weight = it },
         reps,
-        { reps = it },
-        oneRm,
+        entry,
+        onWeightChanged = { weight = it },
+        onRepsChanged = { reps = it },
         onUpdateReps = { repsToAdd ->
             reps = (reps.toInt() + repsToAdd).toString()
         },
@@ -60,10 +63,10 @@ fun OneRmCalculatorScreen() {
 @Composable
 fun OneRmCalculatorContent(
     weight: String,
-    onWeightChanged: (String) -> Unit,
     reps: String,
+    entry: OneRmEntry?,
+    onWeightChanged: (String) -> Unit,
     onRepsChanged: (String) -> Unit,
-    oneRm: Float?,
     onUpdateReps: (Int) -> Unit,
     onUpdateWeight: (Float) -> Unit
 ) {
@@ -84,7 +87,7 @@ fun OneRmCalculatorContent(
 
             RepsSection(reps, onRepsChanged, onUpdateReps)
 
-            oneRm?.let {
+            entry?.calculate1Rm()?.let {
                 Spacer(Modifier.height(16.dp))
 
                 ResultColumn(it)
@@ -149,7 +152,7 @@ private fun RepsSection(
         Text("Reps")
         OutlinedTextField(
             reps,
-            onRepsChanged,
+            { onRepsChanged(it) },
             maxLines = 1,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
@@ -189,5 +192,13 @@ private fun ResultColumn(oneRm: Float) {
 @Preview
 @Composable
 fun OneRmCalculatorPreview() {
-    OneRmCalculatorContent("50", {}, "10", {}, 72f, {}, {})
+    OneRmCalculatorContent(
+        "50",
+        "10",
+        OneRmEntry(50f, 10),
+        {},
+        {},
+        {},
+        {}
+    )
 }
