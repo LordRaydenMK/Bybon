@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "schedule": [
+    "every Sunday"
+  ],
+  "packageRules": [
+    {
+      "groupName": "Update other dependencies",
+      "matchPackageNames": [
+        "*"
+      ]
+    },
+    {
+      "groupName": "Update Androidx",
+      "matchPackageNames": [
+        "/androidx.*/"
+      ]
+    },
+    {
+      "groupName": "kotlin",
+      "matchPackageNames": [
+        "/androidx.compose.compiler:compiler/"
+      ]
+    },
+    {
+      "groupName": "kotlin",
+      "matchPackageNames": [
+        "/org.jetbrains.kotlin.*/"
+      ]
+    }
+  ]
+}
