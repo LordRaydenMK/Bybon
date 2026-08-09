@@ -58,16 +58,24 @@ fun OneRmCalculatorScreen() {
         onUpdateReps = { repsToAdd ->
             reps = (reps.toInt() + repsToAdd).toString()
             weight.toFloatOrNull()?.let { weight ->
-                OneRmEntry(weight, reps.toInt()).also {
-                    history += it
+                OneRmEntry(weight, reps.toInt()).also { newEntry ->
+                    history = buildList {
+                        add(newEntry)
+                        addAll(history.take(10))
+                        sortByDescending { it.calculate1Rm() }
+                    }.distinct()
                 }
             }
         },
         onUpdateWeight = { weightToAdd ->
             weight = (weight.toFloat() + weightToAdd).toString()
             reps.toIntOrNull()?.let { reps ->
-                OneRmEntry(weight.toFloat(), reps).also {
-                    history += it
+                OneRmEntry(weight.toFloat(), reps).also { newEntry ->
+                    history = buildList {
+                        add(newEntry)
+                        addAll(history.take(10))
+                        sortByDescending { it.calculate1Rm() }
+                    }.distinct()
                 }
             }
         }
