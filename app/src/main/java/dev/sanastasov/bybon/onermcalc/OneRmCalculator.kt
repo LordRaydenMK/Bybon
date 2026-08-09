@@ -2,13 +2,16 @@ package dev.sanastasov.bybon.onermcalc
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -44,17 +47,29 @@ fun OneRmCalculatorScreen() {
             }
         }
     }
+    var history by remember { mutableStateOf(listOf<OneRmEntry>()) }
     OneRmCalculatorContent(
         weight,
         reps,
         entry,
+        history,
         onWeightChanged = { weight = it },
         onRepsChanged = { reps = it },
         onUpdateReps = { repsToAdd ->
             reps = (reps.toInt() + repsToAdd).toString()
+            weight.toFloatOrNull()?.let { weight ->
+                OneRmEntry(weight, reps.toInt()).also {
+                    history += it
+                }
+            }
         },
         onUpdateWeight = { weightToAdd ->
             weight = (weight.toFloat() + weightToAdd).toString()
+            reps.toIntOrNull()?.let { reps ->
+                OneRmEntry(weight.toFloat(), reps).also {
+                    history += it
+                }
+            }
         }
     )
 }
@@ -65,6 +80,7 @@ fun OneRmCalculatorContent(
     weight: String,
     reps: String,
     entry: OneRmEntry?,
+    history: List<OneRmEntry>,
     onWeightChanged: (String) -> Unit,
     onRepsChanged: (String) -> Unit,
     onUpdateReps: (Int) -> Unit,
@@ -77,6 +93,7 @@ fun OneRmCalculatorContent(
         Column(
             Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(contentPadding)
                 .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -92,6 +109,10 @@ fun OneRmCalculatorContent(
 
                 ResultColumn(it)
             }
+
+            Spacer(Modifier.height(16.dp))
+
+            HistorySection(history)
         }
     }
 }
@@ -189,6 +210,14 @@ private fun ResultColumn(oneRm: Float) {
     }
 }
 
+@Composable
+private fun ColumnScope.HistorySection(items: List<OneRmEntry>) {
+    items.forEach { entry ->
+        val oneRM = ("%.2f").format(entry.calculate1Rm())
+        Text("${entry.weight} kg x ${entry.reps} reps ~ 1 RM: $oneRM")
+    }
+}
+
 @Preview
 @Composable
 fun OneRmCalculatorPreview() {
@@ -196,6 +225,12 @@ fun OneRmCalculatorPreview() {
         "50",
         "10",
         OneRmEntry(50f, 10),
+        listOf(
+            OneRmEntry(50f, 9),
+            OneRmEntry(50f, 10),
+            OneRmEntry(52.5f, 8),
+            OneRmEntry(52.5f, 9),
+        ),
         {},
         {},
         {},
