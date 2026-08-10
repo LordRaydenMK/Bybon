@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.onermcalc
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -136,10 +135,11 @@ private fun WeightSection(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
     ) {
-        Text("Weight")
+        Text("Weight", Modifier.weight(1f))
         OutlinedTextField(
             weight,
             onWeightChanged,
+            Modifier.weight(3f),
             maxLines = 1,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
@@ -178,10 +178,11 @@ private fun RepsSection(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
     ) {
-        Text("Reps")
+        Text("Reps", Modifier.weight(1f),)
         OutlinedTextField(
             reps,
             { onRepsChanged(it) },
+            Modifier.weight(3f),
             maxLines = 1,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
@@ -219,7 +220,7 @@ private fun ResultColumn(oneRm: Float) {
 }
 
 @Composable
-private fun ColumnScope.HistorySection(items: List<OneRmEntry>) {
+private fun HistorySection(items: List<OneRmEntry>) {
     items.forEach { entry ->
         Row(
             Modifier.fillMaxWidth(),
