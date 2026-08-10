@@ -221,8 +221,16 @@ private fun ResultColumn(oneRm: Float) {
 @Composable
 private fun ColumnScope.HistorySection(items: List<OneRmEntry>) {
     items.forEach { entry ->
-        val oneRM = ("%.2f").format(entry.calculate1Rm())
-        Text("${entry.weight} kg x ${entry.reps} reps ~ 1 RM: $oneRM")
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("${entry.weight} kg x", Modifier.weight(1f))
+            Text("${entry.reps} reps", Modifier.weight(1f))
+            val oneRM = ("%.2f").format(entry.calculate1Rm())
+            Text("~ 1 RM: $oneRM", Modifier.weight(1f))
+        }
     }
 }
 
