@@ -3,8 +3,9 @@
   "extends": [
     "config:recommended"
   ],
+  "description": "Schedule to run on weekends",
   "schedule": [
-    "every Sunday"
+    "* * * * 0,6"
   ],
   "packageRules": [
     {
