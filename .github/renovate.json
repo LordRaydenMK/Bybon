@@ -12,25 +12,29 @@
       "groupName": "Update other dependencies",
       "matchPackageNames": [
         "*"
-      ]
+      ],
+      "automerge": true
     },
     {
       "groupName": "Update Androidx",
       "matchPackageNames": [
         "/androidx.*/"
-      ]
+      ],
+      "automerge": true
     },
     {
       "groupName": "kotlin",
       "matchPackageNames": [
         "/androidx.compose.compiler:compiler/"
-      ]
+      ],
+      "automerge": true
     },
     {
       "groupName": "kotlin",
       "matchPackageNames": [
         "/org.jetbrains.kotlin.*/"
-      ]
+      ],
+      "automerge": true
     }
   ]
 }
