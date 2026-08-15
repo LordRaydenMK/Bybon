@@ -20,10 +20,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.retain.retain
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -32,11 +30,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun OneRmCalculatorScreen() {
-    var weight by rememberSaveable { mutableStateOf("50") }
-    var reps by rememberSaveable { mutableStateOf("10") }
+    val viewModel = retain { OneRmCalculatorViewModel() }
+    val weight by viewModel.weight
+    val reps by viewModel.reps
     val entry by remember {
         derivedStateOf {
             weight.toFloatOrNull()?.let { weight ->
@@ -46,38 +46,16 @@ fun OneRmCalculatorScreen() {
             }
         }
     }
-    var history by remember { mutableStateOf(listOf<OneRmEntry>()) }
+    val history by viewModel.uiState.collectAsStateWithLifecycle()
     OneRmCalculatorContent(
         weight,
         reps,
         entry,
         history,
-        onWeightChanged = { weight = it },
-        onRepsChanged = { reps = it },
-        onUpdateReps = { repsToAdd ->
-            reps = (reps.toInt() + repsToAdd).toString()
-            weight.toFloatOrNull()?.let { weight ->
-                OneRmEntry(weight, reps.toInt()).also { newEntry ->
-                    history = buildList {
-                        add(newEntry)
-                        addAll(history.take(10))
-                        sortByDescending { it.calculate1Rm() }
-                    }.distinct()
-                }
-            }
-        },
-        onUpdateWeight = { weightToAdd ->
-            weight = (weight.toFloat() + weightToAdd).toString()
-            reps.toIntOrNull()?.let { reps ->
-                OneRmEntry(weight.toFloat(), reps).also { newEntry ->
-                    history = buildList {
-                        add(newEntry)
-                        addAll(history.take(10))
-                        sortByDescending { it.calculate1Rm() }
-                    }.distinct()
-                }
-            }
-        }
+        onWeightChanged = { viewModel.onWeightChanged(it) },
+        onRepsChanged = { viewModel.onRepsChanged(it) },
+        onUpdateWeight = { viewModel.onUpdateWeight(it) },
+        onUpdateReps = { viewModel.onUpdateReps(it) },
     )
 }
 
@@ -90,8 +68,8 @@ fun OneRmCalculatorContent(
     history: List<OneRmEntry>,
     onWeightChanged: (String) -> Unit,
     onRepsChanged: (String) -> Unit,
+    onUpdateWeight: (Float) -> Unit,
     onUpdateReps: (Int) -> Unit,
-    onUpdateWeight: (Float) -> Unit
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -178,7 +156,7 @@ private fun RepsSection(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
     ) {
-        Text("Reps", Modifier.weight(1f),)
+        Text("Reps", Modifier.weight(1f))
         OutlinedTextField(
             reps,
             { onRepsChanged(it) },
