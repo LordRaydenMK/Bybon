@@ -11,15 +11,24 @@ class OneRmCalculatorViewModel {
 
     val uiState = MutableStateFlow<List<OneRmEntry>>(emptyList())
 
-    fun onWeightChanged(newWeight: String) {
+    fun onAction(action: OneRmCalcAction) {
+        when (action) {
+            is OneRmCalcAction.OnRepsChanged -> onRepsChanged(action.newReps)
+            is OneRmCalcAction.OnUpdateReps -> onUpdateReps(action.amount)
+            is OneRmCalcAction.OnUpdateWeight -> onUpdateWeight(action.amount)
+            is OneRmCalcAction.OnWeightChanged -> onWeightChanged(action.newWeight)
+        }
+    }
+
+    private fun onWeightChanged(newWeight: String) {
         weight.value = newWeight
     }
 
-    fun onRepsChanged(newReps: String) {
+    private fun onRepsChanged(newReps: String) {
         reps.value = newReps
     }
 
-    fun onUpdateWeight(weightToAdd: Float) {
+    private fun onUpdateWeight(weightToAdd: Float) {
         val weight = (weight.value.toFloat() + weightToAdd).toString()
         onWeightChanged(weight)
         reps.value.toIntOrNull()?.let { reps ->
@@ -34,7 +43,7 @@ class OneRmCalculatorViewModel {
         }
     }
 
-    fun onUpdateReps(repsToAdd: Int) {
+    private fun onUpdateReps(repsToAdd: Int) {
         val reps = (reps.value.toInt() + repsToAdd).toString()
         onRepsChanged(reps)
         weight.value.toFloatOrNull()?.let { weight ->

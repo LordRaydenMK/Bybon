@@ -52,10 +52,7 @@ fun OneRmCalculatorScreen() {
         reps,
         entry,
         history,
-        onWeightChanged = { viewModel.onWeightChanged(it) },
-        onRepsChanged = { viewModel.onRepsChanged(it) },
-        onUpdateWeight = { viewModel.onUpdateWeight(it) },
-        onUpdateReps = { viewModel.onUpdateReps(it) },
+        viewModel::onAction,
     )
 }
 
@@ -66,10 +63,7 @@ fun OneRmCalculatorContent(
     reps: String,
     entry: OneRmEntry?,
     history: List<OneRmEntry>,
-    onWeightChanged: (String) -> Unit,
-    onRepsChanged: (String) -> Unit,
-    onUpdateWeight: (Float) -> Unit,
-    onUpdateReps: (Int) -> Unit,
+    onAction: (OneRmCalcAction) -> Unit
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -83,11 +77,19 @@ fun OneRmCalculatorContent(
                 .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            WeightSection(weight, onWeightChanged, onUpdateWeight)
+            WeightSection(
+                weight,
+                { onAction(OneRmCalcAction.OnWeightChanged(it)) },
+                { onAction(OneRmCalcAction.OnUpdateWeight(it)) }
+            )
 
             Spacer(Modifier.height(16.dp))
 
-            RepsSection(reps, onRepsChanged, onUpdateReps)
+            RepsSection(
+                reps,
+                { onAction(OneRmCalcAction.OnRepsChanged(it)) },
+                { onAction(OneRmCalcAction.OnUpdateReps(it)) }
+            )
 
             entry?.calculate1Rm()?.let {
                 Spacer(Modifier.height(16.dp))
@@ -227,8 +229,5 @@ fun OneRmCalculatorPreview() {
             OneRmEntry(52.5f, 9),
         ),
         {},
-        {},
-        {},
-        {}
     )
 }
