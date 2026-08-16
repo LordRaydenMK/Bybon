@@ -2,6 +2,8 @@ package dev.sanastasov.bybon.onermcalc
 
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 
 class OneRmCalculatorViewModel {
 
@@ -9,7 +11,15 @@ class OneRmCalculatorViewModel {
 
     val reps = mutableStateOf("10")
 
-    val uiState = MutableStateFlow<List<OneRmEntry>>(emptyList())
+    val uiState: StateFlow<OneRmUiState>
+        field = MutableStateFlow(
+            OneRmUiState(
+                OneRmEntry(
+                    weight.value.toFloat(),
+                    reps.value.toInt()
+                )
+            )
+        )
 
     fun onAction(action: OneRmCalcAction) {
         when (action) {
@@ -35,10 +45,10 @@ class OneRmCalculatorViewModel {
             OneRmEntry(weight.toFloat(), reps).also { newEntry ->
                 val history = buildList {
                     add(newEntry)
-                    addAll(uiState.value.take(10))
+                    addAll(uiState.value.history.take(10))
                     sortByDescending { it.calculate1Rm() }
                 }.distinct()
-                uiState.value = history
+                uiState.update { it.copy(history = history) }
             }
         }
     }
@@ -50,10 +60,10 @@ class OneRmCalculatorViewModel {
             OneRmEntry(weight, reps.toInt()).also { newEntry ->
                 val history = buildList {
                     add(newEntry)
-                    addAll(uiState.value.take(10))
+                    addAll(uiState.value.history.take(10))
                     sortByDescending { it.calculate1Rm() }
                 }.distinct()
-                uiState.value = history
+                uiState.update { it.copy(history = history) }
             }
         }
     }

@@ -13,7 +13,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +25,7 @@ import dev.sanastasov.bybon.onermcalc.OneRmCalcAction
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorContent
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
 import dev.sanastasov.bybon.onermcalc.OneRmEntry
+import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
 
@@ -34,16 +34,7 @@ fun MainScreen() {
     val viewModel = retain { OneRmCalculatorViewModel() }
     val weight by viewModel.weight
     val reps by viewModel.reps
-    val entry by remember {
-        derivedStateOf {
-            weight.toFloatOrNull()?.let { weight ->
-                reps.toIntOrNull()?.let { reps ->
-                    OneRmEntry(weight, reps)
-                }
-            }
-        }
-    }
-    val history by viewModel.uiState.collectAsStateWithLifecycle()
+    val oneRmUiState by viewModel.uiState.collectAsStateWithLifecycle()
 
 
     var selectedIndex by remember { mutableIntStateOf(0) }
@@ -53,8 +44,7 @@ fun MainScreen() {
         { selectedIndex = it },
         weight,
         reps,
-        entry,
-        history,
+        oneRmUiState,
         viewModel::onAction,
     )
 }
@@ -65,8 +55,7 @@ private fun MainScreenContent(
     onTabSelected: (Int) -> Unit,
     weight: String,
     reps: String,
-    entry: OneRmEntry?,
-    history: List<OneRmEntry>,
+    oneRmUiState: OneRmUiState,
     onOneRmAction: (OneRmCalcAction) -> Unit,
 ) {
     Scaffold(
@@ -102,8 +91,7 @@ private fun MainScreenContent(
                 0 -> OneRmCalculatorContent(
                     weight,
                     reps,
-                    entry,
-                    history,
+                    oneRmUiState,
                     onOneRmAction
                 )
 
@@ -122,8 +110,10 @@ private fun MainScreenContentPreview() {
         {},
         "50",
         "10",
-        OneRmEntry(50f, 10),
-        emptyList(),
+        OneRmUiState(
+            OneRmEntry(50f, 10),
+            emptyList()
+        ),
         {}
     )
 }

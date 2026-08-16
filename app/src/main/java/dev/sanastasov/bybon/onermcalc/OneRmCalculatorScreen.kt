@@ -18,9 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,21 +35,11 @@ fun OneRmCalculatorScreen() {
     val viewModel = retain { OneRmCalculatorViewModel() }
     val weight by viewModel.weight
     val reps by viewModel.reps
-    val entry by remember {
-        derivedStateOf {
-            weight.toFloatOrNull()?.let { weight ->
-                reps.toIntOrNull()?.let { reps ->
-                    OneRmEntry(weight, reps)
-                }
-            }
-        }
-    }
-    val history by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     OneRmCalculatorContent(
         weight,
         reps,
-        entry,
-        history,
+        uiState,
         viewModel::onAction,
     )
 }
@@ -61,8 +49,7 @@ fun OneRmCalculatorScreen() {
 fun OneRmCalculatorContent(
     weight: String,
     reps: String,
-    entry: OneRmEntry?,
-    history: List<OneRmEntry>,
+    uiState: OneRmUiState,
     onAction: (OneRmCalcAction) -> Unit
 ) {
     Scaffold(
@@ -91,7 +78,7 @@ fun OneRmCalculatorContent(
                 { onAction(OneRmCalcAction.OnUpdateReps(it)) }
             )
 
-            entry?.calculate1Rm()?.let {
+            uiState.entry?.calculate1Rm()?.let {
                 Spacer(Modifier.height(16.dp))
 
                 ResultColumn(it)
@@ -99,7 +86,7 @@ fun OneRmCalculatorContent(
 
             Spacer(Modifier.height(16.dp))
 
-            HistorySection(history)
+            HistorySection(uiState.history)
         }
     }
 }
@@ -221,12 +208,14 @@ fun OneRmCalculatorPreview() {
     OneRmCalculatorContent(
         "50",
         "10",
-        OneRmEntry(50f, 10),
-        listOf(
-            OneRmEntry(50f, 9),
+        OneRmUiState(
             OneRmEntry(50f, 10),
-            OneRmEntry(52.5f, 8),
-            OneRmEntry(52.5f, 9),
+            listOf(
+                OneRmEntry(50f, 9),
+                OneRmEntry(50f, 10),
+                OneRmEntry(52.5f, 8),
+                OneRmEntry(52.5f, 9),
+            )
         ),
         {},
     )
