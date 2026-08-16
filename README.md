@@ -1,3 +1,5 @@
+WIP Gym/Fitness companion app for personal use.
+
 > Bybon was an athlete who lived in Ancient Greece during the early 6th century BC.
 > The only known information of him comes from an Ancient Greek inscription bearing his name on a sandstone in Olympia, Greece. The stone which weighs 143.5 kilograms (316 lb) contains two deep notches carved out of it, forming a handle so that the stone could be used as a free weight. It reads:
 
