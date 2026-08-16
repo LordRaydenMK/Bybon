@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import dev.sanastasov.bybon.onermcalc.OneRmCalculatorScreen
+import dev.sanastasov.bybon.home.MainScreen
 import dev.sanastasov.bybon.ui.theme.BybonTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BybonTheme {
-                OneRmCalculatorScreen()
+                MainScreen()
             }
         }
     }
