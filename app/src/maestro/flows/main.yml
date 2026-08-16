@@ -1,4 +1,4 @@
 appId: dev.sanastasov.bybon
 ---
 - launchApp
-- assertVisible: "1 RM Calculator"
+- assertVisible: "Bybon"

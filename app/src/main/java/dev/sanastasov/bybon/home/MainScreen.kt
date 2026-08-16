@@ -22,7 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.onermcalc.OneRmCalcAction
-import dev.sanastasov.bybon.onermcalc.OneRmCalculatorContent
+import dev.sanastasov.bybon.onermcalc.OneRmCalculatorTab
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
 import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
@@ -88,11 +88,12 @@ private fun MainScreenContent(
                 .padding(contentPadding)
         ) {
             when (selectedIndex) {
-                0 -> OneRmCalculatorContent(
+                0 -> OneRmCalculatorTab(
                     weight,
                     reps,
                     oneRmUiState,
-                    onOneRmAction
+                    onOneRmAction,
+                    Modifier.fillMaxSize()
                 )
 
                 1 -> Text("Weight Tracking (WIP)")

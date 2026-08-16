@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,7 +34,7 @@ fun OneRmCalculatorScreen() {
     val weight by viewModel.weight
     val reps by viewModel.reps
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    OneRmCalculatorContent(
+    OneRmCalculatorTab(
         weight,
         reps,
         uiState,
@@ -44,50 +42,43 @@ fun OneRmCalculatorScreen() {
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OneRmCalculatorContent(
+fun OneRmCalculatorTab(
     weight: String,
     reps: String,
     uiState: OneRmUiState,
-    onAction: (OneRmCalcAction) -> Unit
+    onAction: (OneRmCalcAction) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        Modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("1 RM Calculator") }) }
-    ) { contentPadding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(contentPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            WeightSection(
-                weight,
-                { onAction(OneRmCalcAction.OnWeightChanged(it)) },
-                { onAction(OneRmCalcAction.OnUpdateWeight(it)) }
-            )
+    Column(
+        modifier
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        WeightSection(
+            weight,
+            { onAction(OneRmCalcAction.OnWeightChanged(it)) },
+            { onAction(OneRmCalcAction.OnUpdateWeight(it)) }
+        )
 
+        Spacer(Modifier.height(16.dp))
+
+        RepsSection(
+            reps,
+            { onAction(OneRmCalcAction.OnRepsChanged(it)) },
+            { onAction(OneRmCalcAction.OnUpdateReps(it)) }
+        )
+
+        uiState.entry?.calculate1Rm()?.let {
             Spacer(Modifier.height(16.dp))
 
-            RepsSection(
-                reps,
-                { onAction(OneRmCalcAction.OnRepsChanged(it)) },
-                { onAction(OneRmCalcAction.OnUpdateReps(it)) }
-            )
-
-            uiState.entry?.calculate1Rm()?.let {
-                Spacer(Modifier.height(16.dp))
-
-                ResultColumn(it)
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            HistorySection(uiState.history)
+            ResultColumn(it)
         }
+
+        Spacer(Modifier.height(16.dp))
+
+        HistorySection(uiState.history)
     }
 }
 
@@ -205,18 +196,20 @@ private fun HistorySection(items: List<OneRmEntry>) {
 @Preview
 @Composable
 fun OneRmCalculatorPreview() {
-    OneRmCalculatorContent(
-        "50",
-        "10",
-        OneRmUiState(
-            OneRmEntry(50f, 10),
-            listOf(
-                OneRmEntry(50f, 9),
+    Surface {
+        OneRmCalculatorTab(
+            "50",
+            "10",
+            OneRmUiState(
                 OneRmEntry(50f, 10),
-                OneRmEntry(52.5f, 8),
-                OneRmEntry(52.5f, 9),
-            )
-        ),
-        {},
-    )
+                listOf(
+                    OneRmEntry(50f, 9),
+                    OneRmEntry(50f, 10),
+                    OneRmEntry(52.5f, 8),
+                    OneRmEntry(52.5f, 9),
+                )
+            ),
+            {},
+        )
+    }
 }
