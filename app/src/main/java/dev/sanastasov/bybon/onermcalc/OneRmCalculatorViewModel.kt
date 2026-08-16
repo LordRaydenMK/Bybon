@@ -42,12 +42,7 @@ class OneRmCalculatorViewModel {
         val weight = (weight.value.toFloat() + weightToAdd).toString()
         onWeightChanged(weight)
         reps.value.toIntOrNull()?.let { reps ->
-            OneRmEntry(weight.toFloat(), reps).also { newEntry ->
-                val history = buildList {
-                    add(newEntry)
-                    addAll(uiState.value.history.take(10))
-                    sortByDescending { it.calculate1Rm() }
-                }.distinct()
+            recalculateHistory(weight.toFloat(), reps, uiState.value.history).also { history ->
                 uiState.update { it.copy(history = history) }
             }
         }
@@ -57,14 +52,22 @@ class OneRmCalculatorViewModel {
         val reps = (reps.value.toInt() + repsToAdd).toString()
         onRepsChanged(reps)
         weight.value.toFloatOrNull()?.let { weight ->
-            OneRmEntry(weight, reps.toInt()).also { newEntry ->
-                val history = buildList {
-                    add(newEntry)
-                    addAll(uiState.value.history.take(10))
-                    sortByDescending { it.calculate1Rm() }
-                }.distinct()
+            recalculateHistory(weight, reps.toInt(), uiState.value.history).also { history ->
                 uiState.update { it.copy(history = history) }
             }
         }
+    }
+
+    private fun recalculateHistory(
+        weight: Float,
+        reps: Int,
+        history: List<OneRmEntry>
+    ): List<OneRmEntry> {
+        val newEntry = OneRmEntry(weight, reps)
+        return buildList {
+            add(newEntry)
+            addAll(history.take(10))
+            sortByDescending { it.calculate1Rm() }
+        }.distinct()
     }
 }
