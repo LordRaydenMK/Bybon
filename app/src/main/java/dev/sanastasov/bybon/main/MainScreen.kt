@@ -28,16 +28,23 @@ import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
+import dev.sanastasov.bybon.weight.TrackWeightTab
+import dev.sanastasov.bybon.weight.TrackWeightUiState
+import dev.sanastasov.bybon.weight.TrackWeightViewModel
+import dev.sanastasov.bybon.weight.WeeklyAverageEntryUi
+import dev.sanastasov.bybon.weight.WeightEntryUi
 
 @Composable
 fun MainScreen() {
+    var selectedIndex by remember { mutableIntStateOf(0) }
+
     val oneRmViewModel = retain { OneRmCalculatorViewModel() }
     val weight by oneRmViewModel.weight
     val reps by oneRmViewModel.reps
     val oneRmUiState by oneRmViewModel.uiState.collectAsStateWithLifecycle()
 
-
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    val weightViewModel = retain { TrackWeightViewModel() }
+    val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 
     MainScreenContent(
         selectedIndex,
@@ -46,6 +53,7 @@ fun MainScreen() {
         reps,
         oneRmUiState,
         oneRmViewModel::onAction,
+        weightState,
     )
 }
 
@@ -57,6 +65,7 @@ private fun MainScreenContent(
     reps: String,
     oneRmUiState: OneRmUiState,
     onOneRmAction: (OneRmCalcAction) -> Unit,
+    weightState: TrackWeightUiState,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -96,7 +105,7 @@ private fun MainScreenContent(
                     Modifier.fillMaxSize()
                 )
 
-                1 -> Text("Weight Tracking (WIP)")
+                1 -> TrackWeightTab(weightState)
                 else -> error("Not yet implemented")
             }
         }
@@ -105,7 +114,7 @@ private fun MainScreenContent(
 
 @Preview
 @Composable
-private fun MainScreenContentPreview() {
+private fun MainScreenContentOneRmCalcPreview() {
     MainScreenContent(
         0,
         {},
@@ -115,6 +124,34 @@ private fun MainScreenContentPreview() {
             OneRmEntry(50f, 10),
             emptyList()
         ),
-        {}
+        {},
+        TrackWeightUiState(true, emptyList(), emptyList())
+    )
+}
+
+@Preview
+@Composable
+private fun MainScreenContentWeightTrackPreview() {
+    MainScreenContent(
+        1,
+        {},
+        "50",
+        "10",
+        OneRmUiState(
+            OneRmEntry(50f, 10),
+            emptyList()
+        ),
+        {},
+        TrackWeightUiState(
+            true,
+            listOf(
+                WeightEntryUi("Yesterday", "65.2kg"),
+                WeightEntryUi("Monday", "65.2kg"),
+            ),
+            listOf(
+                WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
+                WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
+            )
+        )
     )
 }
