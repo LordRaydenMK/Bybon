@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package dev.sanastasov.bybon.home
+package dev.sanastasov.bybon.main
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,10 +31,10 @@ import dev.sanastasov.bybon.ui.icons.TablerBarbell
 
 @Composable
 fun MainScreen() {
-    val viewModel = retain { OneRmCalculatorViewModel() }
-    val weight by viewModel.weight
-    val reps by viewModel.reps
-    val oneRmUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val oneRmViewModel = retain { OneRmCalculatorViewModel() }
+    val weight by oneRmViewModel.weight
+    val reps by oneRmViewModel.reps
+    val oneRmUiState by oneRmViewModel.uiState.collectAsStateWithLifecycle()
 
 
     var selectedIndex by remember { mutableIntStateOf(0) }
@@ -45,7 +45,7 @@ fun MainScreen() {
         weight,
         reps,
         oneRmUiState,
-        viewModel::onAction,
+        oneRmViewModel::onAction,
     )
 }
 
