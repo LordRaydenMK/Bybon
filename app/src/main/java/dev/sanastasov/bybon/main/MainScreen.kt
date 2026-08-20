@@ -28,11 +28,11 @@ import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
-import dev.sanastasov.bybon.weight.TrackWeightTab
-import dev.sanastasov.bybon.weight.TrackWeightUiState
-import dev.sanastasov.bybon.weight.TrackWeightViewModel
-import dev.sanastasov.bybon.weight.WeeklyAverageEntryUi
-import dev.sanastasov.bybon.weight.WeightEntryUi
+import dev.sanastasov.bybon.weight.dashboard.WeeklyAverageEntryUi
+import dev.sanastasov.bybon.weight.dashboard.WeightDashboardTab
+import dev.sanastasov.bybon.weight.dashboard.WeightDashboardUiState
+import dev.sanastasov.bybon.weight.dashboard.WeightDashboardViewModel
+import dev.sanastasov.bybon.weight.dashboard.WeightEntryUi
 
 @Composable
 fun MainScreen() {
@@ -43,7 +43,7 @@ fun MainScreen() {
     val reps by oneRmViewModel.reps
     val oneRmUiState by oneRmViewModel.uiState.collectAsStateWithLifecycle()
 
-    val weightViewModel = retain { TrackWeightViewModel() }
+    val weightViewModel = retain { WeightDashboardViewModel() }
     val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 
     MainScreenContent(
@@ -65,7 +65,7 @@ private fun MainScreenContent(
     reps: String,
     oneRmUiState: OneRmUiState,
     onOneRmAction: (OneRmCalcAction) -> Unit,
-    weightState: TrackWeightUiState,
+    weightState: WeightDashboardUiState,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -105,7 +105,7 @@ private fun MainScreenContent(
                     Modifier.fillMaxSize()
                 )
 
-                1 -> TrackWeightTab(weightState)
+                1 -> WeightDashboardTab(weightState)
                 else -> error("Not yet implemented")
             }
         }
@@ -125,7 +125,7 @@ private fun MainScreenContentOneRmCalcPreview() {
             emptyList()
         ),
         {},
-        TrackWeightUiState(true, emptyList(), emptyList())
+        WeightDashboardUiState(true, emptyList(), emptyList())
     )
 }
 
@@ -142,7 +142,7 @@ private fun MainScreenContentWeightTrackPreview() {
             emptyList()
         ),
         {},
-        TrackWeightUiState(
+        WeightDashboardUiState(
             true,
             listOf(
                 WeightEntryUi("Yesterday", "65.2kg"),

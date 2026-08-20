@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.weight
+package dev.sanastasov.bybon.weight.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun TrackWeightTab(state: TrackWeightUiState) {
+fun WeightDashboardTab(state: WeightDashboardUiState) {
     Column(
         Modifier
             .fillMaxSize()
@@ -70,8 +70,8 @@ private fun LogWeight() {
 
 @Preview
 @Composable
-private fun TrackWeightPreview() {
-    val state = TrackWeightUiState(
+private fun WeightDashboardPreview() {
+    val state = WeightDashboardUiState(
         true,
         listOf(
             WeightEntryUi("Yesterday", "65.2kg"),
@@ -84,6 +84,6 @@ private fun TrackWeightPreview() {
         )
     )
     Surface {
-        TrackWeightTab(state)
+        WeightDashboardTab(state)
     }
 }

@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.weight
+package dev.sanastasov.bybon.weight.dashboard
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,8 +13,8 @@ val weeklyEntries = listOf(
     WeeklyAverageEntryUi("CW 30", "64.7 kg", "-0.1 vs CW 29")
 )
 
-class TrackWeightViewModel {
+class WeightDashboardViewModel {
 
-    val uiState: StateFlow<TrackWeightUiState>
-        field = MutableStateFlow(TrackWeightUiState(true, dailyEntries, weeklyEntries))
+    val uiState: StateFlow<WeightDashboardUiState>
+        field = MutableStateFlow(WeightDashboardUiState(true, dailyEntries, weeklyEntries))
 }
