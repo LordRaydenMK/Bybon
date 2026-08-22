@@ -25,7 +25,7 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 
-retained = { module = "dev.marcellogalhardo:retained-compose", version = "1.0.2" }
+retained = { module = "dev.marcellogalhardo:retained-compose", version = "2.0.0-alpha01" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
