@@ -1,4 +1,4 @@
-appId: dev.sanastasov.bybon
+appId: dev.sanastasov.bybon.debug
 ---
 - launchApp
 - assertVisible: "Bybon"
