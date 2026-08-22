@@ -4,12 +4,15 @@ package dev.sanastasov.bybon.weight.input
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -21,8 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.weight.WeightModule
+import java.time.LocalDate
 
 @Composable
 fun WeightModule.WeightInputScreen() {
@@ -30,12 +35,14 @@ fun WeightModule.WeightInputScreen() {
         WeightInputViewModel(weightRepository, it.coroutineScope)
     }
     val weight by viewModel.weight
-    WeightInputContent(weight, viewModel::onAction)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    WeightInputContent(weight, uiState, viewModel::onAction)
 }
 
 @Composable
 private fun WeightInputContent(
     weight: String,
+    uiState: WeightInputUi,
     onAction: (WeightInputAction) -> Unit
 ) {
     Scaffold(
@@ -48,7 +55,26 @@ private fun WeightInputContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("Today")
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedButton({ onAction(WeightInputAction.OnNewDateSelected(uiState.previousDate)) }) {
+                    Text("<")
+                }
+                if (uiState.date == LocalDate.now()) {
+                    Text("Today")
+                } else {
+                    Text(uiState.date.toString())
+                }
+                OutlinedButton(
+                    { onAction(WeightInputAction.OnNewDateSelected(uiState.nextDate!!)) },
+                    enabled = uiState.nextDate != null
+                ) {
+                    Text(">")
+                }
+            }
 
             TextField(
                 weight,
@@ -56,12 +82,12 @@ private fun WeightInputContent(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.DecimalSigned),
                 keyboardActions = KeyboardActions(
                     onDone = {
-                        onAction(WeightInputAction.OnSaveWeight(weight))
+                        onAction(WeightInputAction.OnSaveWeight(uiState.date, weight))
                     }
                 )
             )
 
-            Button({ onAction(WeightInputAction.OnSaveWeight(weight)) }) {
+            Button({ onAction(WeightInputAction.OnSaveWeight(uiState.date, weight)) }) {
                 Text("Save")
             }
         }
@@ -71,5 +97,5 @@ private fun WeightInputContent(
 @Preview
 @Composable
 private fun WeightInputContentPreview() {
-    WeightInputContent("", {})
+    WeightInputContent("", WeightInputUi(LocalDate.now())) {}
 }
