@@ -2,12 +2,16 @@
 
 package dev.sanastasov.bybon.weight.input
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
@@ -26,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.icons.SavedLocally
 import dev.sanastasov.bybon.weight.BodyWeight
 import dev.sanastasov.bybon.weight.WeightModule
 import java.time.LocalDate
@@ -80,35 +85,32 @@ private fun WeightInputContent(
                 }
             }
 
-            TextField(
-                weight,
-                { onAction(WeightInputAction.OnWeightChanged(it)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.DecimalSigned),
-                keyboardActions = KeyboardActions(
-                    onDone = {
-                        onAction(WeightInputAction.OnSaveWeight(uiState.date, weight))
+            Row(Modifier.fillMaxWidth()) {
+                if (uiState.saved) {
+                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        Image(SavedLocally, "Saved in db")
                     }
+                } else {
+                    Spacer(Modifier.size(48.dp))
+                }
+                TextField(
+                    weight,
+                    { onAction(WeightInputAction.OnWeightChanged(it)) },
+                    Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType =
+                            KeyboardType.DecimalSigned
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            onAction(WeightInputAction.OnSaveWeight(uiState.date, weight))
+                        }
+                    )
                 )
-            )
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-OneHundredGrams)) }) {
-                    Text("-0.1")
-                }
-                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-FiftyGrams)) }) {
-                    Text("-0.05")
-                }
-                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(FiftyGrams)) }) {
-                    Text("+0.05")
-                }
-                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(OneHundredGrams)) }) {
-                    Text("+0.1")
-                }
+                Spacer(Modifier.size(48.dp))
             }
+
+            AdjustWeightRow(onAction)
 
             Button({ onAction(WeightInputAction.OnSaveWeight(uiState.date, weight)) }) {
                 Text("Save")
@@ -117,8 +119,36 @@ private fun WeightInputContent(
     }
 }
 
+@Composable
+private fun AdjustWeightRow(onAction: (WeightInputAction) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-OneHundredGrams)) }) {
+            Text("-0.1")
+        }
+        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-FiftyGrams)) }) {
+            Text("-0.05")
+        }
+        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(FiftyGrams)) }) {
+            Text("+0.05")
+        }
+        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(OneHundredGrams)) }) {
+            Text("+0.1")
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun WeightInputContentPreview() {
-    WeightInputContent("", WeightInputUi(LocalDate.now())) {}
+    WeightInputContent("", WeightInputUi(LocalDate.now(), false)) {}
+}
+
+@Preview
+@Composable
+private fun WeightInputSavedContentPreview() {
+    WeightInputContent("", WeightInputUi(LocalDate.now(), true)) {}
 }

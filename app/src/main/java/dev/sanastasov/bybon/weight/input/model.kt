@@ -3,7 +3,10 @@ package dev.sanastasov.bybon.weight.input
 import dev.sanastasov.bybon.weight.BodyWeight
 import java.time.LocalDate
 
-data class WeightInputUi(val date: LocalDate) {
+data class WeightInputUi(
+    val date: LocalDate,
+    val saved: Boolean,
+) {
 
     val previousDate: LocalDate = date.minusDays(1)
 

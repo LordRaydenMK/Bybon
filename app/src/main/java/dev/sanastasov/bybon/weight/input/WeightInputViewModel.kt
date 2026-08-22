@@ -6,9 +6,11 @@ import dev.sanastasov.bybon.weight.BodyWeightEntry
 import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -19,8 +21,19 @@ class WeightInputViewModel(
 
     val weight = mutableStateOf("")
 
-    val uiState: StateFlow<WeightInputUi>
-        field = MutableStateFlow(WeightInputUi(LocalDate.now()))
+    private val date = MutableStateFlow<LocalDate>(LocalDate.now())
+
+    val uiState: StateFlow<WeightInputUi> = combine(
+        repository.entries(),
+        date,
+    ) { allEntries, date ->
+        WeightInputUi(date, allEntries.firstOrNull { it.date == date } != null)
+    }
+        .stateIn(
+            coroutineScope,
+            SharingStarted.WhileSubscribed(5_000),
+            WeightInputUi(date.value, false)
+        )
 
     init {
         coroutineScope.launch {
@@ -32,14 +45,14 @@ class WeightInputViewModel(
         when (action) {
             is WeightInputAction.OnSaveWeight -> saveWeight(action)
             is WeightInputAction.OnWeightChanged -> weight.value = action.weight
-            is WeightInputAction.OnNewDateSelected -> updateDate(action)
+            is WeightInputAction.OnNewDateSelected -> date.value = action.date
             is WeightInputAction.OnUpdateWeight -> weight.value =
                 (BodyWeight.parseFromString(weight.value) + action.amount).kilograms.toString()
         }
     }
 
     private suspend fun prefillMostRecentWeight() {
-        val mostRecentEntry = repository.entries().firstOrNull()?.lastOrNull()
+        val mostRecentEntry = repository.entries().firstOrNull()?.firstOrNull()
         if (mostRecentEntry != null && weight.value.isBlank()) {
             weight.value = mostRecentEntry.weight.kilograms.toString()
         }
@@ -54,9 +67,5 @@ class WeightInputViewModel(
                 )
             )
         }
-    }
-
-    private fun updateDate(action: WeightInputAction.OnNewDateSelected) {
-        uiState.update { it.copy(date = action.date) }
     }
 }
