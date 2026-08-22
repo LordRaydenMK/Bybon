@@ -2,6 +2,7 @@ package dev.sanastasov.bybon
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
@@ -31,7 +32,8 @@ fun BybonApp(dbModule: DbModule) {
     val backStack: BackStack = rememberNavBackStack(Screen.MainScreen)
     NavDisplay(
         entryDecorators = listOf(
-            rememberSaveableStateHolderNavEntryDecorator()
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator(),
         ),
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },

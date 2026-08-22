@@ -10,6 +10,8 @@ lifecycleRuntimeKtx = "2.11.0"
 activityCompose = "1.13.0"
 composeBom = "2026.08.00"
 nav3Core = "1.1.6"
+material3AdaptiveNav3 = "1.3.0"
+lifecycleViewmodelNav3 = "2.12.0-alpha01"
 kotlinxSerializationCore = "1.11.0"
 roomVersion = "3.0.1"
 roomCommon = "2.8.4"
@@ -31,6 +33,8 @@ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-te
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-navigation3-runtime = { module = "androidx.navigation3:navigation3-runtime", version.ref = "nav3Core" }
 androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
+androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycleViewmodelNav3" }
+androidx-material3-adaptive-navigation3 = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "material3AdaptiveNav3" }
 androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "roomVersion" }
 androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "roomVersion" }
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
