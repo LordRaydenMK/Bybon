@@ -23,5 +23,6 @@ sealed class WeightInputAction {
     data class OnSaveWeight(val date: LocalDate, val weight: String) : WeightInputAction()
     data class OnNewDateSelected(val date: LocalDate) : WeightInputAction()
 
-    data class OnUpdateWeight(val amount: BodyWeight) : WeightInputAction()
+    data class AddWeight(val amount: BodyWeight) : WeightInputAction()
+    data class RemoveWeight(val amount: BodyWeight) : WeightInputAction()
 }

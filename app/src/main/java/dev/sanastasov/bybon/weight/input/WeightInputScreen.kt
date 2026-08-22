@@ -126,16 +126,16 @@ private fun AdjustWeightRow(onAction: (WeightInputAction) -> Unit) {
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-OneHundredGrams)) }) {
+        OutlinedButton({ onAction(WeightInputAction.RemoveWeight(OneHundredGrams)) }) {
             Text("-0.1")
         }
-        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-FiftyGrams)) }) {
+        OutlinedButton({ onAction(WeightInputAction.RemoveWeight(FiftyGrams)) }) {
             Text("-0.05")
         }
-        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(FiftyGrams)) }) {
+        OutlinedButton({ onAction(WeightInputAction.AddWeight(FiftyGrams)) }) {
             Text("+0.05")
         }
-        OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(OneHundredGrams)) }) {
+        OutlinedButton({ onAction(WeightInputAction.AddWeight(OneHundredGrams)) }) {
             Text("+0.1")
         }
     }

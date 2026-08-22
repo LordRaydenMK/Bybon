@@ -48,8 +48,11 @@ class WeightInputViewModel(
             is WeightInputAction.OnSaveWeight -> saveWeight(action)
             is WeightInputAction.OnWeightChanged -> weight.value = action.weight
             is WeightInputAction.OnNewDateSelected -> date.value = action.date
-            is WeightInputAction.OnUpdateWeight -> weight.value =
+            is WeightInputAction.AddWeight -> weight.value =
                 (BodyWeight.parseFromString(weight.value) + action.amount).kilograms.toString()
+
+            is WeightInputAction.RemoveWeight -> weight.value =
+                (BodyWeight.parseFromString(weight.value) - action.amount.kilograms).kilograms.toString()
         }
     }
 

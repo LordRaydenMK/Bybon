@@ -28,6 +28,9 @@ value class BodyWeight(val value: Int) {
 
     operator fun unaryMinus(): BodyWeight = BodyWeight(-value)
 
+    operator fun minus(toRemove: Float): BodyWeight =
+        BodyWeight((kilograms - toRemove).roundToInt())
+
     operator fun plus(other: BodyWeight) = BodyWeight(value + other.value)
 
     companion object {
