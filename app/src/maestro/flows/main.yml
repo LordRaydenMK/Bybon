@@ -2,3 +2,6 @@ appId: dev.sanastasov.bybon
 ---
 - launchApp
 - assertVisible: "Bybon"
+- assertVisible: "Estimated 1RM"
+- tapOn: "+1 Rep"
+- assertVisible: "68.33"

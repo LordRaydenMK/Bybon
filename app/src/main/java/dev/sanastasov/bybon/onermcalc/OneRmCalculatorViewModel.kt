@@ -32,11 +32,22 @@ class OneRmCalculatorViewModel {
 
     private fun onWeightChanged(newWeight: String) {
         weight.value = newWeight
+        val updatedOneRm = calculateOneRm()
+        uiState.update { it.copy(entry = updatedOneRm) }
     }
 
     private fun onRepsChanged(newReps: String) {
         reps.value = newReps
+        val updatedOneRm = calculateOneRm()
+        uiState.update { it.copy(entry = updatedOneRm) }
     }
+
+    private fun calculateOneRm(): OneRmEntry? =
+        weight.value.toFloatOrNull()?.let { weight ->
+            reps.value.toIntOrNull()?.let { reps ->
+                OneRmEntry(weight, reps)
+            }
+        }
 
     private fun onUpdateWeight(weightToAdd: Float) {
         val weight = (weight.value.toFloat() + weightToAdd).toString()

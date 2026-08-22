@@ -20,9 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation3.runtime.NavBackStack
 import dev.marcellogalhardo.retained.compose.retain
-import dev.sanastasov.bybon.Screen
 import dev.sanastasov.bybon.onermcalc.OneRmCalcAction
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorTab
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
@@ -37,7 +35,7 @@ import dev.sanastasov.bybon.weight.dashboard.WeightDashboardViewModel
 import dev.sanastasov.bybon.weight.dashboard.WeightEntryUi
 
 @Composable
-fun MainScreen(backStack: NavBackStack<Screen>) {
+fun MainScreen(onNavigateToWeightEntry: () -> Unit) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val oneRmViewModel = retain { OneRmCalculatorViewModel() }
@@ -56,7 +54,7 @@ fun MainScreen(backStack: NavBackStack<Screen>) {
         oneRmUiState,
         oneRmViewModel::onAction,
         weightState,
-        { backStack.add(Screen.WeightEntryScreen) },
+        onNavigateToWeightEntry,
     )
 }
 

@@ -26,7 +26,7 @@ fun <T : NavKey> rememberNavBackStack(vararg elements: NavKey): NavBackStack<T> 
 
 @Composable
 fun BybonApp() {
-    val backStack = rememberNavBackStack<Screen>(Screen.MainScreen)
+    val backStack: BackStack = rememberNavBackStack(Screen.MainScreen)
     NavDisplay(
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator()
@@ -36,7 +36,7 @@ fun BybonApp() {
         entryProvider = { key ->
             when (key) {
                 Screen.MainScreen -> NavEntry(key) {
-                    MainScreen(backStack)
+                    MainScreen { backStack.add(Screen.WeightEntryScreen) }
                 }
 
                 Screen.WeightEntryScreen -> NavEntry(key) {
