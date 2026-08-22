@@ -1,12 +1,11 @@
 package dev.sanastasov.bybon.weight.dashboard
 
+import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.weight.BodyWeightEntry
 import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 
 val weeklyEntries = listOf(
@@ -28,9 +27,8 @@ class WeightDashboardViewModel(
                 weeklyEntries,
             )
         }
-        .stateIn(
+        .stateInWhileInForeground(
             coroutineScope,
-            SharingStarted.WhileSubscribed(5_000),
             WeightDashboardUiState(false, emptyList(), emptyList())
         )
 }

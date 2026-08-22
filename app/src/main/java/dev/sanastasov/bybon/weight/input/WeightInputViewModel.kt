@@ -1,16 +1,15 @@
 package dev.sanastasov.bybon.weight.input
 
 import androidx.compose.runtime.mutableStateOf
+import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.weight.BodyWeight
 import dev.sanastasov.bybon.weight.BodyWeightEntry
 import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -29,9 +28,8 @@ class WeightInputViewModel(
     ) { allEntries, date ->
         WeightInputUi(date, allEntries.firstOrNull { it.date == date } != null)
     }
-        .stateIn(
+        .stateInWhileInForeground(
             coroutineScope,
-            SharingStarted.WhileSubscribed(5_000),
             WeightInputUi(date.value, false)
         )
 
