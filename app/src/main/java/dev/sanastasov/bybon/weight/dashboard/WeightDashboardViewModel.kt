@@ -1,7 +1,13 @@
 package dev.sanastasov.bybon.weight.dashboard
 
-import kotlinx.coroutines.flow.MutableStateFlow
+import dev.sanastasov.bybon.weight.WeightEntry
+import dev.sanastasov.bybon.weight.WeightRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
 
 private val dailyEntries = listOf(
     WeightEntryUi("Yesterday", "65.2kg"),
@@ -13,8 +19,24 @@ val weeklyEntries = listOf(
     WeeklyAverageEntryUi("CW 30", "64.7 kg", "-0.1 vs CW 29")
 )
 
-class WeightDashboardViewModel {
+class WeightDashboardViewModel(
+    private val repository: WeightRepository,
+    private val coroutineScope: CoroutineScope,
+) {
 
-    val uiState: StateFlow<WeightDashboardUiState>
-        field = MutableStateFlow(WeightDashboardUiState(true, dailyEntries, weeklyEntries))
+    val uiState: StateFlow<WeightDashboardUiState> = repository.entries()
+        .map { dailyEntries ->
+            WeightDashboardUiState(
+                showLogWeight = dailyEntries.firstOrNull { it.date == LocalDate.now() } == null,
+                dailyEntries = dailyEntries.map { it.toUi() },
+                weeklyEntries,
+            )
+        }
+        .stateIn(
+            coroutineScope,
+            SharingStarted.WhileSubscribed(5_000),
+            WeightDashboardUiState(false, emptyList(), emptyList())
+        )
 }
+
+private fun WeightEntry.toUi(): WeightEntryUi = WeightEntryUi(date.toString(), "$weight kg")

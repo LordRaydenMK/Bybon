@@ -25,4 +25,5 @@ local.properties
 /.idea/inspectionProfiles/Project_Default.xml
 /.idea/deploymentTargetSelector.xml
 /.idea/markdown.xml
+/.idea/deviceManager.xml
 .kotlin/*
