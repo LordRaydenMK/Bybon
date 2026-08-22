@@ -2,7 +2,6 @@
 
 package dev.sanastasov.bybon.weight.input
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -86,9 +86,9 @@ private fun WeightInputContent(
             }
 
             Row(Modifier.fillMaxWidth()) {
-                if (uiState.saved) {
+                if (uiState.savedBodyWeight != null) {
                     Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                        Image(SavedLocally, "Saved in db")
+                        Icon(SavedLocally, "Saved in db")
                     }
                 } else {
                     Spacer(Modifier.size(48.dp))
@@ -146,12 +146,12 @@ private fun AdjustWeightRow(onAction: (WeightInputAction) -> Unit) {
 private fun WeightInputContentPreview() {
     WeightInputContent(
         "",
-        WeightInputUi(LocalDate.of(2026, 8, 21), false)
+        WeightInputUi(LocalDate.of(2026, 8, 21), null)
     ) {}
 }
 
 @Preview
 @Composable
 private fun WeightInputSavedContentPreview() {
-    WeightInputContent("", WeightInputUi(LocalDate.now(), true)) {}
+    WeightInputContent("", WeightInputUi(LocalDate.now(), BodyWeight(6545))) {}
 }

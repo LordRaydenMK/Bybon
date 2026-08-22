@@ -7,7 +7,7 @@ import java.util.Locale
 
 data class WeightInputUi(
     val date: LocalDate,
-    val saved: Boolean,
+    val savedBodyWeight: BodyWeight? = null,
 ) {
 
     val dayOfWeek: String

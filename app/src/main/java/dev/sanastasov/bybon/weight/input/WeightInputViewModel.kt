@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -26,11 +27,14 @@ class WeightInputViewModel(
         repository.entries(),
         date,
     ) { allEntries, date ->
-        WeightInputUi(date, allEntries.firstOrNull { it.date == date } != null)
+        WeightInputUi(date, allEntries.firstOrNull { it.date == date }?.weight)
     }
+        .onEach {
+            if (it.savedBodyWeight != null) weight.value = it.savedBodyWeight.kilograms.toString()
+        }
         .stateInWhileInForeground(
             coroutineScope,
-            WeightInputUi(date.value, false)
+            WeightInputUi(date.value)
         )
 
     init {
