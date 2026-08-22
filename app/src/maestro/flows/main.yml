@@ -5,3 +5,11 @@ appId: dev.sanastasov.bybon
 - assertVisible: "Estimated 1RM"
 - tapOn: "+1 Rep"
 - assertVisible: "68.33"
+- tapOn:
+      text: "Weight"
+      below: "Estimated 1RM"
+- assertVisible: "Log Weight"
+- tapOn: "Log Weight"
+- assertVisible: "Enter Weight"
+- back
+- assertVisible: "Log Weight"
