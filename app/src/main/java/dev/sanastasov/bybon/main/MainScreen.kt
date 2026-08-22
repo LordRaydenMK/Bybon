@@ -28,7 +28,7 @@ import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
-import dev.sanastasov.bybon.weight.InMemoryWeightRepository
+import dev.sanastasov.bybon.weight.WeightModule
 import dev.sanastasov.bybon.weight.dashboard.WeeklyAverageEntryUi
 import dev.sanastasov.bybon.weight.dashboard.WeightDashboardTab
 import dev.sanastasov.bybon.weight.dashboard.WeightDashboardUiState
@@ -36,7 +36,7 @@ import dev.sanastasov.bybon.weight.dashboard.WeightDashboardViewModel
 import dev.sanastasov.bybon.weight.dashboard.WeightEntryUi
 
 @Composable
-fun MainScreen(onNavigateToWeightEntry: () -> Unit) {
+fun WeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val oneRmViewModel = retain { OneRmCalculatorViewModel() }
@@ -45,7 +45,7 @@ fun MainScreen(onNavigateToWeightEntry: () -> Unit) {
     val oneRmUiState by oneRmViewModel.uiState.collectAsStateWithLifecycle()
 
     val weightViewModel = retain {
-        WeightDashboardViewModel(InMemoryWeightRepository, it.coroutineScope)
+        WeightDashboardViewModel(weightRepository, it.coroutineScope)
     }
     val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 

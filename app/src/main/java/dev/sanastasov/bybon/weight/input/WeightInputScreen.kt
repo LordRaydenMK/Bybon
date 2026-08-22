@@ -22,15 +22,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.marcellogalhardo.retained.compose.retain
-import dev.sanastasov.bybon.weight.InMemoryWeightRepository
+import dev.sanastasov.bybon.weight.WeightModule
 
 @Composable
-fun WeightInputScreen() {
+fun WeightModule.WeightInputScreen() {
     val viewModel = retain {
-        WeightInputViewModel(
-            InMemoryWeightRepository,
-            it.coroutineScope
-        )
+        WeightInputViewModel(weightRepository, it.coroutineScope)
     }
     val weight by viewModel.weight
     WeightInputContent(weight, viewModel::onAction)

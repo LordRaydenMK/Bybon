@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import dev.sanastasov.bybon.data.DbModule
 import dev.sanastasov.bybon.ui.theme.BybonTheme
 
 class MainActivity : ComponentActivity() {
@@ -12,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BybonTheme {
-                BybonApp()
+                BybonApp(DbModule.create(application))
             }
         }
     }
