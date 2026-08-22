@@ -73,9 +73,9 @@ private fun WeightInputContent(
                     Text("<")
                 }
                 if (uiState.date == LocalDate.now()) {
-                    Text("Today")
+                    Text("Today (${uiState.dayOfWeek})")
                 } else {
-                    Text(uiState.date.toString())
+                    Text("${uiState.date} (${uiState.dayOfWeek})")
                 }
                 OutlinedButton(
                     { onAction(WeightInputAction.OnNewDateSelected(uiState.nextDate!!)) },
@@ -144,7 +144,10 @@ private fun AdjustWeightRow(onAction: (WeightInputAction) -> Unit) {
 @Preview
 @Composable
 private fun WeightInputContentPreview() {
-    WeightInputContent("", WeightInputUi(LocalDate.now(), false)) {}
+    WeightInputContent(
+        "",
+        WeightInputUi(LocalDate.of(2026, 8, 21), false)
+    ) {}
 }
 
 @Preview

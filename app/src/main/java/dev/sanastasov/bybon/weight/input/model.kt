@@ -2,11 +2,16 @@ package dev.sanastasov.bybon.weight.input
 
 import dev.sanastasov.bybon.weight.BodyWeight
 import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 data class WeightInputUi(
     val date: LocalDate,
     val saved: Boolean,
 ) {
+
+    val dayOfWeek: String
+        get() = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.US)
 
     val previousDate: LocalDate = date.minusDays(1)
 
