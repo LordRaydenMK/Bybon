@@ -1,13 +1,14 @@
 package dev.sanastasov.bybon.weight.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,7 +19,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun WeightDashboardTab(state: WeightDashboardUiState) {
+fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
@@ -26,7 +27,7 @@ fun WeightDashboardTab(state: WeightDashboardUiState) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (state.showLogWeight) {
-            LogWeight()
+            LogWeight(onLogWeightClicked)
         }
         state.dailyEntries.forEach {
             DailyEntry(it)
@@ -38,10 +39,22 @@ fun WeightDashboardTab(state: WeightDashboardUiState) {
 }
 
 @Composable
-private fun DailyEntry(entry: WeightEntryUi) {
-    Row(Modifier.padding(8.dp)) {
-        Text(entry.day, Modifier.weight(1f))
-        Text(entry.value, Modifier.weight(1f))
+private fun LogWeight(onLogWeightClicked: () -> Unit) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Enter today's weight")
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(onLogWeightClicked) {
+                Text("Log Weight")
+            }
+        }
     }
 }
 
@@ -55,16 +68,10 @@ private fun WeeklyAverage(entry: WeeklyAverageEntryUi) {
 }
 
 @Composable
-private fun LogWeight() {
-    Card(Modifier.fillMaxWidth()) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(48.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Log Weight")
-        }
+private fun DailyEntry(entry: WeightEntryUi) {
+    Row(Modifier.padding(8.dp)) {
+        Text(entry.day, Modifier.weight(1f))
+        Text(entry.value, Modifier.weight(1f))
     }
 }
 
@@ -84,6 +91,6 @@ private fun WeightDashboardPreview() {
         )
     )
     Surface {
-        WeightDashboardTab(state)
+        WeightDashboardTab(state, {})
     }
 }

@@ -15,12 +15,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavBackStack
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.Screen
 import dev.sanastasov.bybon.onermcalc.OneRmCalcAction
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorTab
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
@@ -35,8 +37,8 @@ import dev.sanastasov.bybon.weight.dashboard.WeightDashboardViewModel
 import dev.sanastasov.bybon.weight.dashboard.WeightEntryUi
 
 @Composable
-fun MainScreen() {
-    var selectedIndex by remember { mutableIntStateOf(0) }
+fun MainScreen(backStack: NavBackStack<Screen>) {
+    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val oneRmViewModel = retain { OneRmCalculatorViewModel() }
     val weight by oneRmViewModel.weight
@@ -54,6 +56,7 @@ fun MainScreen() {
         oneRmUiState,
         oneRmViewModel::onAction,
         weightState,
+        { backStack.add(Screen.WeightEntryScreen) },
     )
 }
 
@@ -66,6 +69,7 @@ private fun MainScreenContent(
     oneRmUiState: OneRmUiState,
     onOneRmAction: (OneRmCalcAction) -> Unit,
     weightState: WeightDashboardUiState,
+    onLogWeightClicked: () -> Unit,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -105,7 +109,7 @@ private fun MainScreenContent(
                     Modifier.fillMaxSize()
                 )
 
-                1 -> WeightDashboardTab(weightState)
+                1 -> WeightDashboardTab(weightState, onLogWeightClicked)
                 else -> error("Not yet implemented")
             }
         }
@@ -125,7 +129,8 @@ private fun MainScreenContentOneRmCalcPreview() {
             emptyList()
         ),
         {},
-        WeightDashboardUiState(true, emptyList(), emptyList())
+        WeightDashboardUiState(true, emptyList(), emptyList()),
+        {}
     )
 }
 
@@ -152,6 +157,7 @@ private fun MainScreenContentWeightTrackPreview() {
                 WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
                 WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
             )
-        )
+        ),
+        {}
     )
 }
