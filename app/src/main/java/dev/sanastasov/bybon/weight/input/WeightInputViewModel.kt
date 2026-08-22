@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -20,11 +21,24 @@ class WeightInputViewModel(
     val uiState: StateFlow<WeightInputUi>
         field = MutableStateFlow(WeightInputUi(LocalDate.now()))
 
+    init {
+        coroutineScope.launch {
+            prefillMostRecentWeight()
+        }
+    }
+
     fun onAction(action: WeightInputAction) {
         when (action) {
             is WeightInputAction.OnSaveWeight -> saveWeight(action)
             is WeightInputAction.OnWeightChanged -> weight.value = action.weight
             is WeightInputAction.OnNewDateSelected -> updateDate(action)
+        }
+    }
+
+    private suspend fun prefillMostRecentWeight() {
+        val mostRecentEntry = repository.entries().firstOrNull()?.lastOrNull()
+        if (mostRecentEntry != null && weight.value.isBlank()) {
+            weight.value = mostRecentEntry.weight.toString()
         }
     }
 
