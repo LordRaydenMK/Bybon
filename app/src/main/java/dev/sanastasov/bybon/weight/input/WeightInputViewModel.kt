@@ -1,7 +1,8 @@
 package dev.sanastasov.bybon.weight.input
 
 import androidx.compose.runtime.mutableStateOf
-import dev.sanastasov.bybon.weight.WeightEntry
+import dev.sanastasov.bybon.weight.BodyWeight
+import dev.sanastasov.bybon.weight.BodyWeightEntry
 import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,19 +33,26 @@ class WeightInputViewModel(
             is WeightInputAction.OnSaveWeight -> saveWeight(action)
             is WeightInputAction.OnWeightChanged -> weight.value = action.weight
             is WeightInputAction.OnNewDateSelected -> updateDate(action)
+            is WeightInputAction.OnUpdateWeight -> weight.value =
+                (BodyWeight.parseFromString(weight.value) + action.amount).kilograms.toString()
         }
     }
 
     private suspend fun prefillMostRecentWeight() {
         val mostRecentEntry = repository.entries().firstOrNull()?.lastOrNull()
         if (mostRecentEntry != null && weight.value.isBlank()) {
-            weight.value = mostRecentEntry.weight.toString()
+            weight.value = mostRecentEntry.weight.kilograms.toString()
         }
     }
 
     private fun saveWeight(weight: WeightInputAction.OnSaveWeight) {
         coroutineScope.launch {
-            repository.insert(WeightEntry(weight.date, weight.weight.toFloat()))
+            repository.insert(
+                BodyWeightEntry(
+                    weight.date,
+                    BodyWeight.parseFromString(weight.weight)
+                )
+            )
         }
     }
 

@@ -26,8 +26,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.weight.BodyWeight
 import dev.sanastasov.bybon.weight.WeightModule
 import java.time.LocalDate
+
+private val OneHundredGrams = BodyWeight(10)
+private val FiftyGrams = BodyWeight(5)
 
 @Composable
 fun WeightModule.WeightInputScreen() {
@@ -86,6 +90,25 @@ private fun WeightInputContent(
                     }
                 )
             )
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-OneHundredGrams)) }) {
+                    Text("-0.1")
+                }
+                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(-FiftyGrams)) }) {
+                    Text("-0.05")
+                }
+                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(FiftyGrams)) }) {
+                    Text("+0.05")
+                }
+                OutlinedButton({ onAction(WeightInputAction.OnUpdateWeight(OneHundredGrams)) }) {
+                    Text("+0.1")
+                }
+            }
 
             Button({ onAction(WeightInputAction.OnSaveWeight(uiState.date, weight)) }) {
                 Text("Save")

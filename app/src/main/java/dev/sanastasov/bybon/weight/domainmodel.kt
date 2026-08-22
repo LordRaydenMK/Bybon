@@ -1,35 +1,56 @@
 package dev.sanastasov.bybon.weight
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
-data class WeightEntry(
+/**
+ * Body Weight, represented as Int in units of 0.01 kg (0.05 kg accuracy)
+ *
+ * 65.45 kg represented as 6545
+ */
+@JvmInline
+value class BodyWeight(val value: Int) {
+    init {
+        require(value > 0) {
+            "Weight must be positive. Found '$value'"
+        }
+        require(value % 5 == 0) {
+            "Weight must be in 0.05 kg increments. Found '$value'"
+        }
+        require(value < 50000) {
+            "Weight must be less than 500kg. Found '$value"
+        }
+    }
+
+    val kilograms: Float
+        get() = value / 100f
+
+    operator fun unaryMinus(): BodyWeight = BodyWeight(-value)
+
+    operator fun plus(other: BodyWeight) = BodyWeight(value + other.value)
+
+    companion object {
+
+        fun parseFromString(value: String): BodyWeight {
+            val kilograms = value.toFloatOrNull()
+                ?: throw IllegalArgumentException("Invalid body weight: '$value'")
+
+            val rounded = (kilograms / 0.05).roundToInt() * 0.05f
+
+            return BodyWeight((rounded * 100).roundToInt())
+        }
+    }
+}
+
+data class BodyWeightEntry(
     val date: LocalDate,
-    val weight: Float,
+    val weight: BodyWeight,
 )
 
 interface WeightRepository {
 
-    fun entries(): Flow<List<WeightEntry>>
+    fun entries(): Flow<List<BodyWeightEntry>>
 
-    suspend fun insert(entry: WeightEntry)
-}
-
-object InMemoryWeightRepository : WeightRepository {
-
-    private val dailyEntries = listOf(
-        WeightEntry(LocalDate.of(2026, 8, 21), 65.2f),
-        WeightEntry(LocalDate.of(2026, 8, 20), 65.2f),
-    )
-
-    private val state: MutableStateFlow<List<WeightEntry>> = MutableStateFlow(dailyEntries)
-
-
-    override fun entries(): Flow<List<WeightEntry>> = state
-
-    override suspend fun insert(entry: WeightEntry) {
-        state.update { listOf(entry) + it }
-    }
+    suspend fun insert(entry: BodyWeightEntry)
 }
