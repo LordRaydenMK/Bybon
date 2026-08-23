@@ -1,7 +1,7 @@
 package dev.sanastasov.bybon.bodyweight.dashboard
 
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow

@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.bodyweight
 
 import dev.sanastasov.bybon.bodyweight.data.BodyWeightRepositoryImpl
+import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.data.DbModule
 
 interface BodyWeightModule : DbModule {

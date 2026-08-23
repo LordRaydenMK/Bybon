@@ -2,7 +2,7 @@ package dev.sanastasov.bybon.bodyweight.data
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 

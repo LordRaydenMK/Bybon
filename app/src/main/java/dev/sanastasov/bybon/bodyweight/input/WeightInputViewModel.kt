@@ -3,7 +3,7 @@ package dev.sanastasov.bybon.bodyweight.input
 import androidx.compose.runtime.mutableStateOf
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel

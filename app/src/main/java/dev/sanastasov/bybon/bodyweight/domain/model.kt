@@ -1,6 +1,5 @@
 package dev.sanastasov.bybon.bodyweight
 
-import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -50,10 +49,3 @@ data class BodyWeightEntry(
     val date: LocalDate,
     val weight: BodyWeight,
 )
-
-interface BodyWeightRepository {
-
-    fun entries(): Flow<List<BodyWeightEntry>>
-
-    suspend fun insert(entry: BodyWeightEntry)
-}
