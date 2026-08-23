@@ -86,9 +86,9 @@ jobs:
       - name: Setup secrets
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
-          echo "${{ secrets.KEYSTORE_PASS }}" >> keystore.properties
-          echo "${{ secrets.KEY_ALIAS }}" >> keystore.properties
-          echo "${{ secrets.KEY_PASS }}" >> keystore.properties
+          echo "bybon_ks_pass=${{ secrets.KEYSTORE_PASS }}" >> keystore.properties
+          echo "bybon_key_alias=${{ secrets.KEY_ALIAS }}" >> keystore.properties
+          echo "bybon_key_pass=${{ secrets.KEY_PASS }}" >> keystore.properties
 
       - name: Build release APK
         run: ./gradlew assembleRelease
