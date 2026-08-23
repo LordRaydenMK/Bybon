@@ -25,9 +25,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-        val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
 
+    signingConfigs {
         if (keystorePropertiesFile.exists()) {
             create("release") {
                 val keystoreProperties = Properties().apply {
@@ -47,7 +47,9 @@ android {
             applicationIdSuffix = ".debug"
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             optimization {
                 enable = false
             }
