@@ -90,8 +90,8 @@ jobs:
           echo "${{ secrets.KEY_ALIAS }}" >> keystore.properties
           echo "${{ secrets.KEY_PASS }}" >> keystore.properties
 
-      - name: Build
-        run: ./gradlew buildDebug
+      - name: Build release APK
+        run: ./gradlew assembleRelease
 
       - name: Archive APK
         uses: actions/upload-artifact@v7
