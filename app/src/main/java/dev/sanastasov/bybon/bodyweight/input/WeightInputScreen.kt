@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package dev.sanastasov.bybon.weight.input
+package dev.sanastasov.bybon.bodyweight.input
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,20 +29,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.bodyweight.BodyWeight
+import dev.sanastasov.bybon.bodyweight.BodyWeightModule
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.icons.SavedLocally
-import dev.sanastasov.bybon.weight.BodyWeight
-import dev.sanastasov.bybon.weight.WeightModule
 import java.time.LocalDate
 
 private val OneHundredGrams = BodyWeight(10)
 private val FiftyGrams = BodyWeight(5)
 
 @Composable
-fun WeightModule.WeightInputScreen(onNavigateBack: () -> Unit) {
+fun BodyWeightModule.WeightInputScreen(onNavigateBack: () -> Unit) {
     val viewModel = retain {
-        WeightInputViewModel(weightRepository, it.coroutineScope)
+        WeightInputViewModel(bodyWeightRepository, it.coroutineScope)
     }
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {

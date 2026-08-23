@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.weight.data
+package dev.sanastasov.bybon.bodyweight.data
 
 import androidx.room3.ColumnInfo
 import androidx.room3.Entity

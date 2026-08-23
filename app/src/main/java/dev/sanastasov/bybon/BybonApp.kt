@@ -10,10 +10,10 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.navigation3.runtime.serialization.NavKeySerializer
 import androidx.navigation3.ui.NavDisplay
+import dev.sanastasov.bybon.bodyweight.BodyWeightModule
+import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.data.DbModule
 import dev.sanastasov.bybon.main.MainScreen
-import dev.sanastasov.bybon.weight.WeightModule
-import dev.sanastasov.bybon.weight.input.WeightInputScreen
 
 typealias BackStack = NavBackStack<Screen>
 
@@ -38,7 +38,7 @@ fun BybonApp(dbModule: DbModule) {
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
         entryProvider = { key ->
-            with(WeightModule.create(dbModule)) {
+            with(BodyWeightModule.create(dbModule)) {
                 when (key) {
                     Screen.MainScreen -> NavEntry(key) {
                         MainScreen { backStack.add(Screen.WeightEntryScreen) }

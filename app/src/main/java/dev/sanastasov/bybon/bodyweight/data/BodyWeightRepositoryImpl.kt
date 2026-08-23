@@ -1,14 +1,14 @@
-package dev.sanastasov.bybon.weight.data
+package dev.sanastasov.bybon.bodyweight.data
 
-import dev.sanastasov.bybon.weight.BodyWeight
-import dev.sanastasov.bybon.weight.BodyWeightEntry
-import dev.sanastasov.bybon.weight.WeightRepository
+import dev.sanastasov.bybon.bodyweight.BodyWeight
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.BodyWeightRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class WeightRepositoryImpl(
+class BodyWeightRepositoryImpl(
     private val weightEntryDao: WeightDao
-) : WeightRepository {
+) : BodyWeightRepository {
 
     override fun entries(): Flow<List<BodyWeightEntry>> = weightEntryDao.weightEntries()
         .map { entries -> entries.map { BodyWeightEntry(it.date, BodyWeight(it.weight)) } }

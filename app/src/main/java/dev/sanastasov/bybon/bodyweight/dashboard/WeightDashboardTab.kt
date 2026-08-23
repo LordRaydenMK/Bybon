@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.weight.dashboard
+package dev.sanastasov.bybon.bodyweight.dashboard
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

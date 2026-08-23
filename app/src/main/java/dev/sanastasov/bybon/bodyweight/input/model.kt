@@ -1,6 +1,6 @@
-package dev.sanastasov.bybon.weight.input
+package dev.sanastasov.bybon.bodyweight.input
 
-import dev.sanastasov.bybon.weight.BodyWeight
+import dev.sanastasov.bybon.bodyweight.BodyWeight
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale

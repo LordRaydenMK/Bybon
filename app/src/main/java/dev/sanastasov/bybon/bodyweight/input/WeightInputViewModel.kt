@@ -1,10 +1,10 @@
-package dev.sanastasov.bybon.weight.input
+package dev.sanastasov.bybon.bodyweight.input
 
 import androidx.compose.runtime.mutableStateOf
+import dev.sanastasov.bybon.bodyweight.BodyWeight
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.BodyWeightRepository
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
-import dev.sanastasov.bybon.weight.BodyWeight
-import dev.sanastasov.bybon.weight.BodyWeightEntry
-import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 class WeightInputViewModel(
-    val repository: WeightRepository,
+    val repository: BodyWeightRepository,
     val coroutineScope: CoroutineScope,
 ) {
 

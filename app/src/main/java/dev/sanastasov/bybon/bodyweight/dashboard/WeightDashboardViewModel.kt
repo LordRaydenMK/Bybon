@@ -1,8 +1,8 @@
-package dev.sanastasov.bybon.weight.dashboard
+package dev.sanastasov.bybon.bodyweight.dashboard
 
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.BodyWeightRepository
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
-import dev.sanastasov.bybon.weight.BodyWeightEntry
-import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -15,7 +15,7 @@ val weeklyEntries = listOf(
 )
 
 class WeightDashboardViewModel(
-    private val repository: WeightRepository,
+    private val repository: BodyWeightRepository,
     private val coroutineScope: CoroutineScope,
 ) {
 

@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.weight.dashboard
+package dev.sanastasov.bybon.bodyweight.dashboard
 
 data class WeightEntryUi(val day: String, val value: String)
 

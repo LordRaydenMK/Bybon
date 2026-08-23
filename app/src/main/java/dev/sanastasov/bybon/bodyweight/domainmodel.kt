@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.weight
+package dev.sanastasov.bybon.bodyweight
 
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
@@ -51,7 +51,7 @@ data class BodyWeightEntry(
     val weight: BodyWeight,
 )
 
-interface WeightRepository {
+interface BodyWeightRepository {
 
     fun entries(): Flow<List<BodyWeightEntry>>
 

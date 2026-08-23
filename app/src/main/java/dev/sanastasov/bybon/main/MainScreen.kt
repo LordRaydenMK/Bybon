@@ -21,6 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.bodyweight.BodyWeightModule
+import dev.sanastasov.bybon.bodyweight.dashboard.WeeklyAverageEntryUi
+import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardTab
+import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardUiState
+import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardViewModel
+import dev.sanastasov.bybon.bodyweight.dashboard.WeightEntryUi
 import dev.sanastasov.bybon.onermcalc.OneRmCalcAction
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorTab
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
@@ -28,15 +34,9 @@ import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
-import dev.sanastasov.bybon.weight.WeightModule
-import dev.sanastasov.bybon.weight.dashboard.WeeklyAverageEntryUi
-import dev.sanastasov.bybon.weight.dashboard.WeightDashboardTab
-import dev.sanastasov.bybon.weight.dashboard.WeightDashboardUiState
-import dev.sanastasov.bybon.weight.dashboard.WeightDashboardViewModel
-import dev.sanastasov.bybon.weight.dashboard.WeightEntryUi
 
 @Composable
-fun WeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
+fun BodyWeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val oneRmViewModel = retain { OneRmCalculatorViewModel() }
@@ -45,7 +45,7 @@ fun WeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
     val oneRmUiState by oneRmViewModel.uiState.collectAsStateWithLifecycle()
 
     val weightViewModel = retain {
-        WeightDashboardViewModel(weightRepository, it.coroutineScope)
+        WeightDashboardViewModel(bodyWeightRepository, it.coroutineScope)
     }
     val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 
