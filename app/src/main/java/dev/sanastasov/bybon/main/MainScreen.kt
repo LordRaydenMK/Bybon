@@ -130,7 +130,7 @@ private fun MainScreenContentOneRmCalcPreview() {
             emptyList()
         ),
         {},
-        WeightDashboardUiState(true, emptyList(), emptyList()),
+        WeightDashboardUiState(true, null, emptyList(), emptyList()),
         {}
     )
 }
@@ -150,6 +150,7 @@ private fun MainScreenContentWeightTrackPreview() {
         {},
         WeightDashboardUiState(
             true,
+            null,
             listOf(
                 WeightEntryUi("Yesterday", "65.2kg"),
                 WeightEntryUi("Monday", "65.2kg"),

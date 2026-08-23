@@ -10,13 +10,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> Unit) {
@@ -29,13 +32,31 @@ fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> 
         if (state.showLogWeight) {
             LogWeight(onLogWeightClicked)
         }
-        state.dailyEntries.forEach {
-            DailyEntry(it)
+
+        if (state.comparison != null) {
+            WeightComparison(state.comparison)
         }
-        state.weeklyAverages.forEach {
-            WeeklyAverage(it)
+
+        if (state.dailyEntries != null) {
+            HeaderEntry("This Week (17 Aug) CW 34")
+            state.dailyEntries.forEach {
+                DailyEntry(it)
+            }
+        }
+
+        if (state.weeklyAverages != null) {
+            HeaderEntry("Previous weeks")
+            state.weeklyAverages.forEach {
+                WeeklyAverage(it)
+            }
         }
     }
+}
+
+@Composable
+private fun HeaderEntry(text: String) {
+    Text(text)
+    HorizontalDivider()
 }
 
 @Composable
@@ -59,11 +80,37 @@ private fun LogWeight(onLogWeightClicked: () -> Unit) {
 }
 
 @Composable
+private fun WeightComparison(comparison: BodyWeightComparison) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("CW ${comparison.currentWeekNo} average")
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                comparison.currentWeightWeight,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(8.dp))
+
+            comparison.previousWeek?.let {
+                Text("${it.weightDelta} since CW ${it.previousWeekNo}")
+            }
+        }
+    }
+}
+
+@Composable
 private fun WeeklyAverage(entry: WeeklyAverageEntryUi) {
     Row(Modifier.padding(8.dp)) {
         Text(entry.week, Modifier.weight(1f))
         Text(entry.value, Modifier.weight(1f))
-        Text(entry.delta, Modifier.weight(1f))
+        Text(entry.delta.orEmpty(), Modifier.weight(1f))
     }
 }
 
@@ -80,6 +127,11 @@ private fun DailyEntry(entry: WeightEntryUi) {
 private fun WeightDashboardPreview() {
     val state = WeightDashboardUiState(
         true,
+        BodyWeightComparison(
+            33,
+            "65 kg",
+            PreviousWeekData(32, "+0.5 kg")
+        ),
         listOf(
             WeightEntryUi("Yesterday", "65.2kg"),
             WeightEntryUi("Monday", "65.2kg"),
