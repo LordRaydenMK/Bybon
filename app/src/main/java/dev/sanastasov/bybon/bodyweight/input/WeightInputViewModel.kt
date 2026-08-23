@@ -59,7 +59,7 @@ class WeightInputViewModel(
                 (BodyWeight.parseFromString(weight.value) + action.amount).kilograms.toString()
 
             is WeightInputAction.RemoveWeight -> weight.value =
-                (BodyWeight.parseFromString(weight.value) - action.amount.kilograms).kilograms.toString()
+                (BodyWeight.parseFromString(weight.value) - action.amount).kilograms.toString()
         }
     }
 
