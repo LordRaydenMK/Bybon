@@ -67,6 +67,7 @@ private fun List<BodyWeightEntry>.averageWeight(): BodyWeightEntry? =
         else -> {
             val total = sumOf { it.weight.value }
             val average = total.toFloat() / size
-            BodyWeightEntry(first().date, BodyWeight(average.roundToInt()))
+            val roundedTo5 = (average / 5).roundToInt() * 5
+            BodyWeightEntry(first().date, BodyWeight(roundedTo5))
         }
     }
