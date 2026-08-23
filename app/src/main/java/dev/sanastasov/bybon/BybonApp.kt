@@ -45,7 +45,7 @@ fun BybonApp(dbModule: DbModule) {
                     }
 
                     Screen.WeightEntryScreen -> NavEntry(key) {
-                        WeightInputScreen()
+                        WeightInputScreen { backStack.removeLastOrNull() }
                     }
                 }
             }

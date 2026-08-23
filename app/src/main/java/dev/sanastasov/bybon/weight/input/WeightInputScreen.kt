@@ -20,7 +20,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -30,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
+import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.icons.SavedLocally
 import dev.sanastasov.bybon.weight.BodyWeight
 import dev.sanastasov.bybon.weight.WeightModule
@@ -39,9 +40,14 @@ private val OneHundredGrams = BodyWeight(10)
 private val FiftyGrams = BodyWeight(5)
 
 @Composable
-fun WeightModule.WeightInputScreen() {
+fun WeightModule.WeightInputScreen(onNavigateBack: () -> Unit) {
     val viewModel = retain {
         WeightInputViewModel(weightRepository, it.coroutineScope)
+    }
+    viewModel.effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            WeightInputEffect.NavigateBack -> onNavigateBack()
+        }
     }
     val weight by viewModel.weight
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -55,7 +61,7 @@ private fun WeightInputContent(
     onAction: (WeightInputAction) -> Unit
 ) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Enter Weight") }) }
+        topBar = { BybonTopAppBar("Enter Weight", { onAction(WeightInputAction.OnBackClicked) }) }
     ) { contentPadding ->
         Column(
             Modifier

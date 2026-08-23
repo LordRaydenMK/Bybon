@@ -6,11 +6,14 @@ import dev.sanastasov.bybon.weight.BodyWeight
 import dev.sanastasov.bybon.weight.BodyWeightEntry
 import dev.sanastasov.bybon.weight.WeightRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -18,6 +21,9 @@ class WeightInputViewModel(
     val repository: WeightRepository,
     val coroutineScope: CoroutineScope,
 ) {
+
+    private val _effects = Channel<WeightInputEffect>(Channel.BUFFERED)
+    val effects: Flow<WeightInputEffect> = _effects.receiveAsFlow()
 
     val weight = mutableStateOf("")
 
@@ -45,6 +51,7 @@ class WeightInputViewModel(
 
     fun onAction(action: WeightInputAction) {
         when (action) {
+            WeightInputAction.OnBackClicked -> _effects.trySend(WeightInputEffect.NavigateBack)
             is WeightInputAction.OnSaveWeight -> saveWeight(action)
             is WeightInputAction.OnWeightChanged -> weight.value = action.weight
             is WeightInputAction.OnNewDateSelected -> date.value = action.date
