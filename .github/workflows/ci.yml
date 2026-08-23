@@ -25,7 +25,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Build
-        run: ./gradlew build
+        run: ./gradlew buildDebug
 
   e2e-test:
     runs-on: ubuntu-latest
@@ -54,6 +54,9 @@ jobs:
         run: |
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Create debug APK
+        run: ./gradlew assembleDebug
 
       - name: Run Maestro E2E Tests
         uses: reactivecircus/android-emulator-runner@v2

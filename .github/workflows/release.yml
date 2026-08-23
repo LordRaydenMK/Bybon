@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  release:
+    types: [ created ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Common setup
+        uses: ./.github/actions/setup-android
+
+      - name: Build
+        run: ./gradlew buildDebug
+
+
+
+  e2e-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Common setup
+        uses: ./.github/actions/setup-android
+        with:
+          enable-kvm: true
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Create debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Run Maestro E2E Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            ./gradlew installDebug
+            maestro test app/src/maestro/flows/main.yml
+
+      - name: Archive Maestro test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-test-results
+          path: ~/.maestro/tests/*/
+
+  assemble-release:
+    needs:
+      - build
+      - e2e-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Common setup
+        uses: ./.github/actions/setup-android
+
+      - name: Set version
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+
+          echo "VERSION_CODE=${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=0.${{ github.run_number }}-${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      - name: Setup secrets
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+          echo "${{ secrets.KEYSTORE_PASS }}" >> keystore.properties
+          echo "${{ secrets.KEY_ALIAS }}" >> keystore.properties
+          echo "${{ secrets.KEY_PASS }}" >> keystore.properties
+
+      - name: Build
+        run: ./gradlew buildDebug
+
+      - name: Archive APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/*.apk
+

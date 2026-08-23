@@ -1,0 +1,32 @@
+name: Setup Android
+
+description: Common Android CI build setup
+
+inputs:
+  enable-kvm:
+    description: Enable KVM for Android emulator
+    required: false
+    default: 'false'
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Setup Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: '21'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
+
+    - name: Enable KVM
+      if: inputs.enable-kvm == 'true'
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm

@@ -18,8 +18,9 @@ android {
         applicationId = "dev.sanastasov.bybon"
         minSdk = 31
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+
+        versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
+        versionName = System.getenv("VERSION_NAME") ?: "0.1-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -55,6 +56,10 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+base {
+    archivesName.set("Bybon-${providers.environmentVariable("VERSION_NAME").getOrElse("0.1-dev")}")
 }
 
 room3 {
