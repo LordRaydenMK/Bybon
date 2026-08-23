@@ -27,3 +27,5 @@ local.properties
 /.idea/markdown.xml
 /.idea/deviceManager.xml
 .kotlin/*
+/keystore.jks
+keystore.properties

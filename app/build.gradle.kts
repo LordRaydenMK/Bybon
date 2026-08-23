@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -22,11 +24,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreProperties = Properties().apply {
+                rootProject.file("keystore.properties")
+                    .inputStream().use(::load)
+            }
+            storeFile = rootProject.file("keystore.jks")
+            storePassword = keystoreProperties["bybon_ks_pass"] as String
+            keyAlias = keystoreProperties["bybon_key_alias"] as String
+            keyPassword = keystoreProperties["bybon_key_pass"] as String
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
         }
         release {
+            signingConfig = signingConfigs.getByName("release")
             optimization {
                 enable = false
             }
