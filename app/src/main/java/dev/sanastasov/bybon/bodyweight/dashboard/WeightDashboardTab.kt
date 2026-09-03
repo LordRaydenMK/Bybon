@@ -20,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.sanastasov.bybon.bodyweight.BodyWeight
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import java.time.LocalDate
 
 @Composable
 fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> Unit) {
@@ -38,7 +41,7 @@ fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> 
         }
 
         if (state.dailyEntries != null) {
-            HeaderEntry("This Week (17 Aug) CW 34")
+            HeaderEntry(state.dailyHeaderText!!)
             state.dailyEntries.forEach {
                 DailyEntry(it)
             }
@@ -115,10 +118,10 @@ private fun WeeklyAverage(entry: WeeklyAverageEntryUi) {
 }
 
 @Composable
-private fun DailyEntry(entry: WeightEntryUi) {
+private fun DailyEntry(entry: BodyWeightEntry) {
     Row(Modifier.padding(8.dp)) {
-        Text(entry.day, Modifier.weight(1f))
-        Text(entry.value, Modifier.weight(1f))
+        Text(entry.date.toString(), Modifier.weight(1f))
+        Text("${entry.weight.kilograms} kg", Modifier.weight(1f))
     }
 }
 
@@ -133,8 +136,8 @@ private fun WeightDashboardPreview() {
             PreviousWeekData(32, "+0.5 kg")
         ),
         listOf(
-            WeightEntryUi("Yesterday", "65.2kg"),
-            WeightEntryUi("Monday", "65.2kg"),
+            BodyWeightEntry(LocalDate.now().minusDays(1), BodyWeight.parseFromString("65.2")),
+            BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8")),
         ),
         listOf(
             WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),

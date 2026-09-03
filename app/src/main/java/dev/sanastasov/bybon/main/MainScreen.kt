@@ -21,12 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.bodyweight.BodyWeight
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.BodyWeightModule
 import dev.sanastasov.bybon.bodyweight.dashboard.WeeklyAverageEntryUi
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardTab
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardUiState
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardViewModel
-import dev.sanastasov.bybon.bodyweight.dashboard.WeightEntryUi
 import dev.sanastasov.bybon.onermcalc.OneRmCalcAction
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorTab
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
@@ -34,6 +35,7 @@ import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
+import java.time.LocalDate
 
 @Composable
 fun BodyWeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
@@ -152,8 +154,8 @@ private fun MainScreenContentWeightTrackPreview() {
             true,
             null,
             listOf(
-                WeightEntryUi("Yesterday", "65.2kg"),
-                WeightEntryUi("Monday", "65.2kg"),
+                BodyWeightEntry(LocalDate.now().minusDays(1), BodyWeight.parseFromString("65.2")),
+                BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8")),
             ),
             listOf(
                 WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),

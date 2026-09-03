@@ -1,6 +1,5 @@
 package dev.sanastasov.bybon.bodyweight.dashboard
 
-import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
@@ -40,7 +39,7 @@ class WeightDashboardViewModel(
                     }
                 )
             },
-            dailyEntries = thisWeekValues?.map { it.toDailyEntryUi() },
+            dailyEntries = thisWeekValues,
             weeklyAverages = previousWeeksAverages?.map { (weekOfYear, entry, delta) ->
                 WeeklyAverageEntryUi(
                     "CW $weekOfYear",
@@ -49,7 +48,4 @@ class WeightDashboardViewModel(
                 )
             }
         )
-
-    private fun BodyWeightEntry.toDailyEntryUi(): WeightEntryUi =
-        WeightEntryUi(date.toString(), "${weight.kilograms} kg")
 }
