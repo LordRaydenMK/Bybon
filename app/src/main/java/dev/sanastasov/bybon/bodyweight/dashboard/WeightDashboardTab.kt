@@ -113,7 +113,7 @@ private fun WeeklyAverage(entry: WeeklyAverageEntryUi) {
     Row(Modifier.padding(8.dp)) {
         Text(entry.week, Modifier.weight(1f))
         Text(entry.value, Modifier.weight(1f))
-        Text(entry.delta.orEmpty(), Modifier.weight(1f))
+        Text(entry.delta ?: "n/a", Modifier.weight(1f))
     }
 }
 
@@ -142,7 +142,7 @@ private fun WeightDashboardPreview() {
         listOf(
             WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
             WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
-            WeeklyAverageEntryUi("CW 30", "64.7 kg", "-0.1 vs CW 29")
+            WeeklyAverageEntryUi("CW 30", "64.7 kg", null)
         )
     )
     Surface {

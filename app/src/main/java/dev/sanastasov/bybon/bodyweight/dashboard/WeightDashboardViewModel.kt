@@ -33,7 +33,7 @@ class WeightDashboardViewModel(
                     "${thisWeeksAverage.kilograms} kg",
                     lastWeekAverage?.let { lastWeekAvg ->
                         PreviousWeekData(
-                            LocalDate.now().weekOfYear - 1,
+                            today.weekOfYear - 1,
                             "${(thisWeeksAverage - lastWeekAvg).kilograms} kg"
                         )
                     }
@@ -44,7 +44,7 @@ class WeightDashboardViewModel(
                 WeeklyAverageEntryUi(
                     "CW $weekOfYear",
                     "${entry.kilograms} kg",
-                    delta?.kilograms.let { "$it kg" },
+                    delta?.kilograms?.let { "$it kg" },
                 )
             }
         )
