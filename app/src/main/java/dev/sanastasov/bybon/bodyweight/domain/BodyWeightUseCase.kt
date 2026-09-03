@@ -55,7 +55,7 @@ fun BodyWeightRepository.bodyWeightDashboard(today: LocalDate): Flow<BodyWeightD
         }
 
         BodyWeightDashboard(
-            thisWeekValues,
+            thisWeekValues.takeIf { it.isNotEmpty() },
             previousWeeksAverages.takeIf { it.isNotEmpty() }
         )
     }
