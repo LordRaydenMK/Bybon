@@ -17,4 +17,9 @@ class BodyWeightRepositoryImpl(
         val dto = WeightEntryEntity(entry.date, entry.weight.value)
         weightEntryDao.insertWeight(dto)
     }
+
+    override suspend fun deleteEntry(entry: BodyWeightEntry) {
+        val dto = WeightEntryEntity(entry.date, entry.weight.value)
+        weightEntryDao.deleteEntry(dto)
+    }
 }

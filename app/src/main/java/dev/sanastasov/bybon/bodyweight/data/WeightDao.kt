@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.bodyweight.data
 
 import androidx.room3.Dao
+import androidx.room3.Delete
 import androidx.room3.Insert
 import androidx.room3.Query
 import kotlinx.coroutines.flow.Flow
@@ -17,4 +18,7 @@ interface WeightDao {
 
     @Insert
     suspend fun insertWeight(entry: WeightEntryEntity)
+
+    @Delete
+    suspend fun deleteEntry(entry: WeightEntryEntity)
 }

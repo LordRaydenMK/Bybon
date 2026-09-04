@@ -60,6 +60,8 @@ class WeightInputViewModel(
 
             is WeightInputAction.RemoveWeight -> weight.value =
                 (BodyWeight.parseFromString(weight.value) - action.amount).kilograms.toString()
+
+            is WeightInputAction.DeleteWeightEntry -> deleteEntry(action.entry)
         }
     }
 
@@ -78,6 +80,12 @@ class WeightInputViewModel(
                     BodyWeight.parseFromString(weight.weight)
                 )
             )
+        }
+    }
+
+    private fun deleteEntry(entry: BodyWeightEntry) {
+        coroutineScope.launch {
+            repository.deleteEntry(entry)
         }
     }
 }

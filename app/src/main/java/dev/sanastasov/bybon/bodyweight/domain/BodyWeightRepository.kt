@@ -8,4 +8,6 @@ interface BodyWeightRepository {
     fun entries(): Flow<List<BodyWeightEntry>>
 
     suspend fun insert(entry: BodyWeightEntry)
+
+    suspend fun deleteEntry(entry: BodyWeightEntry)
 }

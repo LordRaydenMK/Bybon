@@ -13,9 +13,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -70,57 +73,80 @@ private fun WeightInputContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedButton({ onAction(WeightInputAction.OnNewDateSelected(uiState.previousDate)) }) {
-                    Text("<")
-                }
-                if (uiState.date == LocalDate.now()) {
-                    Text("Today (${uiState.dayOfWeek})")
-                } else {
-                    Text("${uiState.date} (${uiState.dayOfWeek})")
-                }
-                OutlinedButton(
-                    { onAction(WeightInputAction.OnNewDateSelected(uiState.nextDate!!)) },
-                    enabled = uiState.nextDate != null
-                ) {
-                    Text(">")
-                }
-            }
+            DateRow(onAction, uiState)
 
-            Row(Modifier.fillMaxWidth()) {
-                if (uiState.savedBodyWeight != null) {
-                    Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                        Icon(SavedLocally, "Saved in db")
-                    }
-                } else {
-                    Spacer(Modifier.size(48.dp))
-                }
-                TextField(
-                    weight,
-                    { onAction(WeightInputAction.OnWeightChanged(it)) },
-                    Modifier.weight(1f),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType =
-                            KeyboardType.DecimalSigned
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            onAction(WeightInputAction.OnSaveWeight(uiState.date, weight))
-                        }
-                    )
-                )
-                Spacer(Modifier.size(48.dp))
-            }
+            WeightInputRow(uiState, weight, onAction)
 
             AdjustWeightRow(onAction)
 
             Button({ onAction(WeightInputAction.OnSaveWeight(uiState.date, weight)) }) {
                 Text("Save")
             }
+        }
+    }
+}
+
+@Composable
+private fun DateRow(
+    onAction: (WeightInputAction) -> Unit,
+    uiState: WeightInputUi
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OutlinedButton({ onAction(WeightInputAction.OnNewDateSelected(uiState.previousDate)) }) {
+            Text("<")
+        }
+        if (uiState.date == LocalDate.now()) {
+            Text("Today (${uiState.dayOfWeek})")
+        } else {
+            Text("${uiState.date} (${uiState.dayOfWeek})")
+        }
+        OutlinedButton(
+            { onAction(WeightInputAction.OnNewDateSelected(uiState.nextDate!!)) },
+            enabled = uiState.nextDate != null
+        ) {
+            Text(">")
+        }
+    }
+}
+
+@Composable
+private fun WeightInputRow(
+    uiState: WeightInputUi,
+    weight: String,
+    onAction: (WeightInputAction) -> Unit
+) {
+    Row(Modifier.fillMaxWidth()) {
+        if (uiState.savedBodyWeight != null) {
+            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                Icon(SavedLocally, "Saved in db")
+            }
+        } else {
+            Spacer(Modifier.size(48.dp))
+        }
+        TextField(
+            weight,
+            { onAction(WeightInputAction.OnWeightChanged(it)) },
+            Modifier.weight(1f),
+            keyboardOptions = KeyboardOptions(
+                keyboardType =
+                    KeyboardType.DecimalSigned
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    onAction(WeightInputAction.OnSaveWeight(uiState.date, weight))
+                }
+            )
+        )
+        if (uiState.bodyWeightEntry != null) {
+            IconButton({ onAction(WeightInputAction.DeleteWeightEntry(uiState.bodyWeightEntry)) }) {
+                Icon(Icons.Outlined.Delete, "Delete")
+            }
+        } else {
+            Spacer(Modifier.size(48.dp))
         }
     }
 }
