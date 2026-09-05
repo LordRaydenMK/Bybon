@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.workout.domain.plans
+package dev.sanastasov.bybon.workout.ui.plans
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -54,8 +54,9 @@ private fun WorkoutPlanCard(plan: WorkoutPlan) {
                 Text(it)
             }
 
-            plan.exercises.forEach { (exercise, sets, repRange) ->
-                Text("$sets x ${exercise.name} for ${repRange.first} to ${repRange.last}")
+            plan.setsByExercise.forEach { (exerciseId, sets) ->
+                val exerciseSet = sets.first()
+                Text("${sets.size} x ${exerciseSet.exercise.name} for ${exerciseSet.repRange.first} to ${exerciseSet.repRange.last}")
             }
         }
     }
