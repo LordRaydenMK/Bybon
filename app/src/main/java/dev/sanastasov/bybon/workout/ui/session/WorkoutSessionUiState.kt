@@ -1,11 +1,27 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.workout.domain.Exercise
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
-fun WorkoutPlan.toWorkoutSessionUi(): WorkoutSessionUiState = TODO()
+fun WorkoutPlan.toWorkoutSessionUi(): WorkoutSessionUiState =
+    WorkoutSessionUiState(
+        id,
+        name,
+        description,
+        exercises = exercises.mapIndexed { index, exerciseSet ->
+            WorkoutExercise(
+                exerciseSet.exercise,
+                exerciseSet.repRange,
+                50,
+                10,
+                if (index == 0) ExerciseState.InProgress else ExerciseState.NotStated
+            )
+        }.groupBy { ExerciseSet(it.exercise, it.repRange) }
+    )
 
 enum class ExerciseState {
     NotStated,
@@ -28,7 +44,29 @@ sealed class WorkoutState {
 }
 
 data class WorkoutSessionUiState(
-    val plan: WorkoutPlan,
-    val currentPage: Int,
+    val planId: WorkoutPlanId,
+    val planName: String,
+    val planDescription: String?,
+    val exercises: Map<ExerciseSet, List<WorkoutExercise>>,
+    val currentPage: Int = 0,
     val state: WorkoutState = WorkoutState.NotStarted,
 )
+
+fun WorkoutSessionUiState.completeExercise(): WorkoutSessionUiState {
+    val exercisesList = exercises.values.flatten()
+    val inProgressIndex = exercisesList.indexOfLast { it.state == ExerciseState.InProgress }
+
+    val updated = exercisesList.mapIndexed { index, exercise ->
+        when (index) {
+            inProgressIndex -> exercise.copy(state = ExerciseState.Completed)
+            inProgressIndex + 1 -> exercise.copy(state = ExerciseState.InProgress)
+            else -> exercise
+        }
+    }
+    return copy(exercises = updated.groupBy { ExerciseSet(it.exercise, it.repRange) })
+}
+
+sealed class WorkoutSessionAction {
+    data object NoOp : WorkoutSessionAction()
+    data class OnCompleteSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
+}
