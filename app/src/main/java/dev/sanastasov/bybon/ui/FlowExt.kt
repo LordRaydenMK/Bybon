@@ -9,6 +9,7 @@ import androidx.lifecycle.flowWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -25,6 +26,7 @@ fun <A> Flow<A>.collectEffectWithLifecycle(
     context: CoroutineContext = EmptyCoroutineContext,
     action: (A) -> Unit
 ) = LaunchedEffect(Unit) {
-    flowWithLifecycle(lifecycleOwner.lifecycle)
+    flowWithLifecycle(lifecycleOwner.lifecycle, minActiveState)
+        .flowOn(context)
         .collect(action)
 }

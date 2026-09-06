@@ -23,7 +23,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.BodyWeightModule
 import dev.sanastasov.bybon.bodyweight.dashboard.WeeklyAverageEntryUi
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardTab
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardUiState
@@ -33,17 +32,24 @@ import dev.sanastasov.bybon.onermcalc.OneRmCalculatorTab
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
 import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
+import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.MaterialSymbolsExercise
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlanEffect
+import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansAction
+import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansViewModel
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutsTab
 import java.time.LocalDate
 
 @Composable
-fun BodyWeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
+fun MainModule.MainScreen(
+    onNavigateToWeightEntry: () -> Unit,
+    onNavigateToStartSession: (WorkoutPlan) -> Unit,
+) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val oneRmViewModel = retain { OneRmCalculatorViewModel() }
@@ -56,6 +62,16 @@ fun BodyWeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
     }
     val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 
+    val workoutPlansViewModel = retain {
+        WorkoutPlansViewModel(workoutPlansRepository, it.coroutineScope)
+    }
+    val plansState by workoutPlansViewModel.uiState.collectAsStateWithLifecycle()
+    workoutPlansViewModel.effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            is WorkoutPlanEffect.StartPlan -> onNavigateToStartSession(effect.plan)
+        }
+    }
+
     MainScreenContent(
         selectedIndex,
         { selectedIndex = it },
@@ -65,7 +81,8 @@ fun BodyWeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
         oneRmViewModel::onAction,
         weightState,
         onNavigateToWeightEntry,
-        listOf(fullBodyA, fullBodyB),
+        plansState,
+        workoutPlansViewModel::onAction,
     )
 }
 
@@ -80,6 +97,7 @@ private fun MainScreenContent(
     weightState: WeightDashboardUiState,
     onLogWeightClicked: () -> Unit,
     plans: List<WorkoutPlan>,
+    onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -119,7 +137,7 @@ private fun MainScreenContent(
                 .padding(contentPadding)
         ) {
             when (selectedIndex) {
-                0 -> WorkoutsTab(plans, Modifier.fillMaxSize())
+                0 -> WorkoutsTab(plans, onWorkoutPlansAction, Modifier.fillMaxSize())
                 1 -> OneRmCalculatorTab(
                     weight,
                     reps,
@@ -147,7 +165,8 @@ private fun MainScreenContentWorkoutsPreview() {
         {},
         WeightDashboardUiState(true, null, emptyList(), emptyList()),
         {},
-        listOf(fullBodyA, fullBodyB)
+        listOf(fullBodyA, fullBodyB),
+        {}
     )
 }
 
@@ -166,7 +185,8 @@ private fun MainScreenContentOneRmCalcPreview() {
         {},
         WeightDashboardUiState(true, null, emptyList(), emptyList()),
         {},
-        listOf(fullBodyA, fullBodyB)
+        listOf(fullBodyA, fullBodyB),
+        {}
     )
 }
 
@@ -196,6 +216,7 @@ private fun MainScreenContentWeightTrackPreview() {
             )
         ),
         {},
-        listOf(fullBodyA, fullBodyB)
+        listOf(fullBodyA, fullBodyB),
+        {}
     )
 }

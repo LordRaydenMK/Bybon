@@ -1,11 +1,18 @@
 package dev.sanastasov.bybon.workout.domain
 
+import kotlinx.serialization.Serializable
+
+@JvmInline
+@Serializable
+value class WorkoutPlanId(val id: String)
+
 data class ExerciseSet(
     val exercise: Exercise,
     val repRange: IntRange
 )
 
 data class WorkoutPlan(
+    val id: WorkoutPlanId,
     val name: String,
     val description: String?,
     val exercises: List<ExerciseSet>
@@ -15,6 +22,7 @@ data class WorkoutPlan(
 }
 
 val fullBodyA = WorkoutPlan(
+    WorkoutPlanId("full-body-a"),
     "Full Body A",
     "Full body workout routine variant A",
     listOf(
@@ -46,6 +54,7 @@ val fullBodyA = WorkoutPlan(
 )
 
 val fullBodyB = WorkoutPlan(
+    WorkoutPlanId("full-body-b"),
     "Full Body B",
     "Full body workout routine variant B",
     listOf(

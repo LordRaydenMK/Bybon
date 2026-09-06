@@ -13,7 +13,10 @@ import androidx.navigation3.ui.NavDisplay
 import dev.sanastasov.bybon.bodyweight.BodyWeightModule
 import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.data.DbModule
+import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
+import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionScreen
 
 typealias BackStack = NavBackStack<Screen>
 
@@ -38,10 +41,17 @@ fun BybonApp(dbModule: DbModule) {
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
         entryProvider = { key ->
-            with(BodyWeightModule.create(dbModule)) {
+            with(MainModule.create(BodyWeightModule.create(dbModule), WorkoutModule.create())) {
                 when (key) {
                     Screen.MainScreen -> NavEntry(key) {
-                        MainScreen { backStack.add(Screen.WeightEntryScreen) }
+                        MainScreen(
+                            onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
+                            onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) }
+                        )
+                    }
+
+                    is Screen.WorkoutSession -> NavEntry(key) {
+                        WorkoutSessionScreen(key.planId)
                     }
 
                     Screen.WeightEntryScreen -> NavEntry(key) {

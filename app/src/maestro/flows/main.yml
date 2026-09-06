@@ -2,6 +2,8 @@ appId: dev.sanastasov.bybon.debug
 ---
 - launchApp
 - assertVisible: "Bybon"
+- assertVisible: "Full Body A"
+- tapOn: "1 RM Calc"
 - assertVisible: "Estimated 1RM"
 - tapOn: "+1 Rep"
 - assertVisible: "68.33"

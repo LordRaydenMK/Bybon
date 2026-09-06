@@ -29,13 +29,17 @@ fun WorkoutPlansScreen() {
 }
 
 @Composable
-fun WorkoutsTab(plans: List<WorkoutPlan>, modifier: Modifier = Modifier) {
+fun WorkoutsTab(
+    plans: List<WorkoutPlan>,
+    onAction: (WorkoutPlansAction) -> Unit,
+    modifier: Modifier = Modifier
+) {
     LazyColumn(
         modifier.padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(plans) { plan ->
-            WorkoutPlanCard(plan, {})
+            WorkoutPlanCard(plan) { onAction(WorkoutPlansAction.OnStartPlan(it)) }
         }
     }
 }
@@ -75,6 +79,6 @@ private fun WorkoutPlanCard(plan: WorkoutPlan, onStartWorkoutClicked: (WorkoutPl
 @Composable
 private fun WorkoutPlansContentPreview() {
     Surface {
-        WorkoutsTab(listOf(fullBodyA, fullBodyB))
+        WorkoutsTab(listOf(fullBodyA, fullBodyB), {})
     }
 }

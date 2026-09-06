@@ -13,16 +13,27 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 
 @Composable
-fun SessionScreen() {
-
+fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
+    val viewModel = retain {
+        WorkoutSessionViewModel(planId, workoutPlansRepository, it.coroutineScope)
+    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    uiState?.let {
+        SessionScreenContent(it)
+    }
 }
 
 @Composable
