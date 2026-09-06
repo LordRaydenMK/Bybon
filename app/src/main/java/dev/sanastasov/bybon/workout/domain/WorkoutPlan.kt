@@ -16,7 +16,7 @@ data class WorkoutPlan(
 
 val fullBodyA = WorkoutPlan(
     "Full Body A",
-    null,
+    "Full body workout routine variant A",
     listOf(
         // Bench Press
         ExerciseSet(exercisesMap["bench-press-bb"]!!, 8..10),
@@ -47,7 +47,7 @@ val fullBodyA = WorkoutPlan(
 
 val fullBodyB = WorkoutPlan(
     "Full Body B",
-    null,
+    "Full body workout routine variant B",
     listOf(
         // RDL
         ExerciseSet(exercisesMap["rdl-bb"]!!, 8..10),
