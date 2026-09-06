@@ -34,7 +34,12 @@ import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
 import dev.sanastasov.bybon.onermcalc.OneRmEntry
 import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
+import dev.sanastasov.bybon.ui.icons.MaterialSymbolsExercise
 import dev.sanastasov.bybon.ui.icons.TablerBarbell
+import dev.sanastasov.bybon.workout.domain.WorkoutPlan
+import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.ui.plans.WorkoutsTab
 import java.time.LocalDate
 
 @Composable
@@ -60,6 +65,7 @@ fun BodyWeightModule.MainScreen(onNavigateToWeightEntry: () -> Unit) {
         oneRmViewModel::onAction,
         weightState,
         onNavigateToWeightEntry,
+        listOf(fullBodyA, fullBodyB),
     )
 }
 
@@ -73,6 +79,7 @@ private fun MainScreenContent(
     onOneRmAction: (OneRmCalcAction) -> Unit,
     weightState: WeightDashboardUiState,
     onLogWeightClicked: () -> Unit,
+    plans: List<WorkoutPlan>,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -83,15 +90,23 @@ private fun MainScreenContent(
                     selectedIndex == 0,
                     { onTabSelected(0) },
                     icon = {
-                        Icon(TablerBarbell, null)
+                        Icon(MaterialSymbolsExercise, "Workouts tab")
                     },
-                    label = { Text("1 RM Calc") }
+                    label = { Text("Workouts") }
                 )
                 NavigationBarItem(
                     selectedIndex == 1,
                     { onTabSelected(1) },
                     icon = {
-                        Icon(FontAwesomeWeight, null)
+                        Icon(TablerBarbell, "One RM calculator tab")
+                    },
+                    label = { Text("1 RM Calc") }
+                )
+                NavigationBarItem(
+                    selectedIndex == 2,
+                    { onTabSelected(2) },
+                    icon = {
+                        Icon(FontAwesomeWeight, "Body Weight tab")
                     },
                     label = { Text("Weight") }
                 )
@@ -104,7 +119,8 @@ private fun MainScreenContent(
                 .padding(contentPadding)
         ) {
             when (selectedIndex) {
-                0 -> OneRmCalculatorTab(
+                0 -> WorkoutsTab(plans, Modifier.fillMaxSize())
+                1 -> OneRmCalculatorTab(
                     weight,
                     reps,
                     oneRmUiState,
@@ -112,7 +128,7 @@ private fun MainScreenContent(
                     Modifier.fillMaxSize()
                 )
 
-                1 -> WeightDashboardTab(weightState, onLogWeightClicked)
+                2 -> WeightDashboardTab(weightState, onLogWeightClicked)
                 else -> error("Not yet implemented")
             }
         }
@@ -121,9 +137,25 @@ private fun MainScreenContent(
 
 @Preview
 @Composable
-private fun MainScreenContentOneRmCalcPreview() {
+private fun MainScreenContentWorkoutsPreview() {
     MainScreenContent(
         0,
+        {},
+        "50",
+        "10",
+        OneRmUiState(null, emptyList()),
+        {},
+        WeightDashboardUiState(true, null, emptyList(), emptyList()),
+        {},
+        listOf(fullBodyA, fullBodyB)
+    )
+}
+
+@Preview
+@Composable
+private fun MainScreenContentOneRmCalcPreview() {
+    MainScreenContent(
+        1,
         {},
         "50",
         "10",
@@ -133,7 +165,8 @@ private fun MainScreenContentOneRmCalcPreview() {
         ),
         {},
         WeightDashboardUiState(true, null, emptyList(), emptyList()),
-        {}
+        {},
+        listOf(fullBodyA, fullBodyB)
     )
 }
 
@@ -141,7 +174,7 @@ private fun MainScreenContentOneRmCalcPreview() {
 @Composable
 private fun MainScreenContentWeightTrackPreview() {
     MainScreenContent(
-        1,
+        2,
         {},
         "50",
         "10",
@@ -162,6 +195,7 @@ private fun MainScreenContentWeightTrackPreview() {
                 WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
             )
         ),
-        {}
+        {},
+        listOf(fullBodyA, fullBodyB)
     )
 }

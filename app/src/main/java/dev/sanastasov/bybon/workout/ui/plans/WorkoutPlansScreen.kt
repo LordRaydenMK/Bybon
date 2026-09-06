@@ -9,14 +9,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
@@ -27,18 +26,13 @@ fun WorkoutPlansScreen() {
 }
 
 @Composable
-private fun WorkoutPlansContent(plans: List<WorkoutPlan>) {
-    Scaffold(
-        topBar = { BybonTopAppBar("Workout Plans", {}) }
-    ) { contentPadding ->
-        LazyColumn(
-            Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = contentPadding
-        ) {
-            items(plans) { plan ->
-                WorkoutPlanCard(plan)
-            }
+fun WorkoutsTab(plans: List<WorkoutPlan>, modifier: Modifier = Modifier) {
+    LazyColumn(
+        modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        items(plans) { plan ->
+            WorkoutPlanCard(plan)
         }
     }
 }
@@ -65,5 +59,7 @@ private fun WorkoutPlanCard(plan: WorkoutPlan) {
 @Preview
 @Composable
 private fun WorkoutPlansContentPreview() {
-    WorkoutPlansContent(listOf(fullBodyA, fullBodyB))
+    Surface {
+        WorkoutsTab(listOf(fullBodyA, fullBodyB))
+    }
 }
