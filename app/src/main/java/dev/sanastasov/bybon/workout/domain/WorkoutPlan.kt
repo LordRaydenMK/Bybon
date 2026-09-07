@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 value class WorkoutPlanId(val id: String)
 
 data class ExerciseSet(
-    val exercise: Exercise,
+    val exerciseDefinition: ExerciseDefinition,
     val repRange: IntRange
 )
 
@@ -18,7 +18,7 @@ data class WorkoutPlan(
     val exercises: List<ExerciseSet>
 ) {
 
-    val setsByExercise = exercises.groupBy { it.exercise.id }
+    val setsByExercise = exercises.groupBy { it.exerciseDefinition.id }
 }
 
 val fullBodyA = WorkoutPlan(

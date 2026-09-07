@@ -91,7 +91,7 @@ private fun ExerciseCard(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            "${exercises.size} x ${set.exercise.name} in ${set.repRange.first} - ${set.repRange.last}",
+            "${exercises.size} x ${set.exerciseDefinition.name} in ${set.repRange.first} - ${set.repRange.last}",
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(4.dp))

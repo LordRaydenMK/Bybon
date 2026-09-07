@@ -1,6 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.session
 
-import dev.sanastasov.bybon.workout.domain.Exercise
+import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
@@ -14,13 +14,13 @@ fun WorkoutPlan.toWorkoutSessionUi(): WorkoutSessionUiState =
         description,
         exercises = exercises.mapIndexed { index, exerciseSet ->
             WorkoutExercise(
-                exerciseSet.exercise,
+                exerciseSet.exerciseDefinition,
                 exerciseSet.repRange,
                 50,
                 10,
                 if (index == 0) ExerciseState.InProgress else ExerciseState.NotStated
             )
-        }.groupBy { ExerciseSet(it.exercise, it.repRange) }
+        }.groupBy { ExerciseSet(it.exerciseDefinition, it.repRange) }
     )
 
 enum class ExerciseState {
@@ -30,7 +30,7 @@ enum class ExerciseState {
 }
 
 data class WorkoutExercise(
-    val exercise: Exercise,
+    val exerciseDefinition: ExerciseDefinition,
     val repRange: IntRange,
     val weight: Int,
     val reps: Int,
@@ -63,7 +63,7 @@ fun WorkoutSessionUiState.completeExercise(): WorkoutSessionUiState {
             else -> exercise
         }
     }
-    return copy(exercises = updated.groupBy { ExerciseSet(it.exercise, it.repRange) })
+    return copy(exercises = updated.groupBy { ExerciseSet(it.exerciseDefinition, it.repRange) })
 }
 
 sealed class WorkoutSessionAction {
