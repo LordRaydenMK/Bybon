@@ -60,9 +60,8 @@ private fun WorkoutPlanCard(plan: WorkoutPlan, onStartWorkoutClicked: (WorkoutPl
                 Text(it, fontSize = 14.sp)
             }
 
-            plan.setsByExercise.forEach { (exerciseId, sets) ->
-                val exerciseSet = sets.first()
-                Text("${sets.size} x ${exerciseSet.exerciseDefinition.name} for ${exerciseSet.repRange.first} to ${exerciseSet.repRange.last}")
+            plan.sets.forEach { planedSet ->
+                Text("${planedSet.sets} x ${planedSet.exercise.name} - ${planedSet.repRange.first} to ${planedSet.repRange.last} reps")
             }
 
             TextButton(

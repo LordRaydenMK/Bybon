@@ -12,10 +12,14 @@ fun WorkoutPlan.toWorkoutSessionUi(): WorkoutSessionUiState =
         id,
         name,
         description,
-        exercises = exercises.mapIndexed { index, exerciseSet ->
+        exercises = sets.flatMap { planedSet ->
+            (1..planedSet.sets).map {
+                planedSet.exercise to planedSet.repRange
+            }
+        }.mapIndexed { index, (exerciseDefinition, repRange) ->
             WorkoutExercise(
-                exerciseSet.exerciseDefinition,
-                exerciseSet.repRange,
+                exerciseDefinition,
+                repRange,
                 50,
                 10,
                 if (index == 0) ExerciseState.InProgress else ExerciseState.NotStated

@@ -1,13 +1,36 @@
 package dev.sanastasov.bybon.workout.domain
 
 import kotlinx.serialization.Serializable
+import kotlin.math.roundToInt
 
 @JvmInline
 @Serializable
 value class WorkoutPlanId(val id: String)
 
+@JvmInline
+value class Weight(private val value: Int) {
+
+    companion object {
+
+        fun kilograms(value: Int): Weight = Weight(value * 10)
+
+        fun kilograms(value: Float): Weight = Weight((value * 10).roundToInt())
+    }
+}
+
 data class ExerciseSet(
     val exerciseDefinition: ExerciseDefinition,
+    val repRange: IntRange
+)
+
+data class WorkoutExercise(
+    val id: String,
+    val exerciseDefinition: ExerciseDefinition,
+)
+
+data class PlanedSet(
+    val exercise: ExerciseDefinition,
+    val sets: Int,
     val repRange: IntRange
 )
 
@@ -15,41 +38,20 @@ data class WorkoutPlan(
     val id: WorkoutPlanId,
     val name: String,
     val description: String?,
-    val exercises: List<ExerciseSet>
-) {
-
-    val setsByExercise = exercises.groupBy { it.exerciseDefinition.id }
-}
+    val sets: List<PlanedSet>
+)
 
 val fullBodyA = WorkoutPlan(
     WorkoutPlanId("full-body-a"),
     "Full Body A",
     "Full body workout routine variant A",
     listOf(
-        // Bench Press
-        ExerciseSet(exercisesMap["bench-press-bb"]!!, 8..10),
-        ExerciseSet(exercisesMap["bench-press-bb"]!!, 8..10),
-        ExerciseSet(exercisesMap["bench-press-bb"]!!, 8..10),
-        // Squat
-        ExerciseSet(exercisesMap["squat-bb"]!!, 8..10),
-        ExerciseSet(exercisesMap["squat-bb"]!!, 8..10),
-        ExerciseSet(exercisesMap["squat-bb"]!!, 8..10),
-        // Pull Up
-        ExerciseSet(exercisesMap["pullup-assisted"]!!, 6..10),
-        ExerciseSet(exercisesMap["pullup-assisted"]!!, 6..10),
-        ExerciseSet(exercisesMap["pullup-assisted"]!!, 6..10),
-        // Leg Curl
-        ExerciseSet(exercisesMap["leg-curl"]!!, 12..14),
-        ExerciseSet(exercisesMap["leg-curl"]!!, 12..14),
-        ExerciseSet(exercisesMap["leg-curl"]!!, 12..14),
-        // Upright row
-        ExerciseSet(exercisesMap["upright-row-db"]!!, 10..14),
-        ExerciseSet(exercisesMap["upright-row-db"]!!, 10..14),
-        ExerciseSet(exercisesMap["upright-row-db"]!!, 10..14),
-        // Skullcrusher
-        ExerciseSet(exercisesMap["skullcrusher-db"]!!, 10..16),
-        ExerciseSet(exercisesMap["skullcrusher-db"]!!, 10..16),
-        ExerciseSet(exercisesMap["skullcrusher-db"]!!, 10..16),
+        PlanedSet(exercisesMap["bench-press-bb"]!!, 3, 8..10),
+        PlanedSet(exercisesMap["squat-bb"]!!, 3, 8..10),
+        PlanedSet(exercisesMap["pullup-assisted"]!!, 3, 6..10),
+        PlanedSet(exercisesMap["leg-curl"]!!, 3, 12..14),
+        PlanedSet(exercisesMap["upright-row-db"]!!, 3, 10..14),
+        PlanedSet(exercisesMap["skullcrusher-db"]!!, 3, 10..16),
     )
 )
 
@@ -58,28 +60,11 @@ val fullBodyB = WorkoutPlan(
     "Full Body B",
     "Full body workout routine variant B",
     listOf(
-        // RDL
-        ExerciseSet(exercisesMap["rdl-bb"]!!, 8..10),
-        ExerciseSet(exercisesMap["rdl-bb"]!!, 8..10),
-        ExerciseSet(exercisesMap["rdl-bb"]!!, 8..10),
-        // Incline Bench Press
-        ExerciseSet(exercisesMap["incline-bench-press-db"]!!, 10..15),
-        ExerciseSet(exercisesMap["incline-bench-press-db"]!!, 10..15),
-        ExerciseSet(exercisesMap["incline-bench-press-db"]!!, 10..15),
-        // Split Squat
-        ExerciseSet(exercisesMap["split-squat-db"]!!, 8..10),
-        ExerciseSet(exercisesMap["split-squat-db"]!!, 8..10),
-        ExerciseSet(exercisesMap["split-squat-db"]!!, 8..10),
-        // Incline Row
-        ExerciseSet(exercisesMap["incline-row-db"]!!, 10..15),
-        ExerciseSet(exercisesMap["incline-row-db"]!!, 10..15),
-        ExerciseSet(exercisesMap["incline-row-db"]!!, 10..15),
-        // Lateral Raise
-        ExerciseSet(exercisesMap["lateral-raise-db"]!!, 10..15),
-        ExerciseSet(exercisesMap["lateral-raise-db"]!!, 10..15),
-        ExerciseSet(exercisesMap["lateral-raise-db"]!!, 10..15),
-        // Incline Curl
-        ExerciseSet(exercisesMap["incline-curl-db"]!!, 10..16),
-        ExerciseSet(exercisesMap["incline-curl-db"]!!, 10..16),
-    )
+        PlanedSet(exercisesMap["rdl-bb"]!!, 3, 8..10),
+        PlanedSet(exercisesMap["incline-bench-press-db"]!!, 3, 10..15),
+        PlanedSet(exercisesMap["split-squat-db"]!!, 3, 8..10),
+        PlanedSet(exercisesMap["incline-row-db"]!!, 3, 10..16),
+        PlanedSet(exercisesMap["lateral-raise-db"]!!, 3, 10..15),
+        PlanedSet(exercisesMap["incline-curl-db"]!!, 2, 10..16),
+    ),
 )
