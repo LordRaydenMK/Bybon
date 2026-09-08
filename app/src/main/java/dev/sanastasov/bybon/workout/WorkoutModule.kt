@@ -9,10 +9,11 @@ interface WorkoutModule {
 
     companion object {
 
+        private val instance = WorkoutsRepositoryImpl()
+
         fun create(): WorkoutModule = object : WorkoutModule {
 
-            override val workoutsRepository: WorkoutsRepository =
-                WorkoutsRepositoryImpl()
+            override val workoutsRepository: WorkoutsRepository = instance
         }
     }
 }

@@ -18,17 +18,18 @@ class WorkoutSessionViewModel(
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
 ) {
-
-    private val sessionFlow = repository.workoutPlans()
-        .map { plans -> plans.first { it.id == planId } }
-
     val uiState: StateFlow<WorkoutSession?> =
         repository.workoutSessions().map { it.first() }
             .stateInWhileInForeground(coroutineScope, null)
 
     init {
         coroutineScope.launch {
-            repository.updateWorkout(sessionFlow.first().toWorkoutSession())
+            val planFlow = repository.workoutPlans()
+                .map { plans -> plans.first { it.id == planId } }
+            val session = repository.workoutSessions()
+                .first()
+                .firstOrNull() ?: planFlow.first().toWorkoutSession()
+            repository.updateWorkout(session)
         }
     }
 
