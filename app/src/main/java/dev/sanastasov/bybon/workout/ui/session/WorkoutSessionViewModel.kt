@@ -1,34 +1,41 @@
 package dev.sanastasov.bybon.workout.ui.session
 
+import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
-import dev.sanastasov.bybon.workout.domain.WorkoutPlansRepository
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
+import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.completeSet
+import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class WorkoutSessionViewModel(
     val planId: WorkoutPlanId,
-    val repository: WorkoutPlansRepository,
+    val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
 ) {
 
     private val sessionFlow = repository.workoutPlans()
-        .map { plans -> plans.first { it.id == planId }.toWorkoutSessionUi() }
+        .map { plans -> plans.first { it.id == planId } }
 
-    val uiState: StateFlow<WorkoutSessionUiState?>
-        field = MutableStateFlow(null)
+    val uiState: StateFlow<WorkoutSession?> =
+        repository.workoutSessions().map { it.first() }
+            .stateInWhileInForeground(coroutineScope, null)
 
     init {
         coroutineScope.launch {
-            uiState.value = sessionFlow.first()
+            repository.updateWorkout(sessionFlow.first().toWorkoutSession())
         }
     }
 
     fun onAction(action: WorkoutSessionAction) {
-        uiState.update { it?.completeExercise() }
+        coroutineScope.launch {
+            val sessions = repository.workoutSessions().first().first()
+            repository.updateWorkout(sessions.completeSet())
+        }
     }
 }

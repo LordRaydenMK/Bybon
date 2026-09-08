@@ -63,7 +63,7 @@ fun MainModule.MainScreen(
     val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 
     val workoutPlansViewModel = retain {
-        WorkoutPlansViewModel(workoutPlansRepository, it.coroutineScope)
+        WorkoutPlansViewModel(workoutsRepository, it.coroutineScope)
     }
     val plansState by workoutPlansViewModel.uiState.collectAsStateWithLifecycle()
     workoutPlansViewModel.effects.collectEffectWithLifecycle { effect ->

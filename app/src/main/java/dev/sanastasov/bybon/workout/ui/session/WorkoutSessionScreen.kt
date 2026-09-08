@@ -27,14 +27,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
-import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
+import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
     val viewModel = retain {
-        WorkoutSessionViewModel(planId, workoutPlansRepository, it.coroutineScope)
+        WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     uiState?.let {
@@ -44,7 +49,7 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
 
 @Composable
 private fun SessionScreenContent(
-    state: WorkoutSessionUiState,
+    state: WorkoutSession,
     onAction: (WorkoutSessionAction) -> Unit,
 ) {
     Scaffold(
@@ -59,30 +64,28 @@ private fun SessionScreenContent(
                 Text(it)
                 Spacer(Modifier.height(8.dp))
             }
-            val pagerState = rememberPagerState(state.currentPage) {
+            val pagerState = rememberPagerState(0) {
                 state.exercises.size
             }
             HorizontalPager(pagerState) {
                 Card {
-                    val (exerciseSet, exercises) = state.exercises.entries.elementAt(pagerState.currentPage)
+                    val exercise = state.exercises.elementAt(pagerState.currentPage)
                     ExerciseCard(
-                        exerciseSet,
-                        exercises,
-                        { set, exercise -> onAction(WorkoutSessionAction.OnCompleteSet(exercise)) })
+                        exercise,
+                        { exercise, _ -> onAction(WorkoutSessionAction.OnCompleteSet(exercise)) })
                 }
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("Exercise ${state.currentPage + 1} / ${state.exercises.size}")
+            Text("Exercise ${pagerState.currentPage + 1} / ${state.exercises.size}")
         }
     }
 }
 
 @Composable
 private fun ExerciseCard(
-    set: ExerciseSet,
-    exercises: List<WorkoutExercise>,
-    onCompleteSet: (ExerciseSet, WorkoutExercise) -> Unit
+    exercise: WorkoutExercise,
+    onCompleteSet: (WorkoutExercise, Int) -> Unit
 ) {
     Column(
         Modifier
@@ -91,12 +94,12 @@ private fun ExerciseCard(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            "${exercises.size} x ${set.exerciseDefinition.name} in ${set.repRange.first} - ${set.repRange.last}",
+            "${exercise.sets.size} x ${exercise.exerciseDefinition.name} in ${exercise.repRange.first} - ${exercise.repRange.last}",
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(4.dp))
 
-        exercises.forEachIndexed { index, (exercise, repRange, weight, reps, state) ->
+        exercise.sets.forEachIndexed { index, (definition, weight, reps, state) ->
             Row(
                 Modifier
                     .defaultMinSize(minHeight = 48.dp)
@@ -104,36 +107,36 @@ private fun ExerciseCard(
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (state == ExerciseState.InProgress) {
+                if (state == SetState.InProgress) {
                     Text(
-                        "${index + 1}. $weight kg x ${repRange.first}",
+                        "${index + 1}. ${weight.kilograms} kg x ${exercise.repRange.first}",
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.labelLarge
                     )
                 } else {
-                    Text("${index + 1}. $weight kg x ${repRange.first}")
+                    Text("${index + 1}. ${weight.kilograms} kg x ${exercise.repRange.first}")
                 }
                 Spacer(Modifier.weight(1f))
                 when (state) {
-                    ExerciseState.InProgress -> Checkbox(
+                    SetState.InProgress -> Checkbox(
                         false,
-                        { onCompleteSet(set, exercises[index]) }
+                        { onCompleteSet(exercise, index) }
                     )
 
-                    ExerciseState.Completed -> Checkbox(
+                    SetState.Completed -> Checkbox(
                         true,
                         null,
                         Modifier.padding(horizontal = 10.dp)
                     )
 
-                    ExerciseState.NotStated -> {
+                    SetState.NotStated -> {
 
                     }
                 }
             }
 
-            if (index == exercises.lastIndex) {
+            if (index == exercise.sets.lastIndex) {
                 TextButton({}) {
                     Text("Add set")
                 }
@@ -145,11 +148,11 @@ private fun ExerciseCard(
 @Preview
 @Composable
 private fun SessionScreenContentPage1CompletedExercisePreview() {
-    SessionScreenContent(fullBodyA.toWorkoutSessionUi().completeExercise(), {})
+    SessionScreenContent(fullBodyA.toWorkoutSession().completeSet(), {})
 }
 
 @Preview
 @Composable
 private fun SessionScreenContentPage4Preview() {
-    SessionScreenContent(fullBodyA.toWorkoutSessionUi().copy(currentPage = 4), {})
+    SessionScreenContent(fullBodyA.toWorkoutSession(), {})
 }

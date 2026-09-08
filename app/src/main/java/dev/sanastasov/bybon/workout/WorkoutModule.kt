@@ -1,18 +1,18 @@
 package dev.sanastasov.bybon.workout
 
-import dev.sanastasov.bybon.workout.data.WorkoutPlansRepositoryImpl
-import dev.sanastasov.bybon.workout.domain.WorkoutPlansRepository
+import dev.sanastasov.bybon.workout.data.WorkoutsRepositoryImpl
+import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 
 interface WorkoutModule {
 
-    val workoutPlansRepository: WorkoutPlansRepository
+    val workoutsRepository: WorkoutsRepository
 
     companion object {
 
         fun create(): WorkoutModule = object : WorkoutModule {
 
-            override val workoutPlansRepository: WorkoutPlansRepository =
-                WorkoutPlansRepositoryImpl()
+            override val workoutsRepository: WorkoutsRepository =
+                WorkoutsRepositoryImpl()
         }
     }
 }

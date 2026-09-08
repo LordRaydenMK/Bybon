@@ -1,14 +1,14 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
-import dev.sanastasov.bybon.workout.domain.WorkoutPlansRepository
+import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 
 class WorkoutPlansViewModel(
-    private val repository: WorkoutPlansRepository,
+    private val repository: WorkoutsRepository,
     private val coroutineScope: CoroutineScope,
 ) {
 
