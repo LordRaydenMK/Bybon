@@ -41,6 +41,8 @@ value class Weight(private val value: Int) {
         fun kilograms(value: Int): Weight = Weight(value * 10)
 
         fun kilograms(value: Float): Weight = Weight((value * 10).roundToInt())
+
+        fun parseString(value: String): Weight = kilograms(value.toFloat())
     }
 }
 
@@ -61,7 +63,9 @@ data class WorkoutExercise(
     val exerciseDefinition: ExerciseDefinition,
     val repRange: IntRange,
     val sets: List<ExerciseSet>,
-)
+) {
+    val id: String = exerciseDefinition.id
+}
 
 sealed class WorkoutState {
     data object NotStarted : WorkoutState()
@@ -75,27 +79,85 @@ data class WorkoutSession(
     val planDescription: String?,
     val exercises: List<WorkoutExercise>,
     val state: WorkoutState = WorkoutState.NotStarted,
-)
+) {
 
-fun WorkoutSession.completeSet(): WorkoutSession {
-    val exerciseSets = exercises.flatMap { it.sets }
-    val inProgressIndex = exerciseSets.indexOfLast { it.setState == SetState.InProgress }
-
-    val updated = exerciseSets.mapIndexed { index, exercise ->
-        when (index) {
-            inProgressIndex -> exercise.copy(setState = SetState.Completed)
-            inProgressIndex + 1 -> exercise.copy(setState = SetState.InProgress)
-            else -> exercise
-        }
-    }
-    val updatedSets = updated.groupBy { it.exerciseDefinition }
-    val updatedExercises = exercises.map { exercise ->
-        exercise.copy(sets = updatedSets[exercise.exerciseDefinition]!!)
-    }
-    return copy(exercises = updatedExercises)
+    val workoutSets: List<ExerciseSet> = exercises.flatMap { it.sets }
 }
 
+fun WorkoutSession.completeSet(exercise: WorkoutExercise, setIndex: Int): WorkoutSession {
+    val exerciseAndIndex = if (setIndex < exercise.sets.lastIndex) {
+        exercise to setIndex + 1
+    } else {
+        if (exercises.indexOf(exercise) != exercises.lastIndex) {
+            exercises[exercises.indexOf(exercise) + 1] to 0
+        } else {
+            null
+        }
+    }
+    val updated = updateExerciseSet(exercise, setIndex) {
+        it.copy(setState = SetState.Completed)
+    }
+    return if (exerciseAndIndex != null) {
+        updated.updateExerciseSet(exerciseAndIndex.first, exerciseAndIndex.second) {
+            it.copy(setState = SetState.InProgress)
+        }
+    } else {
+        updated
+    }
+}
+
+fun WorkoutSession.updateWeight(
+    exercise: WorkoutExercise,
+    setIndex: Int,
+    weight: Weight,
+): WorkoutSession = updateExerciseSet(exercise, setIndex) {
+    it.copy(weight = weight)
+}
+
+fun WorkoutSession.updateReps(
+    exercise: WorkoutExercise,
+    setIndex: Int,
+    count: Int
+): WorkoutSession = updateExerciseSet(exercise, setIndex) {
+    it.copy(reps = count)
+}
+
+private fun WorkoutSession.updateExerciseSet(
+    exercise: WorkoutExercise,
+    setIndex: Int,
+    update: (ExerciseSet) -> ExerciseSet
+): WorkoutSession {
+    val exerciseId = exercise.id
+    val updateExercises = exercises.map { exercise ->
+        if (exercise.id == exerciseId) {
+            val updated = exercise.sets.mapIndexed { index, set ->
+                if (index == setIndex) {
+                    update(set)
+                } else {
+                    set
+                }
+            }
+            exercise.copy(sets = updated)
+        } else {
+            exercise
+        }
+    }
+    return copy(exercises = updateExercises)
+}
+
+
 sealed class WorkoutSessionAction {
-    data object NoOp : WorkoutSessionAction()
-    data class OnCompleteSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
+    data class OnCompleteSet(val exercise: WorkoutExercise, val index: Int) : WorkoutSessionAction()
+
+    data class OnWeightUpdated(
+        val newWeight: String,
+        val exercise: WorkoutExercise,
+        val index: Int
+    ) : WorkoutSessionAction()
+
+    data class OnRepsUpdated(
+        val newReps: String,
+        val exercise: WorkoutExercise,
+        val index: Int
+    ) : WorkoutSessionAction()
 }
