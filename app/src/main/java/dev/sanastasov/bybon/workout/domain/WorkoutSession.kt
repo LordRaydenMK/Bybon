@@ -111,7 +111,12 @@ fun WorkoutSession.completeSet(exercise: WorkoutExercise, setIndex: Int): Workou
 
 fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
     updateExercise(exercise.id) { exercise ->
-        exercise.copy(sets = exercise.sets + exercise.sets.last())
+        val lastSet = exercise.sets.last()
+        val newSetState =
+            if (lastSet.setState == SetState.Completed) SetState.InProgress else SetState.NotStated
+        exercise.copy(
+            sets = exercise.sets + lastSet.copy(setState = newSetState)
+        )
     }
 
 fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession =

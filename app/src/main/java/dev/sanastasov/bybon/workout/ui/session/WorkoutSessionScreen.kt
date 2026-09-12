@@ -212,16 +212,16 @@ private fun ExerciseCard(
                 }
             }
 
-            Row {
-                if (index == exercise.sets.lastIndex) {
+            if (index == exercise.sets.lastIndex) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton({ onAddSet(exercise) }) {
                         Text("Add set")
                     }
-                }
 
-                if (exercise.canRemoveSet) {
-                    TextButton({ onRemoveSet(exercise) }) {
-                        Text("Remove set")
+                    if (exercise.canRemoveSet) {
+                        TextButton({ onRemoveSet(exercise) }) {
+                            Text("Remove last set")
+                        }
                     }
                 }
             }
