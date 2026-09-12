@@ -99,7 +99,9 @@ private fun SessionScreenContent(
                         },
                         { reps, exercise, index ->
                             onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
-                        }
+                        },
+                        { onAction(WorkoutSessionAction.OnAddSet(it)) },
+                        { onAction(WorkoutSessionAction.RemoveLastSet(it)) }
                     )
                 }
             }
@@ -116,6 +118,8 @@ private fun ExerciseCard(
     onCompleteSet: (WorkoutExercise, Int) -> Unit,
     onWeightChanged: (String, WorkoutExercise, Int) -> Unit,
     onRepChanged: (String, WorkoutExercise, Int) -> Unit,
+    onAddSet: (WorkoutExercise) -> Unit,
+    onRemoveSet: (WorkoutExercise) -> Unit,
 ) {
     Column(
         Modifier
@@ -208,9 +212,17 @@ private fun ExerciseCard(
                 }
             }
 
-            if (index == exercise.sets.lastIndex) {
-                TextButton({}) {
-                    Text("Add set")
+            Row {
+                if (index == exercise.sets.lastIndex) {
+                    TextButton({ onAddSet(exercise) }) {
+                        Text("Add set")
+                    }
+                }
+
+                if (exercise.canRemoveSet) {
+                    TextButton({ onRemoveSet(exercise) }) {
+                        Text("Remove set")
+                    }
                 }
             }
         }

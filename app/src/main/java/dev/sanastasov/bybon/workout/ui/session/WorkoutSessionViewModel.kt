@@ -6,7 +6,9 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.completeSet
+import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeight
@@ -75,6 +77,15 @@ class WorkoutSessionViewModel(
                 }
             }
 
+            is WorkoutSessionAction.OnAddSet -> coroutineScope.launch {
+                val session = repository.workoutSessions().first().first()
+                repository.updateWorkout(session.addSet(action.exercise))
+            }
+
+            is WorkoutSessionAction.RemoveLastSet -> coroutineScope.launch {
+                val session = repository.workoutSessions().first().first()
+                repository.updateWorkout(session.removeLastSet(action.exercise))
+            }
         }
 
     }

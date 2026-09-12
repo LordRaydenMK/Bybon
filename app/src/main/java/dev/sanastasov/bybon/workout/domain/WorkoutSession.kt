@@ -65,6 +65,9 @@ data class WorkoutExercise(
     val sets: List<ExerciseSet>,
 ) {
     val id: String = exerciseDefinition.id
+
+    val canRemoveSet: Boolean
+        get() = sets.isNotEmpty() && sets.any { it.setState == SetState.NotStated }
 }
 
 sealed class WorkoutState {
@@ -106,6 +109,16 @@ fun WorkoutSession.completeSet(exercise: WorkoutExercise, setIndex: Int): Workou
     }
 }
 
+fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
+    updateExercise(exercise.id) { exercise ->
+        exercise.copy(sets = exercise.sets + exercise.sets.last())
+    }
+
+fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession =
+    updateExercise(exercise.id) { exercise ->
+        exercise.copy(sets = exercise.sets.dropLast(1))
+    }
+
 fun WorkoutSession.updateWeight(
     exercise: WorkoutExercise,
     setIndex: Int,
@@ -122,27 +135,30 @@ fun WorkoutSession.updateReps(
     it.copy(reps = count)
 }
 
+private fun WorkoutSession.updateExercise(
+    exerciseId: String,
+    update: (WorkoutExercise) -> WorkoutExercise
+): WorkoutSession = copy(exercises = exercises.map { exercise ->
+    if (exercise.id == exerciseId) {
+        update(exercise)
+    } else {
+        exercise
+    }
+})
+
 private fun WorkoutSession.updateExerciseSet(
     exercise: WorkoutExercise,
     setIndex: Int,
     update: (ExerciseSet) -> ExerciseSet
-): WorkoutSession {
-    val exerciseId = exercise.id
-    val updateExercises = exercises.map { exercise ->
-        if (exercise.id == exerciseId) {
-            val updated = exercise.sets.mapIndexed { index, set ->
-                if (index == setIndex) {
-                    update(set)
-                } else {
-                    set
-                }
-            }
-            exercise.copy(sets = updated)
+): WorkoutSession = updateExercise(exercise.id) { exercise ->
+    val updated = exercise.sets.mapIndexed { index, set ->
+        if (index == setIndex) {
+            update(set)
         } else {
-            exercise
+            set
         }
     }
-    return copy(exercises = updateExercises)
+    exercise.copy(sets = updated)
 }
 
 
@@ -160,4 +176,8 @@ sealed class WorkoutSessionAction {
         val exercise: WorkoutExercise,
         val index: Int
     ) : WorkoutSessionAction()
+
+    data class OnAddSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
+
+    data class RemoveLastSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
 }
