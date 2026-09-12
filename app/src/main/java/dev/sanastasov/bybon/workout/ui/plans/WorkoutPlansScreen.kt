@@ -2,13 +2,16 @@ package dev.sanastasov.bybon.workout.ui.plans
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,7 +33,7 @@ fun WorkoutPlansScreen() {
 
 @Composable
 fun WorkoutsTab(
-    plans: List<WorkoutPlan>,
+    plans: List<WorkoutPlanUi>,
     onAction: (WorkoutPlansAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -38,14 +41,15 @@ fun WorkoutsTab(
         modifier.padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        items(plans) { plan ->
-            WorkoutPlanCard(plan) { onAction(WorkoutPlansAction.OnStartPlan(it)) }
+        items(plans, key = { it.plan.id.id }) { planUi ->
+            WorkoutPlanCard(planUi) { onAction(WorkoutPlansAction.OnStartPlan(it)) }
         }
     }
 }
 
 @Composable
-private fun WorkoutPlanCard(plan: WorkoutPlan, onStartWorkoutClicked: (WorkoutPlan) -> Unit) {
+private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (WorkoutPlan) -> Unit) {
+    val plan = planUi.plan
     Card(Modifier.fillMaxWidth()) {
         Column(
             Modifier
@@ -53,7 +57,30 @@ private fun WorkoutPlanCard(plan: WorkoutPlan, onStartWorkoutClicked: (WorkoutPl
                 .fillMaxWidth(),
             Arrangement.spacedBy(4.dp)
         ) {
-            Text(plan.name, fontWeight = FontWeight.Bold)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    plan.name,
+                    Modifier.weight(1f),
+                    fontWeight = FontWeight.Bold,
+                )
+                if (planUi.isActive) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                    ) {
+                        Text(
+                            "Active",
+                            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            style = MaterialTheme.typography.labelMedium,
+                        )
+                    }
+                }
+            }
             Spacer(Modifier.height(4.dp))
 
             plan.description?.let {
@@ -68,7 +95,7 @@ private fun WorkoutPlanCard(plan: WorkoutPlan, onStartWorkoutClicked: (WorkoutPl
                 { onStartWorkoutClicked(plan) },
                 Modifier.align(Alignment.CenterHorizontally)
             ) {
-                Text("Start Workout")
+                Text(if (planUi.isActive) "Open Workout" else "Start Workout")
             }
         }
     }
@@ -78,6 +105,12 @@ private fun WorkoutPlanCard(plan: WorkoutPlan, onStartWorkoutClicked: (WorkoutPl
 @Composable
 private fun WorkoutPlansContentPreview() {
     Surface {
-        WorkoutsTab(listOf(fullBodyA, fullBodyB), {})
+        WorkoutsTab(
+            listOf(
+                WorkoutPlanUi(fullBodyA, isActive = true),
+                WorkoutPlanUi(fullBodyB, isActive = false),
+            ),
+            {},
+        )
     }
 }

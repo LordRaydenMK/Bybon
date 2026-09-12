@@ -40,6 +40,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlanEffect
+import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlanUi
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansAction
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansViewModel
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutsTab
@@ -96,7 +97,7 @@ private fun MainScreenContent(
     onOneRmAction: (OneRmCalcAction) -> Unit,
     weightState: WeightDashboardUiState,
     onLogWeightClicked: () -> Unit,
-    plans: List<WorkoutPlan>,
+    plans: List<WorkoutPlanUi>,
     onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
 ) {
     Scaffold(
@@ -165,7 +166,10 @@ private fun MainScreenContentWorkoutsPreview() {
         {},
         WeightDashboardUiState(true, null, emptyList(), emptyList()),
         {},
-        listOf(fullBodyA, fullBodyB),
+        listOf(
+            WorkoutPlanUi(fullBodyA, isActive = false),
+            WorkoutPlanUi(fullBodyB, isActive = false)
+        ),
         {}
     )
 }
@@ -185,7 +189,10 @@ private fun MainScreenContentOneRmCalcPreview() {
         {},
         WeightDashboardUiState(true, null, emptyList(), emptyList()),
         {},
-        listOf(fullBodyA, fullBodyB),
+        listOf(
+            WorkoutPlanUi(fullBodyA, isActive = false),
+            WorkoutPlanUi(fullBodyB, isActive = false)
+        ),
         {}
     )
 }
@@ -216,7 +223,10 @@ private fun MainScreenContentWeightTrackPreview() {
             )
         ),
         {},
-        listOf(fullBodyA, fullBodyB),
+        listOf(
+            WorkoutPlanUi(fullBodyA, isActive = false),
+            WorkoutPlanUi(fullBodyB, isActive = false)
+        ),
         {}
     )
 }
