@@ -83,8 +83,13 @@ data class WorkoutSession(
     val exercises: List<WorkoutExercise>,
     val state: WorkoutState = WorkoutState.NotStarted,
 ) {
-
     val workoutSets: List<ExerciseSet> = exercises.flatMap { it.sets }
+
+    init {
+        require(workoutSets.map { it.setState }.filter { it == SetState.InProgress }.size <= 1) {
+            "At most 1 set can be in progress. Found ${workoutSets.filter { it.setState == SetState.InProgress }}"
+        }
+    }
 }
 
 fun WorkoutSession.completeSet(exercise: WorkoutExercise, setIndex: Int): WorkoutSession {
