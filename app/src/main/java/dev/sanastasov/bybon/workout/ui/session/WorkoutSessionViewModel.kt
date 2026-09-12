@@ -50,22 +50,28 @@ class WorkoutSessionViewModel(
             is WorkoutSessionAction.OnWeightUpdated -> {
                 coroutineScope.launch {
                     val session = repository.workoutSessions().first().first()
-                    val updated =
-                        session.updateWeight(
+                    action.newWeight.toFloatOrNull()?.let { weight ->
+                        val updated = session.updateWeight(
                             action.exercise,
                             action.index,
-                            Weight.parseString(action.newWeight)
+                            Weight.kilograms(weight)
                         )
-                    repository.updateWorkout(updated)
+                        repository.updateWorkout(updated)
+                    }
                 }
             }
 
             is WorkoutSessionAction.OnRepsUpdated -> {
                 coroutineScope.launch {
                     val session = repository.workoutSessions().first().first()
-                    val updated =
-                        session.updateReps(action.exercise, action.index, action.newReps.toInt())
-                    repository.updateWorkout(updated)
+                    action.newReps.toIntOrNull()?.let { reps ->
+                        val updated = session.updateReps(
+                            action.exercise,
+                            action.index,
+                            action.newReps.toInt()
+                        )
+                        repository.updateWorkout(updated)
+                    }
                 }
             }
 
