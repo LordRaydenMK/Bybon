@@ -53,7 +53,7 @@ jobs:
           disable-animations: true
           script: |
             ./gradlew installDebug
-            maestro test app/src/maestro/flows/main.yml
+            maestro test app/src/maestro/flows
 
       - name: Archive Maestro test results on failure
         if: failure()
