@@ -6,12 +6,36 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Start Workout"
 - assertVisible: "Full body workout routine variant A"
 - assertVisible: "3 x Bench Press (barbell) in 8 - 10"
-- tapOn: "Set 1 in progress, 50 kg by 8. Double tap to mark complete."
-- tapOn: "Set 2 in progress, 50 kg by 8. Double tap to mark complete."
+- tapOn:
+      text: "50"
+      index: 0
+- eraseText
+- inputText: "60"
+- tapOn:
+      text: "8"
+      index: 1
+- eraseText
+- inputText: "10"
+- hideKeyboard
+- assertVisible: "Set 1 in progress, 60 kg by 8. Double tap to mark complete."
+- assertVisible:
+      text: "10"
+      index: 0
+- tapOn: "Set 1 in progress, 60 kg by 8. Double tap to mark complete."
+- assertVisible: "1. 60 kg x 8"
+- assertVisible: "Set 2 in progress, 50 kg by 10. Double tap to mark complete."
+- tapOn: "Set 2 in progress, 50 kg by 10. Double tap to mark complete."
 - tapOn: "Add set"
 - assertVisible: "4 x Bench Press (barbell) in 8 - 10"
 - tapOn: "Remove last set"
 - assertVisible: "3 x Bench Press (barbell) in 8 - 10"
+- swipe:
+      start: 80%, 20%
+      end: 20%, 20%
+- assertVisible: "3 x Squat (barbell) in 8 - 10"
+- assertVisible: "Exercise 2 / 6"
+# TODO: uncomment when the bug of removing a InProgress set is fixed
+#- assertVisible: "Set 1 in progress, 50 kg by 8. Double tap to mark complete."
 - back
 - assertVisible: "Active"
 - assertVisible: "Open Workout"
