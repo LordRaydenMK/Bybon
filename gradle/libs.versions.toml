@@ -48,6 +48,7 @@ retained = { module = "dev.marcellogalhardo:retained-compose", version = "2.0.0-
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-power-assert = { id = "org.jetbrains.kotlin.plugin.power-assert", version.ref = "kotlin" }
 androidx-room3 = { id = "androidx.room3", version.ref = "roomVersion" }
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 

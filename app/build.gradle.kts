@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.powerassert.gradle.PowerAssertCompilationFilter
 import java.util.Properties
 
 plugins {
@@ -5,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.power.assert)
     alias(libs.plugins.androidx.room3)
 }
 
@@ -70,6 +73,19 @@ base {
 
 room3 {
     schemaDirectory("$projectDir/schemas")
+}
+
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
+powerAssert {
+    functions = listOf(
+        "kotlin.assert",
+        "kotlin.test.assertTrue",
+        "kotlin.test.assertEquals",
+        "kotlin.test.assertNull"
+    )
+    compilationFilter = PowerAssertCompilationFilter {
+        it.name.contains("debug", ignoreCase = true)
+    }
 }
 
 dependencies {
