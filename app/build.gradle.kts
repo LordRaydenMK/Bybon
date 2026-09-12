@@ -112,6 +112,7 @@ dependencies {
     implementation(libs.retained)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.csv)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
