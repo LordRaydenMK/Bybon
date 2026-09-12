@@ -26,7 +26,9 @@ appId: dev.sanastasov.bybon.debug
       point: "90%, 50%" # Tap on the right side to avoid the TextInput
 - assertVisible: "1. 60 kg x 8"
 - assertVisible: "Set 2 in progress, 50 kg by 10. Double tap to mark complete."
-- tapOn: "Set 2 in progress, 50 kg by 10. Double tap to mark complete."
+- tapOn:
+      text: "Set 2 in progress, 50 kg by 10. Double tap to mark complete."
+      point: "90%, 50%" # Tap on the right side to avoid the TextInput
 - tapOn: "Add set"
 - assertVisible: "4 x Bench Press (barbell) in 8 - 10"
 - tapOn: "Remove last set"
