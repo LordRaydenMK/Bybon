@@ -12,6 +12,7 @@ import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeight
+import dev.sanastasov.bybon.workout.domain.updateWorkout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -42,49 +43,46 @@ class WorkoutSessionViewModel(
 
     fun onAction(action: WorkoutSessionAction) {
         when (action) {
-            is WorkoutSessionAction.OnCompleteSet -> {
-                coroutineScope.launch {
-                    val sessions = repository.workoutSessions().first().first()
-                    repository.updateWorkout(sessions.completeSet(action.exercise, action.index))
+            is WorkoutSessionAction.OnCompleteSet -> coroutineScope.launch {
+                repository.updateWorkout(planId) { session ->
+                    session.completeSet(action.exercise, action.index)
                 }
             }
 
-            is WorkoutSessionAction.OnWeightUpdated -> {
-                coroutineScope.launch {
-                    val session = repository.workoutSessions().first().first()
+            is WorkoutSessionAction.OnWeightUpdated -> coroutineScope.launch {
+                repository.updateWorkout(planId) { session ->
                     action.newWeight.toFloatOrNull()?.let { weight ->
-                        val updated = session.updateWeight(
+                        session.updateWeight(
                             action.exercise,
                             action.index,
                             Weight.kilograms(weight)
                         )
-                        repository.updateWorkout(updated)
-                    }
+                    } ?: session
                 }
             }
 
-            is WorkoutSessionAction.OnRepsUpdated -> {
-                coroutineScope.launch {
-                    val session = repository.workoutSessions().first().first()
+            is WorkoutSessionAction.OnRepsUpdated -> coroutineScope.launch {
+                repository.updateWorkout(planId) { session ->
                     action.newReps.toIntOrNull()?.let { reps ->
-                        val updated = session.updateReps(
+                        session.updateReps(
                             action.exercise,
                             action.index,
-                            action.newReps.toInt()
+                            reps
                         )
-                        repository.updateWorkout(updated)
-                    }
+                    } ?: session
                 }
             }
 
             is WorkoutSessionAction.OnAddSet -> coroutineScope.launch {
-                val session = repository.workoutSessions().first().first()
-                repository.updateWorkout(session.addSet(action.exercise))
+                repository.updateWorkout(planId) { session ->
+                    session.addSet(action.exercise)
+                }
             }
 
             is WorkoutSessionAction.RemoveLastSet -> coroutineScope.launch {
-                val session = repository.workoutSessions().first().first()
-                repository.updateWorkout(session.removeLastSet(action.exercise))
+                repository.updateWorkout(planId) { session ->
+                    session.removeLastSet(action.exercise)
+                }
             }
         }
 
