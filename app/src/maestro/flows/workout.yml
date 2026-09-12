@@ -21,7 +21,9 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible:
       text: "10"
       index: 0
-- tapOn: "Set 1 in progress, 60 kg by 8. Double tap to mark complete."
+- tapOn:
+        text: "Set 1 in progress, 60 kg by 8. Double tap to mark complete."
+        point: "90%, 50%" # Tap on the right side to avoid the TextInput
 - assertVisible: "1. 60 kg x 8"
 - assertVisible: "Set 2 in progress, 50 kg by 10. Double tap to mark complete."
 - tapOn: "Set 2 in progress, 50 kg by 10. Double tap to mark complete."
