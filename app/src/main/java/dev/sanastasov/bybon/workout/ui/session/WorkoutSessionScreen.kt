@@ -11,12 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -28,6 +30,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -135,81 +140,104 @@ private fun ExerciseCard(
         Spacer(Modifier.height(4.dp))
 
         exercise.sets.forEachIndexed { index, (definition, weight, reps, state) ->
-            Row(
-                Modifier
-                    .defaultMinSize(minHeight = 48.dp)
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val weightStr = remember(exercise) { weight.kilograms }
-                val weightState = rememberSaveable(exercise, saver = TextFieldState.Saver) {
-                    TextFieldState(weightStr)
-                }
-                LaunchedEffect(weightState, exercise) {
-                    snapshotFlow { weightState.text.toString() }
-                        .drop(1)
-                        .collectLatest { onWeightChanged(it, exercise, index) }
-                }
+            val weightStr = remember(exercise) { weight.kilograms }
+            val weightState = rememberSaveable(exercise, saver = TextFieldState.Saver) {
+                TextFieldState(weightStr)
+            }
+            LaunchedEffect(weightState, exercise) {
+                snapshotFlow { weightState.text.toString() }
+                    .drop(1)
+                    .collectLatest { onWeightChanged(it, exercise, index) }
+            }
 
-                val repStr = remember(exercise) { reps.toString() }
-                val repState = rememberSaveable(exercise, saver = TextFieldState.Saver) {
-                    TextFieldState(repStr)
-                }
-                LaunchedEffect(repState, exercise, index) {
-                    snapshotFlow { repState.text.toString() }
-                        .drop(1)
-                        .collectLatest { onRepChanged(it, exercise, index) }
-                }
-                when (state) {
-                    SetState.Completed -> Text("${index + 1}. ${weight.kilograms} kg x $reps")
-                    SetState.InProgress -> Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            "${index + 1}.",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelLarge
+            val repStr = remember(exercise) { reps.toString() }
+            val repState = rememberSaveable(exercise, saver = TextFieldState.Saver) {
+                TextFieldState(repStr)
+            }
+            LaunchedEffect(repState, exercise, index) {
+                snapshotFlow { repState.text.toString() }
+                    .drop(1)
+                    .collectLatest { onRepChanged(it, exercise, index) }
+            }
+
+            val setRow: @Composable () -> Unit = {
+                Row(
+                    Modifier
+                        .defaultMinSize(minHeight = 48.dp)
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    when (state) {
+                        SetState.Completed -> Text("${index + 1}. ${weight.kilograms} kg x $reps")
+                        SetState.InProgress -> {
+                            val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    "${index + 1}.",
+                                    color = labelColor,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                                NumberInputField(weightState)
+                                Text(
+                                    " kg x ",
+                                    color = labelColor,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                                NumberInputField(repState)
+                            }
+                        }
+
+                        SetState.NotStated -> Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("${index + 1}.")
+                            NumberInputField(weightState)
+                            Text(" kg x ")
+                            NumberInputField(repState)
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    when (state) {
+                        SetState.InProgress -> Checkbox(
+                            false,
+                            { onCompleteSet(exercise, index) },
+                            Modifier.clearAndSetSemantics { }
                         )
-                        NumberInputField(weightState)
-                        Text(
-                            " kg x ",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelLarge
+
+                        SetState.Completed -> Checkbox(
+                            true,
+                            null,
+                            Modifier.padding(horizontal = 10.dp)
                         )
-                        NumberInputField(repState)
-                    }
 
-                    SetState.NotStated -> Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text("${index + 1}.")
-                        NumberInputField(weightState)
-                        Text(" kg x ")
-                        NumberInputField(repState)
+                        SetState.NotStated -> Unit
                     }
                 }
-                Spacer(Modifier.weight(1f))
-                when (state) {
-                    SetState.InProgress -> Checkbox(
-                        false,
-                        { onCompleteSet(exercise, index) }
-                    )
+            }
 
-                    SetState.Completed -> Checkbox(
-                        true,
-                        null,
-                        Modifier.padding(horizontal = 10.dp)
-                    )
-
-                    SetState.NotStated -> {
-
-                    }
+            if (state == SetState.InProgress) {
+                Surface(
+                    onClick = { onCompleteSet(exercise, index) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics {
+                            contentDescription =
+                                "Set ${index + 1} in progress, ${weight.kilograms} kg by $reps. Double tap to mark complete."
+                        },
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                ) {
+                    setRow()
                 }
+            } else {
+                setRow()
             }
 
             if (index == exercise.sets.lastIndex) {

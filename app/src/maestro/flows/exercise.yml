@@ -6,3 +6,12 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Start Workout"
 - assertVisible: "Full body workout routine variant A"
 - assertVisible: "3 x Bench Press (barbell) in 8 - 10"
+- tapOn: "Set 1 in progress, 50 kg by 8. Double tap to mark complete."
+- tapOn: "Set 2 in progress, 50 kg by 8. Double tap to mark complete."
+- tapOn: "Add set"
+- assertVisible: "4 x Bench Press (barbell) in 8 - 10"
+- tapOn: "Remove last set"
+- assertVisible: "3 x Bench Press (barbell) in 8 - 10"
+- back
+- assertVisible: "Active"
+- assertVisible: "Open Workout"
