@@ -42,23 +42,20 @@ import java.util.Locale
 
 @Composable
 fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
+    val contentResolver = LocalContext.current.contentResolver
     val viewModel = retain {
-        WorkoutHistoryViewModel(workoutsRepository, it.coroutineScope)
+        WorkoutHistoryViewModel(
+            workoutsRepository,
+            it.coroutineScope,
+            AndroidContentResolverReader(contentResolver),
+        )
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val contentResolver = LocalContext.current.contentResolver
     val documentPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        viewModel.onAction(
-            WorkoutHistoryAction.OnCsvSelected {
-                contentResolver.openInputStream(uri)
-                    ?.bufferedReader()
-                    ?.use { it.readText() }
-                    ?: error("Unable to read CSV")
-            }
-        )
+        viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(uri))
     }
 
     WorkoutHistoryContent(

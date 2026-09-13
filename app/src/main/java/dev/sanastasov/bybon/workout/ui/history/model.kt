@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import android.net.Uri
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
@@ -44,7 +45,7 @@ data class ExerciseTopSetUi(
 )
 
 sealed class WorkoutHistoryAction {
-    data class OnCsvSelected(val readCsv: () -> String) : WorkoutHistoryAction()
+    data class OnCsvSelected(val uri: Uri) : WorkoutHistoryAction()
     data object OnImportDone : WorkoutHistoryAction()
 }
 

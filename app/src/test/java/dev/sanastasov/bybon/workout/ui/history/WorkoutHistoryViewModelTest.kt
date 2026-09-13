@@ -243,14 +243,16 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `importing the strong sample csv shows a spinner then a summary`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
-        val csv = readStrongBackupSample(javaClass.classLoader)
-        val viewModel = historyViewModel(repository)
+        val viewModel = historyViewModel(
+            repository,
+            csv = readStrongBackupSample(javaClass.classLoader),
+        )
 
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutHistoryUiState.Loading)
             assert(awaitItem() == WorkoutHistoryUiState.Empty)
 
-            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected { csv })
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
 
             assert(awaitItem() == WorkoutHistoryUiState.Importing)
             val summary = (awaitItem() as WorkoutHistoryUiState.Summary).summary
@@ -274,12 +276,14 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `done after import shows the imported history newest first`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
-        val csv = readStrongBackupSample(javaClass.classLoader)
-        val viewModel = historyViewModel(repository)
+        val viewModel = historyViewModel(
+            repository,
+            csv = readStrongBackupSample(javaClass.classLoader),
+        )
 
         viewModel.uiState.test {
             skipItems(2)
-            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected { csv })
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
             skipItems(1)
             val summary = awaitItem()
             assert(summary is WorkoutHistoryUiState.Summary)
@@ -298,13 +302,13 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `invalid csv returns to the empty history state`() = runTest {
         val repository = FakeWorkoutsRepository()
-        val viewModel = historyViewModel(repository)
+        val viewModel = historyViewModel(repository, csv = "not a strong csv")
 
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutHistoryUiState.Loading)
             assert(awaitItem() == WorkoutHistoryUiState.Empty)
 
-            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected { "not a strong csv" })
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
 
             assert(awaitItem() == WorkoutHistoryUiState.Importing)
             assert(awaitItem() == WorkoutHistoryUiState.Empty)
@@ -314,9 +318,11 @@ class WorkoutHistoryViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun TestScope.historyViewModel(
         repository: FakeWorkoutsRepository,
+        csv: String = "",
     ) = WorkoutHistoryViewModel(
         repository = repository,
         coroutineScope = backgroundScope,
+        contentResolverReader = FakeContentResolverReader(csv),
         ioDispatcher = UnconfinedTestDispatcher(testScheduler),
         defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
     )

@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import android.net.Uri
 import dev.sanastasov.bybon.strong.StrongCsvParser
 import dev.sanastasov.bybon.strong.StrongImportResult
 import dev.sanastasov.bybon.strong.toStrongImport
@@ -21,6 +22,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class WorkoutHistoryViewModel(
     private val repository: WorkoutsRepository,
     private val coroutineScope: CoroutineScope,
+    private val contentResolverReader: ContentResolverReader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
@@ -41,16 +43,16 @@ class WorkoutHistoryViewModel(
 
     fun onAction(action: WorkoutHistoryAction) {
         when (action) {
-            is WorkoutHistoryAction.OnCsvSelected -> importCsv(action.readCsv)
+            is WorkoutHistoryAction.OnCsvSelected -> importCsv(action.uri)
             WorkoutHistoryAction.OnImportDone -> importPhase.value = ImportPhase.Idle
         }
     }
 
-    private fun importCsv(readCsv: () -> String) {
+    private fun importCsv(uri: Uri) {
         importPhase.value = ImportPhase.Importing
         coroutineScope.launch {
             try {
-                val csv = withContext(ioDispatcher) { readCsv() }
+                val csv = withContext(ioDispatcher) { contentResolverReader.read(uri) }
                 val existingPlans = repository.workoutPlans().first()
                 val result = withContext(defaultDispatcher) {
                     StrongCsvParser.parse(csv).toStrongImport(existingPlans)
