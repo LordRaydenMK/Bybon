@@ -24,17 +24,18 @@ class BodyWeightUseCaseTest {
     }
 
     @Test
-    fun `last seven days average is used when current week has fewer than three entries`() = runTest {
-        val dashboard = dashboard(
-            entry(today, "65.2"),
-            entry(today.minusDays(1), "64.8"),
-            entry(today.minusDays(5), "65.0"),
-        )
+    fun `last seven days average is used when current week has fewer than three entries`() =
+        runTest {
+            val dashboard = dashboard(
+                entry(today, "65.2"),
+                entry(today.minusDays(1), "64.8"),
+                entry(today.minusDays(5), "65.0"),
+            )
 
-        assert(dashboard.thisWeekValues?.size == 2)
-        assert(dashboard.thisWeekAverage == null)
-        assert(dashboard.lastSevenDaysAverage == BodyWeight.parseFromString("65.0"))
-    }
+            assert(dashboard.thisWeekValues?.size == 2)
+            assert(dashboard.thisWeekAverage == null)
+            assert(dashboard.lastSevenDaysAverage == BodyWeight.parseFromString("65.0"))
+        }
 
     @Test
     fun `current week average takes priority when it has three entries`() = runTest {

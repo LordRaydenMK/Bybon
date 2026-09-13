@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -59,7 +60,7 @@ class WeightDashboardViewModelTest {
         assert(state.dailyHeaderText == "This week (8 Sep 2026) CW 37")
     }
 
-    private suspend fun uiState(vararg entries: BodyWeightEntry): WeightDashboardUiState {
+    private suspend fun TestScope.uiState(vararg entries: BodyWeightEntry): WeightDashboardUiState {
         val viewModel = WeightDashboardViewModel(
             FakeBodyWeightRepository(entries.toList()),
             backgroundScope,
