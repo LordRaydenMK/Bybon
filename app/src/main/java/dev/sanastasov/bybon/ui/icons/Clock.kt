@@ -11,8 +11,8 @@ import androidx.compose.ui.unit.dp
 
 val Clock: ImageVector
     get() {
-        if (_Clock != null) return _Clock!!
-        _Clock = ImageVector.Builder(
+        if (cachedClock != null) return cachedClock!!
+        cachedClock = ImageVector.Builder(
             name = "clock",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
@@ -49,7 +49,7 @@ val Clock: ImageVector
                 close()
             }
         }.build()
-        return _Clock!!
+        return cachedClock!!
     }
 
-private var _Clock: ImageVector? = null
+private var cachedClock: ImageVector? = null
