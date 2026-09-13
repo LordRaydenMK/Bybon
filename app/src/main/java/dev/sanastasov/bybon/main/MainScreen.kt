@@ -5,8 +5,11 @@ package dev.sanastasov.bybon.main
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -50,6 +53,7 @@ import java.time.LocalDate
 fun MainModule.MainScreen(
     onNavigateToWeightEntry: () -> Unit,
     onNavigateToStartSession: (WorkoutPlan) -> Unit,
+    onNavigateToHistory: () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
@@ -84,6 +88,7 @@ fun MainModule.MainScreen(
         onNavigateToWeightEntry,
         plansState,
         workoutPlansViewModel::onAction,
+        onNavigateToHistory,
     )
 }
 
@@ -99,10 +104,22 @@ private fun MainScreenContent(
     onLogWeightClicked: () -> Unit,
     plans: List<WorkoutPlanUi>,
     onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
+    onHistoryClicked: () -> Unit,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text("Bybon") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Bybon") },
+                actions = {
+                    if (selectedIndex == 0) {
+                        IconButton(onHistoryClicked) {
+                            Icon(Icons.Filled.DateRange, contentDescription = "History")
+                        }
+                    }
+                },
+            )
+        },
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
@@ -170,7 +187,8 @@ private fun MainScreenContentWorkoutsPreview() {
             WorkoutPlanUi(fullBodyA, isActive = false),
             WorkoutPlanUi(fullBodyB, isActive = false)
         ),
-        {}
+        {},
+        {},
     )
 }
 
@@ -193,7 +211,8 @@ private fun MainScreenContentOneRmCalcPreview() {
             WorkoutPlanUi(fullBodyA, isActive = false),
             WorkoutPlanUi(fullBodyB, isActive = false)
         ),
-        {}
+        {},
+        {},
     )
 }
 
@@ -227,6 +246,7 @@ private fun MainScreenContentWeightTrackPreview() {
             WorkoutPlanUi(fullBodyA, isActive = false),
             WorkoutPlanUi(fullBodyB, isActive = false)
         ),
-        {}
+        {},
+        {},
     )
 }
