@@ -1,3 +1,5 @@
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.DetektCreateBaselineTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.powerassert.gradle.PowerAssertCompilationFilter
 import java.util.Properties
@@ -9,6 +11,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.power.assert)
     alias(libs.plugins.androidx.room3)
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -78,6 +81,26 @@ room3 {
     schemaDirectory("$projectDir/schemas")
 }
 
+detekt {
+    buildUponDefaultConfig = true
+    parallel = true
+    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+    baseline = file("${rootProject.projectDir}/config/detekt/baseline.xml")
+    basePath.set(rootProject.projectDir)
+}
+
+tasks.withType<Detekt>().configureEach {
+    jvmTarget.set("21")
+    exclude("**/build/**")
+    exclude("**/generated/**")
+}
+
+tasks.withType<DetektCreateBaselineTask>().configureEach {
+    jvmTarget.set("21")
+    exclude("**/build/**")
+    exclude("**/generated/**")
+}
+
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 powerAssert {
     functions = listOf(
@@ -93,6 +116,8 @@ powerAssert {
 }
 
 dependencies {
+    detektPlugins(libs.detekt.rules.ktlint.wrapper)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
