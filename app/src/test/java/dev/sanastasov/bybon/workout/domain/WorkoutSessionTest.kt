@@ -92,4 +92,10 @@ class WorkoutSessionTest {
         assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
         assert(actual.exercises[1].sets.first().setState == SetState.InProgress)
     }
+
+    @Test
+    fun `Weight kilograms formats whole and decimal values`() {
+        assert(Weight.kilograms(50).kilograms == "50")
+        assert(Weight.kilograms(52.5f).kilograms == "52.5")
+    }
 }

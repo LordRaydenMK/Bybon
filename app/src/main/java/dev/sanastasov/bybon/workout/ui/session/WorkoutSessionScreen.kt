@@ -13,6 +13,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -52,7 +53,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
-import kotlin.math.roundToInt
+import java.util.Locale
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -168,7 +169,7 @@ private fun SetRow(
     repState: TextFieldState,
     onAction: (WorkoutSessionAction) -> Unit,
 ) {
-    val oneRmLabel = set.oneRm?.roundToInt()?.let { "@ $it kg 1RM" }
+    val oneRmLabel = set.oneRm?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
     val content: @Composable () -> Unit = {
         Row(
             Modifier
@@ -298,11 +299,15 @@ private fun rememberSyncedTextField(
 private fun NumberInputField(state: TextFieldState) {
     TextField(
         state,
-        Modifier.width(56.dp),
+        Modifier.width(72.dp),
         textStyle = MaterialTheme.typography.labelLarge,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        lineLimits = TextFieldLineLimits.SingleLine,
     )
 }
+
+private fun formatOneRmKg(kg: Float): String =
+    "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
 
 @Preview
 @Composable

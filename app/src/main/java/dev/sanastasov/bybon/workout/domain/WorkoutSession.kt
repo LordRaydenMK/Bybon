@@ -1,6 +1,5 @@
 package dev.sanastasov.bybon.workout.domain
 
-import java.text.DecimalFormat
 import java.time.LocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -26,15 +25,15 @@ fun WorkoutPlan.toWorkoutSession(): WorkoutSession =
         }
     )
 
-private val DF = DecimalFormat().apply {
-
-}
-
 @JvmInline
 value class Weight(private val value: Int) {
 
     val kilograms: String
-        get() = (value / 10).toString()
+        get() = if (value % 10 == 0) {
+            (value / 10).toString()
+        } else {
+            (value / 10f).toString()
+        }
 
     val kilogramsValue: Float
         get() = value / 10f
