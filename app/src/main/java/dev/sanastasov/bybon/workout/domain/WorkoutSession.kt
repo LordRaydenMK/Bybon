@@ -4,21 +4,31 @@ import java.time.LocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 
-fun WorkoutPlan.toWorkoutSession(): WorkoutSession =
+fun WorkoutPlan.toWorkoutSession(
+    previousSession: WorkoutSession? = null,
+): WorkoutSession =
     WorkoutSession(
         id,
         name,
         description,
         sets.mapIndexed { index, planedExercise ->
+            val previousExercise = previousSession?.exercises?.firstOrNull {
+                it.id == planedExercise.exercise.id
+            }
             WorkoutExercise(
                 planedExercise.exercise,
                 planedExercise.repRange,
-                (1..planedExercise.sets).map {
+                (1..planedExercise.sets).map { setNumber ->
+                    val setIndex = setNumber - 1
+                    val previousSet = previousExercise?.sets?.getOrNull(setIndex)
                     ExerciseSet(
                         planedExercise.exercise,
                         Weight.kilograms(50),
                         planedExercise.repRange.first,
-                        if (index == 0 && it == 1) SetState.InProgress else SetState.NotStated
+                        if (index == 0 && setNumber == 1) SetState.InProgress else SetState.NotStated,
+                        previous = previousSet?.let {
+                            PreviousSetPerformance(it.weight, it.reps)
+                        },
                     )
                 }
             )
@@ -61,18 +71,29 @@ fun estimateOneRmKg(weightKg: Float, reps: Int): Float = if (reps < 10) {
     weightKg * (1 + reps / 30f)
 }
 
+data class PreviousSetPerformance(
+    val weight: Weight,
+    val reps: Int,
+) {
+    val oneRm: Float?
+        get() = oneRmOrNull(weight, reps)
+}
+
 data class ExerciseSet(
     val exerciseDefinition: ExerciseDefinition,
     val weight: Weight,
     val reps: Int,
     val setState: SetState,
+    val previous: PreviousSetPerformance? = null,
 ) {
     val oneRm: Float?
-        get() {
-            val kg = weight.kilogramsValue
-            if (kg <= 0f || reps <= 0) return null
-            return estimateOneRmKg(kg, reps)
-        }
+        get() = oneRmOrNull(weight, reps)
+}
+
+private fun oneRmOrNull(weight: Weight, reps: Int): Float? {
+    val kg = weight.kilogramsValue
+    if (kg <= 0f || reps <= 0) return null
+    return estimateOneRmKg(kg, reps)
 }
 
 data class WorkoutExercise(
@@ -136,7 +157,7 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
         val newSetState =
             if (lastSet.setState == SetState.Completed) SetState.InProgress else SetState.NotStated
         exercise.copy(
-            sets = exercise.sets + lastSet.copy(setState = newSetState)
+            sets = exercise.sets + lastSet.copy(setState = newSetState, previous = null)
         )
     }
 

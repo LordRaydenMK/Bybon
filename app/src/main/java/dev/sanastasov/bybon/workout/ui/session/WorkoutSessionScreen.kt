@@ -170,6 +170,12 @@ private fun SetRow(
     onAction: (WorkoutSessionAction) -> Unit,
 ) {
     val oneRmLabel = set.oneRm?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
+    val previousLabel = set.previous?.let { previous ->
+        buildString {
+            append("${previous.weight.kilograms} kg x ${previous.reps}")
+            previous.oneRm?.let { append(" @ ${formatOneRmKg(it)} kg 1RM") }
+        }
+    }
     val content: @Composable () -> Unit = {
         Row(
             Modifier
@@ -178,62 +184,73 @@ private fun SetRow(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            when (set.setState) {
-                SetState.Completed -> {
-                    val summary = buildString {
-                        append("${index + 1}. ${set.weight.kilograms} kg x ${set.reps}")
-                        if (oneRmLabel != null) {
-                            append(" $oneRmLabel")
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                when (set.setState) {
+                    SetState.Completed -> {
+                        val summary = buildString {
+                            append("${index + 1}. ${set.weight.kilograms} kg x ${set.reps}")
+                            if (oneRmLabel != null) {
+                                append(" $oneRmLabel")
+                            }
                         }
+                        Text(summary)
                     }
-                    Text(summary)
-                }
 
-                SetState.InProgress -> {
-                    val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            "${index + 1}.",
-                            color = labelColor,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                        NumberInputField(weightState)
-                        Text(
-                            " kg x ",
-                            color = labelColor,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                        NumberInputField(repState)
-                        if (oneRmLabel != null) {
+                    SetState.InProgress -> {
+                        val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Text(
-                                oneRmLabel,
+                                "${index + 1}.",
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.labelLarge
                             )
+                            NumberInputField(weightState)
+                            Text(
+                                " kg x ",
+                                color = labelColor,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                            NumberInputField(repState)
+                            if (oneRmLabel != null) {
+                                Text(
+                                    oneRmLabel,
+                                    color = labelColor,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
+                        }
+                    }
+
+                    SetState.NotStated -> Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text("${index + 1}.")
+                        NumberInputField(weightState)
+                        Text(" kg x ")
+                        NumberInputField(repState)
+                        if (oneRmLabel != null) {
+                            Text(oneRmLabel)
                         }
                     }
                 }
-
-                SetState.NotStated -> Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text("${index + 1}.")
-                    NumberInputField(weightState)
-                    Text(" kg x ")
-                    NumberInputField(repState)
-                    if (oneRmLabel != null) {
-                        Text(oneRmLabel)
-                    }
+                if (previousLabel != null) {
+                    Text(
+                        previousLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
-            Spacer(Modifier.weight(1f))
             when (set.setState) {
                 SetState.InProgress -> Checkbox(
                     false,
@@ -264,6 +281,9 @@ private fun SetRow(
                         )
                         if (oneRmLabel != null) {
                             append(", $oneRmLabel")
+                        }
+                        if (previousLabel != null) {
+                            append(". Previous: $previousLabel")
                         }
                         append(". Double tap to mark complete.")
                     }

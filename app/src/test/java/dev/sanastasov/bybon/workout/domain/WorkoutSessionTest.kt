@@ -98,4 +98,56 @@ class WorkoutSessionTest {
         assert(Weight.kilograms(50).kilograms == "50")
         assert(Weight.kilograms(52.5f).kilograms == "52.5")
     }
+
+    @Test
+    fun `toWorkoutSession attaches previous sets from same plan history`() {
+        val previous = fullBodyA.toWorkoutSession().let { session ->
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.mapIndexed { index, set ->
+                            set.copy(
+                                weight = Weight.kilograms(40 + index),
+                                reps = 9,
+                                setState = SetState.Completed,
+                            )
+                        }
+                    )
+                },
+                state = WorkoutState.Completed(
+                    startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
+                    duration = kotlin.time.Duration.ZERO,
+                ),
+            )
+        }
+
+        val actual = fullBodyA.toWorkoutSession(previous)
+
+        val firstSet = actual.exercises.first().sets.first()
+        assert(
+            firstSet.previous == PreviousSetPerformance(Weight.kilograms(40), 9)
+        )
+        assert(actual.exercises.first().sets[1].previous?.weight == Weight.kilograms(41))
+    }
+
+    @Test
+    fun `update weight preserves previous set reference`() {
+        val previous = PreviousSetPerformance(Weight.kilograms(45), 12)
+        val session = fullBodyA.toWorkoutSession().let { session ->
+            session.copy(
+                exercises = session.exercises.mapIndexed { exerciseIndex, exercise ->
+                    if (exerciseIndex != 0) exercise
+                    else exercise.copy(
+                        sets = exercise.sets.mapIndexed { setIndex, set ->
+                            if (setIndex != 0) set else set.copy(previous = previous)
+                        }
+                    )
+                }
+            )
+        }
+
+        val actual = session.updateWeight(session.exercises.first(), 0, Weight.kilograms(52.5f))
+
+        assert(actual.exercises.first().sets.first().previous == previous)
+    }
 }

@@ -46,7 +46,10 @@ class WorkoutSessionViewModel(
             }
             if (inProgress == null) {
                 val plan = repository.workoutPlans().first().first { it.id == planId }
-                repository.updateWorkout(plan.toWorkoutSession())
+                val previousSession = sessions
+                    .filter { it.planId == planId && it.state is WorkoutState.Completed }
+                    .maxByOrNull { (it.state as WorkoutState.Completed).startedAt }
+                repository.updateWorkout(plan.toWorkoutSession(previousSession))
             }
         }
     }
