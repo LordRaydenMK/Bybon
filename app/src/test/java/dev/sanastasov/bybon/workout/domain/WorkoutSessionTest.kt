@@ -429,6 +429,20 @@ class WorkoutSessionTest {
         assert(bench.sets.all { it.setState == SetState.NotStated })
         assert(session.exercises.first { it.id == "leg-curl" }.warmupSets == null)
     }
+
+    @Test
+    fun `numbered sets expose warmup and work indexes`() {
+        val bench = fullBodyA.toWorkoutSession().exercises.first()
+        val legCurl = fullBodyA.toWorkoutSession().exercises.first { it.id == "leg-curl" }
+
+        assert(
+            bench.numberedWarmupSets.map { it.isWarmup to it.index } ==
+                listOf(true to 0, true to 1, true to 2),
+        )
+        assert(bench.numberedWorkSets.map { it.workSetNumber } == listOf(1, 2, 3))
+        assert(legCurl.numberedWarmupSets.isEmpty())
+        assert(legCurl.numberedWorkSets.size == legCurl.sets.size)
+    }
 }
 
 private fun WorkoutSession.completeWarmups(exerciseIndex: Int): WorkoutSession {

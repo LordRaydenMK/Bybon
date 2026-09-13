@@ -37,7 +37,7 @@ import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.components.NumberInputField
 import dev.sanastasov.bybon.ui.components.rememberSyncedTextField
 import dev.sanastasov.bybon.workout.WorkoutModule
-import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -48,6 +48,9 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
+import dev.sanastasov.bybon.workout.ui.oneRmLabel
+import dev.sanastasov.bybon.workout.ui.overviewContentDescription
+import dev.sanastasov.bybon.workout.ui.previousLabel
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
@@ -156,8 +159,9 @@ private fun OverviewWarmupSets(
     exercise: WorkoutExercise,
     onAction: (WorkoutOverviewAction) -> Unit,
 ) {
-    val warmupSets = exercise.warmupSets ?: return
-    warmupSets.forEachIndexed { index, set ->
+    exercise.numberedWarmupSets.forEach { numbered ->
+        val index = numbered.index
+        val set = numbered.set
         val weightState = rememberSyncedTextField(
             key = exercise to "w$index",
             initialText = remember(exercise, index) { set.weight.kilograms },
@@ -185,12 +189,10 @@ private fun OverviewWarmupSets(
             )
         }
         OverviewSetRow(
-            isWarmup = true,
-            workSetNumber = null,
-            set = set,
+            numbered = numbered,
             weightState = weightState,
             repState = repState,
-            onBadgeClick = if (index == warmupSets.lastIndex) {
+            onBadgeClick = if (index == exercise.numberedWarmupSets.lastIndex) {
                 { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
             } else {
                 null
@@ -204,7 +206,9 @@ private fun OverviewWorkSets(
     exercise: WorkoutExercise,
     onAction: (WorkoutOverviewAction) -> Unit,
 ) {
-    exercise.sets.forEachIndexed { index, set ->
+    exercise.numberedWorkSets.forEach { numbered ->
+        val index = numbered.index
+        val set = numbered.set
         val weightState = rememberSyncedTextField(
             key = exercise to "s$index",
             initialText = remember(exercise, index) { set.weight.kilograms },
@@ -218,9 +222,7 @@ private fun OverviewWorkSets(
             onAction(WorkoutOverviewAction.OnRepsUpdated(reps, exercise, index))
         }
         OverviewSetRow(
-            isWarmup = false,
-            workSetNumber = index + 1,
-            set = set,
+            numbered = numbered,
             weightState = weightState,
             repState = repState,
             onBadgeClick = if (index == 0) {
@@ -280,35 +282,18 @@ private fun OverviewExerciseSetActions(
 
 @Composable
 private fun OverviewSetRow(
-    isWarmup: Boolean,
-    workSetNumber: Int?,
-    set: ExerciseSet,
+    numbered: NumberedSet,
     weightState: TextFieldState,
     repState: TextFieldState,
     onBadgeClick: (() -> Unit)?,
 ) {
-    val oneRmLabel = set.oneRm?.let { "@ ${it.kilograms} kg 1RM" }
-    val previousLabel = set.previous?.let { previous ->
-        buildString {
-            append("${previous.weight.kilograms} kg x ${previous.reps}")
-            previous.oneRm?.let { append(" @ ${it.kilograms} kg 1RM") }
-        }
-    }
-    val setLabel = if (isWarmup) "Warmup set" else "Set $workSetNumber"
-    val setDescription = buildString {
-        append("$setLabel, ${set.weight.kilograms} kg by ${set.reps}")
-        if (oneRmLabel != null) {
-            append(", $oneRmLabel")
-        }
-        if (previousLabel != null) {
-            append(". Previous: $previousLabel")
-        }
-    }
+    val oneRmLabel = numbered.oneRmLabel
+    val previousLabel = numbered.previousLabel
     Box(
         Modifier
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {
-                contentDescription = setDescription
+                contentDescription = numbered.overviewContentDescription
             },
     ) {
         Row(
@@ -327,8 +312,8 @@ private fun OverviewSetRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     SetNumberBadge(
-                        isWarmup = isWarmup,
-                        workSetNumber = workSetNumber,
+                        isWarmup = numbered.isWarmup,
+                        workSetNumber = numbered.workSetNumber,
                         onClick = onBadgeClick,
                     )
                     NumberInputField(weightState)

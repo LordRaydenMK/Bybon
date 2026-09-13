@@ -152,6 +152,16 @@ data class WorkoutExercise(
     val orderedSets: List<ExerciseSet>
         get() = warmupSets.orEmpty() + sets
 
+    val numberedWarmupSets: List<NumberedSet>
+        get() = warmupSets?.mapIndexed { index, set ->
+            NumberedSet(set, isWarmup = true, index)
+        }.orEmpty()
+
+    val numberedWorkSets: List<NumberedSet>
+        get() = sets.mapIndexed { index, set ->
+            NumberedSet(set, isWarmup = false, index)
+        }
+
     val canRemoveSet: Boolean
         get() {
             val last = orderedSets.lastOrNull() ?: return false
