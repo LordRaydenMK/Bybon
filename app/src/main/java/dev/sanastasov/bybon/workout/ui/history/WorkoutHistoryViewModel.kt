@@ -78,7 +78,9 @@ class WorkoutHistoryViewModel(
     private sealed class ImportPhase {
         data object Idle : ImportPhase()
         data object Importing : ImportPhase()
-        data class Summary(val summary: ImportSummaryUi) : ImportPhase()
+        data class Summary(
+            val summary: ImportSummaryUi,
+        ) : ImportPhase()
     }
 }
 

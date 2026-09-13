@@ -9,3 +9,5 @@ ktlint:
     useTrailingCommaOnCallSite: true
   TrailingCommaOnDeclarationSite:
     useTrailingCommaOnDeclarationSite: true
+  ClassSignature:
+    forceMultilineWhenParameterCountGreaterOrEqualThan: '1'

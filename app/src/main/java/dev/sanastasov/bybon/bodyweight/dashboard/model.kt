@@ -4,7 +4,10 @@ import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.domain.weekOfYear
 import java.time.format.DateTimeFormatter
 
-data class PreviousWeekData(val previousWeekNo: Int, val weightDelta: String)
+data class PreviousWeekData(
+    val previousWeekNo: Int,
+    val weightDelta: String,
+)
 
 data class BodyWeightComparison(
     val currentWeekNo: Int,
@@ -12,7 +15,11 @@ data class BodyWeightComparison(
     val previousWeek: PreviousWeekData? = null,
 )
 
-data class WeeklyAverageEntryUi(val week: String, val value: String, val delta: String?)
+data class WeeklyAverageEntryUi(
+    val week: String,
+    val value: String,
+    val delta: String?,
+)
 
 private val DAY_MONTH_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM")
 

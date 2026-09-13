@@ -6,4 +6,7 @@ import androidx.room3.PrimaryKey
 import java.time.LocalDate
 
 @Entity("weight_entry")
-data class WeightEntryEntity(@PrimaryKey val date: LocalDate, @ColumnInfo("weight") val weight: Int)
+data class WeightEntryEntity(
+    @PrimaryKey val date: LocalDate,
+    @ColumnInfo("weight") val weight: Int,
+)

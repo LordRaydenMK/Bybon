@@ -40,7 +40,9 @@ fun WorkoutPlan.toWorkoutSession(previousSession: WorkoutSession? = null): Worko
     )
 
 @JvmInline
-value class Weight(private val value: Int) {
+value class Weight(
+    private val value: Int,
+) {
 
     val kilograms: String
         get() = if (value % 10 == 0) {
@@ -79,7 +81,10 @@ fun estimateOneRmKg(weightKg: Float, reps: Int): Float = if (reps < 10) {
     weightKg * (1 + reps / 30f)
 }
 
-data class PreviousSetPerformance(val weight: Weight, val reps: Int) {
+data class PreviousSetPerformance(
+    val weight: Weight,
+    val reps: Int,
+) {
     val oneRm: Float?
         get() = oneRmOrNull(weight, reps)
 }
@@ -114,8 +119,13 @@ data class WorkoutExercise(
 
 sealed class WorkoutState {
     data object NotStarted : WorkoutState()
-    data class InProgress(val startedAt: LocalDateTime) : WorkoutState()
-    data class Completed(val startedAt: LocalDateTime, val duration: Duration) : WorkoutState()
+    data class InProgress(
+        val startedAt: LocalDateTime,
+    ) : WorkoutState()
+    data class Completed(
+        val startedAt: LocalDateTime,
+        val duration: Duration,
+    ) : WorkoutState()
 }
 
 data class WorkoutSession(
@@ -300,7 +310,10 @@ private fun WorkoutSession.updateExerciseSet(
 }
 
 sealed class WorkoutSessionAction {
-    data class OnCompleteSet(val exercise: WorkoutExercise, val index: Int) : WorkoutSessionAction()
+    data class OnCompleteSet(
+        val exercise: WorkoutExercise,
+        val index: Int,
+    ) : WorkoutSessionAction()
 
     data class OnWeightUpdated(
         val newWeight: String,
@@ -308,10 +321,17 @@ sealed class WorkoutSessionAction {
         val index: Int,
     ) : WorkoutSessionAction()
 
-    data class OnRepsUpdated(val newReps: String, val exercise: WorkoutExercise, val index: Int) :
-        WorkoutSessionAction()
+    data class OnRepsUpdated(
+        val newReps: String,
+        val exercise: WorkoutExercise,
+        val index: Int,
+    ) : WorkoutSessionAction()
 
-    data class OnAddSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
+    data class OnAddSet(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
 
-    data class RemoveLastSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
+    data class RemoveLastSet(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
 }

@@ -11,8 +11,12 @@ sealed class WorkoutHistoryUiState {
     data object Loading : WorkoutHistoryUiState()
     data object Empty : WorkoutHistoryUiState()
     data object Importing : WorkoutHistoryUiState()
-    data class Summary(val summary: ImportSummaryUi) : WorkoutHistoryUiState()
-    data class History(val sessions: List<WorkoutSessionHistoryUi>) : WorkoutHistoryUiState()
+    data class Summary(
+        val summary: ImportSummaryUi,
+    ) : WorkoutHistoryUiState()
+    data class History(
+        val sessions: List<WorkoutSessionHistoryUi>,
+    ) : WorkoutHistoryUiState()
 }
 
 data class ImportSummaryUi(
@@ -25,7 +29,10 @@ data class ImportSummaryUi(
     val workingSetCount: Int,
 )
 
-data class PlanSessionCountUi(val planName: String, val sessionCount: Int)
+data class PlanSessionCountUi(
+    val planName: String,
+    val sessionCount: Int,
+)
 
 data class WorkoutSessionHistoryUi(
     val key: String,
@@ -42,7 +49,9 @@ data class ExerciseTopSetUi(
 )
 
 sealed class WorkoutHistoryAction {
-    data class OnCsvSelected(val uri: Uri) : WorkoutHistoryAction()
+    data class OnCsvSelected(
+        val uri: Uri,
+    ) : WorkoutHistoryAction()
     data object OnImportDone : WorkoutHistoryAction()
 }
 
