@@ -233,9 +233,25 @@ fun WorkoutSession.adjustAll(increase: Boolean): WorkoutSession =
 fun WorkoutSession.adjustExercise(exercise: WorkoutExercise, increase: Boolean): WorkoutSession =
     updateExercise(exercise.id) { it.adjust(increase) }
 
+fun WorkoutSession.resetTo(previous: WorkoutSession): WorkoutSession = previous
+
+fun WorkoutSession.resetExercise(
+    exercise: WorkoutExercise,
+    previous: WorkoutSession,
+): WorkoutSession {
+    val restored = previous.exercises.firstOrNull { it.id == exercise.id } ?: return this
+    return updateExercise(exercise.id) { restored }
+}
+
 private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
+    val originalFirst = sets.firstOrNull() ?: return this
     val increment = exerciseDefinition.equipment.weightIncrement
-    return copy(sets = sets.map { it.adjust(repRange, increment, increase) })
+    val adjustedFirst = originalFirst.adjust(repRange, increment, increase)
+    return copy(
+        sets = listOf(adjustedFirst) + sets.drop(1).map { set ->
+            set.followFirstWorkSet(originalFirst, adjustedFirst, repRange, increase)
+        },
+    )
 }
 
 internal fun ExerciseSet.adjust(
@@ -243,7 +259,7 @@ internal fun ExerciseSet.adjust(
     increment: Weight,
     increase: Boolean,
 ): ExerciseSet {
-    val currentOneRm = oneRm
+    val expandedRange = repRange.expanded()
     if (increase) {
         if (reps < repRange.last) {
             return copy(reps = reps + 1)
@@ -251,13 +267,12 @@ internal fun ExerciseSet.adjust(
         if (increment.kilogramsValue <= 0f) return this
         var newWeight = weight + increment
         repeat(64) {
-            val repsThatIncrease = repRange.filter { candidateReps ->
-                val candidateOneRm = oneRmOrNull(newWeight, candidateReps) ?: return@filter false
-                currentOneRm == null || candidateOneRm > currentOneRm
-            }
-            if (repsThatIncrease.isNotEmpty()) {
-                return copy(weight = newWeight, reps = repsThatIncrease.min())
-            }
+            withWeightPreservingOneRm(
+                newWeight,
+                preferredRange = repRange,
+                fallbackRange = expandedRange,
+                increase = true,
+            )?.let { return it }
             newWeight += increment
         }
         return this
@@ -269,17 +284,60 @@ internal fun ExerciseSet.adjust(
     var newWeight = weight - increment
     repeat(64) {
         if (newWeight.kilogramsValue <= 0f) return this
-        val repsThatDecrease = repRange.filter { candidateReps ->
-            val candidateOneRm = oneRmOrNull(newWeight, candidateReps) ?: return@filter false
-            currentOneRm == null || candidateOneRm < currentOneRm
-        }
-        if (repsThatDecrease.isNotEmpty()) {
-            return copy(weight = newWeight, reps = repsThatDecrease.max())
-        }
+        withWeightPreservingOneRm(
+            newWeight,
+            preferredRange = repRange,
+            fallbackRange = expandedRange,
+            increase = false,
+        )?.let { return it }
         newWeight -= increment
     }
     return this
 }
+
+private fun ExerciseSet.followFirstWorkSet(
+    originalFirst: ExerciseSet,
+    adjustedFirst: ExerciseSet,
+    repRange: IntRange,
+    increase: Boolean,
+): ExerciseSet {
+    val expandedRange = repRange.expanded()
+    if (adjustedFirst.weight == originalFirst.weight) {
+        val delta = adjustedFirst.reps - originalFirst.reps
+        return copy(reps = (reps + delta).coerceIn(expandedRange))
+    }
+    return withWeightPreservingOneRm(
+        adjustedFirst.weight,
+        preferredRange = expandedRange,
+        fallbackRange = expandedRange,
+        increase = increase,
+    ) ?: copy(weight = adjustedFirst.weight)
+}
+
+private fun ExerciseSet.withWeightPreservingOneRm(
+    newWeight: Weight,
+    preferredRange: IntRange,
+    fallbackRange: IntRange,
+    increase: Boolean,
+): ExerciseSet? {
+    val currentOneRm = oneRm
+    fun pick(range: IntRange): Int? {
+        val candidates = range.filter { candidateReps ->
+            val candidateOneRm = oneRmOrNull(newWeight, candidateReps) ?: return@filter false
+            if (increase) {
+                currentOneRm == null || candidateOneRm > currentOneRm
+            } else {
+                currentOneRm == null || candidateOneRm < currentOneRm
+            }
+        }
+        return if (increase) candidates.minOrNull() else candidates.maxOrNull()
+    }
+    val reps = pick(preferredRange) ?: pick(fallbackRange) ?: return null
+    return copy(weight = newWeight, reps = reps)
+}
+
+private fun IntRange.expanded(amount: Int = 2): IntRange =
+    (first - amount).coerceAtLeast(1)..(last + amount)
 
 private fun WorkoutSession.updateExercise(
     exerciseId: String,

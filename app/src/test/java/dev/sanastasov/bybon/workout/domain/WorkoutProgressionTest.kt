@@ -164,7 +164,7 @@ class WorkoutProgressionTest {
     }
 
     @Test
-    fun `adjustExercise applies independently per set`() {
+    fun `adjustExercise copies first work set weight to other sets`() {
         val session = fullBodyA.toOverviewSession().let { overview ->
             overview.updateReps(overview.exercises.first(), 0, 10)
         }
@@ -175,11 +175,63 @@ class WorkoutProgressionTest {
 
         assert(sets[0].weight == Weight.kilograms(52.5f))
         assert(sets[0].reps == 9)
-        assert(sets[1].weight == Weight.kilograms(50))
-        assert(sets[1].reps == 9)
+        assert(sets[0].reps in benchRange)
+        assert(sets.all { it.weight == sets[0].weight })
+        assert(sets[1].reps == 7)
+        assert(sets[1].reps !in benchRange)
         assert(actual.exercises.drop(1) == session.exercises.drop(1))
         assert(sets[0].oneRm!! > benchExercise.sets[0].oneRm!!)
         assert(sets[1].oneRm!! > benchExercise.sets[1].oneRm!!)
+    }
+
+    @Test
+    fun `adjustExercise keeps matching weights when first set only adds a rep`() {
+        val session = fullBodyA.toOverviewSession()
+        val benchExercise = session.exercises.first()
+
+        val actual = session.adjustExercise(benchExercise, increase = true)
+        val sets = actual.exercises.first().sets
+
+        assert(sets.all { it.weight == Weight.kilograms(50) })
+        assert(sets.all { it.reps == 9 })
+        assert(sets[0].oneRm!! > benchExercise.sets[0].oneRm!!)
+    }
+
+    @Test
+    fun `first set can leave the range when needed to increase 1RM`() {
+        val session = fullBodyA.toOverviewSession().let { overview ->
+            overview.updateReps(overview.exercises.first(), 0, 12)
+        }
+        val start = session.exercises.first().sets.first()
+
+        val actual = session.adjustExercise(session.exercises.first(), increase = true)
+        val first = actual.exercises.first().sets.first()
+
+        assert(first.weight == Weight.kilograms(52.5f))
+        assert(first.reps == 11)
+        assert(first.reps !in benchRange)
+        assert(first.oneRm!! > start.oneRm!!)
+        assert(actual.exercises.first().sets.all { it.weight == first.weight })
+    }
+
+    @Test
+    fun `adjustExercise decrease keeps shared weight and can leave later sets outside range`() {
+        val session = fullBodyA.toOverviewSession().let { overview ->
+            overview.updateReps(overview.exercises.first(), 1, 10)
+        }
+        val benchExercise = session.exercises.first()
+
+        val actual = session.adjustExercise(benchExercise, increase = false)
+        val sets = actual.exercises.first().sets
+
+        assert(sets[0].weight == Weight.kilograms(47.5f))
+        assert(sets[0].reps == 9)
+        assert(sets[0].reps in benchRange)
+        assert(sets.all { it.weight == sets[0].weight })
+        assert(sets[1].reps == 12)
+        assert(sets[1].reps !in benchRange)
+        assert(sets[0].oneRm!! < benchExercise.sets[0].oneRm!!)
+        assert(sets[1].oneRm!! < benchExercise.sets[1].oneRm!!)
     }
 
     @Test
@@ -204,6 +256,7 @@ class WorkoutProgressionTest {
         val actual = session.adjustExercise(session.exercises.first(), increase = true)
 
         assert(actual.exercises.first().sets.first().previous == previous)
+        assert(actual.exercises.first().sets[1].previous == null)
     }
 
     private fun benchSet(kg: Float, reps: Int) = ExerciseSet(

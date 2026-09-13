@@ -213,4 +213,25 @@ class WorkoutSessionTest {
         assert(actual.exercises.first().sets.size == 2)
         assert(actual.workoutSets.none { it.setState == SetState.InProgress })
     }
+
+    @Test
+    fun `resetTo restores the previous overview draft`() {
+        val previous = fullBodyA.toOverviewSession()
+        val increased = previous.adjustAll(increase = true)
+
+        val actual = increased.resetTo(previous)
+
+        assert(actual == previous)
+    }
+
+    @Test
+    fun `resetExercise restores only that exercise from the previous draft`() {
+        val previous = fullBodyA.toOverviewSession()
+        val increased = previous.adjustAll(increase = true)
+
+        val actual = increased.resetExercise(increased.exercises.first(), previous)
+
+        assert(actual.exercises.first() == previous.exercises.first())
+        assert(actual.exercises.drop(1) == increased.exercises.drop(1))
+    }
 }
