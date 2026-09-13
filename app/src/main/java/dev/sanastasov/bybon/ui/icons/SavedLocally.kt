@@ -12,10 +12,10 @@ import androidx.compose.ui.unit.dp
 @Suppress("CheckReturnValue")
 val SavedLocally: ImageVector
     get() {
-        if (_savedLocally != null) {
-            return _savedLocally!!
+        if (cachedSavedLocally != null) {
+            return cachedSavedLocally!!
         }
-        _savedLocally =
+        cachedSavedLocally =
             ImageVector.Builder(
                 name = "sync_saved_locally",
                 defaultWidth = 24.dp,
@@ -76,7 +76,7 @@ val SavedLocally: ImageVector
                     }
                 }
                 .build()
-        return _savedLocally!!
+        return cachedSavedLocally!!
     }
 
-private var _savedLocally: ImageVector? = null
+private var cachedSavedLocally: ImageVector? = null

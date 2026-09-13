@@ -209,9 +209,9 @@ import androidx.compose.ui.unit.dp
 
 val MaterialSymbolsExercise: ImageVector
     get() {
-        if (_materialSymbolsExercise != null) return _materialSymbolsExercise!!
+        if (cachedMaterialSymbolsExercise != null) return cachedMaterialSymbolsExercise!!
 
-        _materialSymbolsExercise = ImageVector.Builder(
+        cachedMaterialSymbolsExercise = ImageVector.Builder(
             name = "exercise",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
@@ -300,7 +300,7 @@ val MaterialSymbolsExercise: ImageVector
             }
         }.build()
 
-        return _materialSymbolsExercise!!
+        return cachedMaterialSymbolsExercise!!
     }
 
-private var _materialSymbolsExercise: ImageVector? = null
+private var cachedMaterialSymbolsExercise: ImageVector? = null
