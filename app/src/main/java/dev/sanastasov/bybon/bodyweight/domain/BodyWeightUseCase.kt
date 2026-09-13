@@ -17,6 +17,7 @@ data class WeeklyAverageEntry(
 data class BodyWeightDashboard(
     val thisWeekValues: List<BodyWeightEntry>?,
     val previousWeeksAverages: List<WeeklyAverageEntry>?,
+    val lastSevenDaysAverage: BodyWeight? = null,
 ) {
 
     val thisWeekAverage: BodyWeight? = thisWeekValues?.averageWeight()?.weight
@@ -30,10 +31,15 @@ data class BodyWeightDashboard(
 fun BodyWeightRepository.bodyWeightDashboard(today: LocalDate): Flow<BodyWeightDashboard> =
     entries().map { allEntries ->
         val currentCw = today.weekOfYear
+        val lastSevenDaysStart = today.minusDays(6)
 
         val thisWeekValues = allEntries.takeWhile { entry ->
             entry.date.weekOfYear == currentCw
         }.map { BodyWeightEntry(it.date, it.weight) }
+
+        val lastSevenDaysAverage = allEntries.filter { entry ->
+            entry.date in lastSevenDaysStart..today
+        }.averageWeight()?.weight
 
         val entriesByWeek = allEntries.filter { entry ->
             entry.date.weekOfYear in currentCw - 11..<currentCw
@@ -57,6 +63,7 @@ fun BodyWeightRepository.bodyWeightDashboard(today: LocalDate): Flow<BodyWeightD
         BodyWeightDashboard(
             thisWeekValues.takeIf { it.isNotEmpty() },
             previousWeeksAverages.takeIf { it.isNotEmpty() },
+            lastSevenDaysAverage,
         )
     }
 
