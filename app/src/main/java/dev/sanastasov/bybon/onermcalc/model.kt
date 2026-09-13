@@ -1,5 +1,7 @@
 package dev.sanastasov.bybon.onermcalc
 
+import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
+
 data class OneRmEntry(val weight: Float, val reps: Int) {
     init {
         require(weight > 0) { "Weight must be positive. Found `$weight`" }
@@ -7,13 +9,7 @@ data class OneRmEntry(val weight: Float, val reps: Int) {
     }
 }
 
-fun OneRmEntry.calculate1Rm(): Float = if (reps < 10) {
-    // Brzycki
-    weight * 36f / (37 - reps)
-} else {
-    // Epley
-    weight * (1 + reps / 30f)
-}
+fun OneRmEntry.calculate1Rm(): Float = estimateOneRmKg(weight, reps)
 
 sealed class OneRmCalcAction {
     data class OnWeightChanged(val newWeight: String) : OneRmCalcAction()

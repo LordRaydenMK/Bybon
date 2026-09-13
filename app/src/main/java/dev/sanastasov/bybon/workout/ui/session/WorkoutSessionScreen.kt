@@ -52,6 +52,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
+import kotlin.math.roundToInt
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -167,6 +168,7 @@ private fun SetRow(
     repState: TextFieldState,
     onAction: (WorkoutSessionAction) -> Unit,
 ) {
+    val oneRmLabel = set.oneRm?.roundToInt()?.let { "@ $it kg 1RM" }
     val content: @Composable () -> Unit = {
         Row(
             Modifier
@@ -176,7 +178,16 @@ private fun SetRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             when (set.setState) {
-                SetState.Completed -> Text("${index + 1}. ${set.weight.kilograms} kg x ${set.reps}")
+                SetState.Completed -> {
+                    val summary = buildString {
+                        append("${index + 1}. ${set.weight.kilograms} kg x ${set.reps}")
+                        if (oneRmLabel != null) {
+                            append(" $oneRmLabel")
+                        }
+                    }
+                    Text(summary)
+                }
+
                 SetState.InProgress -> {
                     val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
                     Row(
@@ -197,6 +208,14 @@ private fun SetRow(
                             style = MaterialTheme.typography.labelLarge
                         )
                         NumberInputField(repState)
+                        if (oneRmLabel != null) {
+                            Text(
+                                oneRmLabel,
+                                color = labelColor,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
                     }
                 }
 
@@ -208,6 +227,9 @@ private fun SetRow(
                     NumberInputField(weightState)
                     Text(" kg x ")
                     NumberInputField(repState)
+                    if (oneRmLabel != null) {
+                        Text(oneRmLabel)
+                    }
                 }
             }
             Spacer(Modifier.weight(1f))
@@ -235,8 +257,15 @@ private fun SetRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics {
-                    contentDescription =
-                        "Set ${index + 1} in progress, ${set.weight.kilograms} kg by ${set.reps}. Double tap to mark complete."
+                    contentDescription = buildString {
+                        append(
+                            "Set ${index + 1} in progress, ${set.weight.kilograms} kg by ${set.reps}"
+                        )
+                        if (oneRmLabel != null) {
+                            append(", $oneRmLabel")
+                        }
+                        append(". Double tap to mark complete.")
+                    }
                 },
             shape = RoundedCornerShape(8.dp),
             color = MaterialTheme.colorScheme.tertiaryContainer,

@@ -36,6 +36,9 @@ value class Weight(private val value: Int) {
     val kilograms: String
         get() = (value / 10).toString()
 
+    val kilogramsValue: Float
+        get() = value / 10f
+
     companion object {
 
         fun kilograms(value: Int): Weight = Weight(value * 10)
@@ -52,12 +55,26 @@ enum class SetState {
     Completed,
 }
 
+/** Brzycki when reps &lt; 10, otherwise Epley. */
+fun estimateOneRmKg(weightKg: Float, reps: Int): Float = if (reps < 10) {
+    weightKg * 36f / (37 - reps)
+} else {
+    weightKg * (1 + reps / 30f)
+}
+
 data class ExerciseSet(
     val exerciseDefinition: ExerciseDefinition,
     val weight: Weight,
     val reps: Int,
     val setState: SetState,
-)
+) {
+    val oneRm: Float?
+        get() {
+            val kg = weight.kilogramsValue
+            if (kg <= 0f || reps <= 0) return null
+            return estimateOneRmKg(kg, reps)
+        }
+}
 
 data class WorkoutExercise(
     val exerciseDefinition: ExerciseDefinition,
