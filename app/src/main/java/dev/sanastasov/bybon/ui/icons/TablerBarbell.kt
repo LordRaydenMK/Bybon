@@ -30,9 +30,9 @@ import androidx.compose.ui.unit.dp
 
 val TablerBarbell: ImageVector
     get() {
-        if (_TablerBarbell != null) return _TablerBarbell!!
+        if (cachedTablerBarbell != null) return cachedTablerBarbell!!
 
-        _TablerBarbell = ImageVector.Builder(
+        cachedTablerBarbell = ImageVector.Builder(
             name = "barbell",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
@@ -87,7 +87,7 @@ val TablerBarbell: ImageVector
             }
         }.build()
 
-        return _TablerBarbell!!
+        return cachedTablerBarbell!!
     }
 
-private var _TablerBarbell: ImageVector? = null
+private var cachedTablerBarbell: ImageVector? = null

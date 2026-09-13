@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package dev.sanastasov.bybon.strong
 
 import dev.sanastasov.bybon.workout.domain.Equipment
@@ -172,6 +174,7 @@ private const val PLAN_MATCH_THRESHOLD = 0.70
 private fun combinedPlanScore(nameScore: Double, exerciseScore: Double): Double =
     0.55 * nameScore + 0.45 * exerciseScore
 
+@Suppress("ReturnCount")
 private fun nameSimilarity(left: String, right: String): Double {
     val a = left.normalizedPlanName()
     val b = right.normalizedPlanName()
@@ -181,6 +184,7 @@ private fun nameSimilarity(left: String, right: String): Double {
     return 1.0 - levenshtein(a, b).toDouble() / max(a.length, b.length)
 }
 
+@Suppress("ReturnCount")
 private fun exerciseSimilarity(left: List<String>, right: List<String>): Double {
     if (left.isEmpty() && right.isEmpty()) return 1.0
     if (left.isEmpty() || right.isEmpty()) return 0.0
@@ -228,6 +232,7 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
     )
 }
 
+@Suppress("ReturnCount")
 private fun resolveExercise(
     strongName: String,
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,

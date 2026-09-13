@@ -3,8 +3,18 @@ naming:
     ignoreAnnotated:
       - Composable
 
+style:
+  MagicNumber:
+    active: false
+  MaxLineLength:
+    maxLineLength: 120
+
 ktlint:
   code_style: android_studio
+  Filename:
+    excludes: ['**/model.kt']
+  MaximumLineLength:
+    maxLineLength: 120
   TrailingCommaOnCallSite:
     useTrailingCommaOnCallSite: true
   TrailingCommaOnDeclarationSite:

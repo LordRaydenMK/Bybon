@@ -8,6 +8,8 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import java.io.IOException
+import java.time.DateTimeException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -59,11 +61,24 @@ class WorkoutHistoryViewModel(
                 }
                 repository.importHistory(result.plans, result.sessionHistory)
                 importPhase.value = ImportPhase.Summary(result.toSummaryUi())
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                importPhase.value = ImportPhase.Idle
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: IOException) {
+                resetImport()
+            } catch (_: SecurityException) {
+                resetImport()
+            } catch (_: IllegalArgumentException) {
+                resetImport()
+            } catch (_: IllegalStateException) {
+                resetImport()
+            } catch (_: DateTimeException) {
+                resetImport()
             }
         }
+    }
+
+    private fun resetImport() {
+        importPhase.value = ImportPhase.Idle
     }
 
     private fun List<WorkoutSession>.toUiState(): WorkoutHistoryUiState {

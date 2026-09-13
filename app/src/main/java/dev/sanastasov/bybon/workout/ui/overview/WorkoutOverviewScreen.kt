@@ -145,8 +145,11 @@ private fun OverviewExerciseCard(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val title =
+                "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
+                    "in ${exercise.repRange.first} - ${exercise.repRange.last}"
             Text(
-                "${exercise.sets.size} x ${exercise.exerciseDefinition.name} in ${exercise.repRange.first} - ${exercise.repRange.last}",
+                title,
                 Modifier.weight(1f),
                 fontWeight = FontWeight.Bold,
             )

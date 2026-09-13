@@ -1,5 +1,4 @@
 import dev.detekt.gradle.Detekt
-import dev.detekt.gradle.DetektCreateBaselineTask
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.powerassert.gradle.PowerAssertCompilationFilter
 import java.util.Properties
@@ -85,17 +84,10 @@ detekt {
     buildUponDefaultConfig = true
     parallel = true
     config.setFrom(rootProject.file("config/detekt/detekt.yml"))
-    baseline = file("${rootProject.projectDir}/config/detekt/baseline.xml")
     basePath.set(rootProject.projectDir)
 }
 
 tasks.withType<Detekt>().configureEach {
-    jvmTarget.set("21")
-    exclude("**/build/**")
-    exclude("**/generated/**")
-}
-
-tasks.withType<DetektCreateBaselineTask>().configureEach {
     jvmTarget.set("21")
     exclude("**/build/**")
     exclude("**/generated/**")

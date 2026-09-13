@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package dev.sanastasov.bybon.workout.domain
 
 import java.time.LocalDateTime
@@ -178,6 +180,7 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
         )
     }
 
+@Suppress("ReturnCount")
 fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
     val hadInProgress = workoutSets.any { it.setState == SetState.InProgress }
     val updated = updateExercise(exercise.id) { exercise ->
@@ -221,6 +224,7 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     },
 )
 
+@Suppress("ReturnCount")
 fun WorkoutSession.startWorkout(): WorkoutSession {
     val firstExercise = exercises.firstOrNull() ?: return this
     if (firstExercise.sets.isEmpty()) return this
@@ -238,6 +242,7 @@ private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
     return copy(sets = sets.map { it.adjust(repRange, increment, increase) })
 }
 
+@Suppress("ReturnCount")
 internal fun ExerciseSet.adjust(
     repRange: IntRange,
     increment: Weight,
