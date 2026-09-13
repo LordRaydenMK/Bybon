@@ -103,8 +103,11 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Spacer(Modifier.height(8.dp))
+        val title =
+            "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
+                "in ${exercise.repRange.first} - ${exercise.repRange.last}"
         Text(
-            "${exercise.sets.size} x ${exercise.exerciseDefinition.name} in ${exercise.repRange.first} - ${exercise.repRange.last}",
+            title,
             fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(4.dp))

@@ -27,10 +27,6 @@ import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 
 @Composable
-fun WorkoutPlansScreen() {
-}
-
-@Composable
 fun WorkoutsTab(
     plans: List<WorkoutPlanUi>,
     onAction: (WorkoutPlansAction) -> Unit,
@@ -89,9 +85,10 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (Worko
             }
 
             plan.sets.forEach { planedSet ->
-                Text(
-                    "${planedSet.sets} x ${planedSet.exercise.name} - ${planedSet.repRange.first} to ${planedSet.repRange.last} reps",
-                )
+                val summary =
+                    "${planedSet.sets} x ${planedSet.exercise.name} - " +
+                        "${planedSet.repRange.first} to ${planedSet.repRange.last} reps"
+                Text(summary)
             }
 
             TextButton(
