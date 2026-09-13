@@ -8,7 +8,7 @@ suspend fun WorkoutsRepository.updateWorkout(
     update: (WorkoutSession) -> WorkoutSession
 ) {
     val session = workoutSessions().map { allSessions ->
-        allSessions.first { it.planId == planId }
+        allSessions.first { it.planId == planId && it.state !is WorkoutState.Completed }
     }.first()
     val updated = update(session)
     updateWorkout(updated)

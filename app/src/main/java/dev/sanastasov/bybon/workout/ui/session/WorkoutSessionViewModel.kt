@@ -1,10 +1,12 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.completeSet
@@ -26,18 +28,26 @@ class WorkoutSessionViewModel(
     val coroutineScope: CoroutineScope,
 ) {
     val uiState: StateFlow<WorkoutSession?> =
-        repository.workoutSessions().map { it.first() }
+        repository.workoutSessions()
+            .map { sessions ->
+                sessions.firstOrNull { session ->
+                    session.planId == planId && session.state !is WorkoutState.Completed
+                }
+            }
             .distinctUntilChanged()
             .stateInWhileInForeground(coroutineScope, null)
 
     init {
         coroutineScope.launch {
-            val planFlow = repository.workoutPlans()
-                .map { plans -> plans.first { it.id == planId } }
-            val session = repository.workoutSessions()
-                .first()
-                .firstOrNull() ?: planFlow.first().toWorkoutSession()
-            repository.updateWorkout(session)
+            val sessions = repository.workoutSessions().first()
+            val inProgress = sessions.firstOrNull { session ->
+                session.planId == planId &&
+                        session.workoutSets.any { it.setState == SetState.InProgress }
+            }
+            if (inProgress == null) {
+                val plan = repository.workoutPlans().first().first { it.id == planId }
+                repository.updateWorkout(plan.toWorkoutSession())
+            }
         }
     }
 
