@@ -3,6 +3,8 @@ package dev.sanastasov.bybon.workout.domain
 import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 
 class WorkoutSessionTest {
@@ -417,6 +419,36 @@ class WorkoutSessionTest {
         assert(bench.numberedWorkSets.map { it.workSetNumber } == listOf(1, 2, 3))
         assert(legCurl.numberedWarmupSets == null)
         assert(legCurl.numberedWorkSets.size == legCurl.sets.size)
+    }
+
+    @Test
+    fun `default rest is 2 minutes for compounds, 1 for isolation, 1_5 otherwise`() {
+        assert(exercisesMap.getValue("bench-press-bb").defaultRest == 2.minutes)
+        assert(exercisesMap.getValue("squat-bb").defaultRest == 2.minutes)
+        assert(exercisesMap.getValue("rdl-bb").defaultRest == 2.minutes)
+        assert(exercisesMap.getValue("skullcrusher-db").defaultRest == 1.minutes)
+        assert(exercisesMap.getValue("incline-curl-db").defaultRest == 1.minutes)
+        assert(exercisesMap.getValue("leg-curl").defaultRest == 90.seconds)
+        assert(exercisesMap.getValue("leg-extension").defaultRest == 90.seconds)
+        assert(2.minutes.formatRestClock() == "2:00")
+        assert(90.seconds.formatRestClock() == "1:30")
+        assert(1.minutes.formatRestClock() == "1:00")
+    }
+
+    @Test
+    fun `toWorkoutSession copies plan rest onto each exercise`() {
+        val session = fullBodyA.toWorkoutSession()
+
+        assert(
+            session.exercises.map { it.id to it.restAfterWorkSet } == listOf(
+                "bench-press-bb" to 2.minutes,
+                "squat-bb" to 2.minutes,
+                "pullup-assisted" to 2.minutes,
+                "leg-curl" to 90.seconds,
+                "upright-row-db" to 1.minutes,
+                "skullcrusher-db" to 1.minutes,
+            ),
+        )
     }
 }
 

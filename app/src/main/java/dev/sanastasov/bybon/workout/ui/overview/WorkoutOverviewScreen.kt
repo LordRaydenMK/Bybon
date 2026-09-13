@@ -44,6 +44,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
+import dev.sanastasov.bybon.workout.ui.RestTimerRow
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 import dev.sanastasov.bybon.workout.ui.oneRmLabel
 import dev.sanastasov.bybon.workout.ui.overviewContentDescription
@@ -187,6 +188,7 @@ private fun OverviewWorkSets(
                 null
             },
         )
+        RestTimerRow(exercise.restAfterWorkSet)
     }
 }
 

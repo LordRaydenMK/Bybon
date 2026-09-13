@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
+import kotlin.time.Duration
 import kotlinx.serialization.Serializable
 
 @JvmInline
@@ -13,6 +14,7 @@ data class PlanedExercise(
     val warmupSets: Int = 0,
     val sets: Int,
     val repRange: IntRange,
+    val restAfterWorkSet: Duration = exercise.defaultRest,
 ) {
     init {
         require(warmupSets >= 0) { "warmupSets must be >= 0" }

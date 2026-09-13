@@ -5,10 +5,12 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -163,6 +165,30 @@ class WorkoutOverviewViewModelTest {
             assert(reset.exercises.first().sets.first().weight == Weight.kilograms(40))
             assert(reset.exercises.first().sets.first().reps == 9)
             assert(reset.exercises == draft.exercises)
+        }
+    }
+
+    @Test
+    fun `overview session exposes rest timers on work sets only`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+            assert(draft.exercises.first().restAfterWorkSet == 2.minutes)
+            assert(draft.exercises.first().restAfterWorkSet.formatRestClock() == "2:00")
+            assert(
+                draft.exercises.first { it.id == "leg-curl" }.restAfterWorkSet.formatRestClock() ==
+                    "1:30",
+            )
+            assert(
+                draft.exercises.first {
+                    it.id == "skullcrusher-db"
+                }.restAfterWorkSet.formatRestClock() ==
+                    "1:00",
+            )
+            assert(draft.exercises.first().warmupSets != null)
         }
     }
 }

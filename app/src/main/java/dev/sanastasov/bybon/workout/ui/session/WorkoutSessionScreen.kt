@@ -43,6 +43,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.ui.RestTimerRow
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 import dev.sanastasov.bybon.workout.ui.completedContentDescription
 import dev.sanastasov.bybon.workout.ui.oneRmLabel
@@ -152,6 +153,7 @@ private fun SessionWorkSets(exercise: WorkoutExercise, onAction: (WorkoutSession
             },
             onAction = onAction,
         )
+        RestTimerRow(exercise.restAfterWorkSet)
     }
 }
 

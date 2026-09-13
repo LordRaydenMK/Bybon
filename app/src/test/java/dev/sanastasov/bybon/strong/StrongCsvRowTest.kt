@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlin.test.assertFailsWith
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 
 class StrongCsvRowTest {
@@ -88,6 +89,23 @@ class StrongCsvRowTest {
             ),
         )
         assert(firstRdl.sets.size == 3)
+        assert(firstRdl.restAfterWorkSet == 120.seconds)
+        val firstFullBodyA = result.sessionHistory.first { it.planId == fullBodyA.id }
+        assert(
+            firstFullBodyA.exercises.first { it.id == "bench-press-bb" }.restAfterWorkSet ==
+                120.seconds,
+        )
+        assert(
+            firstFullBodyA.exercises.first { it.id == "leg-curl" }.restAfterWorkSet == 90.seconds,
+        )
+        assert(
+            firstFullBodyA.exercises.first { it.id == "skullcrusher-db" }.restAfterWorkSet ==
+                60.seconds,
+        )
+        val crunch = result.sessionHistory
+            .flatMap { it.exercises }
+            .first { it.id == "crunch-machine" }
+        assert(crunch.restAfterWorkSet == 120.seconds)
     }
 
     @Test
