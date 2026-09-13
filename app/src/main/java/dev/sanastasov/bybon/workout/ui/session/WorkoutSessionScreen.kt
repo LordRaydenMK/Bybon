@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
@@ -86,27 +87,11 @@ private fun SessionScreenContent(
             val pagerState = rememberPagerState(0) {
                 state.exercises.size
             }
-            HorizontalPager(pagerState) {
+            HorizontalPager(pagerState) { page ->
                 Card {
-                    val exercise = state.exercises.elementAt(pagerState.currentPage)
                     ExerciseCard(
-                        exercise,
-                        { exercise, index ->
-                            onAction(
-                                WorkoutSessionAction.OnCompleteSet(
-                                    exercise,
-                                    index
-                                )
-                            )
-                        },
-                        { weight, exercise, index ->
-                            onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
-                        },
-                        { reps, exercise, index ->
-                            onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
-                        },
-                        { onAction(WorkoutSessionAction.OnAddSet(it)) },
-                        { onAction(WorkoutSessionAction.RemoveLastSet(it)) }
+                        exercise = state.exercises[page],
+                        onAction = onAction,
                     )
                 }
             }
@@ -120,11 +105,7 @@ private fun SessionScreenContent(
 @Composable
 private fun ExerciseCard(
     exercise: WorkoutExercise,
-    onCompleteSet: (WorkoutExercise, Int) -> Unit,
-    onWeightChanged: (String, WorkoutExercise, Int) -> Unit,
-    onRepChanged: (String, WorkoutExercise, Int) -> Unit,
-    onAddSet: (WorkoutExercise) -> Unit,
-    onRemoveSet: (WorkoutExercise) -> Unit,
+    onAction: (WorkoutSessionAction) -> Unit,
 ) {
     Column(
         Modifier
@@ -139,118 +120,38 @@ private fun ExerciseCard(
         )
         Spacer(Modifier.height(4.dp))
 
-        exercise.sets.forEachIndexed { index, (definition, weight, reps, state) ->
-            val weightStr = remember(exercise) { weight.kilograms }
-            val weightState = rememberSaveable(exercise, saver = TextFieldState.Saver) {
-                TextFieldState(weightStr)
+        exercise.sets.forEachIndexed { index, set ->
+            val weightState = rememberSyncedTextField(
+                key = exercise,
+                initialText = remember(exercise) { set.weight.kilograms },
+            ) { weight ->
+                onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
             }
-            LaunchedEffect(weightState, exercise) {
-                snapshotFlow { weightState.text.toString() }
-                    .drop(1)
-                    .collectLatest { onWeightChanged(it, exercise, index) }
-            }
-
-            val repStr = remember(exercise) { reps.toString() }
-            val repState = rememberSaveable(exercise, saver = TextFieldState.Saver) {
-                TextFieldState(repStr)
-            }
-            LaunchedEffect(repState, exercise, index) {
-                snapshotFlow { repState.text.toString() }
-                    .drop(1)
-                    .collectLatest { onRepChanged(it, exercise, index) }
+            val repState = rememberSyncedTextField(
+                key = exercise,
+                initialText = remember(exercise) { set.reps.toString() },
+            ) { reps ->
+                onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
             }
 
-            val setRow: @Composable () -> Unit = {
-                Row(
-                    Modifier
-                        .defaultMinSize(minHeight = 48.dp)
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    when (state) {
-                        SetState.Completed -> Text("${index + 1}. ${weight.kilograms} kg x $reps")
-                        SetState.InProgress -> {
-                            val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    "${index + 1}.",
-                                    color = labelColor,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                                NumberInputField(weightState)
-                                Text(
-                                    " kg x ",
-                                    color = labelColor,
-                                    fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelLarge
-                                )
-                                NumberInputField(repState)
-                            }
-                        }
+            SetRow(
+                exercise = exercise,
+                index = index,
+                set = set,
+                weightState = weightState,
+                repState = repState,
+                onAction = onAction,
+            )
+        }
 
-                        SetState.NotStated -> Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text("${index + 1}.")
-                            NumberInputField(weightState)
-                            Text(" kg x ")
-                            NumberInputField(repState)
-                        }
-                    }
-                    Spacer(Modifier.weight(1f))
-                    when (state) {
-                        SetState.InProgress -> Checkbox(
-                            false,
-                            { onCompleteSet(exercise, index) },
-                            Modifier.clearAndSetSemantics { }
-                        )
-
-                        SetState.Completed -> Checkbox(
-                            true,
-                            null,
-                            Modifier.padding(horizontal = 10.dp)
-                        )
-
-                        SetState.NotStated -> Unit
-                    }
-                }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton({ onAction(WorkoutSessionAction.OnAddSet(exercise)) }) {
+                Text("Add set")
             }
 
-            if (state == SetState.InProgress) {
-                Surface(
-                    onClick = { onCompleteSet(exercise, index) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .semantics {
-                            contentDescription =
-                                "Set ${index + 1} in progress, ${weight.kilograms} kg by $reps. Double tap to mark complete."
-                        },
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.tertiaryContainer,
-                ) {
-                    setRow()
-                }
-            } else {
-                setRow()
-            }
-
-            if (index == exercise.sets.lastIndex) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton({ onAddSet(exercise) }) {
-                        Text("Add set")
-                    }
-
-                    if (exercise.canRemoveSet) {
-                        TextButton({ onRemoveSet(exercise) }) {
-                            Text("Remove last set")
-                        }
-                    }
+            if (exercise.canRemoveSet) {
+                TextButton({ onAction(WorkoutSessionAction.RemoveLastSet(exercise)) }) {
+                    Text("Remove last set")
                 }
             }
         }
@@ -258,9 +159,116 @@ private fun ExerciseCard(
 }
 
 @Composable
-private fun NumberInputField(weightState: TextFieldState) {
+private fun SetRow(
+    exercise: WorkoutExercise,
+    index: Int,
+    set: ExerciseSet,
+    weightState: TextFieldState,
+    repState: TextFieldState,
+    onAction: (WorkoutSessionAction) -> Unit,
+) {
+    val content: @Composable () -> Unit = {
+        Row(
+            Modifier
+                .defaultMinSize(minHeight = 48.dp)
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            when (set.setState) {
+                SetState.Completed -> Text("${index + 1}. ${set.weight.kilograms} kg x ${set.reps}")
+                SetState.InProgress -> {
+                    val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            "${index + 1}.",
+                            color = labelColor,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        NumberInputField(weightState)
+                        Text(
+                            " kg x ",
+                            color = labelColor,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        NumberInputField(repState)
+                    }
+                }
+
+                SetState.NotStated -> Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text("${index + 1}.")
+                    NumberInputField(weightState)
+                    Text(" kg x ")
+                    NumberInputField(repState)
+                }
+            }
+            Spacer(Modifier.weight(1f))
+            when (set.setState) {
+                SetState.InProgress -> Checkbox(
+                    false,
+                    { onAction(WorkoutSessionAction.OnCompleteSet(exercise, index)) },
+                    Modifier.clearAndSetSemantics { }
+                )
+
+                SetState.Completed -> Checkbox(
+                    true,
+                    null,
+                    Modifier.padding(horizontal = 10.dp)
+                )
+
+                SetState.NotStated -> Unit
+            }
+        }
+    }
+
+    if (set.setState == SetState.InProgress) {
+        Surface(
+            onClick = { onAction(WorkoutSessionAction.OnCompleteSet(exercise, index)) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    contentDescription =
+                        "Set ${index + 1} in progress, ${set.weight.kilograms} kg by ${set.reps}. Double tap to mark complete."
+                },
+            shape = RoundedCornerShape(8.dp),
+            color = MaterialTheme.colorScheme.tertiaryContainer,
+        ) {
+            content()
+        }
+    } else {
+        content()
+    }
+}
+
+@Composable
+private fun rememberSyncedTextField(
+    key: Any?,
+    initialText: String,
+    onTextChanged: (String) -> Unit,
+): TextFieldState {
+    val state = rememberSaveable(key, saver = TextFieldState.Saver) {
+        TextFieldState(initialText)
+    }
+    LaunchedEffect(state, key) {
+        snapshotFlow { state.text.toString() }
+            .drop(1)
+            .collectLatest(onTextChanged)
+    }
+    return state
+}
+
+@Composable
+private fun NumberInputField(state: TextFieldState) {
     TextField(
-        weightState,
+        state,
         Modifier.width(56.dp),
         textStyle = MaterialTheme.typography.labelLarge,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -279,6 +287,6 @@ private fun SessionScreenContentPage1CompletedExercisePreview() {
 
 @Preview
 @Composable
-private fun SessionScreenContentPage4Preview() {
+private fun SessionScreenContentInitialPreview() {
     SessionScreenContent(fullBodyA.toWorkoutSession(), {})
 }
