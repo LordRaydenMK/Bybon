@@ -65,7 +65,6 @@
     <ID>MaxLineLength:WorkoutPlansScreen.kt:"${planedSet.sets} x ${planedSet.exercise.name} - ${planedSet.repRange.first} to ${planedSet.repRange.last} reps"</ID>
     <ID>MaxLineLength:WorkoutSessionScreen.kt:"${exercise.sets.size} x ${exercise.exerciseDefinition.name} in ${exercise.repRange.first} - ${exercise.repRange.last}"</ID>
     <ID>MaximumLineLength:StrongCsvMapper.kt:Core</ID>
-    <ID>MaximumLineLength:WorkoutOverviewScreen.kt:"</ID>
     <ID>MaximumLineLength:WorkoutOverviewScreen.kt:,</ID>
     <ID>MaximumLineLength:WorkoutSessionTest.kt:WorkoutSessionTest${</ID>
     <ID>ReturnCount:StrongCsvMapper.kt:private fun exerciseSimilarity: Double</ID>
