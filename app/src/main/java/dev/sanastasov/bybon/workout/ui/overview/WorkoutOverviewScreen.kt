@@ -100,8 +100,10 @@ private fun OverviewScreenContent(
                 AdjustButtons(
                     onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseWorkout) },
                     onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseWorkout) },
+                    onReset = { onAction(WorkoutOverviewAction.OnResetWorkout) },
                     decreaseContentDescription = "Decrease weight and reps for all exercises",
                     increaseContentDescription = "Increase weight and reps for all exercises",
+                    resetContentDescription = "Reset all exercises to previous session",
                 )
             }
 
@@ -153,8 +155,10 @@ private fun OverviewExerciseCard(
             AdjustButtons(
                 onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseExercise(exercise)) },
                 onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseExercise(exercise)) },
+                onReset = { onAction(WorkoutOverviewAction.OnResetExercise(exercise)) },
                 decreaseContentDescription = "Decrease weight and reps for ${exercise.exerciseDefinition.name}",
                 increaseContentDescription = "Increase weight and reps for ${exercise.exerciseDefinition.name}",
+                resetContentDescription = "Reset ${exercise.exerciseDefinition.name} to previous session",
             )
         }
         Spacer(Modifier.height(4.dp))
@@ -264,10 +268,18 @@ private fun OverviewSetRow(
 private fun AdjustButtons(
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
+    onReset: () -> Unit,
     decreaseContentDescription: String,
     increaseContentDescription: String,
+    resetContentDescription: String,
 ) {
-    Row {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        TextButton(
+            onReset,
+            Modifier.semantics { contentDescription = resetContentDescription },
+        ) {
+            Text("Reset")
+        }
         IconButton(
             onDecrease,
             Modifier.semantics { contentDescription = decreaseContentDescription },

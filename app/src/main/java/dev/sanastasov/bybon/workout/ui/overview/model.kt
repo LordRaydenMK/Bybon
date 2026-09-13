@@ -29,6 +29,10 @@ sealed class WorkoutOverviewAction {
     data class RemoveLastSet(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
+    data object OnResetWorkout : WorkoutOverviewAction()
+    data class OnResetExercise(
+        val exercise: WorkoutExercise,
+    ) : WorkoutOverviewAction()
     data object OnStartWorkout : WorkoutOverviewAction()
 }
 

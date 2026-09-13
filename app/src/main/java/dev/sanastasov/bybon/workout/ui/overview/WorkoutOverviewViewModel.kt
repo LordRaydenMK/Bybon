@@ -10,6 +10,8 @@ import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
+import dev.sanastasov.bybon.workout.domain.resetExercise
+import dev.sanastasov.bybon.workout.domain.resetTo
 import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.updateReps
@@ -51,7 +53,7 @@ class WorkoutOverviewViewModel(
             .distinctUntilChanged()
             .filterNotNull()
             .flatMapLatest { seed ->
-                actions.scan(seed, ::reduce)
+                actions.scan(seed) { session, action -> reduce(session, action, seed) }
             }
             .stateInWhileInForeground(coroutineScope, null)
 
@@ -71,32 +73,52 @@ class WorkoutOverviewViewModel(
         }
     }
 
-    private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
-        when (action) {
-            WorkoutOverviewAction.OnIncreaseWorkout -> session.adjustAll(increase = true)
+    private fun reduce(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+        seed: WorkoutSession,
+    ): WorkoutSession = reduceProgression(session, action, seed) ?: reduceEdits(session, action)
 
-            WorkoutOverviewAction.OnDecreaseWorkout -> session.adjustAll(increase = false)
+    private fun reduceProgression(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+        seed: WorkoutSession,
+    ): WorkoutSession? = when (action) {
+        WorkoutOverviewAction.OnIncreaseWorkout -> session.adjustAll(increase = true)
 
-            is WorkoutOverviewAction.OnIncreaseExercise ->
-                session.adjustExercise(action.exercise, increase = true)
+        WorkoutOverviewAction.OnDecreaseWorkout -> session.adjustAll(increase = false)
 
-            is WorkoutOverviewAction.OnDecreaseExercise ->
-                session.adjustExercise(action.exercise, increase = false)
+        is WorkoutOverviewAction.OnIncreaseExercise ->
+            session.adjustExercise(action.exercise, increase = true)
 
-            is WorkoutOverviewAction.OnWeightUpdated ->
-                action.newWeight.toFloatOrNull()?.let { weight ->
-                    session.updateWeight(action.exercise, action.index, Weight.kilograms(weight))
-                } ?: session
+        is WorkoutOverviewAction.OnDecreaseExercise ->
+            session.adjustExercise(action.exercise, increase = false)
 
-            is WorkoutOverviewAction.OnRepsUpdated ->
-                action.newReps.toIntOrNull()?.let { reps ->
-                    session.updateReps(action.exercise, action.index, reps)
-                } ?: session
+        WorkoutOverviewAction.OnResetWorkout -> session.resetTo(seed)
 
-            is WorkoutOverviewAction.OnAddSet -> session.addSet(action.exercise)
+        is WorkoutOverviewAction.OnResetExercise -> session.resetExercise(action.exercise, seed)
 
-            is WorkoutOverviewAction.RemoveLastSet -> session.removeLastSet(action.exercise)
+        else -> null
+    }
 
-            WorkoutOverviewAction.OnStartWorkout -> session
-        }
+    private fun reduceEdits(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+    ): WorkoutSession = when (action) {
+        is WorkoutOverviewAction.OnWeightUpdated ->
+            action.newWeight.toFloatOrNull()?.let { weight ->
+                session.updateWeight(action.exercise, action.index, Weight.kilograms(weight))
+            } ?: session
+
+        is WorkoutOverviewAction.OnRepsUpdated ->
+            action.newReps.toIntOrNull()?.let { reps ->
+                session.updateReps(action.exercise, action.index, reps)
+            } ?: session
+
+        is WorkoutOverviewAction.OnAddSet -> session.addSet(action.exercise)
+
+        is WorkoutOverviewAction.RemoveLastSet -> session.removeLastSet(action.exercise)
+
+        else -> session
+    }
 }

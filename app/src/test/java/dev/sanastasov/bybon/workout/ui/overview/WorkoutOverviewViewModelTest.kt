@@ -32,6 +32,11 @@ class WorkoutOverviewViewModelTest {
                 increased.exercises.first().sets.first().oneRm!! >
                     draft.exercises.first().sets.first().oneRm!!,
             )
+            assert(
+                increased.exercises.first().sets.all {
+                    it.weight == increased.exercises.first().sets.first().weight
+                },
+            )
 
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
             assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
@@ -41,6 +46,34 @@ class WorkoutOverviewViewModelTest {
                 saved.exercises.first().sets.first().reps ==
                     increased.exercises.first().sets.first().reps,
             )
+        }
+    }
+
+    @Test
+    fun `reset restores previous session values at workout and exercise level`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+
+            viewModel.onAction(WorkoutOverviewAction.OnIncreaseWorkout)
+            awaitItem()
+            viewModel.onAction(WorkoutOverviewAction.OnResetWorkout)
+            val workoutReset = awaitItem()!!
+            assert(workoutReset.exercises == draft.exercises)
+
+            viewModel.onAction(WorkoutOverviewAction.OnIncreaseExercise(draft.exercises.first()))
+            val exerciseIncreased = awaitItem()!!
+            assert(exerciseIncreased.exercises.first() != draft.exercises.first())
+            assert(exerciseIncreased.exercises.drop(1) == draft.exercises.drop(1))
+
+            viewModel.onAction(
+                WorkoutOverviewAction.OnResetExercise(exerciseIncreased.exercises.first()),
+            )
+            val exerciseReset = awaitItem()!!
+            assert(exerciseReset.exercises == draft.exercises)
         }
     }
 }
