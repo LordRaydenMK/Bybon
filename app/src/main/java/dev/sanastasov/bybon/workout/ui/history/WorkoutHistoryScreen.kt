@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package dev.sanastasov.bybon.workout.ui.history
 
 import androidx.activity.compose.rememberLauncherForActivityResult

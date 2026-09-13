@@ -94,6 +94,7 @@ fun MainModule.MainScreen(
     )
 }
 
+@Suppress("LongMethod")
 @Composable
 private fun MainScreenContent(
     selectedIndex: Int,

@@ -150,6 +150,7 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
     }
 }
 
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 private fun SetRow(
     exercise: WorkoutExercise,

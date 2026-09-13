@@ -37,6 +37,7 @@ class WorkoutHistoryViewModelTest {
         }
     }
 
+    @Suppress("LongMethod")
     @Test
     fun `completed sessions are shown newest first with top set performance`() = runTest {
         val older = completedSession(
