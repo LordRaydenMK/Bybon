@@ -18,6 +18,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyB
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.max
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private val strongDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -97,8 +98,8 @@ fun List<StrongCsvRow>.toStrongImport(
 private data class ParsedWorkout(
     val workoutNumber: Int,
     val planName: String,
-    val date: String,
-    val durationSec: Int,
+    val startedAt: LocalDateTime,
+    val duration: Duration,
     val workoutNotes: String?,
     val exercises: List<WorkoutExercise>,
 ) {
@@ -119,8 +120,8 @@ private fun List<StrongCsvRow>.toParsedWorkout(
     return ParsedWorkout(
         workoutNumber = first.workoutNumber,
         planName = first.workoutName.trim(),
-        date = first.date,
-        durationSec = first.durationSec,
+        startedAt = LocalDateTime.parse(first.date, strongDateTime),
+        duration = first.durationSec.seconds,
         workoutNotes = first.workoutNotes,
         exercises = groupByExerciseOrder().map { exerciseRows ->
             exerciseRows.toWorkoutExercise(exercisesByNormalizedName, exercisesById)
@@ -135,8 +136,8 @@ private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession =
         planDescription = workoutNotes ?: plan.description,
         exercises = exercises,
         state = WorkoutState.Completed(
-            startedAt = LocalDateTime.parse(date, strongDateTime),
-            duration = durationSec.seconds,
+            startedAt = startedAt,
+            duration = duration,
         ),
     )
 

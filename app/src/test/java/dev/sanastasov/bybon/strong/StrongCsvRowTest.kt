@@ -9,8 +9,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StrongCsvRowTest {
@@ -49,57 +47,59 @@ class StrongCsvRowTest {
     fun `reads strong backup sample into dto rows`() {
         val rows = StrongCsvParser.readSample(javaClass.classLoader)
 
-        assertEquals(2053, rows.size)
+        assert(rows.size == 2053)
     }
 
     @Test
     fun `imports completed session history from the strong backup sample`() {
         val result = StrongCsvParser.readSample(javaClass.classLoader).toStrongImport()
 
-        assertEquals(52, result.sessionHistory.size)
-        assertTrue(result.sessionHistory.all { it.state is WorkoutState.Completed })
-        assertEquals(
-            setOf(fullBodyA.id, fullBodyB.id, WorkoutPlanId("upper-body-a"), WorkoutPlanId("upper-body-b")),
-            result.sessionHistory.map { it.planId }.toSet(),
+        assert(result.sessionHistory.size == 52)
+        assert(result.sessionHistory.all { it.state is WorkoutState.Completed })
+        assert(
+            result.sessionHistory.map { it.planId }.toSet() == setOf(
+                fullBodyA.id,
+                fullBodyB.id,
+                WorkoutPlanId("upper-body-a"),
+                WorkoutPlanId("upper-body-b"),
+            )
         )
-        assertEquals(
-            23,
-            result.sessionHistory.count { it.planId == fullBodyA.id },
-        )
-        assertEquals(
-            23,
-            result.sessionHistory.count { it.planId == fullBodyB.id },
-        )
+        assert(result.sessionHistory.count { it.planId == fullBodyA.id } == 23)
+        assert(result.sessionHistory.count { it.planId == fullBodyB.id } == 23)
     }
 
     @Test
     fun `imports only exercises that do not already exist in Bybon`() {
         val result = StrongCsvParser.readSample(javaClass.classLoader).toStrongImport()
 
-        assertEquals(listOf("Crunch (Machine)"), result.exercises.map { it.name })
-        assertEquals("crunch-machine", result.exercises.single().id)
-        assertEquals(MuscleGroup.Core, result.exercises.single().primaryMuscleGroup)
-        assertEquals(Equipment.Machine, result.exercises.single().equipment)
+        assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
+        assert(result.exercises.single().id == "crunch-machine")
+        assert(result.exercises.single().primaryMuscleGroup == MuscleGroup.Core)
+        assert(result.exercises.single().equipment == Equipment.Machine)
     }
 
     @Test
     fun `imports only plans that do not match existing Bybon plans`() {
         val result = StrongCsvParser.readSample(javaClass.classLoader).toStrongImport()
 
-        assertEquals(listOf("Upper body A", "Upper body B"), result.plans.map { it.name })
-        assertEquals(
-            listOf("bench-press-bb", "pullup-assisted", "upright-row-db", "skullcrusher-db", "crunch-machine"),
-            result.plans.first { it.name == "Upper body A" }.sets.map { it.exercise.id },
+        assert(result.plans.map { it.name } == listOf("Upper body A", "Upper body B"))
+        assert(
+            result.plans.first { it.name == "Upper body A" }.sets.map { it.exercise.id } == listOf(
+                "bench-press-bb",
+                "pullup-assisted",
+                "upright-row-db",
+                "skullcrusher-db",
+                "crunch-machine",
+            )
         )
-        assertEquals(
-            listOf(
+        assert(
+            result.plans.first { it.name == "Upper body B" }.sets.map { it.exercise.id } == listOf(
                 "incline-bench-press-db",
                 "incline-row-db",
                 "lateral-raise-db",
                 "incline-curl-db",
                 "crunch-machine",
-            ),
-            result.plans.first { it.name == "Upper body B" }.sets.map { it.exercise.id },
+            )
         )
     }
 
@@ -113,8 +113,8 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
 
-        assertEquals(emptyList<ExerciseDefinition>(), result.exercises)
-        assertEquals(listOf("bench-press-bb", "squat-bb"), result.sessionHistory.single().exercises.map { it.id })
+        assert(result.exercises == emptyList<ExerciseDefinition>())
+        assert(result.sessionHistory.single().exercises.map { it.id } == listOf("bench-press-bb", "squat-bb"))
     }
 
     @Test
@@ -127,8 +127,8 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
 
-        assertEquals(listOf("Crunch (Machine)"), result.exercises.map { it.name })
-        assertEquals("crunch-machine", result.sessionHistory.single().exercises.last().id)
+        assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
+        assert(result.sessionHistory.single().exercises.last().id == "crunch-machine")
     }
 
     @Test
@@ -141,9 +141,9 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
 
-        assertEquals(emptyList<WorkoutPlan>(), result.plans)
-        assertEquals(fullBodyPlan.id, result.sessionHistory.single().planId)
-        assertEquals(fullBodyPlan.name, result.sessionHistory.single().planName)
+        assert(result.plans == emptyList<WorkoutPlan>())
+        assert(result.sessionHistory.single().planId == fullBodyPlan.id)
+        assert(result.sessionHistory.single().planName == fullBodyPlan.name)
     }
 
     @Test
@@ -156,8 +156,8 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
 
-        assertEquals(emptyList<WorkoutPlan>(), result.plans)
-        assertEquals(fullBodyPlan.id, result.sessionHistory.single().planId)
+        assert(result.plans == emptyList<WorkoutPlan>())
+        assert(result.sessionHistory.single().planId == fullBodyPlan.id)
     }
 
     @Test
@@ -170,9 +170,9 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
 
-        assertEquals(emptyList<WorkoutPlan>(), result.plans)
-        assertEquals(fullBodyPlan.id, result.sessionHistory.single().planId)
-        assertEquals(listOf("Crunch (Machine)"), result.exercises.map { it.name })
+        assert(result.plans == emptyList<WorkoutPlan>())
+        assert(result.sessionHistory.single().planId == fullBodyPlan.id)
+        assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
     }
 
     @Test
@@ -185,13 +185,12 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
 
-        assertEquals(listOf("Upper body A"), result.plans.map { it.name })
-        assertEquals(WorkoutPlanId("upper-body-a"), result.sessionHistory.single().planId)
-        assertEquals(
-            listOf("bench-press-bb", "crunch-machine"),
-            result.plans.single().sets.map { it.exercise.id },
+        assert(result.plans.map { it.name } == listOf("Upper body A"))
+        assert(result.sessionHistory.single().planId == WorkoutPlanId("upper-body-a"))
+        assert(
+            result.plans.single().sets.map { it.exercise.id } == listOf("bench-press-bb", "crunch-machine")
         )
-        assertEquals(listOf(3, 3), result.plans.single().sets.map { it.sets })
+        assert(result.plans.single().sets.map { it.sets } == listOf(3, 3))
     }
 
     @Test
@@ -218,8 +217,8 @@ class StrongCsvRowTest {
             exerciseCatalog = catalog,
         )
 
-        assertEquals(listOf("Full body A"), result.plans.map { it.name })
-        assertEquals(WorkoutPlanId("full-body-a"), result.sessionHistory.single().planId)
+        assert(result.plans.map { it.name } == listOf("Full body A"))
+        assert(result.sessionHistory.single().planId == WorkoutPlanId("full-body-a"))
     }
 
     private fun workout(
