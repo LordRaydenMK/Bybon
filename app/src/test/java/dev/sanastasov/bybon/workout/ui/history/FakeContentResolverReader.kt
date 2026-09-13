@@ -1,7 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import android.net.DummyUri
 import android.net.Uri
-import org.mockito.Mockito.mock
 
 class FakeContentResolverReader(
     private val csv: String = "",
@@ -10,4 +10,4 @@ class FakeContentResolverReader(
     override fun read(uri: Uri): String = csv
 }
 
-internal fun dummyUri(): Uri = mock(Uri::class.java)
+internal fun dummyUri(): Uri = DummyUri()
