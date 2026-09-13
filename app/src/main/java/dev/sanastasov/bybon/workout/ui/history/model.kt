@@ -1,10 +1,34 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import android.net.Uri
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import java.time.LocalDate
+
+sealed class WorkoutHistoryUiState {
+    data object Loading : WorkoutHistoryUiState()
+    data object Empty : WorkoutHistoryUiState()
+    data object Importing : WorkoutHistoryUiState()
+    data class Summary(val summary: ImportSummaryUi) : WorkoutHistoryUiState()
+    data class History(val sessions: List<WorkoutSessionHistoryUi>) : WorkoutHistoryUiState()
+}
+
+data class ImportSummaryUi(
+    val sessionCount: Int,
+    val sessionsByPlan: List<PlanSessionCountUi>,
+    val plansCreatedCount: Int,
+    val exercisesImportedCount: Int,
+    val firstSessionDate: LocalDate?,
+    val lastSessionDate: LocalDate?,
+    val workingSetCount: Int,
+)
+
+data class PlanSessionCountUi(
+    val planName: String,
+    val sessionCount: Int,
+)
 
 data class WorkoutSessionHistoryUi(
     val key: String,
@@ -20,7 +44,12 @@ data class ExerciseTopSetUi(
     val estimatedOneRmKg: Float?,
 )
 
-fun List<WorkoutSession>.toHistoryUi(): List<WorkoutSessionHistoryUi> =
+sealed class WorkoutHistoryAction {
+    data class OnCsvSelected(val uri: Uri) : WorkoutHistoryAction()
+    data object OnImportDone : WorkoutHistoryAction()
+}
+
+internal fun List<WorkoutSession>.toHistoryUi(): List<WorkoutSessionHistoryUi> =
     filter { it.state is WorkoutState.Completed }
         .sortedByDescending { (it.state as WorkoutState.Completed).startedAt }
         .map { it.toHistoryUi() }

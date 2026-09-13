@@ -6,16 +6,26 @@ import com.jsoizo.kotlincsv.reader.withHeader
 
 object StrongCsvParser {
 
-    fun readSample(classLoader: ClassLoader?): List<StrongCsvRow> {
-        val csv = checkNotNull(classLoader?.getResourceAsStream("strong-backup-sample.csv")) {
-            "Missing test resource strong-backup-sample.csv"
-        }.bufferedReader().use { it.readText() }
+    private val requiredColumns = listOf(
+        "Workout #",
+        "Date",
+        "Workout Name",
+        "Duration (sec)",
+        "Exercise Name",
+        "Set Order",
+    )
 
+    fun parse(csv: String): List<StrongCsvRow> {
         val reader = csvReader {
             dialect = CsvDialect(delimiter = ';')
         }
 
-        return reader.readAll(csv)
+        val records = reader.readAll(csv)
+        require(records.isNotEmpty()) { "Strong CSV is empty" }
+        val header = records.first()
+        require(requiredColumns.all { it in header }) { "Not a Strong CSV export" }
+
+        return records
             .asSequence()
             .withHeader()
             .map { record ->
