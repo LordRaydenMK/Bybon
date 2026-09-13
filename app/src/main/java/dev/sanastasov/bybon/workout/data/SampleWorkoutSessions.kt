@@ -19,30 +19,30 @@ val sampleFullBodyBCompleted = WorkoutSession(
     exercises = listOf(
         completedExercise(
             "rdl-bb",
-            listOf(45f to 12, 45f to 12)
+            listOf(45f to 12, 45f to 12),
         ),
         completedExercise(
             "incline-bench-press-db",
-            listOf(20f to 13, 20f to 11, 20f to 8)
+            listOf(20f to 13, 20f to 11, 20f to 8),
         ),
         completedExercise(
             "split-squat-db",
-            listOf(14f to 10, 14f to 10)
+            listOf(14f to 10, 14f to 10),
         ),
         completedExercise(
             "incline-row-db",
-            listOf(22f to 14, 22f to 12, 22f to 10)
-        )
+            listOf(22f to 14, 22f to 12, 22f to 10),
+        ),
     ),
     state = WorkoutState.Completed(
         startedAt = LocalDateTime.of(2026, 8, 13, 18, 25, 54),
-        duration = 2864.seconds
-    )
+        duration = 2864.seconds,
+    ),
 )
 
 private fun completedExercise(
     exerciseId: String,
-    weightAndReps: List<Pair<Float, Int>>
+    weightAndReps: List<Pair<Float, Int>>,
 ): WorkoutExercise {
     val definition = exercisesMap[exerciseId]!!
     val reps = weightAndReps.map { it.second }
@@ -54,8 +54,8 @@ private fun completedExercise(
                 exerciseDefinition = definition,
                 weight = Weight.kilograms(kg),
                 reps = reps,
-                setState = SetState.Completed
+                setState = SetState.Completed,
             )
-        }
+        },
     )
 }

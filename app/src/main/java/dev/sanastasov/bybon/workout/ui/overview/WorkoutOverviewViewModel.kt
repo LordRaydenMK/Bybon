@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 class WorkoutOverviewViewModel(
     val planId: WorkoutPlanId,
     val repository: WorkoutsRepository,
-    val coroutineScope: CoroutineScope
+    val coroutineScope: CoroutineScope,
 ) {
     private val actions = MutableSharedFlow<WorkoutOverviewAction>(extraBufferCapacity = 32)
     private val _effects = Channel<WorkoutOverviewEffect>(Channel.BUFFERED)
@@ -40,7 +40,7 @@ class WorkoutOverviewViewModel(
     val uiState: StateFlow<WorkoutSession?> =
         combine(
             repository.workoutPlans(),
-            repository.workoutSessions()
+            repository.workoutSessions(),
         ) { plans, sessions ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
             val previousSession = sessions

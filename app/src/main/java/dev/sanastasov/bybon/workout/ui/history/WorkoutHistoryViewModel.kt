@@ -24,7 +24,7 @@ class WorkoutHistoryViewModel(
     private val coroutineScope: CoroutineScope,
     private val contentResolverReader: ContentResolverReader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
 
     private val importPhase = MutableStateFlow<ImportPhase>(ImportPhase.Idle)
@@ -32,7 +32,7 @@ class WorkoutHistoryViewModel(
     val uiState: StateFlow<WorkoutHistoryUiState> =
         combine(
             repository.workoutSessions(),
-            importPhase
+            importPhase,
         ) { sessions, phase ->
             when (phase) {
                 ImportPhase.Importing -> WorkoutHistoryUiState.Importing
@@ -101,6 +101,6 @@ private fun StrongImportResult.toSummaryUi(): ImportSummaryUi {
         lastSessionDate = dates.maxOrNull(),
         workingSetCount = sessionHistory.sumOf { session ->
             session.exercises.sumOf { it.sets.size }
-        }
+        },
     )
 }

@@ -48,8 +48,8 @@ class WorkoutProgressionTest {
                 Weight.kilograms(57.5f) to 10,
                 Weight.kilograms(60) to 9,
                 Weight.kilograms(60) to 10,
-                Weight.kilograms(62.5f) to 9
-            )
+                Weight.kilograms(62.5f) to 9,
+            ),
         )
     }
 
@@ -95,8 +95,8 @@ class WorkoutProgressionTest {
                 Weight.kilograms(10) to 14,
                 Weight.kilograms(10) to 15,
                 Weight.kilograms(10) to 16,
-                Weight.kilograms(12) to 10
-            )
+                Weight.kilograms(12) to 10,
+            ),
         )
         steps.zipWithNext().forEach { (previous, next) ->
             assert(next.oneRm!! > previous.oneRm!!)
@@ -134,8 +134,8 @@ class WorkoutProgressionTest {
                 Weight.kilograms(10) to 13,
                 Weight.kilograms(10) to 12,
                 Weight.kilograms(10) to 11,
-                Weight.kilograms(10) to 10
-            )
+                Weight.kilograms(10) to 10,
+            ),
         )
         steps.zipWithNext().forEach { (previous, next) ->
             assert(next.oneRm!! < previous.oneRm!!)
@@ -148,14 +148,14 @@ class WorkoutProgressionTest {
             "push-up",
             "Push Up",
             MuscleGroup.Chest,
-            Equipment.Bodyweight
+            Equipment.Bodyweight,
         )
         val set = ExerciseSet(definition, Weight.kilograms(0), 10, SetState.NotStated)
         val range = 8..10
 
         val atTop = set.adjust(range, Equipment.Bodyweight.weightIncrement, increase = true)
         val within = set.copy(
-            reps = 8
+            reps = 8,
         ).adjust(range, Equipment.Bodyweight.weightIncrement, increase = true)
 
         assert(atTop == set)
@@ -194,10 +194,10 @@ class WorkoutProgressionTest {
                         exercise.copy(
                             sets = exercise.sets.mapIndexed { setIndex, set ->
                                 if (setIndex != 0) set else set.copy(previous = previous)
-                            }
+                            },
                         )
                     }
-                }
+                },
             )
         }
 
@@ -210,14 +210,14 @@ class WorkoutProgressionTest {
         bench,
         Weight.kilograms(kg),
         reps,
-        SetState.NotStated
+        SetState.NotStated,
     )
 
     private fun lateralSet(kg: Float, reps: Int) = ExerciseSet(
         lateralRaise,
         Weight.kilograms(kg),
         reps,
-        SetState.NotStated
+        SetState.NotStated,
     )
 
     private fun ExerciseSet.increase() =

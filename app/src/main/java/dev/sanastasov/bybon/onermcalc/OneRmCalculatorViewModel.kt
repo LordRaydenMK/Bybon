@@ -16,9 +16,9 @@ class OneRmCalculatorViewModel {
             OneRmUiState(
                 OneRmEntry(
                     weight.value.toFloat(),
-                    reps.value.toInt()
-                )
-            )
+                    reps.value.toInt(),
+                ),
+            ),
         )
 
     fun onAction(action: OneRmCalcAction) {
@@ -71,7 +71,7 @@ class OneRmCalculatorViewModel {
     private fun recalculateHistory(
         weight: Float,
         reps: Int,
-        history: List<OneRmEntry>
+        history: List<OneRmEntry>,
     ): List<OneRmEntry> {
         val newEntry = OneRmEntry(weight, reps)
         return buildList {

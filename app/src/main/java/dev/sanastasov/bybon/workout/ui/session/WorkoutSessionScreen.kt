@@ -57,7 +57,7 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
     uiState?.let {
         SessionScreenContent(
             it,
-            viewModel::onAction
+            viewModel::onAction,
         )
     }
 }
@@ -65,12 +65,12 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
 @Composable
 private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
     Scaffold(
-        topBar = { BybonTopAppBar(state.planName, {}) }
+        topBar = { BybonTopAppBar(state.planName, {}) },
     ) { contentPadding ->
         Column(
             Modifier
                 .padding(contentPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp),
         ) {
             state.planDescription?.let {
                 Text(it)
@@ -83,7 +83,7 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
                 Card {
                     ExerciseCard(
                         exercise = state.exercises[page],
-                        onAction = onAction
+                        onAction = onAction,
                     )
                 }
             }
@@ -100,25 +100,25 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
         Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Spacer(Modifier.height(8.dp))
         Text(
             "${exercise.sets.size} x ${exercise.exerciseDefinition.name} in ${exercise.repRange.first} - ${exercise.repRange.last}",
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(4.dp))
 
         exercise.sets.forEachIndexed { index, set ->
             val weightState = rememberSyncedTextField(
                 key = exercise,
-                initialText = remember(exercise) { set.weight.kilograms }
+                initialText = remember(exercise) { set.weight.kilograms },
             ) { weight ->
                 onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
             }
             val repState = rememberSyncedTextField(
                 key = exercise,
-                initialText = remember(exercise) { set.reps.toString() }
+                initialText = remember(exercise) { set.reps.toString() },
             ) { reps ->
                 onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
             }
@@ -129,7 +129,7 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
                 set = set,
                 weightState = weightState,
                 repState = repState,
-                onAction = onAction
+                onAction = onAction,
             )
         }
 
@@ -154,7 +154,7 @@ private fun SetRow(
     set: ExerciseSet,
     weightState: TextFieldState,
     repState: TextFieldState,
-    onAction: (WorkoutSessionAction) -> Unit
+    onAction: (WorkoutSessionAction) -> Unit,
 ) {
     val oneRmLabel = set.oneRm?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
     val previousLabel = set.previous?.let { previous ->
@@ -185,11 +185,11 @@ private fun SetRow(
                 .defaultMinSize(minHeight = 48.dp)
                 .fillMaxWidth()
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
                 Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 when (set.setState) {
                     SetState.Completed -> {
@@ -206,20 +206,20 @@ private fun SetRow(
                         val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
                                 "${index + 1}.",
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                             NumberInputField(weightState)
                             Text(
                                 " kg x ",
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                             NumberInputField(repState)
                             if (oneRmLabel != null) {
@@ -227,7 +227,7 @@ private fun SetRow(
                                     oneRmLabel,
                                     color = labelColor,
                                     fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelLarge
+                                    style = MaterialTheme.typography.labelLarge,
                                 )
                             }
                         }
@@ -235,7 +235,7 @@ private fun SetRow(
 
                     SetState.NotStated -> Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text("${index + 1}.")
                         NumberInputField(weightState)
@@ -250,7 +250,7 @@ private fun SetRow(
                     Text(
                         previousLabel,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -258,13 +258,13 @@ private fun SetRow(
                 SetState.InProgress -> Checkbox(
                     false,
                     { onAction(WorkoutSessionAction.OnCompleteSet(exercise, index)) },
-                    Modifier.clearAndSetSemantics { }
+                    Modifier.clearAndSetSemantics { },
                 )
 
                 SetState.Completed -> Checkbox(
                     true,
                     null,
-                    Modifier.padding(horizontal = 10.dp)
+                    Modifier.padding(horizontal = 10.dp),
                 )
 
                 SetState.NotStated -> Unit
@@ -281,7 +281,7 @@ private fun SetRow(
                     contentDescription = setDescription
                 },
             shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.tertiaryContainer
+            color = MaterialTheme.colorScheme.tertiaryContainer,
         ) {
             content()
         }
@@ -291,7 +291,7 @@ private fun SetRow(
                 .fillMaxWidth()
                 .semantics(mergeDescendants = true) {
                     contentDescription = setDescription
-                }
+                },
         ) {
             content()
         }
@@ -309,7 +309,7 @@ private fun SessionScreenContentPage1CompletedExercisePreview() {
     val session = fullBodyA.toWorkoutSession()
     SessionScreenContent(
         session.completeSet(session.exercises.first(), 0),
-        {}
+        {},
     )
 }
 

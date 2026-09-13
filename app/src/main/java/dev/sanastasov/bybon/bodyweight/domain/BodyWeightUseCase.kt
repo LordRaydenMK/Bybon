@@ -11,12 +11,12 @@ import kotlinx.coroutines.flow.map
 data class WeeklyAverageEntry(
     val weekOfYear: Int,
     val averageWeight: BodyWeight,
-    val delta: BodyWeight?
+    val delta: BodyWeight?,
 )
 
 data class BodyWeightDashboard(
     val thisWeekValues: List<BodyWeightEntry>?,
-    val previousWeeksAverages: List<WeeklyAverageEntry>?
+    val previousWeeksAverages: List<WeeklyAverageEntry>?,
 ) {
 
     val thisWeekAverage: BodyWeight? = thisWeekValues?.averageWeight()?.weight
@@ -56,7 +56,7 @@ fun BodyWeightRepository.bodyWeightDashboard(today: LocalDate): Flow<BodyWeightD
 
         BodyWeightDashboard(
             thisWeekValues.takeIf { it.isNotEmpty() },
-            previousWeeksAverages.takeIf { it.isNotEmpty() }
+            previousWeeksAverages.takeIf { it.isNotEmpty() },
         )
     }
 

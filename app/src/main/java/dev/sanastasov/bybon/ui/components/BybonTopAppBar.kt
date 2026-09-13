@@ -19,15 +19,15 @@ fun BybonTopAppBar(title: String, onBackClicked: () -> Unit, modifier: Modifier 
         title = { Text(title) },
         navigationIcon = {
             IconButton(
-                onClick = { onBackClicked() }
+                onClick = { onBackClicked() },
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back"
+                    contentDescription = "Back",
                 )
             }
         },
-        modifier = modifier
+        modifier = modifier,
     )
 }
 

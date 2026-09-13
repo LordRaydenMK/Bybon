@@ -22,7 +22,7 @@ typealias BackStack = NavBackStack<Screen>
 @Composable
 fun <T : NavKey> rememberNavBackStack(vararg elements: NavKey): NavBackStack<T> =
     rememberSerializable(
-        serializer = NavBackStackSerializer(elementSerializer = NavKeySerializer())
+        serializer = NavBackStackSerializer(elementSerializer = NavKeySerializer()),
     ) {
         @Suppress("UNCHECKED_CAST")
         NavBackStack(*elements) as NavBackStack<T>
@@ -34,7 +34,7 @@ fun MainModule.BybonApp() {
     NavDisplay(
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
+            rememberViewModelStoreNavEntryDecorator(),
         ),
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
@@ -45,7 +45,7 @@ fun MainModule.BybonApp() {
                         onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
                         onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
                         onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
-                        onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) }
+                        onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) },
                     )
                 }
 
@@ -56,7 +56,7 @@ fun MainModule.BybonApp() {
                         onStartSession = {
                             backStack.removeLastOrNull()
                             backStack.add(Screen.WorkoutSession(key.planId))
-                        }
+                        },
                     )
                 }
 
@@ -72,6 +72,6 @@ fun MainModule.BybonApp() {
                     WorkoutHistoryScreen { backStack.removeLastOrNull() }
                 }
             }
-        }
+        },
     )
 }

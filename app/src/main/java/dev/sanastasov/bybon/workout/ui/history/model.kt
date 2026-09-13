@@ -22,7 +22,7 @@ data class ImportSummaryUi(
     val exercisesImportedCount: Int,
     val firstSessionDate: LocalDate?,
     val lastSessionDate: LocalDate?,
-    val workingSetCount: Int
+    val workingSetCount: Int,
 )
 
 data class PlanSessionCountUi(val planName: String, val sessionCount: Int)
@@ -31,14 +31,14 @@ data class WorkoutSessionHistoryUi(
     val key: String,
     val planName: String,
     val date: LocalDate,
-    val exercises: List<ExerciseTopSetUi>
+    val exercises: List<ExerciseTopSetUi>,
 )
 
 data class ExerciseTopSetUi(
     val name: String,
     val weightKg: String,
     val reps: Int,
-    val estimatedOneRmKg: Float?
+    val estimatedOneRmKg: Float?,
 )
 
 sealed class WorkoutHistoryAction {
@@ -57,7 +57,7 @@ internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
         key = "${planId.id}-${completed.startedAt}",
         planName = planName,
         date = completed.startedAt.toLocalDate(),
-        exercises = exercises.mapNotNull { it.toTopSetUi() }
+        exercises = exercises.mapNotNull { it.toTopSetUi() },
     )
 }
 
@@ -67,13 +67,13 @@ private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi? {
         .maxWithOrNull(
             compareBy(
                 { it.weight.kilogramsValue },
-                { it.reps }
-            )
+                { it.reps },
+            ),
         ) ?: return null
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
         weightKg = topSet.weight.kilograms,
         reps = topSet.reps,
-        estimatedOneRmKg = topSet.oneRm
+        estimatedOneRmKg = topSet.oneRm,
     )
 }

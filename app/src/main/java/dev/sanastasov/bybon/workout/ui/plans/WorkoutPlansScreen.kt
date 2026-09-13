@@ -34,11 +34,11 @@ fun WorkoutPlansScreen() {
 fun WorkoutsTab(
     plans: List<WorkoutPlanUi>,
     onAction: (WorkoutPlansAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier.padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(plans, key = { it.plan.id.id }) { planUi ->
             WorkoutPlanCard(planUi) {
@@ -56,28 +56,28 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (Worko
             Modifier
                 .padding(8.dp)
                 .fillMaxWidth(),
-            Arrangement.spacedBy(4.dp)
+            Arrangement.spacedBy(4.dp),
         ) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     plan.name,
                     Modifier.weight(1f),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 if (planUi.isActive) {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
                     ) {
                         Text(
                             "Active",
                             Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelMedium,
                         )
                     }
                 }
@@ -90,13 +90,13 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (Worko
 
             plan.sets.forEach { planedSet ->
                 Text(
-                    "${planedSet.sets} x ${planedSet.exercise.name} - ${planedSet.repRange.first} to ${planedSet.repRange.last} reps"
+                    "${planedSet.sets} x ${planedSet.exercise.name} - ${planedSet.repRange.first} to ${planedSet.repRange.last} reps",
                 )
             }
 
             TextButton(
                 { onStartWorkoutClicked(plan) },
-                Modifier.align(Alignment.CenterHorizontally)
+                Modifier.align(Alignment.CenterHorizontally),
             ) {
                 Text(if (planUi.isActive) "Open Workout" else "Start Workout")
             }
@@ -111,9 +111,9 @@ private fun WorkoutPlansContentPreview() {
         WorkoutsTab(
             listOf(
                 WorkoutPlanUi(fullBodyA, isActive = true),
-                WorkoutPlanUi(fullBodyB, isActive = false)
+                WorkoutPlanUi(fullBodyB, isActive = false),
             ),
-            {}
+            {},
         )
     }
 }

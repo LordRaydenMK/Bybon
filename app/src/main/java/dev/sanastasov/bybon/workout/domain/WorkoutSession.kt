@@ -32,11 +32,11 @@ fun WorkoutPlan.toWorkoutSession(previousSession: WorkoutSession? = null): Worko
                         },
                         previous = previousSet?.let {
                             PreviousSetPerformance(it.weight, it.reps)
-                        }
+                        },
                     )
-                }
+                },
             )
-        }
+        },
     )
 
 @JvmInline
@@ -69,7 +69,7 @@ value class Weight(private val value: Int) {
 enum class SetState {
     NotStated,
     InProgress,
-    Completed
+    Completed,
 }
 
 /** Brzycki when reps &lt; 10, otherwise Epley. */
@@ -89,7 +89,7 @@ data class ExerciseSet(
     val weight: Weight,
     val reps: Int,
     val setState: SetState,
-    val previous: PreviousSetPerformance? = null
+    val previous: PreviousSetPerformance? = null,
 ) {
     val oneRm: Float?
         get() = oneRmOrNull(weight, reps)
@@ -104,7 +104,7 @@ private fun oneRmOrNull(weight: Weight, reps: Int): Float? {
 data class WorkoutExercise(
     val exerciseDefinition: ExerciseDefinition,
     val repRange: IntRange,
-    val sets: List<ExerciseSet>
+    val sets: List<ExerciseSet>,
 ) {
     val id: String = exerciseDefinition.id
 
@@ -123,7 +123,7 @@ data class WorkoutSession(
     val planName: String,
     val planDescription: String?,
     val exercises: List<WorkoutExercise>,
-    val state: WorkoutState = WorkoutState.NotStarted
+    val state: WorkoutState = WorkoutState.NotStarted,
 ) {
     val workoutSets: List<ExerciseSet> = exercises.flatMap { it.sets }
 
@@ -164,7 +164,7 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
         val newSetState =
             if (lastSet.setState == SetState.Completed) SetState.InProgress else SetState.NotStated
         exercise.copy(
-            sets = exercise.sets + lastSet.copy(setState = newSetState, previous = null)
+            sets = exercise.sets + lastSet.copy(setState = newSetState, previous = null),
         )
     }
 
@@ -188,7 +188,7 @@ fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
 fun WorkoutSession.updateWeight(
     exercise: WorkoutExercise,
     setIndex: Int,
-    weight: Weight
+    weight: Weight,
 ): WorkoutSession = updateExerciseSet(exercise, setIndex) {
     it.copy(weight = weight)
 }
@@ -196,7 +196,7 @@ fun WorkoutSession.updateWeight(
 fun WorkoutSession.updateReps(
     exercise: WorkoutExercise,
     setIndex: Int,
-    count: Int
+    count: Int,
 ): WorkoutSession = updateExerciseSet(exercise, setIndex) {
     it.copy(reps = count)
 }
@@ -208,7 +208,7 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     state = WorkoutState.NotStarted,
     exercises = exercises.map { exercise ->
         exercise.copy(sets = exercise.sets.map { it.copy(setState = SetState.NotStated) })
-    }
+    },
 )
 
 fun WorkoutSession.startWorkout(): WorkoutSession {
@@ -231,7 +231,7 @@ private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
 internal fun ExerciseSet.adjust(
     repRange: IntRange,
     increment: Weight,
-    increase: Boolean
+    increase: Boolean,
 ): ExerciseSet {
     val currentOneRm = oneRm
     if (increase) {
@@ -273,7 +273,7 @@ internal fun ExerciseSet.adjust(
 
 private fun WorkoutSession.updateExercise(
     exerciseId: String,
-    update: (WorkoutExercise) -> WorkoutExercise
+    update: (WorkoutExercise) -> WorkoutExercise,
 ): WorkoutSession = copy(
     exercises = exercises.map { exercise ->
         if (exercise.id == exerciseId) {
@@ -281,13 +281,13 @@ private fun WorkoutSession.updateExercise(
         } else {
             exercise
         }
-    }
+    },
 )
 
 private fun WorkoutSession.updateExerciseSet(
     exercise: WorkoutExercise,
     setIndex: Int,
-    update: (ExerciseSet) -> ExerciseSet
+    update: (ExerciseSet) -> ExerciseSet,
 ): WorkoutSession = updateExercise(exercise.id) { exercise ->
     val updated = exercise.sets.mapIndexed { index, set ->
         if (index == setIndex) {
@@ -305,7 +305,7 @@ sealed class WorkoutSessionAction {
     data class OnWeightUpdated(
         val newWeight: String,
         val exercise: WorkoutExercise,
-        val index: Int
+        val index: Int,
     ) : WorkoutSessionAction()
 
     data class OnRepsUpdated(val newReps: String, val exercise: WorkoutExercise, val index: Int) :

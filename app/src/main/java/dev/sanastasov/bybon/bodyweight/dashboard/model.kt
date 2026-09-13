@@ -9,7 +9,7 @@ data class PreviousWeekData(val previousWeekNo: Int, val weightDelta: String)
 data class BodyWeightComparison(
     val currentWeekNo: Int,
     val currentWeightWeight: String,
-    val previousWeek: PreviousWeekData? = null
+    val previousWeek: PreviousWeekData? = null,
 )
 
 data class WeeklyAverageEntryUi(val week: String, val value: String, val delta: String?)
@@ -20,7 +20,7 @@ data class WeightDashboardUiState(
     val showLogWeight: Boolean,
     val comparison: BodyWeightComparison? = null,
     val dailyEntries: List<BodyWeightEntry>? = null,
-    val weeklyAverages: List<WeeklyAverageEntryUi>? = null
+    val weeklyAverages: List<WeeklyAverageEntryUi>? = null,
 ) {
 
     val dailyHeaderText: String? =

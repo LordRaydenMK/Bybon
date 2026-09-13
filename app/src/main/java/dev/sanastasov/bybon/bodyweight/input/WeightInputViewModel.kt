@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 class WeightInputViewModel(
     val repository: BodyWeightRepository,
-    val coroutineScope: CoroutineScope
+    val coroutineScope: CoroutineScope,
 ) {
 
     private val _effects = Channel<WeightInputEffect>(Channel.BUFFERED)
@@ -31,7 +31,7 @@ class WeightInputViewModel(
 
     val uiState: StateFlow<WeightInputUi> = combine(
         repository.entries(),
-        date
+        date,
     ) { allEntries, date ->
         WeightInputUi(date, allEntries.firstOrNull { it.date == date }?.weight)
     }
@@ -40,7 +40,7 @@ class WeightInputViewModel(
         }
         .stateInWhileInForeground(
             coroutineScope,
-            WeightInputUi(date.value)
+            WeightInputUi(date.value),
         )
 
     init {
@@ -83,8 +83,8 @@ class WeightInputViewModel(
             repository.insert(
                 BodyWeightEntry(
                     weight.date,
-                    BodyWeight.parseFromString(weight.weight)
-                )
+                    BodyWeight.parseFromString(weight.weight),
+                ),
             )
         }
     }

@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.map
 
 class WeightDashboardViewModel(
     private val repository: BodyWeightRepository,
-    private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope,
 ) {
 
     private val today = LocalDate.now()
@@ -21,7 +21,7 @@ class WeightDashboardViewModel(
         .map { dashboard -> dashboard.toDashboardUi() }
         .stateInWhileInForeground(
             coroutineScope,
-            WeightDashboardUiState(false)
+            WeightDashboardUiState(false),
         )
 
     private fun BodyWeightDashboard.toDashboardUi(): WeightDashboardUiState =
@@ -34,9 +34,9 @@ class WeightDashboardViewModel(
                     lastWeekAverage?.let { lastWeekAvg ->
                         PreviousWeekData(
                             today.weekOfYear - 1,
-                            "${(thisWeeksAverage - lastWeekAvg).kilograms} kg"
+                            "${(thisWeeksAverage - lastWeekAvg).kilograms} kg",
                         )
-                    }
+                    },
                 )
             },
             dailyEntries = thisWeekValues,
@@ -44,8 +44,8 @@ class WeightDashboardViewModel(
                 WeeklyAverageEntryUi(
                     "CW $weekOfYear",
                     "${entry.kilograms} kg",
-                    delta?.kilograms?.let { "$it kg" }
+                    delta?.kilograms?.let { "$it kg" },
                 )
-            }
+            },
         )
 }

@@ -12,5 +12,5 @@ data class WorkoutPlan(
     val id: WorkoutPlanId,
     val name: String,
     val description: String?,
-    val sets: List<PlanedExercise>
+    val sets: List<PlanedExercise>,
 )

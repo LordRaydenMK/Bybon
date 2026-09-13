@@ -48,14 +48,14 @@ class WorkoutHistoryViewModelTest {
                     "bench-press-bb",
                     80f to 8,
                     80f to 7,
-                    80f to 6
+                    80f to 6,
                 ),
                 completedExercise(
                     "squat-bb",
                     100f to 5,
-                    90f to 8
-                )
-            )
+                    90f to 8,
+                ),
+            ),
         )
         val newer = completedSession(
             planId = "full-body-b",
@@ -65,9 +65,9 @@ class WorkoutHistoryViewModelTest {
                 completedExercise(
                     "rdl-bb",
                     45f to 12,
-                    45f to 12
-                )
-            )
+                    45f to 12,
+                ),
+            ),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(older, newer))
         val viewModel = historyViewModel(repository)
@@ -83,9 +83,9 @@ class WorkoutHistoryViewModelTest {
                             name = "Romanian Deadlift (RDL) (barbell)",
                             weightKg = "45",
                             reps = 12,
-                            estimatedOneRmKg = estimateOneRmKg(45f, 12)
-                        )
-                    )
+                            estimatedOneRmKg = estimateOneRmKg(45f, 12),
+                        ),
+                    ),
                 ),
                 WorkoutSessionHistoryUi(
                     key = "full-body-a-2026-08-10T18:00",
@@ -96,17 +96,17 @@ class WorkoutHistoryViewModelTest {
                             name = "Bench Press (barbell)",
                             weightKg = "80",
                             reps = 8,
-                            estimatedOneRmKg = estimateOneRmKg(80f, 8)
+                            estimatedOneRmKg = estimateOneRmKg(80f, 8),
                         ),
                         ExerciseTopSetUi(
                             name = "Squat (barbell)",
                             weightKg = "100",
                             reps = 5,
-                            estimatedOneRmKg = estimateOneRmKg(100f, 5)
-                        )
-                    )
-                )
-            )
+                            estimatedOneRmKg = estimateOneRmKg(100f, 5),
+                        ),
+                    ),
+                ),
+            ),
         )
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutHistoryUiState.Loading)
@@ -120,14 +120,14 @@ class WorkoutHistoryViewModelTest {
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12))
+            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
         )
         val inProgress = WorkoutSession(
             planId = WorkoutPlanId("full-body-a"),
             planName = "Full Body A",
             planDescription = null,
             exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
-            state = WorkoutState.InProgress(LocalDateTime.of(2026, 8, 14, 18, 0))
+            state = WorkoutState.InProgress(LocalDateTime.of(2026, 8, 14, 18, 0)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(inProgress, completed))
         val viewModel = historyViewModel(repository)
@@ -151,9 +151,9 @@ class WorkoutHistoryViewModelTest {
                 completedExercise(
                     "bench-press-bb",
                     50f to 5,
-                    45f to 12
-                )
-            )
+                    45f to 12,
+                ),
+            ),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
         val viewModel = historyViewModel(repository)
@@ -181,17 +181,17 @@ class WorkoutHistoryViewModelTest {
                     bench,
                     8..10,
                     listOf(
-                        ExerciseSet(bench, Weight.kilograms(80), 8, SetState.Completed)
-                    )
+                        ExerciseSet(bench, Weight.kilograms(80), 8, SetState.Completed),
+                    ),
                 ),
                 WorkoutExercise(
                     squat,
                     8..10,
                     listOf(
-                        ExerciseSet(squat, Weight.kilograms(100), 8, SetState.NotStated)
-                    )
-                )
-            )
+                        ExerciseSet(squat, Weight.kilograms(100), 8, SetState.NotStated),
+                    ),
+                ),
+            ),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
         val viewModel = historyViewModel(repository)
@@ -213,7 +213,7 @@ class WorkoutHistoryViewModelTest {
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12))
+            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
         )
         val expected = WorkoutHistoryUiState.History(
             listOf(
@@ -226,11 +226,11 @@ class WorkoutHistoryViewModelTest {
                             name = "Romanian Deadlift (RDL) (barbell)",
                             weightKg = "45",
                             reps = 12,
-                            estimatedOneRmKg = estimateOneRmKg(45f, 12)
-                        )
-                    )
-                )
-            )
+                            estimatedOneRmKg = estimateOneRmKg(45f, 12),
+                        ),
+                    ),
+                ),
+            ),
         )
 
         viewModel.uiState.test {
@@ -246,7 +246,7 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
         val viewModel = historyViewModel(
             repository,
-            csv = readStrongBackupSample(javaClass.classLoader)
+            csv = readStrongBackupSample(javaClass.classLoader),
         )
 
         viewModel.uiState.test {
@@ -263,8 +263,8 @@ class WorkoutHistoryViewModelTest {
                     PlanSessionCountUi("Full Body B", 23),
                     PlanSessionCountUi("Full Body A", 23),
                     PlanSessionCountUi("Upper body A", 3),
-                    PlanSessionCountUi("Upper body B", 3)
-                )
+                    PlanSessionCountUi("Upper body B", 3),
+                ),
             )
             assert(summary.plansCreatedCount == 2)
             assert(summary.exercisesImportedCount == 1)
@@ -279,7 +279,7 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
         val viewModel = historyViewModel(
             repository,
-            csv = readStrongBackupSample(javaClass.classLoader)
+            csv = readStrongBackupSample(javaClass.classLoader),
         )
 
         viewModel.uiState.test {
@@ -323,6 +323,6 @@ class WorkoutHistoryViewModelTest {
             coroutineScope = backgroundScope,
             contentResolverReader = FakeContentResolverReader(csv),
             ioDispatcher = UnconfinedTestDispatcher(testScheduler),
-            defaultDispatcher = UnconfinedTestDispatcher(testScheduler)
+            defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
         )
 }

@@ -26,11 +26,11 @@ class WorkoutOverviewViewModelTest {
             assert(repository.workoutSessions().first().isEmpty())
             assert(
                 increased.exercises.first().sets.first().reps ==
-                    draft.exercises.first().sets.first().reps + 1
+                    draft.exercises.first().sets.first().reps + 1,
             )
             assert(
                 increased.exercises.first().sets.first().oneRm!! >
-                    draft.exercises.first().sets.first().oneRm!!
+                    draft.exercises.first().sets.first().oneRm!!,
             )
 
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
@@ -39,7 +39,7 @@ class WorkoutOverviewViewModelTest {
             assert(saved.exercises.first().sets.first().setState == SetState.InProgress)
             assert(
                 saved.exercises.first().sets.first().reps ==
-                    increased.exercises.first().sets.first().reps
+                    increased.exercises.first().sets.first().reps,
             )
         }
     }

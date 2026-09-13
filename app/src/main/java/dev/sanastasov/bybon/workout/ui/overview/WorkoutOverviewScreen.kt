@@ -55,7 +55,7 @@ import kotlin.time.Duration
 fun WorkoutModule.WorkoutOverviewScreen(
     planId: WorkoutPlanId,
     onBack: () -> Unit,
-    onStartSession: () -> Unit
+    onStartSession: () -> Unit,
 ) {
     val viewModel = retain {
         WorkoutOverviewViewModel(planId, workoutsRepository, it.coroutineScope)
@@ -75,20 +75,20 @@ fun WorkoutModule.WorkoutOverviewScreen(
 private fun OverviewScreenContent(
     state: WorkoutSession,
     onAction: (WorkoutOverviewAction) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     Scaffold(
-        topBar = { BybonTopAppBar(state.planName, onBack) }
+        topBar = { BybonTopAppBar(state.planName, onBack) },
     ) { contentPadding ->
         Column(
             Modifier
                 .padding(contentPadding)
                 .padding(horizontal = 16.dp, vertical = 24.dp)
-                .fillMaxSize()
+                .fillMaxSize(),
         ) {
             Row(
                 Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(state.planName, fontWeight = FontWeight.Bold)
@@ -101,7 +101,7 @@ private fun OverviewScreenContent(
                     onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseWorkout) },
                     onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseWorkout) },
                     decreaseContentDescription = "Decrease weight and reps for all exercises",
-                    increaseContentDescription = "Increase weight and reps for all exercises"
+                    increaseContentDescription = "Increase weight and reps for all exercises",
                 )
             }
 
@@ -109,7 +109,7 @@ private fun OverviewScreenContent(
 
             LazyColumn(
                 Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 items(state.exercises, key = { it.id }) { exercise ->
                     Card(Modifier.fillMaxWidth()) {
@@ -121,7 +121,7 @@ private fun OverviewScreenContent(
             Spacer(Modifier.height(16.dp))
             Button(
                 { onAction(WorkoutOverviewAction.OnStartWorkout) },
-                Modifier.fillMaxWidth()
+                Modifier.fillMaxWidth(),
             ) {
                 Text("Start Workout")
             }
@@ -132,29 +132,29 @@ private fun OverviewScreenContent(
 @Composable
 private fun OverviewExerciseCard(
     exercise: WorkoutExercise,
-    onAction: (WorkoutOverviewAction) -> Unit
+    onAction: (WorkoutOverviewAction) -> Unit,
 ) {
     Column(
         Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Spacer(Modifier.height(8.dp))
         Row(
             Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 "${exercise.sets.size} x ${exercise.exerciseDefinition.name} in ${exercise.repRange.first} - ${exercise.repRange.last}",
                 Modifier.weight(1f),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             AdjustButtons(
                 onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseExercise(exercise)) },
                 onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseExercise(exercise)) },
                 decreaseContentDescription = "Decrease weight and reps for ${exercise.exerciseDefinition.name}",
-                increaseContentDescription = "Increase weight and reps for ${exercise.exerciseDefinition.name}"
+                increaseContentDescription = "Increase weight and reps for ${exercise.exerciseDefinition.name}",
             )
         }
         Spacer(Modifier.height(4.dp))
@@ -162,13 +162,13 @@ private fun OverviewExerciseCard(
         exercise.sets.forEachIndexed { index, set ->
             val weightState = rememberSyncedTextField(
                 key = exercise,
-                initialText = remember(exercise) { set.weight.kilograms }
+                initialText = remember(exercise) { set.weight.kilograms },
             ) { weight ->
                 onAction(WorkoutOverviewAction.OnWeightUpdated(weight, exercise, index))
             }
             val repState = rememberSyncedTextField(
                 key = exercise,
-                initialText = remember(exercise) { set.reps.toString() }
+                initialText = remember(exercise) { set.reps.toString() },
             ) { reps ->
                 onAction(WorkoutOverviewAction.OnRepsUpdated(reps, exercise, index))
             }
@@ -177,7 +177,7 @@ private fun OverviewExerciseCard(
                 index = index,
                 set = set,
                 weightState = weightState,
-                repState = repState
+                repState = repState,
             )
         }
 
@@ -200,7 +200,7 @@ private fun OverviewSetRow(
     index: Int,
     set: ExerciseSet,
     weightState: TextFieldState,
-    repState: TextFieldState
+    repState: TextFieldState,
 ) {
     val oneRmLabel = set.oneRm?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
     val previousLabel = set.previous?.let { previous ->
@@ -223,22 +223,22 @@ private fun OverviewSetRow(
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {
                 contentDescription = setDescription
-            }
+            },
     ) {
         Row(
             Modifier
                 .defaultMinSize(minHeight = 48.dp)
                 .fillMaxWidth()
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
                 Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text("${index + 1}.")
                     NumberInputField(weightState)
@@ -252,7 +252,7 @@ private fun OverviewSetRow(
                     Text(
                         previousLabel,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -265,18 +265,18 @@ private fun AdjustButtons(
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
     decreaseContentDescription: String,
-    increaseContentDescription: String
+    increaseContentDescription: String,
 ) {
     Row {
         IconButton(
             onDecrease,
-            Modifier.semantics { contentDescription = decreaseContentDescription }
+            Modifier.semantics { contentDescription = decreaseContentDescription },
         ) {
             Text("−", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
         }
         IconButton(
             onIncrease,
-            Modifier.semantics { contentDescription = increaseContentDescription }
+            Modifier.semantics { contentDescription = increaseContentDescription },
         ) {
             Text("+", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineSmall)
         }
@@ -298,15 +298,15 @@ private fun OverviewScreenContentPreview() {
                             weight = Weight.kilograms(45),
                             reps = 9,
                             setState = SetState.Completed,
-                            previous = PreviousSetPerformance(Weight.kilograms(45), 9)
+                            previous = PreviousSetPerformance(Weight.kilograms(45), 9),
                         )
-                    }
+                    },
                 )
             },
             state = WorkoutState.Completed(
                 startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-                duration = Duration.ZERO
-            )
+                duration = Duration.ZERO,
+            ),
         )
     }
     OverviewScreenContent(fullBodyA.toOverviewSession(previous), {}, {})

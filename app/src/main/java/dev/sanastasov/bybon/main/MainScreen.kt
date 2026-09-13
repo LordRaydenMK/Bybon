@@ -54,7 +54,7 @@ fun MainModule.MainScreen(
     onNavigateToWeightEntry: () -> Unit,
     onNavigateToStartSession: (WorkoutPlan) -> Unit,
     onNavigateToOverview: (WorkoutPlan) -> Unit,
-    onNavigateToHistory: () -> Unit
+    onNavigateToHistory: () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
@@ -90,7 +90,7 @@ fun MainModule.MainScreen(
         onNavigateToWeightEntry,
         plansState,
         workoutPlansViewModel::onAction,
-        onNavigateToHistory
+        onNavigateToHistory,
     )
 }
 
@@ -106,7 +106,7 @@ private fun MainScreenContent(
     onLogWeightClicked: () -> Unit,
     plans: List<WorkoutPlanUi>,
     onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
-    onHistoryClicked: () -> Unit
+    onHistoryClicked: () -> Unit,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -119,7 +119,7 @@ private fun MainScreenContent(
                             Icon(Icons.Filled.DateRange, contentDescription = "History")
                         }
                     }
-                }
+                },
             )
         },
         bottomBar = {
@@ -130,7 +130,7 @@ private fun MainScreenContent(
                     icon = {
                         Icon(MaterialSymbolsExercise, "Workouts tab")
                     },
-                    label = { Text("Workouts") }
+                    label = { Text("Workouts") },
                 )
                 NavigationBarItem(
                     selectedIndex == 1,
@@ -138,7 +138,7 @@ private fun MainScreenContent(
                     icon = {
                         Icon(TablerBarbell, "One RM calculator tab")
                     },
-                    label = { Text("1 RM Calc") }
+                    label = { Text("1 RM Calc") },
                 )
                 NavigationBarItem(
                     selectedIndex == 2,
@@ -146,15 +146,15 @@ private fun MainScreenContent(
                     icon = {
                         Icon(FontAwesomeWeight, "Body Weight tab")
                     },
-                    label = { Text("Weight") }
+                    label = { Text("Weight") },
                 )
             }
-        }
+        },
     ) { contentPadding ->
         Box(
             Modifier
                 .fillMaxSize()
-                .padding(contentPadding)
+                .padding(contentPadding),
         ) {
             when (selectedIndex) {
                 0 -> WorkoutsTab(plans, onWorkoutPlansAction, Modifier.fillMaxSize())
@@ -164,7 +164,7 @@ private fun MainScreenContent(
                     reps,
                     oneRmUiState,
                     onOneRmAction,
-                    Modifier.fillMaxSize()
+                    Modifier.fillMaxSize(),
                 )
 
                 2 -> WeightDashboardTab(weightState, onLogWeightClicked)
@@ -189,10 +189,10 @@ private fun MainScreenContentWorkoutsPreview() {
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false)
+            WorkoutPlanUi(fullBodyB, isActive = false),
         ),
         {},
-        {}
+        {},
     )
 }
 
@@ -206,17 +206,17 @@ private fun MainScreenContentOneRmCalcPreview() {
         "10",
         OneRmUiState(
             OneRmEntry(50f, 10),
-            emptyList()
+            emptyList(),
         ),
         {},
         WeightDashboardUiState(true, null, emptyList(), emptyList()),
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false)
+            WorkoutPlanUi(fullBodyB, isActive = false),
         ),
         {},
-        {}
+        {},
     )
 }
 
@@ -230,7 +230,7 @@ private fun MainScreenContentWeightTrackPreview() {
         "10",
         OneRmUiState(
             OneRmEntry(50f, 10),
-            emptyList()
+            emptyList(),
         ),
         {},
         WeightDashboardUiState(
@@ -238,19 +238,19 @@ private fun MainScreenContentWeightTrackPreview() {
             null,
             listOf(
                 BodyWeightEntry(LocalDate.now().minusDays(1), BodyWeight.parseFromString("65.2")),
-                BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8"))
+                BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8")),
             ),
             listOf(
                 WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
-                WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30")
-            )
+                WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
+            ),
         ),
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false)
+            WorkoutPlanUi(fullBodyB, isActive = false),
         ),
         {},
-        {}
+        {},
     )
 }

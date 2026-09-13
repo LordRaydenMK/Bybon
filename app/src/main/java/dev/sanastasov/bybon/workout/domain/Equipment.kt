@@ -5,7 +5,7 @@ enum class Equipment {
     Dumbbell,
     Machine,
     Bodyweight,
-    AssistedBodyWeight
+    AssistedBodyWeight,
 }
 
 val Equipment.weightIncrement: Weight

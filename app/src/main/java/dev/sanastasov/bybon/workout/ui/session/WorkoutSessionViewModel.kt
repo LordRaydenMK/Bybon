@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 class WorkoutSessionViewModel(
     val planId: WorkoutPlanId,
     val repository: WorkoutsRepository,
-    val coroutineScope: CoroutineScope
+    val coroutineScope: CoroutineScope,
 ) {
     val uiState: StateFlow<WorkoutSession?> =
         repository.workoutSessions()
@@ -68,7 +68,7 @@ class WorkoutSessionViewModel(
                         session.updateWeight(
                             action.exercise,
                             action.index,
-                            Weight.kilograms(weight)
+                            Weight.kilograms(weight),
                         )
                     } ?: session
                 }
@@ -80,7 +80,7 @@ class WorkoutSessionViewModel(
                         session.updateReps(
                             action.exercise,
                             action.index,
-                            reps
+                            reps,
                         )
                     } ?: session
                 }

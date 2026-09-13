@@ -47,12 +47,12 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
         WorkoutHistoryViewModel(
             workoutsRepository,
             it.coroutineScope,
-            AndroidContentResolverReader(contentResolver)
+            AndroidContentResolverReader(contentResolver),
         )
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val documentPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
+        ActivityResultContracts.OpenDocument(),
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
         viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(uri))
@@ -68,11 +68,11 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
                     "text/*",
                     "text/csv",
                     "text/comma-separated-values",
-                    "application/csv"
-                )
+                    "application/csv",
+                ),
             )
         },
-        onImportDone = { viewModel.onAction(WorkoutHistoryAction.OnImportDone) }
+        onImportDone = { viewModel.onAction(WorkoutHistoryAction.OnImportDone) },
     )
 }
 
@@ -82,17 +82,17 @@ private fun WorkoutHistoryContent(
     onNavigateBack: () -> Unit,
     onImportHistoryClick: () -> Unit,
     onImportDone: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val title = if (uiState is WorkoutHistoryUiState.Summary) "Import summary" else "History"
     Scaffold(
         modifier.fillMaxSize(),
-        topBar = { BybonTopAppBar(title, onNavigateBack) }
+        topBar = { BybonTopAppBar(title, onNavigateBack) },
     ) { contentPadding ->
         Box(
             Modifier
                 .fillMaxSize()
-                .padding(contentPadding)
+                .padding(contentPadding),
         ) {
             when (uiState) {
                 WorkoutHistoryUiState.Loading -> LoadingIndicator()
@@ -112,7 +112,7 @@ private fun EmptyHistory(onImportHistoryClick: () -> Unit) {
             .fillMaxSize()
             .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text("No completed workouts yet")
         Spacer(Modifier.height(16.dp))
@@ -126,7 +126,7 @@ private fun EmptyHistory(onImportHistoryClick: () -> Unit) {
 private fun LoadingIndicator() {
     Box(
         Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator()
     }
@@ -136,10 +136,10 @@ private fun LoadingIndicator() {
 private fun ImportingIndicator() {
     Box(
         Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator(
-            Modifier.semantics { contentDescription = "Importing history" }
+            Modifier.semantics { contentDescription = "Importing history" },
         )
     }
 }
@@ -151,16 +151,16 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text(
             "${summary.sessionCount} ${sessionsLabel(summary.sessionCount)} imported",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Text(
             "Sessions by plan",
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         summary.sessionsByPlan.forEach { plan ->
             Text("${plan.planName}: ${plan.sessionCount}")
@@ -168,8 +168,8 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
         Text("${summary.plansCreatedCount} ${plansLabel(summary.plansCreatedCount)} created")
         Text(
             "${summary.exercisesImportedCount} ${exercisesLabel(
-                summary.exercisesImportedCount
-            )} imported"
+                summary.exercisesImportedCount,
+            )} imported",
         )
         Text("${summary.workingSetCount} working sets imported")
         val firstDate = summary.firstSessionDate
@@ -180,7 +180,7 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         Button(
             onClick = onImportDone,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Done")
         }
@@ -193,7 +193,7 @@ private fun HistoryList(sessions: List<WorkoutSessionHistoryUi>) {
         Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(sessions, key = { it.key }) { session ->
             WorkoutSessionHistoryCard(session)
@@ -208,16 +208,16 @@ private fun WorkoutSessionHistoryCard(session: WorkoutSessionHistoryUi) {
             Modifier
                 .padding(8.dp)
                 .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 session.planName,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Text(
                 DATE_FORMAT.format(session.date),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
             session.exercises.forEach { exercise ->
@@ -262,15 +262,15 @@ private fun WorkoutHistoryContentPreview() {
                                 name = "Romanian Deadlift (RDL) (barbell)",
                                 weightKg = "45",
                                 reps = 12,
-                                estimatedOneRmKg = 63f
-                            )
-                        )
-                    )
-                )
+                                estimatedOneRmKg = 63f,
+                            ),
+                        ),
+                    ),
+                ),
             ),
             onNavigateBack = {},
             onImportHistoryClick = {},
-            onImportDone = {}
+            onImportDone = {},
         )
     }
 }
@@ -283,7 +283,7 @@ private fun WorkoutHistoryEmptyPreview() {
             uiState = WorkoutHistoryUiState.Empty,
             onNavigateBack = {},
             onImportHistoryClick = {},
-            onImportDone = {}
+            onImportDone = {},
         )
     }
 }
@@ -300,18 +300,18 @@ private fun WorkoutHistoryImportSummaryPreview() {
                         PlanSessionCountUi("Full Body B", 23),
                         PlanSessionCountUi("Full Body A", 23),
                         PlanSessionCountUi("Upper body A", 3),
-                        PlanSessionCountUi("Upper body B", 3)
+                        PlanSessionCountUi("Upper body B", 3),
                     ),
                     plansCreatedCount = 2,
                     exercisesImportedCount = 1,
                     firstSessionDate = LocalDate.of(2026, 2, 17),
                     lastSessionDate = LocalDate.of(2026, 8, 20),
-                    workingSetCount = 854
-                )
+                    workingSetCount = 854,
+                ),
             ),
             onNavigateBack = {},
             onImportHistoryClick = {},
-            onImportDone = {}
+            onImportDone = {},
         )
     }
 }
