@@ -38,7 +38,7 @@ fun OneRmCalculatorScreen() {
         weight,
         reps,
         uiState,
-        viewModel::onAction,
+        viewModel::onAction
     )
 }
 
@@ -48,7 +48,7 @@ fun OneRmCalculatorTab(
     reps: String,
     uiState: OneRmUiState,
     onAction: (OneRmCalcAction) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Column(
         modifier
@@ -206,10 +206,10 @@ fun OneRmCalculatorPreview() {
                     OneRmEntry(50f, 9),
                     OneRmEntry(50f, 10),
                     OneRmEntry(52.5f, 8),
-                    OneRmEntry(52.5f, 9),
+                    OneRmEntry(52.5f, 9)
                 )
             ),
-            {},
+            {}
         )
     }
 }

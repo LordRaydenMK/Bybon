@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.drop
 fun rememberSyncedTextField(
     key: Any?,
     initialText: String,
-    onTextChanged: (String) -> Unit,
+    onTextChanged: (String) -> Unit
 ): TextFieldState {
     val state = rememberSaveable(key, saver = TextFieldState.Saver) {
         TextFieldState(initialText)
@@ -48,7 +48,7 @@ fun NumberInputField(state: TextFieldState) {
             focusedContainerColor = Color.Transparent,
             unfocusedContainerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent,
-            errorContainerColor = Color.Transparent,
-        ),
+            errorContainerColor = Color.Transparent
+        )
     )
 }

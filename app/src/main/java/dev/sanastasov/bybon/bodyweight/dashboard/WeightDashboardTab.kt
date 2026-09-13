@@ -137,7 +137,7 @@ private fun WeightDashboardPreview() {
         ),
         listOf(
             BodyWeightEntry(LocalDate.now().minusDays(1), BodyWeight.parseFromString("65.2")),
-            BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8")),
+            BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8"))
         ),
         listOf(
             WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),

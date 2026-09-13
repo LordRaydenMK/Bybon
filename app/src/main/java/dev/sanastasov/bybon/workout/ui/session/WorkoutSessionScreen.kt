@@ -63,10 +63,7 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
 }
 
 @Composable
-private fun SessionScreenContent(
-    state: WorkoutSession,
-    onAction: (WorkoutSessionAction) -> Unit,
-) {
+private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
     Scaffold(
         topBar = { BybonTopAppBar(state.planName, {}) }
     ) { contentPadding ->
@@ -86,7 +83,7 @@ private fun SessionScreenContent(
                 Card {
                     ExerciseCard(
                         exercise = state.exercises[page],
-                        onAction = onAction,
+                        onAction = onAction
                     )
                 }
             }
@@ -98,10 +95,7 @@ private fun SessionScreenContent(
 }
 
 @Composable
-private fun ExerciseCard(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutSessionAction) -> Unit,
-) {
+private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -118,13 +112,13 @@ private fun ExerciseCard(
         exercise.sets.forEachIndexed { index, set ->
             val weightState = rememberSyncedTextField(
                 key = exercise,
-                initialText = remember(exercise) { set.weight.kilograms },
+                initialText = remember(exercise) { set.weight.kilograms }
             ) { weight ->
                 onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
             }
             val repState = rememberSyncedTextField(
                 key = exercise,
-                initialText = remember(exercise) { set.reps.toString() },
+                initialText = remember(exercise) { set.reps.toString() }
             ) { reps ->
                 onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
             }
@@ -135,7 +129,7 @@ private fun ExerciseCard(
                 set = set,
                 weightState = weightState,
                 repState = repState,
-                onAction = onAction,
+                onAction = onAction
             )
         }
 
@@ -160,7 +154,7 @@ private fun SetRow(
     set: ExerciseSet,
     weightState: TextFieldState,
     repState: TextFieldState,
-    onAction: (WorkoutSessionAction) -> Unit,
+    onAction: (WorkoutSessionAction) -> Unit
 ) {
     val oneRmLabel = set.oneRm?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
     val previousLabel = set.previous?.let { previous ->
@@ -195,7 +189,7 @@ private fun SetRow(
         ) {
             Column(
                 Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 when (set.setState) {
                     SetState.Completed -> {
@@ -256,7 +250,7 @@ private fun SetRow(
                     Text(
                         previousLabel,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -287,7 +281,7 @@ private fun SetRow(
                     contentDescription = setDescription
                 },
             shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.tertiaryContainer,
+            color = MaterialTheme.colorScheme.tertiaryContainer
         ) {
             content()
         }

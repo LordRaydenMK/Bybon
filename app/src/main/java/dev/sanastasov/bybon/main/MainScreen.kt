@@ -54,7 +54,7 @@ fun MainModule.MainScreen(
     onNavigateToWeightEntry: () -> Unit,
     onNavigateToStartSession: (WorkoutPlan) -> Unit,
     onNavigateToOverview: (WorkoutPlan) -> Unit,
-    onNavigateToHistory: () -> Unit,
+    onNavigateToHistory: () -> Unit
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
@@ -90,7 +90,7 @@ fun MainModule.MainScreen(
         onNavigateToWeightEntry,
         plansState,
         workoutPlansViewModel::onAction,
-        onNavigateToHistory,
+        onNavigateToHistory
     )
 }
 
@@ -106,7 +106,7 @@ private fun MainScreenContent(
     onLogWeightClicked: () -> Unit,
     plans: List<WorkoutPlanUi>,
     onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
-    onHistoryClicked: () -> Unit,
+    onHistoryClicked: () -> Unit
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -119,7 +119,7 @@ private fun MainScreenContent(
                             Icon(Icons.Filled.DateRange, contentDescription = "History")
                         }
                     }
-                },
+                }
             )
         },
         bottomBar = {
@@ -158,6 +158,7 @@ private fun MainScreenContent(
         ) {
             when (selectedIndex) {
                 0 -> WorkoutsTab(plans, onWorkoutPlansAction, Modifier.fillMaxSize())
+
                 1 -> OneRmCalculatorTab(
                     weight,
                     reps,
@@ -167,6 +168,7 @@ private fun MainScreenContent(
                 )
 
                 2 -> WeightDashboardTab(weightState, onLogWeightClicked)
+
                 else -> error("Not yet implemented")
             }
         }
@@ -190,7 +192,7 @@ private fun MainScreenContentWorkoutsPreview() {
             WorkoutPlanUi(fullBodyB, isActive = false)
         ),
         {},
-        {},
+        {}
     )
 }
 
@@ -214,7 +216,7 @@ private fun MainScreenContentOneRmCalcPreview() {
             WorkoutPlanUi(fullBodyB, isActive = false)
         ),
         {},
-        {},
+        {}
     )
 }
 
@@ -236,11 +238,11 @@ private fun MainScreenContentWeightTrackPreview() {
             null,
             listOf(
                 BodyWeightEntry(LocalDate.now().minusDays(1), BodyWeight.parseFromString("65.2")),
-                BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8")),
+                BodyWeightEntry(LocalDate.now().minusDays(2), BodyWeight.parseFromString("64.8"))
             ),
             listOf(
                 WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
-                WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
+                WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30")
             )
         ),
         {},
@@ -249,6 +251,6 @@ private fun MainScreenContentWeightTrackPreview() {
             WorkoutPlanUi(fullBodyB, isActive = false)
         ),
         {},
-        {},
+        {}
     )
 }

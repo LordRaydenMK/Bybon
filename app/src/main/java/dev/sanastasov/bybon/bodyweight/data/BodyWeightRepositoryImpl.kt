@@ -6,9 +6,7 @@ import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class BodyWeightRepositoryImpl(
-    private val weightEntryDao: WeightDao
-) : BodyWeightRepository {
+class BodyWeightRepositoryImpl(private val weightEntryDao: WeightDao) : BodyWeightRepository {
 
     override fun entries(): Flow<List<BodyWeightEntry>> = weightEntryDao.weightEntries()
         .map { entries -> entries.map { BodyWeightEntry(it.date, BodyWeight(it.weight)) } }

@@ -13,5 +13,5 @@ data class StrongCsvRow(
     val distanceMeters: Double?,
     val seconds: Double?,
     val notes: String?,
-    val workoutNotes: String?,
+    val workoutNotes: String?
 )

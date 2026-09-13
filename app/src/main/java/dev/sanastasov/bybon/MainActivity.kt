@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val module = MainModule.create(
             BodyWeightModule.create(DbModule.create(application)),
-            WorkoutModule.create(),
+            WorkoutModule.create()
         )
         setContent {
             BybonTheme {

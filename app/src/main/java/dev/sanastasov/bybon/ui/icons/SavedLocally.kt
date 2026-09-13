@@ -21,7 +21,7 @@ val SavedLocally: ImageVector
                 defaultWidth = 24.dp,
                 defaultHeight = 24.dp,
                 viewportWidth = 24f,
-                viewportHeight = 24f,
+                viewportHeight = 24f
             )
                 .apply {
                     path(
@@ -33,7 +33,7 @@ val SavedLocally: ImageVector
                         strokeLineCap = StrokeCap.Butt,
                         strokeLineJoin = StrokeJoin.Bevel,
                         strokeLineMiter = 1f,
-                        pathFillType = PathFillType.Companion.NonZero,
+                        pathFillType = PathFillType.Companion.NonZero
                     ) {
                         moveTo(10.93f, 14.05f)
                         lineTo(16.6f, 8.4f)

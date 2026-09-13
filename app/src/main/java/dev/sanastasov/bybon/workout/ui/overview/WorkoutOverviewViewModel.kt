@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 class WorkoutOverviewViewModel(
     val planId: WorkoutPlanId,
     val repository: WorkoutsRepository,
-    val coroutineScope: CoroutineScope,
+    val coroutineScope: CoroutineScope
 ) {
     private val actions = MutableSharedFlow<WorkoutOverviewAction>(extraBufferCapacity = 32)
     private val _effects = Channel<WorkoutOverviewEffect>(Channel.BUFFERED)
@@ -40,7 +40,7 @@ class WorkoutOverviewViewModel(
     val uiState: StateFlow<WorkoutSession?> =
         combine(
             repository.workoutPlans(),
-            repository.workoutSessions(),
+            repository.workoutSessions()
         ) { plans, sessions ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
             val previousSession = sessions
@@ -71,30 +71,32 @@ class WorkoutOverviewViewModel(
         }
     }
 
-    private fun reduce(
-        session: WorkoutSession,
-        action: WorkoutOverviewAction,
-    ): WorkoutSession = when (action) {
-        WorkoutOverviewAction.OnIncreaseWorkout -> session.adjustAll(increase = true)
-        WorkoutOverviewAction.OnDecreaseWorkout -> session.adjustAll(increase = false)
-        is WorkoutOverviewAction.OnIncreaseExercise ->
-            session.adjustExercise(action.exercise, increase = true)
+    private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
+        when (action) {
+            WorkoutOverviewAction.OnIncreaseWorkout -> session.adjustAll(increase = true)
 
-        is WorkoutOverviewAction.OnDecreaseExercise ->
-            session.adjustExercise(action.exercise, increase = false)
+            WorkoutOverviewAction.OnDecreaseWorkout -> session.adjustAll(increase = false)
 
-        is WorkoutOverviewAction.OnWeightUpdated ->
-            action.newWeight.toFloatOrNull()?.let { weight ->
-                session.updateWeight(action.exercise, action.index, Weight.kilograms(weight))
-            } ?: session
+            is WorkoutOverviewAction.OnIncreaseExercise ->
+                session.adjustExercise(action.exercise, increase = true)
 
-        is WorkoutOverviewAction.OnRepsUpdated ->
-            action.newReps.toIntOrNull()?.let { reps ->
-                session.updateReps(action.exercise, action.index, reps)
-            } ?: session
+            is WorkoutOverviewAction.OnDecreaseExercise ->
+                session.adjustExercise(action.exercise, increase = false)
 
-        is WorkoutOverviewAction.OnAddSet -> session.addSet(action.exercise)
-        is WorkoutOverviewAction.RemoveLastSet -> session.removeLastSet(action.exercise)
-        WorkoutOverviewAction.OnStartWorkout -> session
-    }
+            is WorkoutOverviewAction.OnWeightUpdated ->
+                action.newWeight.toFloatOrNull()?.let { weight ->
+                    session.updateWeight(action.exercise, action.index, Weight.kilograms(weight))
+                } ?: session
+
+            is WorkoutOverviewAction.OnRepsUpdated ->
+                action.newReps.toIntOrNull()?.let { reps ->
+                    session.updateReps(action.exercise, action.index, reps)
+                } ?: session
+
+            is WorkoutOverviewAction.OnAddSet -> session.addSet(action.exercise)
+
+            is WorkoutOverviewAction.RemoveLastSet -> session.removeLastSet(action.exercise)
+
+            WorkoutOverviewAction.OnStartWorkout -> session
+        }
 }

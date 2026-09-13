@@ -166,7 +166,7 @@ val exercises = listOf(
         "Overhead Press (barbell)",
         MuscleGroup.Shoulders,
         Equipment.Barbell
-    ),
+    )
 )
 
 val exercisesMap = exercises.associateBy { it.id }

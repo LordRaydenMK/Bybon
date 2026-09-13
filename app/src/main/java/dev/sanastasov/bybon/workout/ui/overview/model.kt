@@ -10,14 +10,11 @@ sealed class WorkoutOverviewAction {
     data class OnWeightUpdated(
         val newWeight: String,
         val exercise: WorkoutExercise,
-        val index: Int,
+        val index: Int
     ) : WorkoutOverviewAction()
 
-    data class OnRepsUpdated(
-        val newReps: String,
-        val exercise: WorkoutExercise,
-        val index: Int,
-    ) : WorkoutOverviewAction()
+    data class OnRepsUpdated(val newReps: String, val exercise: WorkoutExercise, val index: Int) :
+        WorkoutOverviewAction()
 
     data class OnAddSet(val exercise: WorkoutExercise) : WorkoutOverviewAction()
     data class RemoveLastSet(val exercise: WorkoutExercise) : WorkoutOverviewAction()

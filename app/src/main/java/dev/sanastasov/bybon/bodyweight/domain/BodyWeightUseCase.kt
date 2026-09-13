@@ -3,10 +3,10 @@ package dev.sanastasov.bybon.bodyweight.domain
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.domain.weekOfYear
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 data class WeeklyAverageEntry(
     val weekOfYear: Int,
@@ -60,14 +60,15 @@ fun BodyWeightRepository.bodyWeightDashboard(today: LocalDate): Flow<BodyWeightD
         )
     }
 
-private fun List<BodyWeightEntry>.averageWeight(): BodyWeightEntry? =
-    when {
-        isEmpty() -> null
-        size < 3 -> null
-        else -> {
-            val total = sumOf { it.weight.value }
-            val average = total.toFloat() / size
-            val roundedTo5 = (average / 5).roundToInt() * 5
-            BodyWeightEntry(first().date, BodyWeight(roundedTo5))
-        }
+private fun List<BodyWeightEntry>.averageWeight(): BodyWeightEntry? = when {
+    isEmpty() -> null
+
+    size < 3 -> null
+
+    else -> {
+        val total = sumOf { it.weight.value }
+        val average = total.toFloat() / size
+        val roundedTo5 = (average / 5).roundToInt() * 5
+        BodyWeightEntry(first().date, BodyWeight(roundedTo5))
     }
+}

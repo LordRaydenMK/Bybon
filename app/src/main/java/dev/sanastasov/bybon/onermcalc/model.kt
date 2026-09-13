@@ -18,7 +18,4 @@ sealed class OneRmCalcAction {
     data class OnUpdateReps(val amount: Int) : OneRmCalcAction()
 }
 
-data class OneRmUiState(
-    val entry: OneRmEntry?,
-    val history: List<OneRmEntry> = emptyList()
-)
+data class OneRmUiState(val entry: OneRmEntry?, val history: List<OneRmEntry> = emptyList())

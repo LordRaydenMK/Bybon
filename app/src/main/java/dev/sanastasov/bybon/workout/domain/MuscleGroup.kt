@@ -8,5 +8,5 @@ enum class MuscleGroup {
     FullBody,
     Legs,
     Shoulders,
-    Other,
+    Other
 }

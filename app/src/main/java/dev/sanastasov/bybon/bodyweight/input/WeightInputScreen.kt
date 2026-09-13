@@ -71,7 +71,7 @@ private fun WeightInputContent(
                 .fillMaxSize()
                 .padding(contentPadding),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             DateRow(onAction, uiState)
 
@@ -87,14 +87,11 @@ private fun WeightInputContent(
 }
 
 @Composable
-private fun DateRow(
-    onAction: (WeightInputAction) -> Unit,
-    uiState: WeightInputUi
-) {
+private fun DateRow(onAction: (WeightInputAction) -> Unit, uiState: WeightInputUi) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedButton({ onAction(WeightInputAction.OnNewDateSelected(uiState.previousDate)) }) {
             Text("<")
@@ -156,7 +153,7 @@ private fun AdjustWeightRow(onAction: (WeightInputAction) -> Unit) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         OutlinedButton({ onAction(WeightInputAction.RemoveWeight(OneHundredGrams)) }) {
             Text("-0.1")

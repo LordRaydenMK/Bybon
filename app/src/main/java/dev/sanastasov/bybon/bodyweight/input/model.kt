@@ -6,10 +6,7 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
-data class WeightInputUi(
-    val date: LocalDate,
-    val savedBodyWeight: BodyWeight? = null,
-) {
+data class WeightInputUi(val date: LocalDate, val savedBodyWeight: BodyWeight? = null) {
 
     val dayOfWeek: String
         get() = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.US)

@@ -4,9 +4,7 @@ import java.time.LocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 
-fun WorkoutPlan.toWorkoutSession(
-    previousSession: WorkoutSession? = null,
-): WorkoutSession =
+fun WorkoutPlan.toWorkoutSession(previousSession: WorkoutSession? = null): WorkoutSession =
     WorkoutSession(
         id,
         name,
@@ -25,10 +23,16 @@ fun WorkoutPlan.toWorkoutSession(
                         planedExercise.exercise,
                         previousSet?.weight ?: Weight.kilograms(50),
                         previousSet?.reps ?: planedExercise.repRange.first,
-                        if (index == 0 && setNumber == 1) SetState.InProgress else SetState.NotStated,
+                        if (index == 0 &&
+                            setNumber == 1
+                        ) {
+                            SetState.InProgress
+                        } else {
+                            SetState.NotStated
+                        },
                         previous = previousSet?.let {
                             PreviousSetPerformance(it.weight, it.reps)
-                        },
+                        }
                     )
                 }
             )
@@ -65,7 +69,7 @@ value class Weight(private val value: Int) {
 enum class SetState {
     NotStated,
     InProgress,
-    Completed,
+    Completed
 }
 
 /** Brzycki when reps &lt; 10, otherwise Epley. */
@@ -75,10 +79,7 @@ fun estimateOneRmKg(weightKg: Float, reps: Int): Float = if (reps < 10) {
     weightKg * (1 + reps / 30f)
 }
 
-data class PreviousSetPerformance(
-    val weight: Weight,
-    val reps: Int,
-) {
+data class PreviousSetPerformance(val weight: Weight, val reps: Int) {
     val oneRm: Float?
         get() = oneRmOrNull(weight, reps)
 }
@@ -88,7 +89,7 @@ data class ExerciseSet(
     val weight: Weight,
     val reps: Int,
     val setState: SetState,
-    val previous: PreviousSetPerformance? = null,
+    val previous: PreviousSetPerformance? = null
 ) {
     val oneRm: Float?
         get() = oneRmOrNull(weight, reps)
@@ -103,7 +104,7 @@ private fun oneRmOrNull(weight: Weight, reps: Int): Float? {
 data class WorkoutExercise(
     val exerciseDefinition: ExerciseDefinition,
     val repRange: IntRange,
-    val sets: List<ExerciseSet>,
+    val sets: List<ExerciseSet>
 ) {
     val id: String = exerciseDefinition.id
 
@@ -122,13 +123,15 @@ data class WorkoutSession(
     val planName: String,
     val planDescription: String?,
     val exercises: List<WorkoutExercise>,
-    val state: WorkoutState = WorkoutState.NotStarted,
+    val state: WorkoutState = WorkoutState.NotStarted
 ) {
     val workoutSets: List<ExerciseSet> = exercises.flatMap { it.sets }
 
     init {
         require(workoutSets.map { it.setState }.filter { it == SetState.InProgress }.size <= 1) {
-            "At most 1 set can be in progress. Found ${workoutSets.filter { it.setState == SetState.InProgress }}"
+            "At most 1 set can be in progress. Found ${workoutSets.filter {
+                it.setState == SetState.InProgress
+            }}"
         }
     }
 }
@@ -185,7 +188,7 @@ fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
 fun WorkoutSession.updateWeight(
     exercise: WorkoutExercise,
     setIndex: Int,
-    weight: Weight,
+    weight: Weight
 ): WorkoutSession = updateExerciseSet(exercise, setIndex) {
     it.copy(weight = weight)
 }
@@ -228,7 +231,7 @@ private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
 internal fun ExerciseSet.adjust(
     repRange: IntRange,
     increment: Weight,
-    increase: Boolean,
+    increase: Boolean
 ): ExerciseSet {
     val currentOneRm = oneRm
     if (increase) {
@@ -271,13 +274,15 @@ internal fun ExerciseSet.adjust(
 private fun WorkoutSession.updateExercise(
     exerciseId: String,
     update: (WorkoutExercise) -> WorkoutExercise
-): WorkoutSession = copy(exercises = exercises.map { exercise ->
-    if (exercise.id == exerciseId) {
-        update(exercise)
-    } else {
-        exercise
+): WorkoutSession = copy(
+    exercises = exercises.map { exercise ->
+        if (exercise.id == exerciseId) {
+            update(exercise)
+        } else {
+            exercise
+        }
     }
-})
+)
 
 private fun WorkoutSession.updateExerciseSet(
     exercise: WorkoutExercise,
@@ -294,7 +299,6 @@ private fun WorkoutSession.updateExerciseSet(
     exercise.copy(sets = updated)
 }
 
-
 sealed class WorkoutSessionAction {
     data class OnCompleteSet(val exercise: WorkoutExercise, val index: Int) : WorkoutSessionAction()
 
@@ -304,11 +308,8 @@ sealed class WorkoutSessionAction {
         val index: Int
     ) : WorkoutSessionAction()
 
-    data class OnRepsUpdated(
-        val newReps: String,
-        val exercise: WorkoutExercise,
-        val index: Int
-    ) : WorkoutSessionAction()
+    data class OnRepsUpdated(val newReps: String, val exercise: WorkoutExercise, val index: Int) :
+        WorkoutSessionAction()
 
     data class OnAddSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
 

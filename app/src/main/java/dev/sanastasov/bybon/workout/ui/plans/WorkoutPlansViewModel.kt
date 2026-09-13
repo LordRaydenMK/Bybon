@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 
 class WorkoutPlansViewModel(
     private val repository: WorkoutsRepository,
-    private val coroutineScope: CoroutineScope,
+    private val coroutineScope: CoroutineScope
 ) {
 
     private val _effects = Channel<WorkoutPlanEffect>(Channel.BUFFERED)
@@ -19,15 +19,15 @@ class WorkoutPlansViewModel(
 
     val uiState = combine(
         repository.workoutPlans(),
-        repository.workoutSessions(),
+        repository.workoutSessions()
     ) { plans, sessions ->
         plans.map { plan ->
             WorkoutPlanUi(
                 plan = plan,
                 isActive = sessions.any { session ->
                     session.planId == plan.id &&
-                            session.workoutSets.any { it.setState == SetState.InProgress }
-                },
+                        session.workoutSets.any { it.setState == SetState.InProgress }
+                }
             )
         }
     }.stateInWhileInForeground(coroutineScope, emptyList())

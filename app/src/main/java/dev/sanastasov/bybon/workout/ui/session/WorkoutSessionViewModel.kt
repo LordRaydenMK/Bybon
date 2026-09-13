@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 class WorkoutSessionViewModel(
     val planId: WorkoutPlanId,
     val repository: WorkoutsRepository,
-    val coroutineScope: CoroutineScope,
+    val coroutineScope: CoroutineScope
 ) {
     val uiState: StateFlow<WorkoutSession?> =
         repository.workoutSessions()
@@ -42,7 +42,7 @@ class WorkoutSessionViewModel(
             val sessions = repository.workoutSessions().first()
             val inProgress = sessions.firstOrNull { session ->
                 session.planId == planId &&
-                        session.workoutSets.any { it.setState == SetState.InProgress }
+                    session.workoutSets.any { it.setState == SetState.InProgress }
             }
             if (inProgress == null) {
                 val plan = repository.workoutPlans().first().first { it.id == planId }
@@ -98,6 +98,5 @@ class WorkoutSessionViewModel(
                 }
             }
         }
-
     }
 }

@@ -27,8 +27,7 @@ value class BodyWeight(val value: Int) {
 
     operator fun unaryMinus(): BodyWeight = BodyWeight(-value)
 
-    operator fun minus(other: BodyWeight): BodyWeight =
-        BodyWeight(value - other.value)
+    operator fun minus(other: BodyWeight): BodyWeight = BodyWeight(value - other.value)
 
     operator fun plus(other: BodyWeight) = BodyWeight(value + other.value)
 
@@ -45,7 +44,4 @@ value class BodyWeight(val value: Int) {
     }
 }
 
-data class BodyWeightEntry(
-    val date: LocalDate,
-    val weight: BodyWeight,
-)
+data class BodyWeightEntry(val date: LocalDate, val weight: BodyWeight)

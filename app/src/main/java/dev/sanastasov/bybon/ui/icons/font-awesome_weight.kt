@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.dp
 val FontAwesomeWeight: ImageVector
     get() {
         if (_FontAwesomeWeight != null) return _FontAwesomeWeight!!
-        
+
         _FontAwesomeWeight = ImageVector.Builder(
             name = "weight",
             defaultWidth = 24.dp,
@@ -87,7 +87,7 @@ val FontAwesomeWeight: ImageVector
                 close()
             }
         }.build()
-        
+
         return _FontAwesomeWeight!!
     }
 

@@ -15,7 +15,7 @@ class WorkoutSessionTest {
                 session.exercises.first().exerciseDefinition,
                 Weight.kilograms(50),
                 8,
-                SetState.Completed,
+                SetState.Completed
             )
         )
         assert(
@@ -23,7 +23,7 @@ class WorkoutSessionTest {
                 session.exercises.first().exerciseDefinition,
                 Weight.kilograms(50),
                 8,
-                SetState.InProgress,
+                SetState.InProgress
             )
         )
         assert(actual.workoutSets.drop(2) == session.workoutSets.drop(2))
@@ -39,7 +39,7 @@ class WorkoutSessionTest {
             session.exercises.first().exerciseDefinition,
             Weight.kilograms(100),
             8,
-            SetState.InProgress,
+            SetState.InProgress
         )
         assert(actual.exercises.first().sets.first() == expected)
         assert(actual.exercises.drop(1) == session.exercises.drop(1))
@@ -55,7 +55,7 @@ class WorkoutSessionTest {
             session.exercises[1].exerciseDefinition,
             Weight.kilograms(100),
             8,
-            SetState.NotStated,
+            SetState.NotStated
         )
         assert(actual.workoutSets[3] == expected)
         assert(actual.workoutSets.take(3) == session.workoutSets.take(3))
@@ -72,7 +72,7 @@ class WorkoutSessionTest {
             session.exercises.first().exerciseDefinition,
             Weight.kilograms(50),
             10,
-            SetState.InProgress,
+            SetState.InProgress
         )
         assert(actual.exercises.first().sets.first() == expected)
         assert(actual.exercises.drop(1) == session.exercises.drop(1))
@@ -109,15 +109,15 @@ class WorkoutSessionTest {
                             set.copy(
                                 weight = Weight.kilograms(40 + index),
                                 reps = 9,
-                                setState = SetState.Completed,
+                                setState = SetState.Completed
                             )
                         }
                     )
                 },
                 state = WorkoutState.Completed(
                     startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
-                    duration = kotlin.time.Duration.ZERO,
-                ),
+                    duration = kotlin.time.Duration.ZERO
+                )
             )
         }
 
@@ -140,12 +140,15 @@ class WorkoutSessionTest {
         val session = fullBodyA.toWorkoutSession().let { session ->
             session.copy(
                 exercises = session.exercises.mapIndexed { exerciseIndex, exercise ->
-                    if (exerciseIndex != 0) exercise
-                    else exercise.copy(
-                        sets = exercise.sets.mapIndexed { setIndex, set ->
-                            if (setIndex != 0) set else set.copy(previous = previous)
-                        }
-                    )
+                    if (exerciseIndex != 0) {
+                        exercise
+                    } else {
+                        exercise.copy(
+                            sets = exercise.sets.mapIndexed { setIndex, set ->
+                                if (setIndex != 0) set else set.copy(previous = previous)
+                            }
+                        )
+                    }
                 }
             )
         }
@@ -165,15 +168,15 @@ class WorkoutSessionTest {
                             set.copy(
                                 weight = Weight.kilograms(40),
                                 reps = 9,
-                                setState = SetState.Completed,
+                                setState = SetState.Completed
                             )
                         }
                     )
                 },
                 state = WorkoutState.Completed(
                     startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
-                    duration = kotlin.time.Duration.ZERO,
-                ),
+                    duration = kotlin.time.Duration.ZERO
+                )
             )
         }
 
@@ -183,7 +186,12 @@ class WorkoutSessionTest {
         assert(actual.workoutSets.none { it.setState == SetState.InProgress })
         assert(actual.exercises.first().sets.first().weight == Weight.kilograms(40))
         assert(actual.exercises.first().sets.first().reps == 9)
-        assert(actual.exercises.first().sets.first().previous == PreviousSetPerformance(Weight.kilograms(40), 9))
+        assert(
+            actual.exercises.first().sets.first().previous == PreviousSetPerformance(
+                Weight.kilograms(40),
+                9
+            )
+        )
     }
 
     @Test

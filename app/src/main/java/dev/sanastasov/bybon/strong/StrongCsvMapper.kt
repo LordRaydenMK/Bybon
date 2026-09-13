@@ -31,23 +31,23 @@ private val strongExerciseAliases = mapOf(
     "bulgarian split squat" to "split-squat-db",
     "bicep curl (machine)" to "biceps-curl-machine",
     "seated leg curl (machine)" to "leg-curl",
-    "triceps press" to "triceps-press-machine",
+    "triceps press" to "triceps-press-machine"
 )
 
 data class StrongImportResult(
     val sessionHistory: List<WorkoutSession>,
     val exercises: List<ExerciseDefinition>,
-    val plans: List<WorkoutPlan>,
+    val plans: List<WorkoutPlan>
 )
 
 fun List<StrongCsvRow>.toWorkoutSessions(
     plans: List<WorkoutPlan> = listOf(fullBodyA, fullBodyB),
-    exerciseCatalog: List<ExerciseDefinition> = exercises,
+    exerciseCatalog: List<ExerciseDefinition> = exercises
 ): List<WorkoutSession> = toStrongImport(plans, exerciseCatalog).sessionHistory
 
 fun List<StrongCsvRow>.toStrongImport(
     plans: List<WorkoutPlan> = listOf(fullBodyA, fullBodyB),
-    exerciseCatalog: List<ExerciseDefinition> = exercises,
+    exerciseCatalog: List<ExerciseDefinition> = exercises
 ): StrongImportResult {
     val catalogByNormalizedName = exerciseCatalog.associateBy { it.name.normalizedExerciseName() }
     val catalogById = exerciseCatalog.associateBy { it.id }
@@ -91,7 +91,7 @@ fun List<StrongCsvRow>.toStrongImport(
     return StrongImportResult(
         sessionHistory = sessions,
         exercises = exercisesToImport,
-        plans = plansToImport,
+        plans = plansToImport
     )
 }
 
@@ -101,7 +101,7 @@ private data class ParsedWorkout(
     val startedAt: LocalDateTime,
     val duration: Duration,
     val workoutNotes: String?,
-    val exercises: List<WorkoutExercise>,
+    val exercises: List<WorkoutExercise>
 ) {
     val exerciseIds: List<String> = exercises.map { it.id }
 }
@@ -114,7 +114,7 @@ private fun List<ParsedWorkout>.representative(): ParsedWorkout {
 
 private fun List<StrongCsvRow>.toParsedWorkout(
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,
-    exercisesById: Map<String, ExerciseDefinition>,
+    exercisesById: Map<String, ExerciseDefinition>
 ): ParsedWorkout {
     val first = first()
     return ParsedWorkout(
@@ -125,39 +125,37 @@ private fun List<StrongCsvRow>.toParsedWorkout(
         workoutNotes = first.workoutNotes,
         exercises = groupByExerciseOrder().map { exerciseRows ->
             exerciseRows.toWorkoutExercise(exercisesByNormalizedName, exercisesById)
-        },
+        }
     )
 }
 
-private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession =
-    WorkoutSession(
-        planId = plan.id,
-        planName = plan.name,
-        planDescription = workoutNotes ?: plan.description,
-        exercises = exercises,
-        state = WorkoutState.Completed(
-            startedAt = startedAt,
-            duration = duration,
-        ),
+private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession = WorkoutSession(
+    planId = plan.id,
+    planName = plan.name,
+    planDescription = workoutNotes ?: plan.description,
+    exercises = exercises,
+    state = WorkoutState.Completed(
+        startedAt = startedAt,
+        duration = duration
     )
+)
 
-private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan =
-    WorkoutPlan(
-        id = WorkoutPlanId(planName.slugify()),
-        name = planName,
-        description = null,
-        sets = exercises.map { exercise ->
-            PlanedExercise(
-                exercise = exercise.exerciseDefinition,
-                sets = exercise.sets.size,
-                repRange = exercise.repRange,
-            )
-        },
-    )
+private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
+    id = WorkoutPlanId(planName.slugify()),
+    name = planName,
+    description = null,
+    sets = exercises.map { exercise ->
+        PlanedExercise(
+            exercise = exercise.exerciseDefinition,
+            sets = exercise.sets.size,
+            repRange = exercise.repRange
+        )
+    }
+)
 
 private fun List<WorkoutPlan>.findMatchingPlan(
     strongName: String,
-    strongExerciseIds: List<String>,
+    strongExerciseIds: List<String>
 ): WorkoutPlan? {
     val scored = map { plan ->
         val nameScore = nameSimilarity(strongName, plan.name)
@@ -208,7 +206,7 @@ private fun List<StrongCsvRow>.groupByExerciseOrder(): List<List<StrongCsvRow>> 
 
 private fun List<StrongCsvRow>.toWorkoutExercise(
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,
-    exercisesById: Map<String, ExerciseDefinition>,
+    exercisesById: Map<String, ExerciseDefinition>
 ): WorkoutExercise {
     val strongName = first().exerciseName
     val definition = resolveExercise(strongName, exercisesByNormalizedName, exercisesById)
@@ -224,16 +222,16 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
                 exerciseDefinition = definition,
                 weight = Weight.kilograms((row.weightKg ?: 0.0).toFloat()),
                 reps = row.reps ?: 0,
-                setState = SetState.Completed,
+                setState = SetState.Completed
             )
-        },
+        }
     )
 }
 
 private fun resolveExercise(
     strongName: String,
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,
-    exercisesById: Map<String, ExerciseDefinition>,
+    exercisesById: Map<String, ExerciseDefinition>
 ): ExerciseDefinition {
     val normalized = strongName.normalizedExerciseName()
     strongExerciseAliases[normalized]?.let { id -> exercisesById[id] }?.let { return it }
@@ -243,7 +241,7 @@ private fun resolveExercise(
         id = strongName.slugify(),
         name = strongName,
         primaryMuscleGroup = inferMuscleGroup(strongName),
-        equipment = inferEquipment(strongName),
+        equipment = inferEquipment(strongName)
     )
 }
 
@@ -266,23 +264,20 @@ private fun inferMuscleGroup(name: String): MuscleGroup {
     }
 }
 
-private fun String.normalizedExerciseName(): String =
-    lowercase()
-        .replace("(rdl)", "")
-        .replace(Regex("\\s+"), " ")
-        .trim()
+private fun String.normalizedExerciseName(): String = lowercase()
+    .replace("(rdl)", "")
+    .replace(Regex("\\s+"), " ")
+    .trim()
 
-private fun String.normalizedPlanName(): String =
-    lowercase()
-        .replace(Regex("[^a-z0-9]+"), " ")
-        .split(" ")
-        .filter { it.isNotEmpty() && it !in planNameFillers }
-        .joinToString(" ")
+private fun String.normalizedPlanName(): String = lowercase()
+    .replace(Regex("[^a-z0-9]+"), " ")
+    .split(" ")
+    .filter { it.isNotEmpty() && it !in planNameFillers }
+    .joinToString(" ")
 
-private fun String.slugify(): String =
-    lowercase()
-        .replace(Regex("[^a-z0-9]+"), "-")
-        .trim('-')
+private fun String.slugify(): String = lowercase()
+    .replace(Regex("[^a-z0-9]+"), "-")
+    .trim('-')
 
 private fun levenshtein(left: String, right: String): Int {
     val previous = IntArray(right.length + 1) { it }

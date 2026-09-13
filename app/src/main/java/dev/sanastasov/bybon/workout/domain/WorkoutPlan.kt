@@ -6,11 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 value class WorkoutPlanId(val id: String)
 
-data class PlanedExercise(
-    val exercise: ExerciseDefinition,
-    val sets: Int,
-    val repRange: IntRange
-)
+data class PlanedExercise(val exercise: ExerciseDefinition, val sets: Int, val repRange: IntRange)
 
 data class WorkoutPlan(
     val id: WorkoutPlanId,

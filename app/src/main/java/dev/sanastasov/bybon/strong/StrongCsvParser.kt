@@ -12,7 +12,7 @@ object StrongCsvParser {
         "Workout Name",
         "Duration (sec)",
         "Exercise Name",
-        "Set Order",
+        "Set Order"
     )
 
     fun parse(csv: String): List<StrongCsvRow> {
@@ -42,12 +42,11 @@ object StrongCsvParser {
                     distanceMeters = record["Distance (meters)"].blankToNull()?.toDouble(),
                     seconds = record["Seconds"].blankToNull()?.toDouble(),
                     notes = record["Notes"].blankToNull(),
-                    workoutNotes = record["Workout Notes"].blankToNull(),
+                    workoutNotes = record["Workout Notes"].blankToNull()
                 )
             }
             .toList()
     }
 
-    private fun String?.blankToNull(): String? =
-        this?.takeIf { it.isNotBlank() }
+    private fun String?.blankToNull(): String? = this?.takeIf { it.isNotBlank() }
 }

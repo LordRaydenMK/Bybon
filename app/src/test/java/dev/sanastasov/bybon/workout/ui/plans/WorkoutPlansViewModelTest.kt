@@ -23,7 +23,7 @@ class WorkoutPlansViewModelTest {
     fun `starting an active plan opens the session`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
-            initialSessions = listOf(fullBodyA.toWorkoutSession()),
+            initialSessions = listOf(fullBodyA.toWorkoutSession())
         )
         val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
 

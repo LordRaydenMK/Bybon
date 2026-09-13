@@ -6,18 +6,16 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 
-fun <A> Flow<A>.stateInWhileInForeground(
-    scope: CoroutineScope,
-    initialValue: A,
-) = stateIn(scope, SharingStarted.WhileSubscribed(5_000), initialValue)
+fun <A> Flow<A>.stateInWhileInForeground(scope: CoroutineScope, initialValue: A) =
+    stateIn(scope, SharingStarted.WhileSubscribed(5_000), initialValue)
 
 @Composable
 fun <A> Flow<A>.collectEffectWithLifecycle(

@@ -35,20 +35,22 @@ class WorkoutProgressionTest {
         steps.zipWithNext().forEach { (previous, next) ->
             assert(next.oneRm!! > previous.oneRm!!)
         }
-        assert(steps.map { it.weight to it.reps } == listOf(
-            Weight.kilograms(50) to 8,
-            Weight.kilograms(50) to 9,
-            Weight.kilograms(50) to 10,
-            Weight.kilograms(52.5f) to 9,
-            Weight.kilograms(52.5f) to 10,
-            Weight.kilograms(55) to 9,
-            Weight.kilograms(55) to 10,
-            Weight.kilograms(57.5f) to 9,
-            Weight.kilograms(57.5f) to 10,
-            Weight.kilograms(60) to 9,
-            Weight.kilograms(60) to 10,
-            Weight.kilograms(62.5f) to 9,
-        ))
+        assert(
+            steps.map { it.weight to it.reps } == listOf(
+                Weight.kilograms(50) to 8,
+                Weight.kilograms(50) to 9,
+                Weight.kilograms(50) to 10,
+                Weight.kilograms(52.5f) to 9,
+                Weight.kilograms(52.5f) to 10,
+                Weight.kilograms(55) to 9,
+                Weight.kilograms(55) to 10,
+                Weight.kilograms(57.5f) to 9,
+                Weight.kilograms(57.5f) to 10,
+                Weight.kilograms(60) to 9,
+                Weight.kilograms(60) to 10,
+                Weight.kilograms(62.5f) to 9
+            )
+        )
     }
 
     @Test
@@ -84,16 +86,18 @@ class WorkoutProgressionTest {
         val start = lateralSet(10f, 10)
         val steps = generateSequence(start) { it.increaseLateral() }.take(8).toList()
 
-        assert(steps.map { it.weight to it.reps } == listOf(
-            Weight.kilograms(10) to 10,
-            Weight.kilograms(10) to 11,
-            Weight.kilograms(10) to 12,
-            Weight.kilograms(10) to 13,
-            Weight.kilograms(10) to 14,
-            Weight.kilograms(10) to 15,
-            Weight.kilograms(10) to 16,
-            Weight.kilograms(12) to 10,
-        ))
+        assert(
+            steps.map { it.weight to it.reps } == listOf(
+                Weight.kilograms(10) to 10,
+                Weight.kilograms(10) to 11,
+                Weight.kilograms(10) to 12,
+                Weight.kilograms(10) to 13,
+                Weight.kilograms(10) to 14,
+                Weight.kilograms(10) to 15,
+                Weight.kilograms(10) to 16,
+                Weight.kilograms(12) to 10
+            )
+        )
         steps.zipWithNext().forEach { (previous, next) ->
             assert(next.oneRm!! > previous.oneRm!!)
         }
@@ -122,15 +126,17 @@ class WorkoutProgressionTest {
     fun `lateral raise minus from 10kg x 16 keeps decreasing estimated 1RM`() {
         val steps = generateSequence(lateralSet(10f, 16)) { it.decreaseLateral() }.take(7).toList()
 
-        assert(steps.map { it.weight to it.reps } == listOf(
-            Weight.kilograms(10) to 16,
-            Weight.kilograms(10) to 15,
-            Weight.kilograms(10) to 14,
-            Weight.kilograms(10) to 13,
-            Weight.kilograms(10) to 12,
-            Weight.kilograms(10) to 11,
-            Weight.kilograms(10) to 10,
-        ))
+        assert(
+            steps.map { it.weight to it.reps } == listOf(
+                Weight.kilograms(10) to 16,
+                Weight.kilograms(10) to 15,
+                Weight.kilograms(10) to 14,
+                Weight.kilograms(10) to 13,
+                Weight.kilograms(10) to 12,
+                Weight.kilograms(10) to 11,
+                Weight.kilograms(10) to 10
+            )
+        )
         steps.zipWithNext().forEach { (previous, next) ->
             assert(next.oneRm!! < previous.oneRm!!)
         }
@@ -142,13 +148,15 @@ class WorkoutProgressionTest {
             "push-up",
             "Push Up",
             MuscleGroup.Chest,
-            Equipment.Bodyweight,
+            Equipment.Bodyweight
         )
         val set = ExerciseSet(definition, Weight.kilograms(0), 10, SetState.NotStated)
         val range = 8..10
 
         val atTop = set.adjust(range, Equipment.Bodyweight.weightIncrement, increase = true)
-        val within = set.copy(reps = 8).adjust(range, Equipment.Bodyweight.weightIncrement, increase = true)
+        val within = set.copy(
+            reps = 8
+        ).adjust(range, Equipment.Bodyweight.weightIncrement, increase = true)
 
         assert(atTop == set)
         assert(within.weight == Weight.kilograms(0))
@@ -180,12 +188,15 @@ class WorkoutProgressionTest {
         val session = fullBodyA.toOverviewSession().let { overview ->
             overview.copy(
                 exercises = overview.exercises.mapIndexed { index, exercise ->
-                    if (index != 0) exercise
-                    else exercise.copy(
-                        sets = exercise.sets.mapIndexed { setIndex, set ->
-                            if (setIndex != 0) set else set.copy(previous = previous)
-                        }
-                    )
+                    if (index != 0) {
+                        exercise
+                    } else {
+                        exercise.copy(
+                            sets = exercise.sets.mapIndexed { setIndex, set ->
+                                if (setIndex != 0) set else set.copy(previous = previous)
+                            }
+                        )
+                    }
                 }
             )
         }
@@ -199,14 +210,14 @@ class WorkoutProgressionTest {
         bench,
         Weight.kilograms(kg),
         reps,
-        SetState.NotStated,
+        SetState.NotStated
     )
 
     private fun lateralSet(kg: Float, reps: Int) = ExerciseSet(
         lateralRaise,
         Weight.kilograms(kg),
         reps,
-        SetState.NotStated,
+        SetState.NotStated
     )
 
     private fun ExerciseSet.increase() =
