@@ -143,27 +143,7 @@ private fun OverviewExerciseCard(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Spacer(Modifier.height(8.dp))
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val title =
-                "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
-                    "in ${exercise.repRange.first} - ${exercise.repRange.last}"
-            Text(
-                title,
-                Modifier.weight(1f),
-                fontWeight = FontWeight.Bold,
-            )
-            AdjustButtons(
-                onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseExercise(exercise)) },
-                onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseExercise(exercise)) },
-                onReset = { onAction(WorkoutOverviewAction.OnResetExercise(exercise)) },
-                decreaseContentDescription = "Decrease weight and reps for ${exercise.exerciseDefinition.name}",
-                increaseContentDescription = "Increase weight and reps for ${exercise.exerciseDefinition.name}",
-                resetContentDescription = "Reset ${exercise.exerciseDefinition.name} to previous session",
-            )
-        }
+        OverviewExerciseHeader(exercise, onAction)
         Spacer(Modifier.height(4.dp))
 
         exercise.sets.forEachIndexed { index, set ->
@@ -188,15 +168,51 @@ private fun OverviewExerciseCard(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton({ onAction(WorkoutOverviewAction.OnAddSet(exercise)) }) {
-                Text("Add set")
-            }
+        OverviewExerciseSetActions(exercise, onAction)
+    }
+}
 
-            if (exercise.sets.size > 1) {
-                TextButton({ onAction(WorkoutOverviewAction.RemoveLastSet(exercise)) }) {
-                    Text("Remove last set")
-                }
+@Composable
+private fun OverviewExerciseHeader(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val title =
+            "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
+                "in ${exercise.repRange.first} - ${exercise.repRange.last}"
+        Text(
+            title,
+            Modifier.weight(1f),
+            fontWeight = FontWeight.Bold,
+        )
+        AdjustButtons(
+            onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseExercise(exercise)) },
+            onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseExercise(exercise)) },
+            onReset = { onAction(WorkoutOverviewAction.OnResetExercise(exercise)) },
+            decreaseContentDescription = "Decrease weight and reps for ${exercise.exerciseDefinition.name}",
+            increaseContentDescription = "Increase weight and reps for ${exercise.exerciseDefinition.name}",
+            resetContentDescription = "Reset ${exercise.exerciseDefinition.name} to previous session",
+        )
+    }
+}
+
+@Composable
+private fun OverviewExerciseSetActions(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton({ onAction(WorkoutOverviewAction.OnAddSet(exercise)) }) {
+            Text("Add set")
+        }
+
+        if (exercise.sets.size > 1) {
+            TextButton({ onAction(WorkoutOverviewAction.RemoveLastSet(exercise)) }) {
+                Text("Remove last set")
             }
         }
     }
