@@ -18,6 +18,9 @@ jobs:
       - name: Common setup
         uses: ./.github/actions/setup-android
 
+      - name: Detekt
+        run: ./gradlew detekt
+
       - name: Build
         run: ./gradlew buildDebug
 
