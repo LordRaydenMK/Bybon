@@ -48,6 +48,10 @@ value class Weight(private val value: Int) {
     val kilogramsValue: Float
         get() = value / 10f
 
+    operator fun plus(other: Weight): Weight = Weight(value + other.value)
+
+    operator fun minus(other: Weight): Weight = Weight((value - other.value).coerceAtLeast(0))
+
     companion object {
 
         fun kilograms(value: Int): Weight = Weight(value * 10)
@@ -162,10 +166,11 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
     }
 
 fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
+    val hadInProgress = workoutSets.any { it.setState == SetState.InProgress }
     val updated = updateExercise(exercise.id) { exercise ->
         exercise.copy(sets = exercise.sets.dropLast(1))
     }
-    if (updated.workoutSets.any { it.setState == SetState.InProgress }) {
+    if (!hadInProgress || updated.workoutSets.any { it.setState == SetState.InProgress }) {
         return updated
     }
     val next = updated.exercises.firstNotNullOfOrNull { ex ->
@@ -191,6 +196,76 @@ fun WorkoutSession.updateReps(
     count: Int
 ): WorkoutSession = updateExerciseSet(exercise, setIndex) {
     it.copy(reps = count)
+}
+
+fun WorkoutPlan.toOverviewSession(previousSession: WorkoutSession? = null): WorkoutSession =
+    toWorkoutSession(previousSession).asOverviewDraft()
+
+fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
+    state = WorkoutState.NotStarted,
+    exercises = exercises.map { exercise ->
+        exercise.copy(sets = exercise.sets.map { it.copy(setState = SetState.NotStated) })
+    }
+)
+
+fun WorkoutSession.startWorkout(): WorkoutSession {
+    val firstExercise = exercises.firstOrNull() ?: return this
+    if (firstExercise.sets.isEmpty()) return this
+    return updateExerciseSet(firstExercise, 0) { it.copy(setState = SetState.InProgress) }
+}
+
+fun WorkoutSession.adjustAll(increase: Boolean): WorkoutSession =
+    copy(exercises = exercises.map { it.adjust(increase) })
+
+fun WorkoutSession.adjustExercise(exercise: WorkoutExercise, increase: Boolean): WorkoutSession =
+    updateExercise(exercise.id) { it.adjust(increase) }
+
+private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
+    val increment = exerciseDefinition.equipment.weightIncrement
+    return copy(sets = sets.map { it.adjust(repRange, increment, increase) })
+}
+
+internal fun ExerciseSet.adjust(
+    repRange: IntRange,
+    increment: Weight,
+    increase: Boolean,
+): ExerciseSet {
+    val currentOneRm = oneRm
+    if (increase) {
+        if (reps < repRange.last) {
+            return copy(reps = reps + 1)
+        }
+        if (increment.kilogramsValue <= 0f) return this
+        var newWeight = weight + increment
+        repeat(64) {
+            val repsThatIncrease = repRange.filter { candidateReps ->
+                val candidateOneRm = oneRmOrNull(newWeight, candidateReps) ?: return@filter false
+                currentOneRm == null || candidateOneRm > currentOneRm
+            }
+            if (repsThatIncrease.isNotEmpty()) {
+                return copy(weight = newWeight, reps = repsThatIncrease.min())
+            }
+            newWeight += increment
+        }
+        return this
+    }
+    if (reps > repRange.first) {
+        return copy(reps = reps - 1)
+    }
+    if (increment.kilogramsValue <= 0f || weight.kilogramsValue <= 0f) return this
+    var newWeight = weight - increment
+    repeat(64) {
+        if (newWeight.kilogramsValue <= 0f) return this
+        val repsThatDecrease = repRange.filter { candidateReps ->
+            val candidateOneRm = oneRmOrNull(newWeight, candidateReps) ?: return@filter false
+            currentOneRm == null || candidateOneRm < currentOneRm
+        }
+        if (repsThatDecrease.isNotEmpty()) {
+            return copy(weight = newWeight, reps = repsThatDecrease.max())
+        }
+        newWeight -= increment
+    }
+    return this
 }
 
 private fun WorkoutSession.updateExercise(

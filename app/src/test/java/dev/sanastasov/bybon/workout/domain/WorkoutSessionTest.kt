@@ -154,4 +154,55 @@ class WorkoutSessionTest {
 
         assert(actual.exercises.first().sets.first().previous == previous)
     }
+
+    @Test
+    fun `toOverviewSession clears in-progress sets and keeps previous performance`() {
+        val previous = fullBodyA.toWorkoutSession().let { session ->
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.map { set ->
+                            set.copy(
+                                weight = Weight.kilograms(40),
+                                reps = 9,
+                                setState = SetState.Completed,
+                            )
+                        }
+                    )
+                },
+                state = WorkoutState.Completed(
+                    startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
+                    duration = kotlin.time.Duration.ZERO,
+                ),
+            )
+        }
+
+        val actual = fullBodyA.toOverviewSession(previous)
+
+        assert(actual.state == WorkoutState.NotStarted)
+        assert(actual.workoutSets.none { it.setState == SetState.InProgress })
+        assert(actual.exercises.first().sets.first().weight == Weight.kilograms(40))
+        assert(actual.exercises.first().sets.first().reps == 9)
+        assert(actual.exercises.first().sets.first().previous == PreviousSetPerformance(Weight.kilograms(40), 9))
+    }
+
+    @Test
+    fun `startWorkout marks the first set in progress`() {
+        val overview = fullBodyA.toOverviewSession()
+
+        val actual = overview.startWorkout()
+
+        assert(actual.exercises.first().sets.first().setState == SetState.InProgress)
+        assert(actual.workoutSets.drop(1).all { it.setState == SetState.NotStated })
+    }
+
+    @Test
+    fun `remove last set on overview draft does not start another set`() {
+        val overview = fullBodyA.toOverviewSession()
+
+        val actual = overview.removeLastSet(overview.exercises.first())
+
+        assert(actual.exercises.first().sets.size == 2)
+        assert(actual.workoutSets.none { it.setState == SetState.InProgress })
+    }
 }

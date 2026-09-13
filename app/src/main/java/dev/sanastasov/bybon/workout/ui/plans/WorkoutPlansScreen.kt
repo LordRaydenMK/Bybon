@@ -42,7 +42,9 @@ fun WorkoutsTab(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(plans, key = { it.plan.id.id }) { planUi ->
-            WorkoutPlanCard(planUi) { onAction(WorkoutPlansAction.OnStartPlan(it)) }
+            WorkoutPlanCard(planUi) {
+                onAction(WorkoutPlansAction.OnStartPlan(it))
+            }
         }
     }
 }

@@ -53,6 +53,7 @@ import java.time.LocalDate
 fun MainModule.MainScreen(
     onNavigateToWeightEntry: () -> Unit,
     onNavigateToStartSession: (WorkoutPlan) -> Unit,
+    onNavigateToOverview: (WorkoutPlan) -> Unit,
     onNavigateToHistory: () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -73,7 +74,8 @@ fun MainModule.MainScreen(
     val plansState by workoutPlansViewModel.uiState.collectAsStateWithLifecycle()
     workoutPlansViewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
-            is WorkoutPlanEffect.StartPlan -> onNavigateToStartSession(effect.plan)
+            is WorkoutPlanEffect.OpenOverview -> onNavigateToOverview(effect.plan)
+            is WorkoutPlanEffect.OpenSession -> onNavigateToStartSession(effect.plan)
         }
     }
 
