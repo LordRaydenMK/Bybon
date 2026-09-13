@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -73,7 +76,8 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
         Column(
             Modifier
                 .padding(contentPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp),
+                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .fillMaxSize(),
         ) {
             state.planDescription?.let {
                 Text(it)
@@ -82,8 +86,11 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
             val pagerState = rememberPagerState(0) {
                 state.exercises.size
             }
-            HorizontalPager(pagerState) { page ->
-                Card {
+            HorizontalPager(
+                pagerState,
+                Modifier.weight(1f),
+            ) { page ->
+                Card(Modifier.fillMaxSize()) {
                     ExerciseCard(
                         exercise = state.exercises[page],
                         onAction = onAction,
@@ -102,6 +109,7 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
     Column(
         Modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
