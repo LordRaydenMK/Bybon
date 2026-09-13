@@ -230,20 +230,42 @@ internal fun ExerciseSet.adjust(
     increment: Weight,
     increase: Boolean,
 ): ExerciseSet {
-    val canChangeWeight = increment.kilogramsValue > 0f
-    return if (increase) {
-        when {
-            reps < repRange.last -> copy(reps = reps + 1)
-            canChangeWeight -> copy(weight = weight + increment, reps = repRange.first)
-            else -> this
+    val currentOneRm = oneRm
+    if (increase) {
+        if (reps < repRange.last) {
+            return copy(reps = reps + 1)
         }
-    } else {
-        when {
-            reps > repRange.first -> copy(reps = reps - 1)
-            canChangeWeight -> copy(weight = weight - increment, reps = repRange.last)
-            else -> this
+        if (increment.kilogramsValue <= 0f) return this
+        var newWeight = weight + increment
+        repeat(64) {
+            val repsThatIncrease = repRange.filter { candidateReps ->
+                val candidateOneRm = oneRmOrNull(newWeight, candidateReps) ?: return@filter false
+                currentOneRm == null || candidateOneRm > currentOneRm
+            }
+            if (repsThatIncrease.isNotEmpty()) {
+                return copy(weight = newWeight, reps = repsThatIncrease.min())
+            }
+            newWeight += increment
         }
+        return this
     }
+    if (reps > repRange.first) {
+        return copy(reps = reps - 1)
+    }
+    if (increment.kilogramsValue <= 0f || weight.kilogramsValue <= 0f) return this
+    var newWeight = weight - increment
+    repeat(64) {
+        if (newWeight.kilogramsValue <= 0f) return this
+        val repsThatDecrease = repRange.filter { candidateReps ->
+            val candidateOneRm = oneRmOrNull(newWeight, candidateReps) ?: return@filter false
+            currentOneRm == null || candidateOneRm < currentOneRm
+        }
+        if (repsThatDecrease.isNotEmpty()) {
+            return copy(weight = newWeight, reps = repsThatDecrease.max())
+        }
+        newWeight -= increment
+    }
+    return this
 }
 
 private fun WorkoutSession.updateExercise(
