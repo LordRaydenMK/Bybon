@@ -7,6 +7,7 @@ import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
+import dev.sanastasov.bybon.workout.domain.PlanedWarmupSet
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -149,6 +150,9 @@ private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
             exercise = exercise.exerciseDefinition,
             sets = exercise.sets.size,
             repRange = exercise.repRange,
+            warmupSets = exercise.warmupSets.map { warmup ->
+                PlanedWarmupSet(warmup.weight, warmup.reps)
+            },
         )
     },
 )
@@ -212,6 +216,7 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
 ): WorkoutExercise {
     val strongName = first().exerciseName
     val definition = resolveExercise(strongName, exercisesByNormalizedName, exercisesById)
+    val warmupRows = filter { it.setOrder.equals("W", ignoreCase = true) }
     val workingRows = filter { it.setOrder.toIntOrNull() != null }
     val reps = workingRows.mapNotNull { it.reps }
     val repRange = if (reps.isEmpty()) 0..0 else reps.min()..reps.max()
@@ -220,6 +225,14 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
         exerciseDefinition = definition,
         repRange = repRange,
         sets = workingRows.map { row ->
+            ExerciseSet(
+                exerciseDefinition = definition,
+                weight = Weight.kilograms((row.weightKg ?: 0.0).toFloat()),
+                reps = row.reps ?: 0,
+                setState = SetState.Completed,
+            )
+        },
+        warmupSets = warmupRows.map { row ->
             ExerciseSet(
                 exerciseDefinition = definition,
                 weight = Weight.kilograms((row.weightKg ?: 0.0).toFloat()),

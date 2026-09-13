@@ -182,6 +182,7 @@ class WorkoutProgressionTest {
         assert(actual.exercises.drop(1) == session.exercises.drop(1))
         assert(sets[0].oneRm!! > benchExercise.sets[0].oneRm!!)
         assert(sets[1].oneRm!! > benchExercise.sets[1].oneRm!!)
+        assert(actual.exercises.first().warmupSets == benchExercise.warmupSets)
     }
 
     @Test

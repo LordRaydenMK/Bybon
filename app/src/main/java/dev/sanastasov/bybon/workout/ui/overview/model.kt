@@ -6,28 +6,36 @@ sealed class WorkoutOverviewAction {
     data object OnIncreaseWorkout : WorkoutOverviewAction()
     data object OnDecreaseWorkout : WorkoutOverviewAction()
     data class OnIncreaseExercise(
-        val exercise: WorkoutExercise,
+        val exercise: WorkoutExercise
     ) : WorkoutOverviewAction()
     data class OnDecreaseExercise(
-        val exercise: WorkoutExercise,
+        val exercise: WorkoutExercise
     ) : WorkoutOverviewAction()
     data class OnWeightUpdated(
         val newWeight: String,
         val exercise: WorkoutExercise,
         val index: Int,
+        val isWarmup: Boolean = false,
     ) : WorkoutOverviewAction()
 
     data class OnRepsUpdated(
         val newReps: String,
         val exercise: WorkoutExercise,
         val index: Int,
+        val isWarmup: Boolean = false,
     ) : WorkoutOverviewAction()
 
     data class OnAddSet(
-        val exercise: WorkoutExercise,
+        val exercise: WorkoutExercise
     ) : WorkoutOverviewAction()
     data class RemoveLastSet(
-        val exercise: WorkoutExercise,
+        val exercise: WorkoutExercise
+    ) : WorkoutOverviewAction()
+    data class OnConvertToWarmup(
+        val exercise: WorkoutExercise
+    ) : WorkoutOverviewAction()
+    data class OnConvertToWorkSet(
+        val exercise: WorkoutExercise
     ) : WorkoutOverviewAction()
     data object OnResetWorkout : WorkoutOverviewAction()
     data class OnResetExercise(

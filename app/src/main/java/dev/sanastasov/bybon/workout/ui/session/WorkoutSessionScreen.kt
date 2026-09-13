@@ -46,6 +46,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -62,7 +63,7 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
 }
 
 @Composable
-private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
+private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit,) {
     Scaffold(
         topBar = { BybonTopAppBar(state.planName, {}) },
     ) { contentPadding ->
@@ -94,7 +95,7 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
 }
 
 @Composable
-private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit) {
+private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit,) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -111,16 +112,61 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
         )
         Spacer(Modifier.height(4.dp))
 
+        exercise.warmupSets.forEachIndexed { index, set ->
+            val weightState = rememberSyncedTextField(
+                key = exercise to "w$index",
+                initialText = remember(exercise, index) { set.weight.kilograms },
+            ) { weight ->
+                onAction(
+                    WorkoutSessionAction.OnWeightUpdated(
+                        weight,
+                        exercise,
+                        index,
+                        isWarmup = true,
+                    ),
+                )
+            }
+            val repState = rememberSyncedTextField(
+                key = exercise to "wr$index",
+                initialText = remember(exercise, index) { set.reps.toString() },
+            ) { reps ->
+                onAction(
+                    WorkoutSessionAction.OnRepsUpdated(
+                        reps,
+                        exercise,
+                        index,
+                        isWarmup = true,
+                    ),
+                )
+            }
+
+            SetRow(
+                exercise = exercise,
+                index = index,
+                isWarmup = true,
+                workSetNumber = null,
+                set = set,
+                weightState = weightState,
+                repState = repState,
+                onBadgeClick = if (index == exercise.warmupSets.lastIndex) {
+                    { onAction(WorkoutSessionAction.OnConvertToWorkSet(exercise)) }
+                } else {
+                    null
+                },
+                onAction = onAction,
+            )
+        }
+
         exercise.sets.forEachIndexed { index, set ->
             val weightState = rememberSyncedTextField(
-                key = exercise,
-                initialText = remember(exercise) { set.weight.kilograms },
+                key = exercise to "s$index",
+                initialText = remember(exercise, index) { set.weight.kilograms },
             ) { weight ->
                 onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
             }
             val repState = rememberSyncedTextField(
-                key = exercise,
-                initialText = remember(exercise) { set.reps.toString() },
+                key = exercise to "sr$index",
+                initialText = remember(exercise, index) { set.reps.toString() },
             ) { reps ->
                 onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
             }
@@ -128,9 +174,16 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
             SetRow(
                 exercise = exercise,
                 index = index,
+                isWarmup = false,
+                workSetNumber = index + 1,
                 set = set,
                 weightState = weightState,
                 repState = repState,
+                onBadgeClick = if (index == 0) {
+                    { onAction(WorkoutSessionAction.OnConvertToWarmup(exercise)) }
+                } else {
+                    null
+                },
                 onAction = onAction,
             )
         }
@@ -154,9 +207,12 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
 private fun SetRow(
     exercise: WorkoutExercise,
     index: Int,
+    isWarmup: Boolean,
+    workSetNumber: Int?,
     set: ExerciseSet,
     weightState: TextFieldState,
     repState: TextFieldState,
+    onBadgeClick: (() -> Unit)?,
     onAction: (WorkoutSessionAction) -> Unit,
 ) {
     val oneRmLabel = set.oneRm?.let { "@ ${it.kilograms} kg 1RM" }
@@ -166,8 +222,9 @@ private fun SetRow(
             previous.oneRm?.let { append(" @ ${it.kilograms} kg 1RM") }
         }
     }
+    val setLabel = if (isWarmup) "Warmup set" else "Set $workSetNumber"
     val setDescription = buildString {
-        append("Set ${index + 1}")
+        append(setLabel)
         if (set.setState == SetState.InProgress) {
             append(" in progress")
         }
@@ -197,12 +254,22 @@ private fun SetRow(
                 when (set.setState) {
                     SetState.Completed -> {
                         val summary = buildString {
-                            append("${index + 1}. ${set.weight.kilograms} kg x ${set.reps}")
+                            append("${set.weight.kilograms} kg x ${set.reps}")
                             if (oneRmLabel != null) {
                                 append(" $oneRmLabel")
                             }
                         }
-                        Text(summary)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            SetNumberBadge(
+                                isWarmup = isWarmup,
+                                workSetNumber = workSetNumber,
+                                onClick = onBadgeClick,
+                            )
+                            Text(summary)
+                        }
                     }
 
                     SetState.InProgress -> {
@@ -211,11 +278,12 @@ private fun SetRow(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text(
-                                "${index + 1}.",
+                            SetNumberBadge(
+                                isWarmup = isWarmup,
+                                workSetNumber = workSetNumber,
+                                onClick = onBadgeClick,
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge,
                             )
                             NumberInputField(weightState)
                             Text(
@@ -240,7 +308,11 @@ private fun SetRow(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text("${index + 1}.")
+                        SetNumberBadge(
+                            isWarmup = isWarmup,
+                            workSetNumber = workSetNumber,
+                            onClick = onBadgeClick,
+                        )
                         NumberInputField(weightState)
                         Text(" kg x ")
                         NumberInputField(repState)
@@ -260,7 +332,11 @@ private fun SetRow(
             when (set.setState) {
                 SetState.InProgress -> Checkbox(
                     false,
-                    { onAction(WorkoutSessionAction.OnCompleteSet(exercise, index)) },
+                    {
+                        onAction(
+                            WorkoutSessionAction.OnCompleteSet(exercise, index, isWarmup),
+                        )
+                    },
                     Modifier.clearAndSetSemantics { },
                 )
 
@@ -277,7 +353,9 @@ private fun SetRow(
 
     if (set.setState == SetState.InProgress) {
         Surface(
-            onClick = { onAction(WorkoutSessionAction.OnCompleteSet(exercise, index)) },
+            onClick = {
+                onAction(WorkoutSessionAction.OnCompleteSet(exercise, index, isWarmup))
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics(mergeDescendants = true) {
@@ -308,7 +386,7 @@ private fun SetRow(
 private fun SessionScreenContentPage1CompletedExercisePreview() {
     val session = fullBodyA.toWorkoutSession()
     SessionScreenContent(
-        session.completeSet(session.exercises.first(), 0),
+        session.completeSet(session.exercises.first(), 0, isWarmup = true),
         {},
     )
 }

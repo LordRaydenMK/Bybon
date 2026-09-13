@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
@@ -77,6 +78,16 @@ class StrongCsvRowTest {
         )
         assert(result.sessionHistory.count { it.planId == fullBodyA.id } == 23)
         assert(result.sessionHistory.count { it.planId == fullBodyB.id } == 23)
+        val firstRdl = result.sessionHistory.first { it.planId == fullBodyB.id }.exercises.first()
+        assert(firstRdl.id == "rdl-bb")
+        assert(firstRdl.warmupSets.size == 2)
+        assert(
+            firstRdl.warmupSets.map { it.weight to it.reps } == listOf(
+            Weight.kilograms(20f) to 8,
+            Weight.kilograms(35f) to 4,
+        )
+        )
+        assert(firstRdl.sets.size == 3)
     }
 
     @Test

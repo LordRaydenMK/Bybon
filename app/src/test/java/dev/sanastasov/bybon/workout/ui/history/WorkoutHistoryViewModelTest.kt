@@ -147,6 +147,35 @@ class WorkoutHistoryViewModelTest {
     }
 
     @Test
+    fun `history top set ignores warmup sets`() = runTest {
+        val bench = completedExercise("bench-press-bb", 80f to 8, 80f to 7).copy(
+            warmupSets = listOf(
+                ExerciseSet(
+                    exerciseDefinition = exercisesMap.getValue("bench-press-bb"),
+                    weight = Weight.kilograms(200),
+                    reps = 1,
+                    setState = SetState.Completed,
+                ),
+            ),
+        )
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(bench),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val actual = awaitItem() as WorkoutHistoryUiState.History
+            assert(actual.sessions.single().exercises.single().weightKg == "80")
+            assert(actual.sessions.single().exercises.single().reps == 8)
+        }
+    }
+
+    @Test
     fun `top set is the heaviest completed set even when another set has a higher 1RM`() = runTest {
         val session = completedSession(
             planId = "full-body-a",
