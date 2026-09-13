@@ -53,9 +53,7 @@ jobs:
           disable-animations: true
           script: |
             ./gradlew installDebug
-            adb shell mkdir -p /storage/emulated/0/Download
-            adb push app/src/test/resources/strong-backup-sample.csv /storage/emulated/0/Download/strong-backup-sample.csv
-            adb shell am broadcast -a android.intent.action.MEDIA_SCANNER_SCAN_FILE -d file:///storage/emulated/0/Download/strong-backup-sample.csv
+            bash .github/scripts/seed-strong-csv.sh
             maestro test app/src/maestro/flows
 
       - name: Archive Maestro test results on failure

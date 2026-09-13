@@ -8,7 +8,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "No completed workouts yet"
 - assertVisible: "Import history"
 - tapOn: "Import history"
-# System SAF picker. CI pushes the unit-test CSV to Downloads so it shows under Recents.
+# System SAF picker. CI/release seed the unit-test CSV via .github/scripts/seed-strong-csv.sh.
 - extendedWaitUntil:
     visible: "strong-backup-sample.csv"
     timeout: 15000
