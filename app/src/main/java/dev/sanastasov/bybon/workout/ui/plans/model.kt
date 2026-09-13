@@ -8,9 +8,9 @@ data class WorkoutPlanUi(
 )
 
 sealed class WorkoutPlansAction {
-    data class OnStartPlan(val plan: WorkoutPlan) : WorkoutPlansAction()
+    data class OnStartPlan(val plan: WorkoutPlan, val isResume: Boolean) : WorkoutPlansAction()
 }
 
 sealed class WorkoutPlanEffect {
-    data class StartPlan(val plan: WorkoutPlan) : WorkoutPlanEffect()
+    data class StartPlan(val plan: WorkoutPlan, val isResume: Boolean) : WorkoutPlanEffect()
 }

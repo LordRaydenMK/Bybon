@@ -34,7 +34,9 @@ class WorkoutPlansViewModel(
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {
-            is WorkoutPlansAction.OnStartPlan -> _effects.trySend(WorkoutPlanEffect.StartPlan(action.plan))
+            is WorkoutPlansAction.OnStartPlan -> _effects.trySend(
+                WorkoutPlanEffect.StartPlan(action.plan, action.isResume)
+            )
         }
     }
 }
