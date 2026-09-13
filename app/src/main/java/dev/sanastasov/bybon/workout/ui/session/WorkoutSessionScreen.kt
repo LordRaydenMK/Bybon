@@ -9,12 +9,9 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -23,28 +20,22 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.components.NumberInputField
+import dev.sanastasov.bybon.ui.components.rememberSyncedTextField
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -55,8 +46,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
 import java.util.Locale
 
 @Composable
@@ -315,40 +304,6 @@ private fun SetRow(
     } else {
         content()
     }
-}
-
-@Composable
-private fun rememberSyncedTextField(
-    key: Any?,
-    initialText: String,
-    onTextChanged: (String) -> Unit,
-): TextFieldState {
-    val state = rememberSaveable(key, saver = TextFieldState.Saver) {
-        TextFieldState(initialText)
-    }
-    LaunchedEffect(state, key) {
-        snapshotFlow { state.text.toString() }
-            .drop(1)
-            .collectLatest(onTextChanged)
-    }
-    return state
-}
-
-@Composable
-private fun NumberInputField(state: TextFieldState) {
-    TextField(
-        state,
-        Modifier.width(72.dp),
-        textStyle = MaterialTheme.typography.labelLarge.copy(textAlign = TextAlign.Center),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        lineLimits = TextFieldLineLimits.SingleLine,
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent,
-            unfocusedContainerColor = Color.Transparent,
-            disabledContainerColor = Color.Transparent,
-            errorContainerColor = Color.Transparent,
-        ),
-    )
 }
 
 private fun formatOneRmKg(kg: Float): String =
