@@ -37,7 +37,7 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
         WorkoutHistoryViewModel(workoutsRepository, it.coroutineScope)
     }
     val sessions by viewModel.uiState.collectAsStateWithLifecycle()
-    WorkoutHistoryContent(sessions, onNavigateBack)
+    sessions?.let { WorkoutHistoryContent(it, onNavigateBack) }
 }
 
 @Composable

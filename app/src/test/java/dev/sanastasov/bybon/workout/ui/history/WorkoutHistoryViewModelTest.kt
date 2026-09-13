@@ -10,17 +10,14 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.exercisesMap
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutHistoryViewModelTest {
 
     @Test
@@ -28,9 +25,7 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository()
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val states = collectStates(viewModel)
-
-        assert(states.last() == emptyList<WorkoutSessionHistoryUi>())
+        assert(viewModel.awaitState() == emptyList<WorkoutSessionHistoryUi>())
     }
 
     @Test
@@ -68,8 +63,6 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(older, newer))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val states = collectStates(viewModel)
-
         val expected = listOf(
             WorkoutSessionHistoryUi(
                 key = "full-body-b-2026-08-13T18:00",
@@ -104,7 +97,7 @@ class WorkoutHistoryViewModelTest {
                 ),
             ),
         )
-        assert(states.last() == expected)
+        assert(viewModel.awaitState() == expected)
     }
 
     @Test
@@ -125,9 +118,7 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(inProgress, completed))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val states = collectStates(viewModel)
-
-        val actual = states.last()
+        val actual = viewModel.awaitState()
         assert(actual.size == 1)
         assert(actual.single().planName == "Full Body B")
         assert(actual.single().date == LocalDate.of(2026, 8, 13))
@@ -150,9 +141,7 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val states = collectStates(viewModel)
-
-        val topSet = states.last().single().exercises.single()
+        val topSet = viewModel.awaitState().single().exercises.single()
         assert(topSet.weightKg == "50")
         assert(topSet.reps == 5)
         assert(topSet.estimatedOneRmKg == estimateOneRmKg(50f, 5))
@@ -186,9 +175,7 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val states = collectStates(viewModel)
-
-        val exercises = states.last().single().exercises
+        val exercises = viewModel.awaitState().single().exercises
         assert(exercises.size == 1)
         assert(exercises.single().name == "Bench Press (barbell)")
     }
@@ -197,9 +184,8 @@ class WorkoutHistoryViewModelTest {
     fun `ui state updates when the repository emits new sessions`() = runTest {
         val repository = FakeWorkoutsRepository()
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
-        val states = collectStates(viewModel)
 
-        assert(states.last() == emptyList<WorkoutSessionHistoryUi>())
+        assert(viewModel.awaitState() == emptyList<WorkoutSessionHistoryUi>())
 
         val session = completedSession(
             planId = "full-body-b",
@@ -224,18 +210,12 @@ class WorkoutHistoryViewModelTest {
                 ),
             ),
         )
-        assert(states.last() == expected)
+        assert(viewModel.awaitState { it.isNotEmpty() } == expected)
     }
 
-    private fun TestScope.collectStates(
-        viewModel: WorkoutHistoryViewModel,
-    ): MutableList<List<WorkoutSessionHistoryUi>> {
-        val states = mutableListOf<List<WorkoutSessionHistoryUi>>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiState.collect { states.add(it) }
-        }
-        return states
-    }
+    private suspend fun WorkoutHistoryViewModel.awaitState(
+        predicate: (List<WorkoutSessionHistoryUi>) -> Boolean = { true },
+    ): List<WorkoutSessionHistoryUi> = uiState.filterNotNull().first(predicate)
 }
 
 private fun completedSession(

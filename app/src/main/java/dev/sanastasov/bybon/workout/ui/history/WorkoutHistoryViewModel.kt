@@ -11,8 +11,8 @@ class WorkoutHistoryViewModel(
     coroutineScope: CoroutineScope,
 ) {
 
-    val uiState: StateFlow<List<WorkoutSessionHistoryUi>> =
+    val uiState: StateFlow<List<WorkoutSessionHistoryUi>?> =
         repository.workoutSessions()
             .map { sessions -> sessions.toHistoryUi() }
-            .stateInWhileInForeground(coroutineScope, emptyList())
+            .stateInWhileInForeground(coroutineScope, null)
 }
