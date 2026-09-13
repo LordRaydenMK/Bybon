@@ -145,81 +145,90 @@ private fun OverviewExerciseCard(
         Spacer(Modifier.height(8.dp))
         OverviewExerciseHeader(exercise, onAction)
         Spacer(Modifier.height(4.dp))
-
-        exercise.warmupSets?.let { warmupSets ->
-            warmupSets.forEachIndexed { index, set ->
-                val weightState = rememberSyncedTextField(
-                    key = exercise to "w$index",
-                    initialText = remember(exercise, index) { set.weight.kilograms },
-                ) { weight ->
-                    onAction(
-                        WorkoutOverviewAction.OnWeightUpdated(
-                            weight,
-                            exercise,
-                            index,
-                            isWarmup = true,
-                        ),
-                    )
-                }
-                val repState = rememberSyncedTextField(
-                    key = exercise to "wr$index",
-                    initialText = remember(exercise, index) { set.reps.toString() },
-                ) { reps ->
-                    onAction(
-                        WorkoutOverviewAction.OnRepsUpdated(
-                            reps,
-                            exercise,
-                            index,
-                            isWarmup = true,
-                        ),
-                    )
-                }
-
-                OverviewSetRow(
-                    isWarmup = true,
-                    workSetNumber = null,
-                    set = set,
-                    weightState = weightState,
-                    repState = repState,
-                    onBadgeClick = if (index == warmupSets.lastIndex) {
-                        { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
-                    } else {
-                        null
-                    },
-                )
-            }
-        }
-
-        exercise.sets.forEachIndexed { index, set ->
-            val weightState = rememberSyncedTextField(
-                key = exercise to "s$index",
-                initialText = remember(exercise, index) { set.weight.kilograms },
-            ) { weight ->
-                onAction(WorkoutOverviewAction.OnWeightUpdated(weight, exercise, index))
-            }
-            val repState = rememberSyncedTextField(
-                key = exercise to "sr$index",
-                initialText = remember(exercise, index) { set.reps.toString() },
-            ) { reps ->
-                onAction(WorkoutOverviewAction.OnRepsUpdated(reps, exercise, index))
-            }
-
-            OverviewSetRow(
-                isWarmup = false,
-                workSetNumber = index + 1,
-                set = set,
-                weightState = weightState,
-                repState = repState,
-                onBadgeClick = if (index == 0) {
-                    { onAction(WorkoutOverviewAction.OnConvertToWarmup(exercise)) }
-                } else {
-                    null
-                },
-            )
-        }
-
+        OverviewWarmupSets(exercise, onAction)
+        OverviewWorkSets(exercise, onAction)
         OverviewExerciseSetActions(exercise, onAction)
     }
+}
+
+@Composable
+private fun OverviewWarmupSets(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    val warmupSets = exercise.warmupSets ?: return
+    warmupSets.forEachIndexed { index, set ->
+        OverviewEditableSetRow(
+            exercise = exercise,
+            index = index,
+            set = set,
+            isWarmup = true,
+            onBadgeClick = if (index == warmupSets.lastIndex) {
+                { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
+            } else {
+                null
+            },
+            onAction = onAction,
+        )
+    }
+}
+
+@Composable
+private fun OverviewWorkSets(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    exercise.sets.forEachIndexed { index, set ->
+        OverviewEditableSetRow(
+            exercise = exercise,
+            index = index,
+            set = set,
+            isWarmup = false,
+            onBadgeClick = if (index == 0) {
+                { onAction(WorkoutOverviewAction.OnConvertToWarmup(exercise)) }
+            } else {
+                null
+            },
+            onAction = onAction,
+        )
+    }
+}
+
+@Composable
+private fun OverviewEditableSetRow(
+    exercise: WorkoutExercise,
+    index: Int,
+    set: ExerciseSet,
+    isWarmup: Boolean,
+    onBadgeClick: (() -> Unit)?,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    val weightKey = if (isWarmup) "w$index" else "s$index"
+    val repsKey = if (isWarmup) "wr$index" else "sr$index"
+    val weightState = rememberSyncedTextField(
+        key = exercise to weightKey,
+        initialText = remember(exercise, index) { set.weight.kilograms },
+    ) { weight ->
+        onAction(
+            WorkoutOverviewAction.OnWeightUpdated(weight, exercise, index, isWarmup),
+        )
+    }
+    val repState = rememberSyncedTextField(
+        key = exercise to repsKey,
+        initialText = remember(exercise, index) { set.reps.toString() },
+    ) { reps ->
+        onAction(
+            WorkoutOverviewAction.OnRepsUpdated(reps, exercise, index, isWarmup),
+        )
+    }
+    OverviewSetRow(
+        isWarmup = isWarmup,
+        workSetNumber = if (isWarmup) null else index + 1,
+        set = set,
+        weightState = weightState,
+        repState = repState,
+        onBadgeClick = onBadgeClick,
+    )
 }
 
 @Composable
