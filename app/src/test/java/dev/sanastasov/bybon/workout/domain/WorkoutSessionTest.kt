@@ -127,7 +127,11 @@ class WorkoutSessionTest {
         assert(
             firstSet.previous == PreviousSetPerformance(Weight.kilograms(40), 9)
         )
+        assert(firstSet.weight == Weight.kilograms(40))
+        assert(firstSet.reps == 9)
         assert(actual.exercises.first().sets[1].previous?.weight == Weight.kilograms(41))
+        assert(actual.exercises.first().sets[1].weight == Weight.kilograms(41))
+        assert(actual.exercises.first().sets[1].reps == 9)
     }
 
     @Test

@@ -23,8 +23,8 @@ fun WorkoutPlan.toWorkoutSession(
                     val previousSet = previousExercise?.sets?.getOrNull(setIndex)
                     ExerciseSet(
                         planedExercise.exercise,
-                        Weight.kilograms(50),
-                        planedExercise.repRange.first,
+                        previousSet?.weight ?: Weight.kilograms(50),
+                        previousSet?.reps ?: planedExercise.repRange.first,
                         if (index == 0 && setNumber == 1) SetState.InProgress else SetState.NotStated,
                         previous = previousSet?.let {
                             PreviousSetPerformance(it.weight, it.reps)
