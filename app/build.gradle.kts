@@ -65,6 +65,9 @@ android {
     buildFeatures {
         compose = true
     }
+    testFixtures {
+        enable = true
+    }
 }
 
 base {
@@ -84,7 +87,8 @@ powerAssert {
         "kotlin.test.assertNull"
     )
     compilationFilter = PowerAssertCompilationFilter {
-        it.name.contains("debug", ignoreCase = true)
+        it.name.contains("debug", ignoreCase = true) &&
+                !it.name.contains("testFixtures", ignoreCase = true)
     }
 }
 
@@ -111,8 +115,13 @@ dependencies {
 
     implementation(libs.retained)
 
+    testFixturesImplementation(platform(libs.androidx.compose.bom))
+    testFixturesImplementation(libs.androidx.compose.runtime)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.csv)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
