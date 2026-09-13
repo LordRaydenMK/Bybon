@@ -172,10 +172,7 @@ private fun SessionWarmupSets(
 }
 
 @Composable
-private fun SessionWorkSets(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutSessionAction) -> Unit,
-) {
+private fun SessionWorkSets(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit) {
     exercise.numberedWorkSets.forEach { numbered ->
         val index = numbered.index
         val set = numbered.set
@@ -207,10 +204,7 @@ private fun SessionWorkSets(
 }
 
 @Composable
-private fun SessionSetActions(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutSessionAction) -> Unit,
-) {
+private fun SessionSetActions(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         TextButton({ onAction(WorkoutSessionAction.OnAddSet(exercise)) }) {
             Text("Add set")
