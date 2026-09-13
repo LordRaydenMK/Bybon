@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -10,8 +11,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.exercisesMap
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.time.LocalDate
@@ -25,7 +24,10 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository()
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        assert(viewModel.awaitState() == emptyList<WorkoutSessionHistoryUi>())
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            assert(awaitItem() == emptyList<WorkoutSessionHistoryUi>())
+        }
     }
 
     @Test
@@ -97,7 +99,10 @@ class WorkoutHistoryViewModelTest {
                 ),
             ),
         )
-        assert(viewModel.awaitState() == expected)
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            assert(awaitItem() == expected)
+        }
     }
 
     @Test
@@ -118,10 +123,13 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(inProgress, completed))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val actual = viewModel.awaitState()
-        assert(actual.size == 1)
-        assert(actual.single().planName == "Full Body B")
-        assert(actual.single().date == LocalDate.of(2026, 8, 13))
+        viewModel.uiState.test {
+            skipItems(1)
+            val actual = awaitItem()
+            assert(actual?.size == 1)
+            assert(actual?.single()?.planName == "Full Body B")
+            assert(actual?.single()?.date == LocalDate.of(2026, 8, 13))
+        }
     }
 
     @Test
@@ -141,10 +149,13 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val topSet = viewModel.awaitState().single().exercises.single()
-        assert(topSet.weightKg == "50")
-        assert(topSet.reps == 5)
-        assert(topSet.estimatedOneRmKg == estimateOneRmKg(50f, 5))
+        viewModel.uiState.test {
+            skipItems(1)
+            val topSet = awaitItem()?.single()?.exercises?.single()
+            assert(topSet?.weightKg == "50")
+            assert(topSet?.reps == 5)
+            assert(topSet?.estimatedOneRmKg == estimateOneRmKg(50f, 5))
+        }
     }
 
     @Test
@@ -175,26 +186,24 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val exercises = viewModel.awaitState().single().exercises
-        assert(exercises.size == 1)
-        assert(exercises.single().name == "Bench Press (barbell)")
+        viewModel.uiState.test {
+            skipItems(1)
+            val exercises = awaitItem()?.single()?.exercises
+            assert(exercises?.size == 1)
+            assert(exercises?.single()?.name == "Bench Press (barbell)")
+        }
     }
 
     @Test
     fun `ui state updates when the repository emits new sessions`() = runTest {
         val repository = FakeWorkoutsRepository()
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
-
-        assert(viewModel.awaitState() == emptyList<WorkoutSessionHistoryUi>())
-
         val session = completedSession(
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
         )
-        repository.emitSessions(listOf(session))
-
         val expected = listOf(
             WorkoutSessionHistoryUi(
                 key = "full-body-b-2026-08-13T18:00",
@@ -210,12 +219,14 @@ class WorkoutHistoryViewModelTest {
                 ),
             ),
         )
-        assert(viewModel.awaitState { it.isNotEmpty() } == expected)
-    }
 
-    private suspend fun WorkoutHistoryViewModel.awaitState(
-        predicate: (List<WorkoutSessionHistoryUi>) -> Boolean = { true },
-    ): List<WorkoutSessionHistoryUi> = uiState.filterNotNull().first(predicate)
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            assert(awaitItem() == emptyList<WorkoutSessionHistoryUi>())
+            repository.emitSessions(listOf(session))
+            assert(awaitItem() == expected)
+        }
+    }
 }
 
 private fun completedSession(
