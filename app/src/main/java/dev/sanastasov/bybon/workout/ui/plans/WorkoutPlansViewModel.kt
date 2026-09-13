@@ -34,9 +34,15 @@ class WorkoutPlansViewModel(
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {
-            is WorkoutPlansAction.OnStartPlan -> _effects.trySend(
-                WorkoutPlanEffect.StartPlan(action.plan, action.isResume)
-            )
+            is WorkoutPlansAction.OnStartPlan -> {
+                val isResume = uiState.value.any { it.plan.id == action.plan.id && it.isActive }
+                val effect = if (isResume) {
+                    WorkoutPlanEffect.OpenSession(action.plan)
+                } else {
+                    WorkoutPlanEffect.OpenOverview(action.plan)
+                }
+                _effects.trySend(effect)
+            }
         }
     }
 }

@@ -44,12 +44,8 @@ fun MainModule.BybonApp() {
                 Screen.MainScreen -> NavEntry(key) {
                     MainScreen(
                         onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
-                        onNavigateToStartSession = { plan, isResume ->
-                            backStack.add(
-                                if (isResume) Screen.WorkoutSession(plan.id)
-                                else Screen.WorkoutOverview(plan.id)
-                            )
-                        },
+                        onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
+                        onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
                         onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) },
                     )
                 }

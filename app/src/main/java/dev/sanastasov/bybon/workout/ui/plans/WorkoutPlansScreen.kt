@@ -43,7 +43,7 @@ fun WorkoutsTab(
     ) {
         items(plans, key = { it.plan.id.id }) { planUi ->
             WorkoutPlanCard(planUi) {
-                onAction(WorkoutPlansAction.OnStartPlan(it, planUi.isActive))
+                onAction(WorkoutPlansAction.OnStartPlan(it))
             }
         }
     }
