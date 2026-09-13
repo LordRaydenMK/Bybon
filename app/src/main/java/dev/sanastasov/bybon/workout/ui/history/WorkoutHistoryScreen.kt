@@ -46,16 +46,19 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
         WorkoutHistoryViewModel(workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
+    val contentResolver = LocalContext.current.contentResolver
     val documentPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
         if (uri == null) return@rememberLauncherForActivityResult
-        val csv = context.contentResolver.openInputStream(uri)
-            ?.bufferedReader()
-            ?.use { it.readText() }
-            ?: return@rememberLauncherForActivityResult
-        viewModel.onAction(WorkoutHistoryAction.OnCsvImported(csv))
+        viewModel.onAction(
+            WorkoutHistoryAction.OnCsvSelected {
+                contentResolver.openInputStream(uri)
+                    ?.bufferedReader()
+                    ?.use { it.readText() }
+                    ?: error("Unable to read CSV")
+            }
+        )
     }
 
     WorkoutHistoryContent(

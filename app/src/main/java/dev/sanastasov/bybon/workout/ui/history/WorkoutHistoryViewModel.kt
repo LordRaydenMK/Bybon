@@ -7,17 +7,22 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
 class WorkoutHistoryViewModel(
     private val repository: WorkoutsRepository,
     private val coroutineScope: CoroutineScope,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
 
     private val importPhase = MutableStateFlow<ImportPhase>(ImportPhase.Idle)
@@ -36,17 +41,20 @@ class WorkoutHistoryViewModel(
 
     fun onAction(action: WorkoutHistoryAction) {
         when (action) {
-            is WorkoutHistoryAction.OnCsvImported -> importCsv(action.csv)
+            is WorkoutHistoryAction.OnCsvSelected -> importCsv(action.readCsv)
             WorkoutHistoryAction.OnImportDone -> importPhase.value = ImportPhase.Idle
         }
     }
 
-    private fun importCsv(csv: String) {
+    private fun importCsv(readCsv: () -> String) {
         importPhase.value = ImportPhase.Importing
         coroutineScope.launch {
             try {
+                val csv = withContext(ioDispatcher) { readCsv() }
                 val existingPlans = repository.workoutPlans().first()
-                val result = StrongCsvParser.parse(csv).toStrongImport(existingPlans)
+                val result = withContext(defaultDispatcher) {
+                    StrongCsvParser.parse(csv).toStrongImport(existingPlans)
+                }
                 repository.importHistory(result.plans, result.sessionHistory)
                 importPhase.value = ImportPhase.Summary(result.toSummaryUi())
             } catch (e: Exception) {

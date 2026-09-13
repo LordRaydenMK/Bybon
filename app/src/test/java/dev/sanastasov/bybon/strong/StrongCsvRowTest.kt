@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import org.junit.Test
+import kotlin.test.assertFailsWith
 
 class StrongCsvRowTest {
 
@@ -45,12 +46,10 @@ class StrongCsvRowTest {
 
     @Test
     fun `rejects a file that is not a strong csv export`() {
-        try {
+        val error = assertFailsWith<IllegalArgumentException> {
             StrongCsvParser.parse("not a strong csv")
-            error("Expected parse to fail")
-        } catch (e: IllegalArgumentException) {
-            assert(e.message == "Not a Strong CSV export")
         }
+        assert(error.message == "Not a Strong CSV export")
     }
 
     @Test

@@ -44,7 +44,7 @@ data class ExerciseTopSetUi(
 )
 
 sealed class WorkoutHistoryAction {
-    data class OnCsvImported(val csv: String) : WorkoutHistoryAction()
+    data class OnCsvSelected(val readCsv: () -> String) : WorkoutHistoryAction()
     data object OnImportDone : WorkoutHistoryAction()
 }
 

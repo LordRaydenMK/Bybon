@@ -14,6 +14,9 @@ import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.exercisesMap
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.time.LocalDate
@@ -25,7 +28,7 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `empty repository emits empty history`() = runTest {
         val repository = FakeWorkoutsRepository()
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutHistoryUiState.Loading)
@@ -66,7 +69,7 @@ class WorkoutHistoryViewModelTest {
             ),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(older, newer))
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val viewModel = historyViewModel(repository)
 
         val expected = WorkoutHistoryUiState.History(
             listOf(
@@ -126,7 +129,7 @@ class WorkoutHistoryViewModelTest {
             state = WorkoutState.InProgress(LocalDateTime.of(2026, 8, 14, 18, 0)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(inProgress, completed))
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
             skipItems(1)
@@ -152,7 +155,7 @@ class WorkoutHistoryViewModelTest {
             ),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
             skipItems(1)
@@ -190,7 +193,7 @@ class WorkoutHistoryViewModelTest {
             ),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
             skipItems(1)
@@ -204,7 +207,7 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `ui state updates when the repository emits new sessions`() = runTest {
         val repository = FakeWorkoutsRepository()
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val viewModel = historyViewModel(repository)
         val session = completedSession(
             planId = "full-body-b",
             planName = "Full Body B",
@@ -240,14 +243,14 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `importing the strong sample csv shows a spinner then a summary`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
         val csv = readStrongBackupSample(javaClass.classLoader)
+        val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutHistoryUiState.Loading)
             assert(awaitItem() == WorkoutHistoryUiState.Empty)
 
-            viewModel.onAction(WorkoutHistoryAction.OnCsvImported(csv))
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected { csv })
 
             assert(awaitItem() == WorkoutHistoryUiState.Importing)
             val summary = (awaitItem() as WorkoutHistoryUiState.Summary).summary
@@ -271,12 +274,12 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `done after import shows the imported history newest first`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
         val csv = readStrongBackupSample(javaClass.classLoader)
+        val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
             skipItems(2)
-            viewModel.onAction(WorkoutHistoryAction.OnCsvImported(csv))
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected { csv })
             skipItems(1)
             val summary = awaitItem()
             assert(summary is WorkoutHistoryUiState.Summary)
@@ -295,18 +298,28 @@ class WorkoutHistoryViewModelTest {
     @Test
     fun `invalid csv returns to the empty history state`() = runTest {
         val repository = FakeWorkoutsRepository()
-        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutHistoryUiState.Loading)
             assert(awaitItem() == WorkoutHistoryUiState.Empty)
 
-            viewModel.onAction(WorkoutHistoryAction.OnCsvImported("not a strong csv"))
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected { "not a strong csv" })
 
             assert(awaitItem() == WorkoutHistoryUiState.Importing)
             assert(awaitItem() == WorkoutHistoryUiState.Empty)
         }
     }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun TestScope.historyViewModel(
+        repository: FakeWorkoutsRepository,
+    ) = WorkoutHistoryViewModel(
+        repository = repository,
+        coroutineScope = backgroundScope,
+        ioDispatcher = UnconfinedTestDispatcher(testScheduler),
+        defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
+    )
 }
 
 private fun completedSession(

@@ -122,6 +122,7 @@ dependencies {
     implementation(libs.kotlin.csv)
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
 
