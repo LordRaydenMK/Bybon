@@ -8,19 +8,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "No completed workouts yet"
 - assertVisible: "Import history"
 - tapOn: "Import history"
-# System SAF picker. The CSV is pushed to Downloads before the suite runs.
-- tapOn:
-    id: "com.android.documentsui:id/option_menu_search"
-    optional: true
-- tapOn:
-    id: "com.google.android.documentsui:id/option_menu_search"
-    optional: true
-- tapOn:
-    text: "Search"
-    optional: true
-- tapOn:
-    text: "Downloads"
-    optional: true
+# System SAF picker. CI pushes the unit-test CSV to Downloads so it shows under Recents.
 - extendedWaitUntil:
     visible: "strong-backup-sample.csv"
     timeout: 15000
