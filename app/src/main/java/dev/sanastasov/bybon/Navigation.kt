@@ -15,4 +15,7 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object WeightEntryScreen : Screen
+
+    @Serializable
+    data object WorkoutHistory : Screen
 }

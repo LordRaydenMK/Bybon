@@ -1,0 +1,12 @@
+appId: dev.sanastasov.bybon.debug
+---
+- launchApp
+- assertVisible: "Bybon"
+- assertVisible: "History"
+- tapOn: "History"
+- assertVisible: "Full Body B"
+- assertVisible: "Romanian Deadlift (RDL) (barbell): 45 kg x 12 @ 63 kg 1RM"
+- back
+- assertVisible: "Full Body A"
+- tapOn: "1 RM Calc"
+- assertNotVisible: "History"
