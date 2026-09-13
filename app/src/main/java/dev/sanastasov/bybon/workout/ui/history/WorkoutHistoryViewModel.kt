@@ -1,18 +1,96 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import dev.sanastasov.bybon.strong.StrongCsvParser
+import dev.sanastasov.bybon.strong.StrongImportResult
+import dev.sanastasov.bybon.strong.toStrongImport
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class WorkoutHistoryViewModel(
-    repository: WorkoutsRepository,
-    coroutineScope: CoroutineScope,
+    private val repository: WorkoutsRepository,
+    private val coroutineScope: CoroutineScope,
 ) {
 
-    val uiState: StateFlow<List<WorkoutSessionHistoryUi>?> =
-        repository.workoutSessions()
-            .map { sessions -> sessions.toHistoryUi() }
-            .stateInWhileInForeground(coroutineScope, null)
+    private val importPhase = MutableStateFlow<ImportPhase>(ImportPhase.Idle)
+
+    val uiState: StateFlow<WorkoutHistoryUiState> =
+        combine(
+            repository.workoutSessions(),
+            importPhase,
+        ) { sessions, phase ->
+            when (phase) {
+                ImportPhase.Importing -> WorkoutHistoryUiState.Importing
+                is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
+                ImportPhase.Idle -> sessions.toUiState()
+            }
+        }.stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
+
+    fun onAction(action: WorkoutHistoryAction) {
+        when (action) {
+            is WorkoutHistoryAction.OnCsvImported -> importCsv(action.csv)
+            WorkoutHistoryAction.OnImportDone -> importPhase.value = ImportPhase.Idle
+        }
+    }
+
+    private fun importCsv(csv: String) {
+        importPhase.value = ImportPhase.Importing
+        coroutineScope.launch {
+            try {
+                val existingPlans = repository.workoutPlans().first()
+                val result = StrongCsvParser.parse(csv).toStrongImport(existingPlans)
+                repository.importHistory(result.plans, result.sessionHistory)
+                importPhase.value = ImportPhase.Summary(result.toSummaryUi())
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                importPhase.value = ImportPhase.Idle
+            }
+        }
+    }
+
+    private fun List<WorkoutSession>.toUiState(): WorkoutHistoryUiState {
+        val history = toHistoryUi()
+        return if (history.isEmpty()) {
+            WorkoutHistoryUiState.Empty
+        } else {
+            WorkoutHistoryUiState.History(history)
+        }
+    }
+
+    private sealed class ImportPhase {
+        data object Idle : ImportPhase()
+        data object Importing : ImportPhase()
+        data class Summary(val summary: ImportSummaryUi) : ImportPhase()
+    }
+}
+
+private fun StrongImportResult.toSummaryUi(): ImportSummaryUi {
+    val sessionsByPlan = sessionHistory
+        .groupingBy { it.planName }
+        .eachCount()
+        .map { (planName, sessionCount) ->
+            PlanSessionCountUi(planName, sessionCount)
+        }
+    val dates = sessionHistory.mapNotNull { session ->
+        (session.state as? WorkoutState.Completed)?.startedAt?.toLocalDate()
+    }
+    return ImportSummaryUi(
+        sessionCount = sessionHistory.size,
+        sessionsByPlan = sessionsByPlan,
+        plansCreatedCount = plans.size,
+        exercisesImportedCount = exercises.size,
+        firstSessionDate = dates.minOrNull(),
+        lastSessionDate = dates.maxOrNull(),
+        workingSetCount = sessionHistory.sumOf { session ->
+            session.exercises.sumOf { it.sets.size }
+        },
+    )
 }

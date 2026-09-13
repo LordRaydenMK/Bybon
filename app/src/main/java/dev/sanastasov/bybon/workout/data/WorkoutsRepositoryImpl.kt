@@ -8,15 +8,14 @@ import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
-
 
 class WorkoutsRepositoryImpl : WorkoutsRepository {
 
-    private val sessions = MutableStateFlow(listOf(sampleFullBodyBCompleted))
+    private val plans = MutableStateFlow(listOf(fullBodyA, fullBodyB))
+    private val sessions = MutableStateFlow<List<WorkoutSession>>(emptyList())
 
-    override fun workoutPlans(): Flow<List<WorkoutPlan>> = flowOf(listOf(fullBodyA, fullBodyB))
+    override fun workoutPlans(): Flow<List<WorkoutPlan>> = plans
 
     override suspend fun updateWorkout(session: WorkoutSession) {
         sessions.update { list ->
@@ -32,4 +31,12 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
     }
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = sessions
+
+    override suspend fun importHistory(
+        plans: List<WorkoutPlan>,
+        sessions: List<WorkoutSession>,
+    ) {
+        this.plans.update { it + plans }
+        this.sessions.update { it + sessions }
+    }
 }

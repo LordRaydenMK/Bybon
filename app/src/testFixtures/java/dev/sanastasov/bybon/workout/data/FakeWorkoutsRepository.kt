@@ -23,6 +23,14 @@ class FakeWorkoutsRepository(
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = sessions
 
+    override suspend fun importHistory(
+        plans: List<WorkoutPlan>,
+        sessions: List<WorkoutSession>,
+    ) {
+        this.plans.update { it + plans }
+        this.sessions.update { it + sessions }
+    }
+
     fun emitSessions(value: List<WorkoutSession>) {
         sessions.value = value
     }

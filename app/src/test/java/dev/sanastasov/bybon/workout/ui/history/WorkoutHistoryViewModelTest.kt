@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.history
 
 import app.cash.turbine.test
+import dev.sanastasov.bybon.strong.readStrongBackupSample
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -11,6 +12,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.exercisesMap
+import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.time.LocalDate
@@ -25,8 +28,8 @@ class WorkoutHistoryViewModelTest {
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
         viewModel.uiState.test {
-            assert(awaitItem() == null)
-            assert(awaitItem() == emptyList<WorkoutSessionHistoryUi>())
+            assert(awaitItem() == WorkoutHistoryUiState.Loading)
+            assert(awaitItem() == WorkoutHistoryUiState.Empty)
         }
     }
 
@@ -65,42 +68,44 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(older, newer))
         val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
 
-        val expected = listOf(
-            WorkoutSessionHistoryUi(
-                key = "full-body-b-2026-08-13T18:00",
-                planName = "Full Body B",
-                date = LocalDate.of(2026, 8, 13),
-                exercises = listOf(
-                    ExerciseTopSetUi(
-                        name = "Romanian Deadlift (RDL) (barbell)",
-                        weightKg = "45",
-                        reps = 12,
-                        estimatedOneRmKg = estimateOneRmKg(45f, 12),
+        val expected = WorkoutHistoryUiState.History(
+            listOf(
+                WorkoutSessionHistoryUi(
+                    key = "full-body-b-2026-08-13T18:00",
+                    planName = "Full Body B",
+                    date = LocalDate.of(2026, 8, 13),
+                    exercises = listOf(
+                        ExerciseTopSetUi(
+                            name = "Romanian Deadlift (RDL) (barbell)",
+                            weightKg = "45",
+                            reps = 12,
+                            estimatedOneRmKg = estimateOneRmKg(45f, 12),
+                        ),
                     ),
                 ),
-            ),
-            WorkoutSessionHistoryUi(
-                key = "full-body-a-2026-08-10T18:00",
-                planName = "Full Body A",
-                date = LocalDate.of(2026, 8, 10),
-                exercises = listOf(
-                    ExerciseTopSetUi(
-                        name = "Bench Press (barbell)",
-                        weightKg = "80",
-                        reps = 8,
-                        estimatedOneRmKg = estimateOneRmKg(80f, 8),
-                    ),
-                    ExerciseTopSetUi(
-                        name = "Squat (barbell)",
-                        weightKg = "100",
-                        reps = 5,
-                        estimatedOneRmKg = estimateOneRmKg(100f, 5),
+                WorkoutSessionHistoryUi(
+                    key = "full-body-a-2026-08-10T18:00",
+                    planName = "Full Body A",
+                    date = LocalDate.of(2026, 8, 10),
+                    exercises = listOf(
+                        ExerciseTopSetUi(
+                            name = "Bench Press (barbell)",
+                            weightKg = "80",
+                            reps = 8,
+                            estimatedOneRmKg = estimateOneRmKg(80f, 8),
+                        ),
+                        ExerciseTopSetUi(
+                            name = "Squat (barbell)",
+                            weightKg = "100",
+                            reps = 5,
+                            estimatedOneRmKg = estimateOneRmKg(100f, 5),
+                        ),
                     ),
                 ),
             ),
         )
         viewModel.uiState.test {
-            assert(awaitItem() == null)
+            assert(awaitItem() == WorkoutHistoryUiState.Loading)
             assert(awaitItem() == expected)
         }
     }
@@ -125,10 +130,10 @@ class WorkoutHistoryViewModelTest {
 
         viewModel.uiState.test {
             skipItems(1)
-            val actual = awaitItem()
-            assert(actual?.size == 1)
-            assert(actual?.single()?.planName == "Full Body B")
-            assert(actual?.single()?.date == LocalDate.of(2026, 8, 13))
+            val actual = awaitItem() as WorkoutHistoryUiState.History
+            assert(actual.sessions.size == 1)
+            assert(actual.sessions.single().planName == "Full Body B")
+            assert(actual.sessions.single().date == LocalDate.of(2026, 8, 13))
         }
     }
 
@@ -151,10 +156,11 @@ class WorkoutHistoryViewModelTest {
 
         viewModel.uiState.test {
             skipItems(1)
-            val topSet = awaitItem()?.single()?.exercises?.single()
-            assert(topSet?.weightKg == "50")
-            assert(topSet?.reps == 5)
-            assert(topSet?.estimatedOneRmKg == estimateOneRmKg(50f, 5))
+            val topSet = (awaitItem() as WorkoutHistoryUiState.History)
+                .sessions.single().exercises.single()
+            assert(topSet.weightKg == "50")
+            assert(topSet.reps == 5)
+            assert(topSet.estimatedOneRmKg == estimateOneRmKg(50f, 5))
         }
     }
 
@@ -188,9 +194,10 @@ class WorkoutHistoryViewModelTest {
 
         viewModel.uiState.test {
             skipItems(1)
-            val exercises = awaitItem()?.single()?.exercises
-            assert(exercises?.size == 1)
-            assert(exercises?.single()?.name == "Bench Press (barbell)")
+            val exercises = (awaitItem() as WorkoutHistoryUiState.History)
+                .sessions.single().exercises
+            assert(exercises.size == 1)
+            assert(exercises.single().name == "Bench Press (barbell)")
         }
     }
 
@@ -204,27 +211,100 @@ class WorkoutHistoryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
         )
-        val expected = listOf(
-            WorkoutSessionHistoryUi(
-                key = "full-body-b-2026-08-13T18:00",
-                planName = "Full Body B",
-                date = LocalDate.of(2026, 8, 13),
-                exercises = listOf(
-                    ExerciseTopSetUi(
-                        name = "Romanian Deadlift (RDL) (barbell)",
-                        weightKg = "45",
-                        reps = 12,
-                        estimatedOneRmKg = estimateOneRmKg(45f, 12),
+        val expected = WorkoutHistoryUiState.History(
+            listOf(
+                WorkoutSessionHistoryUi(
+                    key = "full-body-b-2026-08-13T18:00",
+                    planName = "Full Body B",
+                    date = LocalDate.of(2026, 8, 13),
+                    exercises = listOf(
+                        ExerciseTopSetUi(
+                            name = "Romanian Deadlift (RDL) (barbell)",
+                            weightKg = "45",
+                            reps = 12,
+                            estimatedOneRmKg = estimateOneRmKg(45f, 12),
+                        ),
                     ),
                 ),
             ),
         )
 
         viewModel.uiState.test {
-            assert(awaitItem() == null)
-            assert(awaitItem() == emptyList<WorkoutSessionHistoryUi>())
+            assert(awaitItem() == WorkoutHistoryUiState.Loading)
+            assert(awaitItem() == WorkoutHistoryUiState.Empty)
             repository.emitSessions(listOf(session))
             assert(awaitItem() == expected)
+        }
+    }
+
+    @Test
+    fun `importing the strong sample csv shows a spinner then a summary`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val csv = readStrongBackupSample(javaClass.classLoader)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == WorkoutHistoryUiState.Loading)
+            assert(awaitItem() == WorkoutHistoryUiState.Empty)
+
+            viewModel.onAction(WorkoutHistoryAction.OnCsvImported(csv))
+
+            assert(awaitItem() == WorkoutHistoryUiState.Importing)
+            val summary = (awaitItem() as WorkoutHistoryUiState.Summary).summary
+            assert(summary.sessionCount == 52)
+            assert(
+                summary.sessionsByPlan == listOf(
+                    PlanSessionCountUi("Full Body B", 23),
+                    PlanSessionCountUi("Full Body A", 23),
+                    PlanSessionCountUi("Upper body A", 3),
+                    PlanSessionCountUi("Upper body B", 3),
+                )
+            )
+            assert(summary.plansCreatedCount == 2)
+            assert(summary.exercisesImportedCount == 1)
+            assert(summary.firstSessionDate == LocalDate.of(2026, 2, 17))
+            assert(summary.lastSessionDate == LocalDate.of(2026, 8, 20))
+            assert(summary.workingSetCount == 854)
+        }
+    }
+
+    @Test
+    fun `done after import shows the imported history newest first`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+        val csv = readStrongBackupSample(javaClass.classLoader)
+
+        viewModel.uiState.test {
+            skipItems(2)
+            viewModel.onAction(WorkoutHistoryAction.OnCsvImported(csv))
+            skipItems(1)
+            val summary = awaitItem()
+            assert(summary is WorkoutHistoryUiState.Summary)
+
+            viewModel.onAction(WorkoutHistoryAction.OnImportDone)
+
+            val history = awaitItem() as WorkoutHistoryUiState.History
+            assert(history.sessions.size == 52)
+            assert(history.sessions.first().planName == "Upper body B")
+            assert(history.sessions.first().date == LocalDate.of(2026, 8, 20))
+            assert(history.sessions.any { it.planName == "Full Body B" })
+            assert(history.sessions.any { it.planName == "Full Body A" })
+        }
+    }
+
+    @Test
+    fun `invalid csv returns to the empty history state`() = runTest {
+        val repository = FakeWorkoutsRepository()
+        val viewModel = WorkoutHistoryViewModel(repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == WorkoutHistoryUiState.Loading)
+            assert(awaitItem() == WorkoutHistoryUiState.Empty)
+
+            viewModel.onAction(WorkoutHistoryAction.OnCsvImported("not a strong csv"))
+
+            assert(awaitItem() == WorkoutHistoryUiState.Importing)
+            assert(awaitItem() == WorkoutHistoryUiState.Empty)
         }
     }
 }
