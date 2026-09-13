@@ -1,0 +1,4 @@
+{
+  "name": "Bybon Android",
+  "install": "bash .cursor/install.sh"
+}
