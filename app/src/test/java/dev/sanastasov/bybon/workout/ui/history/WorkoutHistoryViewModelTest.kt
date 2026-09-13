@@ -2,6 +2,8 @@ package dev.sanastasov.bybon.workout.ui.history
 
 import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.data.completedExercise
+import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -15,7 +17,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
-import kotlin.time.Duration.Companion.minutes
 
 class WorkoutHistoryViewModelTest {
 
@@ -227,36 +228,4 @@ class WorkoutHistoryViewModelTest {
             assert(awaitItem() == expected)
         }
     }
-}
-
-private fun completedSession(
-    planId: String,
-    planName: String,
-    startedAt: LocalDateTime,
-    exercises: List<WorkoutExercise>,
-): WorkoutSession = WorkoutSession(
-    planId = WorkoutPlanId(planId),
-    planName = planName,
-    planDescription = null,
-    exercises = exercises,
-    state = WorkoutState.Completed(startedAt, 40.minutes),
-)
-
-private fun completedExercise(
-    exerciseId: String,
-    vararg weightAndReps: Pair<Float, Int>,
-): WorkoutExercise {
-    val definition = exercisesMap.getValue(exerciseId)
-    return WorkoutExercise(
-        exerciseDefinition = definition,
-        repRange = 8..12,
-        sets = weightAndReps.map { (kg, reps) ->
-            ExerciseSet(
-                exerciseDefinition = definition,
-                weight = Weight.kilograms(kg),
-                reps = reps,
-                setState = SetState.Completed,
-            )
-        },
-    )
 }
