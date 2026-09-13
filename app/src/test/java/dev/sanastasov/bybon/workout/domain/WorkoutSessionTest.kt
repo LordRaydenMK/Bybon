@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration
 import org.junit.Test
+import kotlin.test.assertFailsWith
 
 class WorkoutSessionTest {
 
@@ -14,10 +15,11 @@ class WorkoutSessionTest {
 
         val actual = session.completeSet(bench, 0, isWarmup = true)
         val actualBench = actual.exercises.first()
+        val warmupSets = checkNotNull(actualBench.warmupSets)
 
-        assert(actualBench.warmupSets[0].setState == SetState.Completed)
-        assert(actualBench.warmupSets[1].setState == SetState.InProgress)
-        assert(actualBench.warmupSets[2].setState == SetState.NotStated)
+        assert(warmupSets[0].setState == SetState.Completed)
+        assert(warmupSets[1].setState == SetState.InProgress)
+        assert(warmupSets[2].setState == SetState.NotStated)
         assert(actualBench.sets.all { it.setState == SetState.NotStated })
     }
 
@@ -28,7 +30,7 @@ class WorkoutSessionTest {
         val actual = session.completeSet(session.exercises.first(), 2, isWarmup = true)
         val bench = actual.exercises.first()
 
-        assert(bench.warmupSets.all { it.setState == SetState.Completed })
+        assert(checkNotNull(bench.warmupSets).all { it.setState == SetState.Completed })
         assert(bench.sets.first().setState == SetState.InProgress)
     }
 
@@ -42,7 +44,7 @@ class WorkoutSessionTest {
         val squat = actual.exercises[1]
 
         assert(actual.exercises.first().sets.all { it.setState == SetState.Completed })
-        assert(squat.warmupSets.first().setState == SetState.InProgress)
+        assert(checkNotNull(squat.warmupSets).first().setState == SetState.InProgress)
         assert(squat.sets.all { it.setState == SetState.NotStated })
     }
 
@@ -106,7 +108,7 @@ class WorkoutSessionTest {
 
         assert(actual.exercises.first().sets.size == 2)
         assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
-        assert(actual.exercises[1].warmupSets.first().setState == SetState.InProgress)
+        assert(checkNotNull(actual.exercises[1].warmupSets).first().setState == SetState.InProgress)
     }
 
     @Test
@@ -128,7 +130,7 @@ class WorkoutSessionTest {
                                 setState = SetState.Completed,
                             )
                         },
-                        warmupSets = exercise.warmupSets.mapIndexed { index, set ->
+                        warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
                             set.copy(
                                 weight = Weight.kilograms(22 + index),
                                 reps = 6,
@@ -153,11 +155,11 @@ class WorkoutSessionTest {
         assert(actual.exercises.first().sets[1].previous?.weight == Weight.kilograms(41))
         assert(actual.exercises.first().sets[1].weight == Weight.kilograms(41))
         assert(actual.exercises.first().sets[1].reps == 9)
-        val firstWarmup = actual.exercises.first().warmupSets.first()
+        val firstWarmup = checkNotNull(actual.exercises.first().warmupSets).first()
         assert(firstWarmup.weight == Weight.kilograms(22))
         assert(firstWarmup.reps == 6)
         assert(firstWarmup.previous == PreviousSetPerformance(Weight.kilograms(22), 6))
-        assert(actual.exercises.first().warmupSets[1].weight == Weight.kilograms(23))
+        assert(checkNotNull(actual.exercises.first().warmupSets)[1].weight == Weight.kilograms(23))
     }
 
     @Test
@@ -197,7 +199,7 @@ class WorkoutSessionTest {
                                 setState = SetState.Completed,
                             )
                         },
-                        warmupSets = exercise.warmupSets.map { set ->
+                        warmupSets = exercise.warmupSets?.map { set ->
                             set.copy(setState = SetState.Completed)
                         },
                     )
@@ -228,8 +230,9 @@ class WorkoutSessionTest {
         val actual = overview.startWorkout()
         val bench = actual.exercises.first()
 
-        assert(bench.warmupSets.first().setState == SetState.InProgress)
-        assert(bench.warmupSets.drop(1).all { it.setState == SetState.NotStated })
+        val warmupSets = checkNotNull(bench.warmupSets)
+        assert(warmupSets.first().setState == SetState.InProgress)
+        assert(warmupSets.drop(1).all { it.setState == SetState.NotStated })
         assert(bench.sets.all { it.setState == SetState.NotStated })
         assert(actual.workoutSets.drop(1).all { it.setState == SetState.NotStated })
     }
@@ -241,11 +244,10 @@ class WorkoutSessionTest {
         val actual = overview.removeLastSet(overview.exercises.first())
 
         assert(actual.exercises.first().sets.size == 2)
-        assert(actual.exercises.first().warmupSets.size == 3)
+        assert(actual.exercises.first().warmupSets?.size == 3)
         assert(actual.workoutSets.none { it.setState == SetState.InProgress })
     }
 
-    @Test
     @Test
     fun `resetTo restores the previous overview draft`() {
         val previous = fullBodyA.toOverviewSession()
@@ -280,7 +282,7 @@ class WorkoutSessionTest {
             exercises = notStarted.exercises.map { exercise ->
                 exercise.copy(
                     sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
-                    warmupSets = exercise.warmupSets.map { it.copy(setState = SetState.Completed) },
+                    warmupSets = exercise.warmupSets?.map { it.copy(setState = SetState.Completed) },
                 )
             },
             state = WorkoutState.Completed(Duration.ZERO),
@@ -318,9 +320,9 @@ class WorkoutSessionTest {
     }
 
     @Test
-    fun `default plans include warmup sets from the strong sample`() {
+    fun `default plans include warmup set counts from the strong sample`() {
         assert(
-            fullBodyA.sets.map { it.exercise.id to it.warmupSets.size } == listOf(
+            fullBodyA.sets.map { it.exercise.id to it.warmupSets } == listOf(
             "bench-press-bb" to 3,
             "squat-bb" to 3,
             "pullup-assisted" to 2,
@@ -330,7 +332,7 @@ class WorkoutSessionTest {
         )
         )
         assert(
-            fullBodyB.sets.map { it.exercise.id to it.warmupSets.size } == listOf(
+            fullBodyB.sets.map { it.exercise.id to it.warmupSets } == listOf(
             "rdl-bb" to 2,
             "incline-bench-press-db" to 2,
             "split-squat-db" to 1,
@@ -339,10 +341,6 @@ class WorkoutSessionTest {
             "incline-curl-db" to 0,
         )
         )
-        assert(fullBodyA.sets[0].warmupSets.all { it.weight == Weight.kilograms(20) })
-        assert(fullBodyA.sets[0].warmupSets.map { it.reps } == listOf(8, 4, 3))
-        assert(fullBodyB.sets[1].warmupSets.all { it.weight == Weight.kilograms(10) })
-        assert(fullBodyB.sets[2].warmupSets.single().weight == Weight.kilograms(10))
     }
 
     @Test
@@ -353,10 +351,10 @@ class WorkoutSessionTest {
         val actual = session.convertFirstWorkSetToWarmup(bench)
         val updated = actual.exercises.first()
 
-        assert(updated.warmupSets.size == 4)
+        assert(updated.warmupSets?.size == 4)
         assert(updated.sets.size == 2)
-        assert(updated.warmupSets.last().weight == bench.sets.first().weight)
-        assert(updated.warmupSets.last().reps == bench.sets.first().reps)
+        assert(checkNotNull(updated.warmupSets).last().weight == bench.sets.first().weight)
+        assert(checkNotNull(updated.warmupSets).last().reps == bench.sets.first().reps)
         assert(updated.sets.first() == bench.sets[1])
     }
 
@@ -368,9 +366,38 @@ class WorkoutSessionTest {
         val actual = converted.convertLastWarmupToWorkSet(converted.exercises.first())
         val bench = actual.exercises.first()
 
-        assert(bench.warmupSets.size == 3)
+        assert(bench.warmupSets?.size == 3)
         assert(bench.sets.size == 3)
         assert(bench.sets.first() == session.exercises.first().sets.first())
+    }
+
+    @Test
+    fun `converting the last remaining warmup leaves warmup sets null`() {
+        val session = fullBodyB.toOverviewSession()
+        val splitSquat = session.exercises.first { it.id == "split-squat-db" }
+        assert(splitSquat.warmupSets?.size == 1)
+
+        val actual = session.convertLastWarmupToWorkSet(splitSquat)
+        val updated = actual.exercises.first { it.id == "split-squat-db" }
+
+        assert(updated.warmupSets == null)
+        assert(updated.sets.size == 4)
+    }
+
+    @Test
+    fun `warmup sets cannot be an empty list`() {
+        val bench = exercisesMap.getValue("bench-press-bb")
+        val error = assertFailsWith<IllegalArgumentException> {
+            WorkoutExercise(
+                exerciseDefinition = bench,
+                repRange = 8..10,
+                warmupSets = emptyList(),
+                sets = listOf(
+                    ExerciseSet(bench, Weight.kilograms(50), 8, SetState.NotStated),
+                ),
+            )
+        }
+        assert(error.message == "warmupSets must be null or contain at least one set")
     }
 
     @Test
@@ -380,7 +407,7 @@ class WorkoutSessionTest {
         val actual = session.addSet(session.exercises.first())
         val bench = actual.exercises.first()
 
-        assert(bench.warmupSets.size == 3)
+        assert(bench.warmupSets?.size == 3)
         assert(bench.sets.size == 4)
     }
 
@@ -389,22 +416,24 @@ class WorkoutSessionTest {
         val session = fullBodyA.toWorkoutSession()
         val bench = session.exercises.first()
 
-        assert(bench.warmupSets.size == 3)
+        val warmupSets = checkNotNull(bench.warmupSets)
+        assert(warmupSets.size == 3)
         assert(
-            bench.warmupSets.map { it.weight } == listOf(
+            warmupSets.map { it.weight } == listOf(
             Weight.kilograms(20),
             Weight.kilograms(20),
             Weight.kilograms(20),
         )
         )
-        assert(bench.warmupSets.map { it.reps } == listOf(8, 4, 3))
-        assert(bench.warmupSets.first().setState == SetState.InProgress)
+        assert(warmupSets.map { it.reps } == listOf(8, 4, 3))
+        assert(warmupSets.first().setState == SetState.InProgress)
         assert(bench.sets.all { it.setState == SetState.NotStated })
+        assert(session.exercises.first { it.id == "leg-curl" }.warmupSets == null)
     }
 }
 
 private fun WorkoutSession.completeWarmups(exerciseIndex: Int): WorkoutSession {
-    val warmupCount = exercises[exerciseIndex].warmupSets.size
+    val warmupCount = exercises[exerciseIndex].warmupSets?.size ?: 0
     return (0 until warmupCount).fold(this) { session, index ->
         session.completeSet(session.exercises[exerciseIndex], index, isWarmup = true)
     }

@@ -20,17 +20,18 @@ class WorkoutSessionViewModelTest {
             assert(awaitItem() == null)
             val session = awaitItem()!!
             val bench = session.exercises.first()
-            assert(bench.warmupSets.size == 3)
+            val warmupSets = checkNotNull(bench.warmupSets)
+            assert(warmupSets.size == 3)
             assert(
-                bench.warmupSets.map { it.weight } == listOf(
+                warmupSets.map { it.weight } == listOf(
                 Weight.kilograms(20),
                 Weight.kilograms(20),
                 Weight.kilograms(20),
             )
             )
-            assert(bench.warmupSets.map { it.reps } == listOf(8, 4, 3))
+            assert(warmupSets.map { it.reps } == listOf(8, 4, 3))
             assert(bench.sets.size == 3)
-            assert(bench.warmupSets.first().setState == SetState.InProgress)
+            assert(warmupSets.first().setState == SetState.InProgress)
             assert(bench.sets.all { it.setState == SetState.NotStated })
         }
     }
@@ -47,13 +48,13 @@ class WorkoutSessionViewModelTest {
 
             viewModel.onAction(WorkoutSessionAction.OnConvertToWarmup(bench))
             val converted = awaitItem()!!
-            assert(converted.exercises.first().warmupSets.size == 4)
+            assert(converted.exercises.first().warmupSets?.size == 4)
             assert(converted.exercises.first().sets.size == 2)
-            assert(converted.exercises.first().warmupSets.first().setState == SetState.InProgress)
+            assert(converted.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
 
             viewModel.onAction(WorkoutSessionAction.OnConvertToWorkSet(converted.exercises.first()))
             val restored = awaitItem()!!
-            assert(restored.exercises.first().warmupSets.size == 3)
+            assert(restored.exercises.first().warmupSets?.size == 3)
             assert(restored.exercises.first().sets.size == 3)
         }
     }
@@ -71,13 +72,13 @@ class WorkoutSessionViewModelTest {
             viewModel.onAction(WorkoutSessionAction.OnAddSet(bench))
             val added = awaitItem()!!
             assert(added.exercises.first().sets.size == 4)
-            assert(added.exercises.first().warmupSets.size == 3)
+            assert(added.exercises.first().warmupSets?.size == 3)
             assert(added.exercises.first().sets.last().setState == SetState.NotStated)
 
             viewModel.onAction(WorkoutSessionAction.RemoveLastSet(added.exercises.first()))
             val removed = awaitItem()!!
             assert(removed.exercises.first().sets.size == 3)
-            assert(removed.exercises.first().warmupSets.size == 3)
+            assert(removed.exercises.first().warmupSets?.size == 3)
         }
     }
 
@@ -91,7 +92,7 @@ class WorkoutSessionViewModelTest {
             var session = awaitItem()!!
             val bench = session.exercises.first()
 
-            bench.warmupSets.indices.forEach { index ->
+            checkNotNull(bench.warmupSets).indices.forEach { index ->
                 viewModel.onAction(
                     WorkoutSessionAction.OnCompleteSet(
                         session.exercises.first(),
@@ -101,7 +102,7 @@ class WorkoutSessionViewModelTest {
                 )
                 session = awaitItem()!!
             }
-            assert(session.exercises.first().warmupSets.all { it.setState == SetState.Completed })
+            assert(session.exercises.first().warmupSets!!.all { it.setState == SetState.Completed })
             assert(session.exercises.first().sets.first().setState == SetState.InProgress)
 
             session.exercises.first().sets.indices.forEach { index ->
@@ -111,7 +112,7 @@ class WorkoutSessionViewModelTest {
                 session = awaitItem()!!
             }
             assert(session.exercises.first().sets.all { it.setState == SetState.Completed })
-            assert(session.exercises[1].warmupSets.first().setState == SetState.InProgress)
+            assert(session.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
         }
     }
 }

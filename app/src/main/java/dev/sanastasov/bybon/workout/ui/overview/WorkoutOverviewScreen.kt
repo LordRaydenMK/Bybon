@@ -146,46 +146,48 @@ private fun OverviewExerciseCard(
         OverviewExerciseHeader(exercise, onAction)
         Spacer(Modifier.height(4.dp))
 
-        exercise.warmupSets.forEachIndexed { index, set ->
-            val weightState = rememberSyncedTextField(
-                key = exercise to "w$index",
-                initialText = remember(exercise, index) { set.weight.kilograms },
-            ) { weight ->
-                onAction(
-                    WorkoutOverviewAction.OnWeightUpdated(
-                        weight,
-                        exercise,
-                        index,
-                        isWarmup = true,
-                    ),
-                )
-            }
-            val repState = rememberSyncedTextField(
-                key = exercise to "wr$index",
-                initialText = remember(exercise, index) { set.reps.toString() },
-            ) { reps ->
-                onAction(
-                    WorkoutOverviewAction.OnRepsUpdated(
-                        reps,
-                        exercise,
-                        index,
-                        isWarmup = true,
-                    ),
-                )
-            }
+        exercise.warmupSets?.let { warmupSets ->
+            warmupSets.forEachIndexed { index, set ->
+                val weightState = rememberSyncedTextField(
+                    key = exercise to "w$index",
+                    initialText = remember(exercise, index) { set.weight.kilograms },
+                ) { weight ->
+                    onAction(
+                        WorkoutOverviewAction.OnWeightUpdated(
+                            weight,
+                            exercise,
+                            index,
+                            isWarmup = true,
+                        ),
+                    )
+                }
+                val repState = rememberSyncedTextField(
+                    key = exercise to "wr$index",
+                    initialText = remember(exercise, index) { set.reps.toString() },
+                ) { reps ->
+                    onAction(
+                        WorkoutOverviewAction.OnRepsUpdated(
+                            reps,
+                            exercise,
+                            index,
+                            isWarmup = true,
+                        ),
+                    )
+                }
 
-            OverviewSetRow(
-                isWarmup = true,
-                workSetNumber = null,
-                set = set,
-                weightState = weightState,
-                repState = repState,
-                onBadgeClick = if (index == exercise.warmupSets.lastIndex) {
-                    { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
-                } else {
-                    null
-                },
-            )
+                OverviewSetRow(
+                    isWarmup = true,
+                    workSetNumber = null,
+                    set = set,
+                    weightState = weightState,
+                    repState = repState,
+                    onBadgeClick = if (index == warmupSets.lastIndex) {
+                        { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
+                    } else {
+                        null
+                    },
+                )
+            }
         }
 
         exercise.sets.forEachIndexed { index, set ->

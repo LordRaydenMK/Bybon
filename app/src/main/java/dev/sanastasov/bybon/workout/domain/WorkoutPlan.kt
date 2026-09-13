@@ -8,16 +8,11 @@ value class WorkoutPlanId(
     val id: String
 )
 
-data class PlanedWarmupSet(
-    val weight: Weight,
-    val reps: Int,
-)
-
 data class PlanedExercise(
     val exercise: ExerciseDefinition,
+    val warmupSets: Int = 0,
     val sets: Int,
     val repRange: IntRange,
-    val warmupSets: List<PlanedWarmupSet> = emptyList(),
 )
 
 data class WorkoutPlan(

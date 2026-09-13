@@ -112,49 +112,51 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
         )
         Spacer(Modifier.height(4.dp))
 
-        exercise.warmupSets.forEachIndexed { index, set ->
-            val weightState = rememberSyncedTextField(
-                key = exercise to "w$index",
-                initialText = remember(exercise, index) { set.weight.kilograms },
-            ) { weight ->
-                onAction(
-                    WorkoutSessionAction.OnWeightUpdated(
-                        weight,
-                        exercise,
-                        index,
-                        isWarmup = true,
-                    ),
-                )
-            }
-            val repState = rememberSyncedTextField(
-                key = exercise to "wr$index",
-                initialText = remember(exercise, index) { set.reps.toString() },
-            ) { reps ->
-                onAction(
-                    WorkoutSessionAction.OnRepsUpdated(
-                        reps,
-                        exercise,
-                        index,
-                        isWarmup = true,
-                    ),
-                )
-            }
+        exercise.warmupSets?.let { warmupSets ->
+            warmupSets.forEachIndexed { index, set ->
+                val weightState = rememberSyncedTextField(
+                    key = exercise to "w$index",
+                    initialText = remember(exercise, index) { set.weight.kilograms },
+                ) { weight ->
+                    onAction(
+                        WorkoutSessionAction.OnWeightUpdated(
+                            weight,
+                            exercise,
+                            index,
+                            isWarmup = true,
+                        ),
+                    )
+                }
+                val repState = rememberSyncedTextField(
+                    key = exercise to "wr$index",
+                    initialText = remember(exercise, index) { set.reps.toString() },
+                ) { reps ->
+                    onAction(
+                        WorkoutSessionAction.OnRepsUpdated(
+                            reps,
+                            exercise,
+                            index,
+                            isWarmup = true,
+                        ),
+                    )
+                }
 
-            SetRow(
-                exercise = exercise,
-                index = index,
-                isWarmup = true,
-                workSetNumber = null,
-                set = set,
-                weightState = weightState,
-                repState = repState,
-                onBadgeClick = if (index == exercise.warmupSets.lastIndex) {
-                    { onAction(WorkoutSessionAction.OnConvertToWorkSet(exercise)) }
-                } else {
-                    null
-                },
-                onAction = onAction,
-            )
+                SetRow(
+                    exercise = exercise,
+                    index = index,
+                    isWarmup = true,
+                    workSetNumber = null,
+                    set = set,
+                    weightState = weightState,
+                    repState = repState,
+                    onBadgeClick = if (index == warmupSets.lastIndex) {
+                        { onAction(WorkoutSessionAction.OnConvertToWorkSet(exercise)) }
+                    } else {
+                        null
+                    },
+                    onAction = onAction,
+                )
+            }
         }
 
         exercise.sets.forEachIndexed { index, set ->

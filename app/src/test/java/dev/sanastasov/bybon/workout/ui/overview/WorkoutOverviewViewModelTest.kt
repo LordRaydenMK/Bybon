@@ -46,13 +46,13 @@ class WorkoutOverviewViewModelTest {
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
             assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
             val saved = repository.workoutSessions().first().single()
-            assert(saved.exercises.first().warmupSets.first().setState == SetState.InProgress)
+            assert(saved.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
             assert(saved.exercises.first().sets.first().setState == SetState.NotStated)
             assert(
                 saved.exercises.first().sets.first().reps ==
                     increased.exercises.first().sets.first().reps
             )
-            assert(saved.exercises.first().warmupSets.size == 3)
+            assert(saved.exercises.first().warmupSets?.size == 3)
         }
     }
 
@@ -64,31 +64,31 @@ class WorkoutOverviewViewModelTest {
         viewModel.uiState.test {
             assert(awaitItem() == null)
             val draft = awaitItem()!!
-            assert(draft.exercises.first().warmupSets.size == 3)
+            assert(draft.exercises.first().warmupSets?.size == 3)
             assert(draft.exercises.first().sets.size == 3)
 
             viewModel.onAction(WorkoutOverviewAction.OnConvertToWarmup(draft.exercises.first()))
             val converted = awaitItem()!!
             assert(repository.workoutSessions().first().isEmpty())
-            assert(converted.exercises.first().warmupSets.size == 4)
+            assert(converted.exercises.first().warmupSets?.size == 4)
             assert(converted.exercises.first().sets.size == 2)
 
             viewModel.onAction(
                 WorkoutOverviewAction.OnConvertToWorkSet(converted.exercises.first())
             )
             val restored = awaitItem()!!
-            assert(restored.exercises.first().warmupSets.size == 3)
+            assert(restored.exercises.first().warmupSets?.size == 3)
             assert(restored.exercises.first().sets.size == 3)
 
             viewModel.onAction(WorkoutOverviewAction.OnAddSet(restored.exercises.first()))
             val added = awaitItem()!!
-            assert(added.exercises.first().warmupSets.size == 3)
+            assert(added.exercises.first().warmupSets?.size == 3)
             assert(added.exercises.first().sets.size == 4)
 
             viewModel.onAction(WorkoutOverviewAction.RemoveLastSet(added.exercises.first()))
             val removed = awaitItem()!!
             assert(removed.exercises.first().sets.size == 3)
-            assert(removed.exercises.first().warmupSets.size == 3)
+            assert(removed.exercises.first().warmupSets?.size == 3)
         }
     }
 

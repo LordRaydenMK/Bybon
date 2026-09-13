@@ -7,6 +7,8 @@ import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 
+private val defaultWarmupReps = listOf(8, 4, 3)
+
 fun WorkoutPlan.toWorkoutSession(
     previousSession: WorkoutSession? = null,
     startedAt: LocalDateTime = LocalDateTime.now(),
@@ -20,9 +22,14 @@ fun WorkoutPlan.toWorkoutSession(
                 it.id == planedExercise.exercise.id
             }
             WorkoutExercise(
-                planedExercise.exercise,
-                planedExercise.repRange,
-                (1..planedExercise.sets).map { setNumber ->
+                exerciseDefinition = planedExercise.exercise,
+                repRange = planedExercise.repRange,
+                warmupSets = warmupSetsFromPlan(
+                    planedExercise.exercise,
+                    planedExercise.warmupSets,
+                    previousExercise?.warmupSets,
+                ),
+                sets = (1..planedExercise.sets).map { setNumber ->
                     val setIndex = setNumber - 1
                     val previousSet = previousExercise?.sets?.getOrNull(setIndex)
                     ExerciseSet(
@@ -35,23 +42,32 @@ fun WorkoutPlan.toWorkoutSession(
                         },
                     )
                 },
-                planedExercise.warmupSets.mapIndexed { warmupIndex, plannedWarmup ->
-                    val previousWarmup = previousExercise?.warmupSets?.getOrNull(warmupIndex)
-                    ExerciseSet(
-                        planedExercise.exercise,
-                        previousWarmup?.weight ?: plannedWarmup.weight,
-                        previousWarmup?.reps ?: plannedWarmup.reps,
-                        SetState.NotStated,
-                        previous = previousWarmup?.let {
-                            PreviousSetPerformance(it.weight, it.reps)
-                        },
-                    )
-                },
             )
         },
         startedAt,
     )
     return session.startWorkout()
+}
+
+private fun warmupSetsFromPlan(
+    exercise: ExerciseDefinition,
+    count: Int,
+    previousWarmups: List<ExerciseSet>?,
+): List<ExerciseSet>? {
+    if (count <= 0) return null
+    return List(count) { index ->
+        val previousWarmup = previousWarmups?.getOrNull(index)
+        ExerciseSet(
+            exerciseDefinition = exercise,
+            weight = previousWarmup?.weight ?: exercise.equipment.defaultWarmupWeight,
+            reps = previousWarmup?.reps
+                ?: defaultWarmupReps.getOrElse(index) { defaultWarmupReps.last() },
+            setState = SetState.NotStated,
+            previous = previousWarmup?.let {
+                PreviousSetPerformance(it.weight, it.reps)
+            },
+        )
+    }
 }
 
 @JvmInline
@@ -122,13 +138,19 @@ private fun oneRmOrNull(weight: Weight, reps: Int): Weight? {
 data class WorkoutExercise(
     val exerciseDefinition: ExerciseDefinition,
     val repRange: IntRange,
+    val warmupSets: List<ExerciseSet>? = null,
     val sets: List<ExerciseSet>,
-    val warmupSets: List<ExerciseSet> = emptyList(),
 ) {
+    init {
+        require(warmupSets == null || warmupSets.isNotEmpty()) {
+            "warmupSets must be null or contain at least one set"
+        }
+    }
+
     val id: String = exerciseDefinition.id
 
     val orderedSets: List<ExerciseSet>
-        get() = warmupSets + sets
+        get() = warmupSets.orEmpty() + sets
 
     val canRemoveSet: Boolean
         get() {
@@ -196,7 +218,7 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
     updateExercise(exercise.id) { current ->
         val lastWorkSet = current.sets.lastOrNull()
         val template =
-            lastWorkSet ?: current.warmupSets.lastOrNull() ?: return@updateExercise current
+            lastWorkSet ?: current.warmupSets?.lastOrNull() ?: return@updateExercise current
         val newSetState = if (lastWorkSet?.setState == SetState.Completed ||
             (lastWorkSet == null && template.setState == SetState.Completed)
         ) {
@@ -217,8 +239,10 @@ fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
             current.sets.lastOrNull()?.let { it.setState != SetState.Completed } == true ->
                 current.copy(sets = current.sets.dropLast(1))
 
-            current.warmupSets.lastOrNull()?.let { it.setState != SetState.Completed } == true ->
-                current.copy(warmupSets = current.warmupSets.dropLast(1))
+            current.warmupSets?.lastOrNull()?.let { it.setState != SetState.Completed } == true ->
+                current.copy(
+                    warmupSets = current.warmupSets.orEmpty().dropLast(1).nullIfEmpty(),
+                )
 
             else -> current
         }
@@ -237,16 +261,17 @@ fun WorkoutSession.convertFirstWorkSetToWarmup(exercise: WorkoutExercise): Worko
     updateExercise(exercise.id) { current ->
         val firstWorkSet = current.sets.firstOrNull() ?: return@updateExercise current
         current.copy(
-            warmupSets = current.warmupSets + firstWorkSet,
+            warmupSets = current.warmupSets.orEmpty() + firstWorkSet,
             sets = current.sets.drop(1),
         )
     }
 
 fun WorkoutSession.convertLastWarmupToWorkSet(exercise: WorkoutExercise): WorkoutSession =
     updateExercise(exercise.id) { current ->
-        val lastWarmup = current.warmupSets.lastOrNull() ?: return@updateExercise current
+        val warmupSets = current.warmupSets ?: return@updateExercise current
+        val lastWarmup = warmupSets.last()
         current.copy(
-            warmupSets = current.warmupSets.dropLast(1),
+            warmupSets = warmupSets.dropLast(1).nullIfEmpty(),
             sets = listOf(lastWarmup) + current.sets,
         )
     }
@@ -277,7 +302,7 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     exercises = exercises.map { exercise ->
         exercise.copy(
             sets = exercise.sets.map { it.copy(setState = SetState.NotStated) },
-            warmupSets = exercise.warmupSets.map { it.copy(setState = SetState.NotStated) },
+            warmupSets = exercise.warmupSets?.map { it.copy(setState = SetState.NotStated) },
         )
     },
 )
@@ -404,6 +429,8 @@ private fun ExerciseSet.withWeightPreservingOneRm(
 private fun IntRange.expanded(amount: Int = 2): IntRange =
     (first - amount).coerceAtLeast(1)..(last + amount)
 
+private fun List<ExerciseSet>.nullIfEmpty(): List<ExerciseSet>? = takeIf { isNotEmpty() }
+
 private fun WorkoutSession.updateExercise(
     exerciseId: String,
     update: (WorkoutExercise) -> WorkoutExercise,
@@ -425,7 +452,7 @@ private fun WorkoutSession.updateExerciseSet(
 ): WorkoutSession = updateExercise(exercise.id) { current ->
     if (isWarmup) {
         current.copy(
-            warmupSets = current.warmupSets.mapIndexed { index, set ->
+            warmupSets = current.warmupSets?.mapIndexed { index, set ->
                 if (index == setIndex) update(set) else set
             },
         )
@@ -450,8 +477,9 @@ private fun WorkoutSession.nextSetAfter(
     isWarmup: Boolean,
 ): SetRef? {
     val exercise = exercises.first { it.id == exerciseId }
+    val warmupSets = exercise.warmupSets
     if (isWarmup) {
-        if (setIndex < exercise.warmupSets.lastIndex) {
+        if (warmupSets != null && setIndex < warmupSets.lastIndex) {
             return SetRef(exerciseId, setIndex + 1, isWarmup = true)
         }
         if (exercise.sets.isNotEmpty()) {
@@ -462,7 +490,7 @@ private fun WorkoutSession.nextSetAfter(
     }
     val nextExercise = exercises.getOrNull(exercises.indexOfFirst { it.id == exerciseId } + 1)
         ?: return null
-    if (nextExercise.warmupSets.isNotEmpty()) {
+    if (nextExercise.warmupSets != null) {
         return SetRef(nextExercise.id, 0, isWarmup = true)
     }
     if (nextExercise.sets.isNotEmpty()) {
@@ -473,9 +501,10 @@ private fun WorkoutSession.nextSetAfter(
 
 private fun WorkoutSession.firstNotStartedSet(): SetRef? =
     exercises.firstNotNullOfOrNull { exercise ->
-        val warmupIndex = exercise.warmupSets.indexOfFirst { it.setState == SetState.NotStated }
+        val warmupIndex = exercise.warmupSets?.indexOfFirst { it.setState == SetState.NotStated }
         when {
-            warmupIndex >= 0 -> SetRef(exercise.id, warmupIndex, isWarmup = true)
+            warmupIndex != null && warmupIndex >= 0 ->
+                SetRef(exercise.id, warmupIndex, isWarmup = true)
 
             else -> {
                 val workIndex = exercise.sets.indexOfFirst { it.setState == SetState.NotStated }
