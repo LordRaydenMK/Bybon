@@ -116,90 +116,109 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
             fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(4.dp))
+        SessionWarmupSets(exercise, onAction)
+        SessionWorkSets(exercise, onAction)
+        SessionSetActions(exercise, onAction)
+    }
+}
 
-        exercise.numberedWarmupSets.forEach { numbered ->
-            val index = numbered.index
-            val set = numbered.set
-            val weightState = rememberSyncedTextField(
-                key = exercise to "w$index",
-                initialText = remember(exercise, index) { set.weight.kilograms },
-            ) { weight ->
-                onAction(
-                    WorkoutSessionAction.OnWeightUpdated(
-                        weight,
-                        exercise,
-                        index,
-                        isWarmup = true,
-                    ),
-                )
-            }
-            val repState = rememberSyncedTextField(
-                key = exercise to "wr$index",
-                initialText = remember(exercise, index) { set.reps.toString() },
-            ) { reps ->
-                onAction(
-                    WorkoutSessionAction.OnRepsUpdated(
-                        reps,
-                        exercise,
-                        index,
-                        isWarmup = true,
-                    ),
-                )
-            }
-
-            SetRow(
-                exercise = exercise,
-                numbered = numbered,
-                weightState = weightState,
-                repState = repState,
-                onBadgeClick = if (index == exercise.numberedWarmupSets.lastIndex) {
-                    { onAction(WorkoutSessionAction.OnConvertToWorkSet(exercise)) }
-                } else {
-                    null
-                },
-                onAction = onAction,
+@Composable
+private fun SessionWarmupSets(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutSessionAction) -> Unit,
+) {
+    exercise.numberedWarmupSets.forEach { numbered ->
+        val index = numbered.index
+        val set = numbered.set
+        val weightState = rememberSyncedTextField(
+            key = exercise to "w$index",
+            initialText = remember(exercise, index) { set.weight.kilograms },
+        ) { weight ->
+            onAction(
+                WorkoutSessionAction.OnWeightUpdated(
+                    weight,
+                    exercise,
+                    index,
+                    isWarmup = true,
+                ),
             )
         }
-
-        exercise.numberedWorkSets.forEach { numbered ->
-            val index = numbered.index
-            val set = numbered.set
-            val weightState = rememberSyncedTextField(
-                key = exercise to "s$index",
-                initialText = remember(exercise, index) { set.weight.kilograms },
-            ) { weight ->
-                onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
-            }
-            val repState = rememberSyncedTextField(
-                key = exercise to "sr$index",
-                initialText = remember(exercise, index) { set.reps.toString() },
-            ) { reps ->
-                onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
-            }
-
-            SetRow(
-                exercise = exercise,
-                numbered = numbered,
-                weightState = weightState,
-                repState = repState,
-                onBadgeClick = if (index == 0) {
-                    { onAction(WorkoutSessionAction.OnConvertToWarmup(exercise)) }
-                } else {
-                    null
-                },
-                onAction = onAction,
+        val repState = rememberSyncedTextField(
+            key = exercise to "wr$index",
+            initialText = remember(exercise, index) { set.reps.toString() },
+        ) { reps ->
+            onAction(
+                WorkoutSessionAction.OnRepsUpdated(
+                    reps,
+                    exercise,
+                    index,
+                    isWarmup = true,
+                ),
             )
         }
+        SetRow(
+            exercise = exercise,
+            numbered = numbered,
+            weightState = weightState,
+            repState = repState,
+            onBadgeClick = if (index == exercise.numberedWarmupSets.lastIndex) {
+                { onAction(WorkoutSessionAction.OnConvertToWorkSet(exercise)) }
+            } else {
+                null
+            },
+            onAction = onAction,
+        )
+    }
+}
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton({ onAction(WorkoutSessionAction.OnAddSet(exercise)) }) {
-                Text("Add set")
-            }
+@Composable
+private fun SessionWorkSets(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutSessionAction) -> Unit,
+) {
+    exercise.numberedWorkSets.forEach { numbered ->
+        val index = numbered.index
+        val set = numbered.set
+        val weightState = rememberSyncedTextField(
+            key = exercise to "s$index",
+            initialText = remember(exercise, index) { set.weight.kilograms },
+        ) { weight ->
+            onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
+        }
+        val repState = rememberSyncedTextField(
+            key = exercise to "sr$index",
+            initialText = remember(exercise, index) { set.reps.toString() },
+        ) { reps ->
+            onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
+        }
+        SetRow(
+            exercise = exercise,
+            numbered = numbered,
+            weightState = weightState,
+            repState = repState,
+            onBadgeClick = if (index == 0) {
+                { onAction(WorkoutSessionAction.OnConvertToWarmup(exercise)) }
+            } else {
+                null
+            },
+            onAction = onAction,
+        )
+    }
+}
 
-            if (exercise.canRemoveSet) {
-                TextButton({ onAction(WorkoutSessionAction.RemoveLastSet(exercise)) }) {
-                    Text("Remove last set")
-                }
+@Composable
+private fun SessionSetActions(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutSessionAction) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton({ onAction(WorkoutSessionAction.OnAddSet(exercise)) }) {
+            Text("Add set")
+        }
+
+        if (exercise.canRemoveSet) {
+            TextButton({ onAction(WorkoutSessionAction.RemoveLastSet(exercise)) }) {
+                Text("Remove last set")
             }
         }
     }
