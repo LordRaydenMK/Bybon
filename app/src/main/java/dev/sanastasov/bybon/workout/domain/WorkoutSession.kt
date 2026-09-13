@@ -124,10 +124,21 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
         )
     }
 
-fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession =
-    updateExercise(exercise.id) { exercise ->
+fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
+    val updated = updateExercise(exercise.id) { exercise ->
         exercise.copy(sets = exercise.sets.dropLast(1))
     }
+    if (updated.workoutSets.any { it.setState == SetState.InProgress }) {
+        return updated
+    }
+    val next = updated.exercises.firstNotNullOfOrNull { ex ->
+        val index = ex.sets.indexOfFirst { it.setState == SetState.NotStated }
+        if (index >= 0) ex to index else null
+    } ?: return updated
+    return updated.updateExerciseSet(next.first, next.second) {
+        it.copy(setState = SetState.InProgress)
+    }
+}
 
 fun WorkoutSession.updateWeight(
     exercise: WorkoutExercise,

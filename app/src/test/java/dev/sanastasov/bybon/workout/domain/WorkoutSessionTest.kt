@@ -77,4 +77,19 @@ class WorkoutSessionTest {
         assert(actual.exercises.first().sets.first() == expected)
         assert(actual.exercises.drop(1) == session.exercises.drop(1))
     }
+
+    @Test
+    fun `remove last set when it is in progress - another set becomes in progress`() {
+        val initial = fullBodyA.toWorkoutSession()
+        val session = initial
+            .completeSet(initial.exercises.first(), 0)
+            .let { it.completeSet(it.exercises.first(), 1) }
+        // First exercise: [Completed, Completed, InProgress]
+
+        val actual = session.removeLastSet(session.exercises.first())
+
+        assert(actual.exercises.first().sets.size == 2)
+        assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
+        assert(actual.exercises[1].sets.first().setState == SetState.InProgress)
+    }
 }

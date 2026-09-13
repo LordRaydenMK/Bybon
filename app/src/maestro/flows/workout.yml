@@ -38,8 +38,7 @@ appId: dev.sanastasov.bybon.debug
       end: 20%, 20%
 - assertVisible: "3 x Squat (barbell) in 8 - 10"
 - assertVisible: "Exercise 2 / 6"
-# TODO: uncomment when the bug of removing a InProgress set is fixed
-#- assertVisible: "Set 1 in progress, 50 kg by 8. Double tap to mark complete."
+- assertVisible: "Set 1 in progress, 50 kg by 8. Double tap to mark complete."
 - back
 - assertVisible: "Active"
 - assertVisible: "Open Workout"
