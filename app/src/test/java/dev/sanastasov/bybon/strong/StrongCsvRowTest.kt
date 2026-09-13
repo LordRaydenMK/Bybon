@@ -44,15 +44,25 @@ class StrongCsvRowTest {
     )
 
     @Test
+    fun `rejects a file that is not a strong csv export`() {
+        try {
+            StrongCsvParser.parse("not a strong csv")
+            error("Expected parse to fail")
+        } catch (e: IllegalArgumentException) {
+            assert(e.message == "Not a Strong CSV export")
+        }
+    }
+
+    @Test
     fun `reads strong backup sample into dto rows`() {
-        val rows = StrongCsvParser.readSample(javaClass.classLoader)
+        val rows = StrongCsvParser.parse(readStrongBackupSample(javaClass.classLoader))
 
         assert(rows.size == 2053)
     }
 
     @Test
     fun `imports completed session history from the strong backup sample`() {
-        val result = StrongCsvParser.readSample(javaClass.classLoader).toStrongImport()
+        val result = StrongCsvParser.parse(readStrongBackupSample(javaClass.classLoader)).toStrongImport()
 
         assert(result.sessionHistory.size == 52)
         assert(result.sessionHistory.all { it.state is WorkoutState.Completed })
@@ -70,7 +80,7 @@ class StrongCsvRowTest {
 
     @Test
     fun `imports only exercises that do not already exist in Bybon`() {
-        val result = StrongCsvParser.readSample(javaClass.classLoader).toStrongImport()
+        val result = StrongCsvParser.parse(readStrongBackupSample(javaClass.classLoader)).toStrongImport()
 
         assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
         assert(result.exercises.single().id == "crunch-machine")
@@ -80,7 +90,7 @@ class StrongCsvRowTest {
 
     @Test
     fun `imports only plans that do not match existing Bybon plans`() {
-        val result = StrongCsvParser.readSample(javaClass.classLoader).toStrongImport()
+        val result = StrongCsvParser.parse(readStrongBackupSample(javaClass.classLoader)).toStrongImport()
 
         assert(result.plans.map { it.name } == listOf("Upper body A", "Upper body B"))
         assert(
