@@ -1,11 +1,32 @@
 appId: dev.sanastasov.bybon.debug
 ---
-- launchApp
+- launchApp:
+    clearState: true
 - assertVisible: "Bybon"
 - assertVisible: "History"
 - tapOn: "History"
-- assertVisible: "Full Body B"
-- assertVisible: "Romanian Deadlift (RDL) (barbell): 45 kg x 12 @ 63 kg 1RM"
+- assertVisible: "No completed workouts yet"
+- assertVisible: "Import history"
+- tapOn: "Import history"
+# System SAF picker. CI/release seed the unit-test CSV via .github/scripts/seed-strong-csv.sh.
+- extendedWaitUntil:
+    visible: "strong-backup-sample.csv"
+    timeout: 15000
+- tapOn: "strong-backup-sample.csv"
+- extendedWaitUntil:
+    visible: "Import summary"
+    timeout: 20000
+- assertVisible: "52 sessions imported"
+- assertVisible: "Full Body B: 23"
+- assertVisible: "Full Body A: 23"
+- assertVisible: "Upper body A: 3"
+- assertVisible: "Upper body B: 3"
+- assertVisible: "2 plans created"
+- assertVisible: "1 exercise imported"
+- assertVisible: "854 working sets imported"
+- tapOn: "Done"
+- assertVisible: "History"
+- assertVisible: "Upper body B"
 - back
 - assertVisible: "Full Body A"
 - tapOn: "1 RM Calc"

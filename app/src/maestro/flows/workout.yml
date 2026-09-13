@@ -6,6 +6,13 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Start Workout"
 - assertVisible: "Full body workout routine variant A"
 - assertVisible: "3 x Bench Press (barbell) in 8 - 10"
+- assertVisible: "Decrease weight and reps for all exercises"
+- assertVisible: "Increase weight and reps for all exercises"
+- tapOn: "Increase weight and reps for Bench Press (barbell)"
+- tapOn: "Decrease weight and reps for Bench Press (barbell)"
+- tapOn: "Start Workout"
+- assertVisible: "Full body workout routine variant A"
+- assertVisible: "3 x Bench Press (barbell) in 8 - 10"
 - tapOn:
       text: "50"
       index: 0
@@ -42,3 +49,7 @@ appId: dev.sanastasov.bybon.debug
 - back
 - assertVisible: "Active"
 - assertVisible: "Open Workout"
+- tapOn: "Open Workout"
+- assertVisible: "3 x Bench Press (barbell) in 8 - 10"
+- assertVisible: "1. 60 kg x 8 @ 74.48 kg 1RM"
+- assertNotVisible: "Start Workout"

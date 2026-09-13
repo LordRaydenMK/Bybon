@@ -57,6 +57,7 @@ jobs:
           disable-animations: true
           script: |
             ./gradlew installDebug
+            bash .github/scripts/seed-strong-csv.sh
             maestro test app/src/maestro/flows
 
       - name: Archive Maestro test results on failure

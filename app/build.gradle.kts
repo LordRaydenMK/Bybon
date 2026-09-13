@@ -119,8 +119,10 @@ dependencies {
     testFixturesImplementation(libs.androidx.compose.runtime)
     testFixturesImplementation(libs.kotlinx.coroutines.core)
 
+    implementation(libs.kotlin.csv)
+
     testImplementation(libs.junit)
-    testImplementation(libs.kotlin.csv)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
 

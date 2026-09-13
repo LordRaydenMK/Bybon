@@ -12,5 +12,6 @@ sealed class WorkoutPlansAction {
 }
 
 sealed class WorkoutPlanEffect {
-    data class StartPlan(val plan: WorkoutPlan) : WorkoutPlanEffect()
+    data class OpenOverview(val plan: WorkoutPlan) : WorkoutPlanEffect()
+    data class OpenSession(val plan: WorkoutPlan) : WorkoutPlanEffect()
 }
