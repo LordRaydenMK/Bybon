@@ -436,12 +436,12 @@ private fun WorkoutSession.updateExercise(
     update: (WorkoutExercise) -> WorkoutExercise,
 ): WorkoutSession = copy(
     exercises = exercises.map { exercise ->
-    if (exercise.id == exerciseId) {
-        update(exercise)
-    } else {
-        exercise
-    }
-}
+        if (exercise.id == exerciseId) {
+            update(exercise)
+        } else {
+            exercise
+        }
+    },
 )
 
 private fun WorkoutSession.updateExerciseSet(
@@ -535,18 +535,18 @@ sealed class WorkoutSessionAction {
     ) : WorkoutSessionAction()
 
     data class OnAddSet(
-        val exercise: WorkoutExercise
+        val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
 
     data class RemoveLastSet(
-        val exercise: WorkoutExercise
+        val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
 
     data class OnConvertToWarmup(
-        val exercise: WorkoutExercise
+        val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
 
     data class OnConvertToWorkSet(
-        val exercise: WorkoutExercise
+        val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
 }

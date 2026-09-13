@@ -4,7 +4,6 @@ import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration
 import org.junit.Test
-import kotlin.test.assertFailsWith
 
 class WorkoutSessionTest {
 
@@ -172,10 +171,10 @@ class WorkoutSessionTest {
                         exercise
                     } else {
                         exercise.copy(
-                        sets = exercise.sets.mapIndexed { setIndex, set ->
-                            if (setIndex != 0) set else set.copy(previous = previous)
-                        },
-                    )
+                            sets = exercise.sets.mapIndexed { setIndex, set ->
+                                if (setIndex != 0) set else set.copy(previous = previous)
+                            },
+                        )
                     }
                 },
             )
@@ -218,8 +217,8 @@ class WorkoutSessionTest {
         assert(
             actual.exercises.first().sets.first().previous == PreviousSetPerformance(
                 Weight.kilograms(40),
-                9
-            )
+                9,
+            ),
         )
     }
 
@@ -323,23 +322,23 @@ class WorkoutSessionTest {
     fun `default plans include warmup set counts from the strong sample`() {
         assert(
             fullBodyA.sets.map { it.exercise.id to it.warmupSets } == listOf(
-            "bench-press-bb" to 3,
-            "squat-bb" to 3,
-            "pullup-assisted" to 2,
-            "leg-curl" to 0,
-            "upright-row-db" to 0,
-            "skullcrusher-db" to 0,
-        )
+                "bench-press-bb" to 3,
+                "squat-bb" to 3,
+                "pullup-assisted" to 2,
+                "leg-curl" to 0,
+                "upright-row-db" to 0,
+                "skullcrusher-db" to 0,
+            ),
         )
         assert(
             fullBodyB.sets.map { it.exercise.id to it.warmupSets } == listOf(
-            "rdl-bb" to 2,
-            "incline-bench-press-db" to 2,
-            "split-squat-db" to 1,
-            "incline-row-db" to 0,
-            "lateral-raise-db" to 0,
-            "incline-curl-db" to 0,
-        )
+                "rdl-bb" to 2,
+                "incline-bench-press-db" to 2,
+                "split-squat-db" to 1,
+                "incline-row-db" to 0,
+                "lateral-raise-db" to 0,
+                "incline-curl-db" to 0,
+            ),
         )
     }
 
@@ -420,10 +419,10 @@ class WorkoutSessionTest {
         assert(warmupSets.size == 3)
         assert(
             warmupSets.map { it.weight } == listOf(
-            Weight.kilograms(20),
-            Weight.kilograms(20),
-            Weight.kilograms(20),
-        )
+                Weight.kilograms(20),
+                Weight.kilograms(20),
+                Weight.kilograms(20),
+            ),
         )
         assert(warmupSets.map { it.reps } == listOf(8, 4, 3))
         assert(warmupSets.first().setState == SetState.InProgress)

@@ -24,10 +24,10 @@ class WorkoutSessionViewModelTest {
             assert(warmupSets.size == 3)
             assert(
                 warmupSets.map { it.weight } == listOf(
-                Weight.kilograms(20),
-                Weight.kilograms(20),
-                Weight.kilograms(20),
-            )
+                    Weight.kilograms(20),
+                    Weight.kilograms(20),
+                    Weight.kilograms(20),
+                ),
             )
             assert(warmupSets.map { it.reps } == listOf(8, 4, 3))
             assert(bench.sets.size == 3)
@@ -97,7 +97,7 @@ class WorkoutSessionViewModelTest {
                     WorkoutSessionAction.OnCompleteSet(
                         session.exercises.first(),
                         index,
-                        isWarmup = true
+                        isWarmup = true,
                     ),
                 )
                 session = awaitItem()!!

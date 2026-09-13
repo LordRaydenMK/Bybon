@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @JvmInline
 @Serializable
 value class WorkoutPlanId(
-    val id: String
+    val id: String,
 )
 
 data class PlanedExercise(

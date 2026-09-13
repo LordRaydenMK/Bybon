@@ -83,9 +83,9 @@ class StrongCsvRowTest {
         assert(firstRdl.warmupSets?.size == 2)
         assert(
             firstRdl.warmupSets?.map { it.weight to it.reps } == listOf(
-            Weight.kilograms(20f) to 8,
-            Weight.kilograms(35f) to 4,
-        )
+                Weight.kilograms(20f) to 8,
+                Weight.kilograms(35f) to 4,
+            ),
         )
         assert(firstRdl.sets.size == 3)
     }

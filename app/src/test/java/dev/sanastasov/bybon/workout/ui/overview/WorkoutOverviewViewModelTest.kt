@@ -31,11 +31,11 @@ class WorkoutOverviewViewModelTest {
             assert(repository.workoutSessions().first().isEmpty())
             assert(
                 increased.exercises.first().sets.first().reps ==
-                    draft.exercises.first().sets.first().reps + 1
+                    draft.exercises.first().sets.first().reps + 1,
             )
             assert(
                 increased.exercises.first().sets.first().oneRm!! >
-                    draft.exercises.first().sets.first().oneRm!!
+                    draft.exercises.first().sets.first().oneRm!!,
             )
             assert(
                 increased.exercises.first().sets.all {
@@ -50,7 +50,7 @@ class WorkoutOverviewViewModelTest {
             assert(saved.exercises.first().sets.first().setState == SetState.NotStated)
             assert(
                 saved.exercises.first().sets.first().reps ==
-                    increased.exercises.first().sets.first().reps
+                    increased.exercises.first().sets.first().reps,
             )
             assert(saved.exercises.first().warmupSets?.size == 3)
         }
@@ -74,7 +74,7 @@ class WorkoutOverviewViewModelTest {
             assert(converted.exercises.first().sets.size == 2)
 
             viewModel.onAction(
-                WorkoutOverviewAction.OnConvertToWorkSet(converted.exercises.first())
+                WorkoutOverviewAction.OnConvertToWorkSet(converted.exercises.first()),
             )
             val restored = awaitItem()!!
             assert(restored.exercises.first().warmupSets?.size == 3)

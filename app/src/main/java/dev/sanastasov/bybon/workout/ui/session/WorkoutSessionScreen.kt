@@ -63,7 +63,7 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
 }
 
 @Composable
-private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit,) {
+private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
     Scaffold(
         topBar = { BybonTopAppBar(state.planName, {}) },
     ) { contentPadding ->
@@ -95,7 +95,7 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
 }
 
 @Composable
-private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit,) {
+private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
