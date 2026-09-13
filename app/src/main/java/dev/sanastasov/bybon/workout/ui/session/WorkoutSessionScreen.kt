@@ -379,7 +379,26 @@ private fun SetRow(
             content()
         }
     } else {
-        content()
+        val completedDescription = buildString {
+            if (isWarmup) {
+                append("Warmup set, ")
+            } else {
+                append("$workSetNumber. ")
+            }
+            append("${set.weight.kilograms} kg x ${set.reps}")
+            if (oneRmLabel != null) {
+                append(" $oneRmLabel")
+            }
+        }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) {
+                    contentDescription = completedDescription
+                },
+        ) {
+            content()
+        }
     }
 }
 
