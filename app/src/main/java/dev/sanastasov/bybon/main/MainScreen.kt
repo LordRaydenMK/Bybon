@@ -130,7 +130,7 @@ private fun MainScreenContent(
                     icon = {
                         Icon(MaterialSymbolsExercise, "Workouts tab")
                     },
-                    label = { Text("Workouts") }
+                    label = { Text("Workouts") },
                 )
                 NavigationBarItem(
                     selectedIndex == 1,
@@ -138,7 +138,7 @@ private fun MainScreenContent(
                     icon = {
                         Icon(TablerBarbell, "One RM calculator tab")
                     },
-                    label = { Text("1 RM Calc") }
+                    label = { Text("1 RM Calc") },
                 )
                 NavigationBarItem(
                     selectedIndex == 2,
@@ -146,27 +146,29 @@ private fun MainScreenContent(
                     icon = {
                         Icon(FontAwesomeWeight, "Body Weight tab")
                     },
-                    label = { Text("Weight") }
+                    label = { Text("Weight") },
                 )
             }
-        }
+        },
     ) { contentPadding ->
         Box(
             Modifier
                 .fillMaxSize()
-                .padding(contentPadding)
+                .padding(contentPadding),
         ) {
             when (selectedIndex) {
                 0 -> WorkoutsTab(plans, onWorkoutPlansAction, Modifier.fillMaxSize())
+
                 1 -> OneRmCalculatorTab(
                     weight,
                     reps,
                     oneRmUiState,
                     onOneRmAction,
-                    Modifier.fillMaxSize()
+                    Modifier.fillMaxSize(),
                 )
 
                 2 -> WeightDashboardTab(weightState, onLogWeightClicked)
+
                 else -> error("Not yet implemented")
             }
         }
@@ -187,7 +189,7 @@ private fun MainScreenContentWorkoutsPreview() {
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false)
+            WorkoutPlanUi(fullBodyB, isActive = false),
         ),
         {},
         {},
@@ -204,14 +206,14 @@ private fun MainScreenContentOneRmCalcPreview() {
         "10",
         OneRmUiState(
             OneRmEntry(50f, 10),
-            emptyList()
+            emptyList(),
         ),
         {},
         WeightDashboardUiState(true, null, emptyList(), emptyList()),
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false)
+            WorkoutPlanUi(fullBodyB, isActive = false),
         ),
         {},
         {},
@@ -228,7 +230,7 @@ private fun MainScreenContentWeightTrackPreview() {
         "10",
         OneRmUiState(
             OneRmEntry(50f, 10),
-            emptyList()
+            emptyList(),
         ),
         {},
         WeightDashboardUiState(
@@ -241,12 +243,12 @@ private fun MainScreenContentWeightTrackPreview() {
             listOf(
                 WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
                 WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
-            )
+            ),
         ),
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false)
+            WorkoutPlanUi(fullBodyB, isActive = false),
         ),
         {},
         {},

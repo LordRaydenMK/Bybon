@@ -9,7 +9,9 @@ import kotlin.math.roundToInt
  * 65.45 kg represented as 6545
  */
 @JvmInline
-value class BodyWeight(val value: Int) {
+value class BodyWeight(
+    val value: Int,
+) {
     init {
         require(value > 0) {
             "Weight must be positive. Found '$value'"
@@ -27,8 +29,7 @@ value class BodyWeight(val value: Int) {
 
     operator fun unaryMinus(): BodyWeight = BodyWeight(-value)
 
-    operator fun minus(other: BodyWeight): BodyWeight =
-        BodyWeight(value - other.value)
+    operator fun minus(other: BodyWeight): BodyWeight = BodyWeight(value - other.value)
 
     operator fun plus(other: BodyWeight) = BodyWeight(value + other.value)
 

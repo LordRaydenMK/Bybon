@@ -12,11 +12,14 @@ data class PreviousWeekData(
 data class BodyWeightComparison(
     val currentWeekNo: Int,
     val currentWeightWeight: String,
-    val previousWeek: PreviousWeekData? = null
+    val previousWeek: PreviousWeekData? = null,
 )
 
-data class WeeklyAverageEntryUi(val week: String, val value: String, val delta: String?)
-
+data class WeeklyAverageEntryUi(
+    val week: String,
+    val value: String,
+    val delta: String?,
+)
 
 private val DAY_MONTH_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM")
 

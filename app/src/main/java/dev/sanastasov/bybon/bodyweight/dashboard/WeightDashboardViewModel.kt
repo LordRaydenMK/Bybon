@@ -5,10 +5,10 @@ import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
 import dev.sanastasov.bybon.domain.weekOfYear
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import java.time.LocalDate
 
 class WeightDashboardViewModel(
     private val repository: BodyWeightRepository,
@@ -21,7 +21,7 @@ class WeightDashboardViewModel(
         .map { dashboard -> dashboard.toDashboardUi() }
         .stateInWhileInForeground(
             coroutineScope,
-            WeightDashboardUiState(false)
+            WeightDashboardUiState(false),
         )
 
     private fun BodyWeightDashboard.toDashboardUi(): WeightDashboardUiState =
@@ -34,9 +34,9 @@ class WeightDashboardViewModel(
                     lastWeekAverage?.let { lastWeekAvg ->
                         PreviousWeekData(
                             today.weekOfYear - 1,
-                            "${(thisWeeksAverage - lastWeekAvg).kilograms} kg"
+                            "${(thisWeeksAverage - lastWeekAvg).kilograms} kg",
                         )
-                    }
+                    },
                 )
             },
             dailyEntries = thisWeekValues,
@@ -46,6 +46,6 @@ class WeightDashboardViewModel(
                     "${entry.kilograms} kg",
                     delta?.kilograms?.let { "$it kg" },
                 )
-            }
+            },
         )
 }

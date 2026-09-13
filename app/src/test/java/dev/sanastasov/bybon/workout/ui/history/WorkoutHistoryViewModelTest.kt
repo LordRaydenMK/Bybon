@@ -16,13 +16,13 @@ import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.exercisesMap
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 class WorkoutHistoryViewModelTest {
 
@@ -264,7 +264,7 @@ class WorkoutHistoryViewModelTest {
                     PlanSessionCountUi("Full Body A", 23),
                     PlanSessionCountUi("Upper body A", 3),
                     PlanSessionCountUi("Upper body B", 3),
-                )
+                ),
             )
             assert(summary.plansCreatedCount == 2)
             assert(summary.exercisesImportedCount == 1)
@@ -317,14 +317,12 @@ class WorkoutHistoryViewModelTest {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun TestScope.historyViewModel(
-        repository: FakeWorkoutsRepository,
-        csv: String = "",
-    ) = WorkoutHistoryViewModel(
-        repository = repository,
-        coroutineScope = backgroundScope,
-        contentResolverReader = FakeContentResolverReader(csv),
-        ioDispatcher = UnconfinedTestDispatcher(testScheduler),
-        defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
-    )
+    private fun TestScope.historyViewModel(repository: FakeWorkoutsRepository, csv: String = "") =
+        WorkoutHistoryViewModel(
+            repository = repository,
+            coroutineScope = backgroundScope,
+            contentResolverReader = FakeContentResolverReader(csv),
+            ioDispatcher = UnconfinedTestDispatcher(testScheduler),
+            defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
+        )
 }

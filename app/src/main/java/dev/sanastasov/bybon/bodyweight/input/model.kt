@@ -23,14 +23,27 @@ data class WeightInputUi(
 
 sealed class WeightInputAction {
     data object OnBackClicked : WeightInputAction()
-    data class OnWeightChanged(val weight: String) : WeightInputAction()
-    data class OnSaveWeight(val date: LocalDate, val weight: String) : WeightInputAction()
-    data class OnNewDateSelected(val date: LocalDate) : WeightInputAction()
+    data class OnWeightChanged(
+        val weight: String,
+    ) : WeightInputAction()
+    data class OnSaveWeight(
+        val date: LocalDate,
+        val weight: String,
+    ) : WeightInputAction()
+    data class OnNewDateSelected(
+        val date: LocalDate,
+    ) : WeightInputAction()
 
-    data class AddWeight(val amount: BodyWeight) : WeightInputAction()
-    data class RemoveWeight(val amount: BodyWeight) : WeightInputAction()
+    data class AddWeight(
+        val amount: BodyWeight,
+    ) : WeightInputAction()
+    data class RemoveWeight(
+        val amount: BodyWeight,
+    ) : WeightInputAction()
 
-    data class DeleteWeightEntry(val entry: BodyWeightEntry) : WeightInputAction()
+    data class DeleteWeightEntry(
+        val entry: BodyWeightEntry,
+    ) : WeightInputAction()
 }
 
 sealed class WeightInputEffect {

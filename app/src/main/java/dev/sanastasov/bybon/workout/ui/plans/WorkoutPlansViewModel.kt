@@ -26,7 +26,7 @@ class WorkoutPlansViewModel(
                 plan = plan,
                 isActive = sessions.any { session ->
                     session.planId == plan.id &&
-                            session.workoutSets.any { it.setState == SetState.InProgress }
+                        session.workoutSets.any { it.setState == SetState.InProgress }
                 },
             )
         }

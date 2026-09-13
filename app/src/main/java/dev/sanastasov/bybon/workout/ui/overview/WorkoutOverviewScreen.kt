@@ -78,13 +78,13 @@ private fun OverviewScreenContent(
     onBack: () -> Unit,
 ) {
     Scaffold(
-        topBar = { BybonTopAppBar(state.planName, onBack) }
+        topBar = { BybonTopAppBar(state.planName, onBack) },
     ) { contentPadding ->
         Column(
             Modifier
                 .padding(contentPadding)
                 .padding(horizontal = 16.dp, vertical = 24.dp)
-                .fillMaxSize()
+                .fillMaxSize(),
         ) {
             Row(
                 Modifier.fillMaxWidth(),
@@ -138,7 +138,7 @@ private fun OverviewExerciseCard(
         Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Spacer(Modifier.height(8.dp))
         Row(
@@ -223,14 +223,14 @@ private fun OverviewSetRow(
             .fillMaxWidth()
             .semantics(mergeDescendants = true) {
                 contentDescription = setDescription
-            }
+            },
     ) {
         Row(
             Modifier
                 .defaultMinSize(minHeight = 48.dp)
                 .fillMaxWidth()
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
                 Modifier.weight(1f),
@@ -238,7 +238,7 @@ private fun OverviewSetRow(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text("${index + 1}.")
                     NumberInputField(weightState)
@@ -300,7 +300,7 @@ private fun OverviewScreenContentPreview() {
                             setState = SetState.Completed,
                             previous = PreviousSetPerformance(Weight.kilograms(45), 9),
                         )
-                    }
+                    },
                 )
             },
             state = WorkoutState.Completed(

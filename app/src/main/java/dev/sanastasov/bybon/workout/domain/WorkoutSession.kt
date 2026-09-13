@@ -4,9 +4,7 @@ import java.time.LocalDateTime
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 
-fun WorkoutPlan.toWorkoutSession(
-    previousSession: WorkoutSession? = null,
-): WorkoutSession =
+fun WorkoutPlan.toWorkoutSession(previousSession: WorkoutSession? = null): WorkoutSession =
     WorkoutSession(
         id,
         name,
@@ -25,18 +23,26 @@ fun WorkoutPlan.toWorkoutSession(
                         planedExercise.exercise,
                         previousSet?.weight ?: Weight.kilograms(50),
                         previousSet?.reps ?: planedExercise.repRange.first,
-                        if (index == 0 && setNumber == 1) SetState.InProgress else SetState.NotStated,
+                        if (index == 0 &&
+                            setNumber == 1
+                        ) {
+                            SetState.InProgress
+                        } else {
+                            SetState.NotStated
+                        },
                         previous = previousSet?.let {
                             PreviousSetPerformance(it.weight, it.reps)
                         },
                     )
-                }
+                },
             )
-        }
+        },
     )
 
 @JvmInline
-value class Weight(private val value: Int) {
+value class Weight(
+    private val value: Int,
+) {
 
     val kilograms: String
         get() = if (value % 10 == 0) {
@@ -113,8 +119,13 @@ data class WorkoutExercise(
 
 sealed class WorkoutState {
     data object NotStarted : WorkoutState()
-    data class InProgress(val startedAt: LocalDateTime) : WorkoutState()
-    data class Completed(val startedAt: LocalDateTime, val duration: Duration) : WorkoutState()
+    data class InProgress(
+        val startedAt: LocalDateTime,
+    ) : WorkoutState()
+    data class Completed(
+        val startedAt: LocalDateTime,
+        val duration: Duration,
+    ) : WorkoutState()
 }
 
 data class WorkoutSession(
@@ -128,7 +139,9 @@ data class WorkoutSession(
 
     init {
         require(workoutSets.map { it.setState }.filter { it == SetState.InProgress }.size <= 1) {
-            "At most 1 set can be in progress. Found ${workoutSets.filter { it.setState == SetState.InProgress }}"
+            "At most 1 set can be in progress. Found ${workoutSets.filter {
+                it.setState == SetState.InProgress
+            }}"
         }
     }
 }
@@ -161,7 +174,7 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
         val newSetState =
             if (lastSet.setState == SetState.Completed) SetState.InProgress else SetState.NotStated
         exercise.copy(
-            sets = exercise.sets + lastSet.copy(setState = newSetState, previous = null)
+            sets = exercise.sets + lastSet.copy(setState = newSetState, previous = null),
         )
     }
 
@@ -193,7 +206,7 @@ fun WorkoutSession.updateWeight(
 fun WorkoutSession.updateReps(
     exercise: WorkoutExercise,
     setIndex: Int,
-    count: Int
+    count: Int,
 ): WorkoutSession = updateExerciseSet(exercise, setIndex) {
     it.copy(reps = count)
 }
@@ -205,7 +218,7 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     state = WorkoutState.NotStarted,
     exercises = exercises.map { exercise ->
         exercise.copy(sets = exercise.sets.map { it.copy(setState = SetState.NotStated) })
-    }
+    },
 )
 
 fun WorkoutSession.startWorkout(): WorkoutSession {
@@ -270,19 +283,21 @@ internal fun ExerciseSet.adjust(
 
 private fun WorkoutSession.updateExercise(
     exerciseId: String,
-    update: (WorkoutExercise) -> WorkoutExercise
-): WorkoutSession = copy(exercises = exercises.map { exercise ->
-    if (exercise.id == exerciseId) {
-        update(exercise)
-    } else {
-        exercise
-    }
-})
+    update: (WorkoutExercise) -> WorkoutExercise,
+): WorkoutSession = copy(
+    exercises = exercises.map { exercise ->
+        if (exercise.id == exerciseId) {
+            update(exercise)
+        } else {
+            exercise
+        }
+    },
+)
 
 private fun WorkoutSession.updateExerciseSet(
     exercise: WorkoutExercise,
     setIndex: Int,
-    update: (ExerciseSet) -> ExerciseSet
+    update: (ExerciseSet) -> ExerciseSet,
 ): WorkoutSession = updateExercise(exercise.id) { exercise ->
     val updated = exercise.sets.mapIndexed { index, set ->
         if (index == setIndex) {
@@ -294,23 +309,29 @@ private fun WorkoutSession.updateExerciseSet(
     exercise.copy(sets = updated)
 }
 
-
 sealed class WorkoutSessionAction {
-    data class OnCompleteSet(val exercise: WorkoutExercise, val index: Int) : WorkoutSessionAction()
+    data class OnCompleteSet(
+        val exercise: WorkoutExercise,
+        val index: Int,
+    ) : WorkoutSessionAction()
 
     data class OnWeightUpdated(
         val newWeight: String,
         val exercise: WorkoutExercise,
-        val index: Int
+        val index: Int,
     ) : WorkoutSessionAction()
 
     data class OnRepsUpdated(
         val newReps: String,
         val exercise: WorkoutExercise,
-        val index: Int
+        val index: Int,
     ) : WorkoutSessionAction()
 
-    data class OnAddSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
+    data class OnAddSet(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
 
-    data class RemoveLastSet(val exercise: WorkoutExercise) : WorkoutSessionAction()
+    data class RemoveLastSet(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
 }

@@ -54,12 +54,12 @@ fun OneRmCalculatorTab(
         modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         WeightSection(
             weight,
             { onAction(OneRmCalcAction.OnWeightChanged(it)) },
-            { onAction(OneRmCalcAction.OnUpdateWeight(it)) }
+            { onAction(OneRmCalcAction.OnUpdateWeight(it)) },
         )
 
         Spacer(Modifier.height(16.dp))
@@ -67,7 +67,7 @@ fun OneRmCalculatorTab(
         RepsSection(
             reps,
             { onAction(OneRmCalcAction.OnRepsChanged(it)) },
-            { onAction(OneRmCalcAction.OnUpdateReps(it)) }
+            { onAction(OneRmCalcAction.OnUpdateReps(it)) },
         )
 
         uiState.entry?.calculate1Rm()?.let {
@@ -86,12 +86,12 @@ fun OneRmCalculatorTab(
 private fun WeightSection(
     weight: String,
     onWeightChanged: (String) -> Unit,
-    onUpdateWeight: (Float) -> Unit
+    onUpdateWeight: (Float) -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
     ) {
         Text("Weight", Modifier.weight(1f))
         OutlinedTextField(
@@ -101,14 +101,14 @@ private fun WeightSection(
             maxLines = 1,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
-            )
+                imeAction = ImeAction.Next,
+            ),
         )
     }
 
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
     ) {
         OutlinedButton({ onUpdateWeight(-5f) }) {
             Text("-5kg")
@@ -129,12 +129,12 @@ private fun WeightSection(
 private fun RepsSection(
     reps: String,
     onRepsChanged: (String) -> Unit,
-    onUpdateReps: (Int) -> Unit
+    onUpdateReps: (Int) -> Unit,
 ) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
     ) {
         Text("Reps", Modifier.weight(1f))
         OutlinedTextField(
@@ -144,14 +144,14 @@ private fun RepsSection(
             maxLines = 1,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Done
-            )
+                imeAction = ImeAction.Done,
+            ),
         )
     }
 
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
     ) {
         OutlinedButton({ onUpdateReps(-1) }) {
             Text("-1 rep")
@@ -166,12 +166,12 @@ private fun RepsSection(
 private fun ResultColumn(oneRm: Float) {
     Column(
         Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             "%.2f".format(oneRm),
             fontSize = 24.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Text("Estimated 1RM")
     }
@@ -183,7 +183,7 @@ private fun HistorySection(items: List<OneRmEntry>) {
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("${entry.weight} kg x", Modifier.weight(1f))
             Text("${entry.reps} reps", Modifier.weight(1f))
@@ -207,7 +207,7 @@ fun OneRmCalculatorPreview() {
                     OneRmEntry(50f, 10),
                     OneRmEntry(52.5f, 8),
                     OneRmEntry(52.5f, 9),
-                )
+                ),
             ),
             {},
         )

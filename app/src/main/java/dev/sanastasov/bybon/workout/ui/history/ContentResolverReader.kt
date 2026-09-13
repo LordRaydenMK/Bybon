@@ -11,9 +11,8 @@ class AndroidContentResolverReader(
     private val contentResolver: ContentResolver,
 ) : ContentResolverReader {
 
-    override fun read(uri: Uri): String =
-        contentResolver.openInputStream(uri)
-            ?.bufferedReader()
-            ?.use { it.readText() }
-            ?: error("Unable to read CSV")
+    override fun read(uri: Uri): String = contentResolver.openInputStream(uri)
+        ?.bufferedReader()
+        ?.use { it.readText() }
+        ?: error("Unable to read CSV")
 }

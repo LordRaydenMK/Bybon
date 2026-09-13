@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +16,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 class WeightInputViewModel(
     val repository: BodyWeightRepository,
@@ -40,7 +40,7 @@ class WeightInputViewModel(
         }
         .stateInWhileInForeground(
             coroutineScope,
-            WeightInputUi(date.value)
+            WeightInputUi(date.value),
         )
 
     init {
@@ -52,14 +52,20 @@ class WeightInputViewModel(
     fun onAction(action: WeightInputAction) {
         when (action) {
             WeightInputAction.OnBackClicked -> _effects.trySend(WeightInputEffect.NavigateBack)
-            is WeightInputAction.OnSaveWeight -> saveWeight(action)
-            is WeightInputAction.OnWeightChanged -> weight.value = action.weight
-            is WeightInputAction.OnNewDateSelected -> date.value = action.date
-            is WeightInputAction.AddWeight -> weight.value =
-                (BodyWeight.parseFromString(weight.value) + action.amount).kilograms.toString()
 
-            is WeightInputAction.RemoveWeight -> weight.value =
-                (BodyWeight.parseFromString(weight.value) - action.amount).kilograms.toString()
+            is WeightInputAction.OnSaveWeight -> saveWeight(action)
+
+            is WeightInputAction.OnWeightChanged -> weight.value = action.weight
+
+            is WeightInputAction.OnNewDateSelected -> date.value = action.date
+
+            is WeightInputAction.AddWeight ->
+                weight.value =
+                    (BodyWeight.parseFromString(weight.value) + action.amount).kilograms.toString()
+
+            is WeightInputAction.RemoveWeight ->
+                weight.value =
+                    (BodyWeight.parseFromString(weight.value) - action.amount).kilograms.toString()
 
             is WeightInputAction.DeleteWeightEntry -> deleteEntry(action.entry)
         }
@@ -77,8 +83,8 @@ class WeightInputViewModel(
             repository.insert(
                 BodyWeightEntry(
                     weight.date,
-                    BodyWeight.parseFromString(weight.weight)
-                )
+                    BodyWeight.parseFromString(weight.weight),
+                ),
             )
         }
     }

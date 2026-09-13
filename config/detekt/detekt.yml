@@ -5,3 +5,9 @@ naming:
 
 ktlint:
   code_style: android_studio
+  TrailingCommaOnCallSite:
+    useTrailingCommaOnCallSite: true
+  TrailingCommaOnDeclarationSite:
+    useTrailingCommaOnDeclarationSite: true
+  ClassSignature:
+    forceMultilineWhenParameterCountGreaterOrEqualThan: '1'

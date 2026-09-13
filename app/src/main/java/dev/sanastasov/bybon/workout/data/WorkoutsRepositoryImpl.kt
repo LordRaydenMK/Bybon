@@ -32,10 +32,7 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = sessions
 
-    override suspend fun importHistory(
-        plans: List<WorkoutPlan>,
-        sessions: List<WorkoutSession>,
-    ) {
+    override suspend fun importHistory(plans: List<WorkoutPlan>, sessions: List<WorkoutSession>) {
         this.plans.update { it + plans }
         this.sessions.update { it + sessions }
     }

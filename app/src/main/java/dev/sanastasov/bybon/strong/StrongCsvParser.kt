@@ -48,6 +48,5 @@ object StrongCsvParser {
             .toList()
     }
 
-    private fun String?.blankToNull(): String? =
-        this?.takeIf { it.isNotBlank() }
+    private fun String?.blankToNull(): String? = this?.takeIf { it.isNotBlank() }
 }

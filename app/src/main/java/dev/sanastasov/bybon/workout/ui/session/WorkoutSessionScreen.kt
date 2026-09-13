@@ -57,23 +57,20 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
     uiState?.let {
         SessionScreenContent(
             it,
-            viewModel::onAction
+            viewModel::onAction,
         )
     }
 }
 
 @Composable
-private fun SessionScreenContent(
-    state: WorkoutSession,
-    onAction: (WorkoutSessionAction) -> Unit,
-) {
+private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
     Scaffold(
-        topBar = { BybonTopAppBar(state.planName, {}) }
+        topBar = { BybonTopAppBar(state.planName, {}) },
     ) { contentPadding ->
         Column(
             Modifier
                 .padding(contentPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .padding(horizontal = 16.dp, vertical = 24.dp),
         ) {
             state.planDescription?.let {
                 Text(it)
@@ -98,20 +95,17 @@ private fun SessionScreenContent(
 }
 
 @Composable
-private fun ExerciseCard(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutSessionAction) -> Unit,
-) {
+private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit) {
     Column(
         Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Spacer(Modifier.height(8.dp))
         Text(
             "${exercise.sets.size} x ${exercise.exerciseDefinition.name} in ${exercise.repRange.first} - ${exercise.repRange.last}",
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Spacer(Modifier.height(4.dp))
 
@@ -191,7 +185,7 @@ private fun SetRow(
                 .defaultMinSize(minHeight = 48.dp)
                 .fillMaxWidth()
                 .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(
                 Modifier.weight(1f),
@@ -212,20 +206,20 @@ private fun SetRow(
                         val labelColor = MaterialTheme.colorScheme.onTertiaryContainer
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
                                 "${index + 1}.",
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                             NumberInputField(weightState)
                             Text(
                                 " kg x ",
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge
+                                style = MaterialTheme.typography.labelLarge,
                             )
                             NumberInputField(repState)
                             if (oneRmLabel != null) {
@@ -233,7 +227,7 @@ private fun SetRow(
                                     oneRmLabel,
                                     color = labelColor,
                                     fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelLarge
+                                    style = MaterialTheme.typography.labelLarge,
                                 )
                             }
                         }
@@ -241,7 +235,7 @@ private fun SetRow(
 
                     SetState.NotStated -> Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text("${index + 1}.")
                         NumberInputField(weightState)
@@ -264,13 +258,13 @@ private fun SetRow(
                 SetState.InProgress -> Checkbox(
                     false,
                     { onAction(WorkoutSessionAction.OnCompleteSet(exercise, index)) },
-                    Modifier.clearAndSetSemantics { }
+                    Modifier.clearAndSetSemantics { },
                 )
 
                 SetState.Completed -> Checkbox(
                     true,
                     null,
-                    Modifier.padding(horizontal = 10.dp)
+                    Modifier.padding(horizontal = 10.dp),
                 )
 
                 SetState.NotStated -> Unit
@@ -297,7 +291,7 @@ private fun SetRow(
                 .fillMaxWidth()
                 .semantics(mergeDescendants = true) {
                     contentDescription = setDescription
-                }
+                },
         ) {
             content()
         }
@@ -315,7 +309,7 @@ private fun SessionScreenContentPage1CompletedExercisePreview() {
     val session = fullBodyA.toWorkoutSession()
     SessionScreenContent(
         session.completeSet(session.exercises.first(), 0),
-        {}
+        {},
     )
 }
 

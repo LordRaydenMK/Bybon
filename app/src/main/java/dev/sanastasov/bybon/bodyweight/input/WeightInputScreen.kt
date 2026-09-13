@@ -61,10 +61,10 @@ fun BodyWeightModule.WeightInputScreen(onNavigateBack: () -> Unit) {
 private fun WeightInputContent(
     weight: String,
     uiState: WeightInputUi,
-    onAction: (WeightInputAction) -> Unit
+    onAction: (WeightInputAction) -> Unit,
 ) {
     Scaffold(
-        topBar = { BybonTopAppBar("Enter Weight", { onAction(WeightInputAction.OnBackClicked) }) }
+        topBar = { BybonTopAppBar("Enter Weight", { onAction(WeightInputAction.OnBackClicked) }) },
     ) { contentPadding ->
         Column(
             Modifier
@@ -87,10 +87,7 @@ private fun WeightInputContent(
 }
 
 @Composable
-private fun DateRow(
-    onAction: (WeightInputAction) -> Unit,
-    uiState: WeightInputUi
-) {
+private fun DateRow(onAction: (WeightInputAction) -> Unit, uiState: WeightInputUi) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
@@ -106,7 +103,7 @@ private fun DateRow(
         }
         OutlinedButton(
             { onAction(WeightInputAction.OnNewDateSelected(uiState.nextDate!!)) },
-            enabled = uiState.nextDate != null
+            enabled = uiState.nextDate != null,
         ) {
             Text(">")
         }
@@ -117,7 +114,7 @@ private fun DateRow(
 private fun WeightInputRow(
     uiState: WeightInputUi,
     weight: String,
-    onAction: (WeightInputAction) -> Unit
+    onAction: (WeightInputAction) -> Unit,
 ) {
     Row(Modifier.fillMaxWidth()) {
         if (uiState.savedBodyWeight != null) {
@@ -133,13 +130,13 @@ private fun WeightInputRow(
             Modifier.weight(1f),
             keyboardOptions = KeyboardOptions(
                 keyboardType =
-                    KeyboardType.DecimalSigned
+                    KeyboardType.DecimalSigned,
             ),
             keyboardActions = KeyboardActions(
                 onDone = {
                     onAction(WeightInputAction.OnSaveWeight(uiState.date, weight))
-                }
-            )
+                },
+            ),
         )
         if (uiState.bodyWeightEntry != null) {
             IconButton({ onAction(WeightInputAction.DeleteWeightEntry(uiState.bodyWeightEntry)) }) {
@@ -178,7 +175,7 @@ private fun AdjustWeightRow(onAction: (WeightInputAction) -> Unit) {
 private fun WeightInputContentPreview() {
     WeightInputContent(
         "",
-        WeightInputUi(LocalDate.of(2026, 8, 21), null)
+        WeightInputUi(LocalDate.of(2026, 8, 21), null),
     ) {}
 }
 

@@ -28,14 +28,13 @@ import dev.sanastasov.bybon.workout.domain.fullBodyB
 
 @Composable
 fun WorkoutPlansScreen() {
-
 }
 
 @Composable
 fun WorkoutsTab(
     plans: List<WorkoutPlanUi>,
     onAction: (WorkoutPlansAction) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier.padding(horizontal = 16.dp, vertical = 24.dp),
@@ -57,7 +56,7 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (Worko
             Modifier
                 .padding(8.dp)
                 .fillMaxWidth(),
-            Arrangement.spacedBy(4.dp)
+            Arrangement.spacedBy(4.dp),
         ) {
             Row(
                 Modifier.fillMaxWidth(),
@@ -90,12 +89,14 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (Worko
             }
 
             plan.sets.forEach { planedSet ->
-                Text("${planedSet.sets} x ${planedSet.exercise.name} - ${planedSet.repRange.first} to ${planedSet.repRange.last} reps")
+                Text(
+                    "${planedSet.sets} x ${planedSet.exercise.name} - ${planedSet.repRange.first} to ${planedSet.repRange.last} reps",
+                )
             }
 
             TextButton(
                 { onStartWorkoutClicked(plan) },
-                Modifier.align(Alignment.CenterHorizontally)
+                Modifier.align(Alignment.CenterHorizontally),
             ) {
                 Text(if (planUi.isActive) "Open Workout" else "Start Workout")
             }

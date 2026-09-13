@@ -9,8 +9,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
-import org.junit.Test
 import kotlin.test.assertFailsWith
+import org.junit.Test
 
 class StrongCsvRowTest {
 
@@ -61,7 +61,9 @@ class StrongCsvRowTest {
 
     @Test
     fun `imports completed session history from the strong backup sample`() {
-        val result = StrongCsvParser.parse(readStrongBackupSample(javaClass.classLoader)).toStrongImport()
+        val result = StrongCsvParser.parse(
+            readStrongBackupSample(javaClass.classLoader),
+        ).toStrongImport()
 
         assert(result.sessionHistory.size == 52)
         assert(result.sessionHistory.all { it.state is WorkoutState.Completed })
@@ -71,7 +73,7 @@ class StrongCsvRowTest {
                 fullBodyB.id,
                 WorkoutPlanId("upper-body-a"),
                 WorkoutPlanId("upper-body-b"),
-            )
+            ),
         )
         assert(result.sessionHistory.count { it.planId == fullBodyA.id } == 23)
         assert(result.sessionHistory.count { it.planId == fullBodyB.id } == 23)
@@ -79,7 +81,9 @@ class StrongCsvRowTest {
 
     @Test
     fun `imports only exercises that do not already exist in Bybon`() {
-        val result = StrongCsvParser.parse(readStrongBackupSample(javaClass.classLoader)).toStrongImport()
+        val result = StrongCsvParser.parse(
+            readStrongBackupSample(javaClass.classLoader),
+        ).toStrongImport()
 
         assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
         assert(result.exercises.single().id == "crunch-machine")
@@ -89,7 +93,9 @@ class StrongCsvRowTest {
 
     @Test
     fun `imports only plans that do not match existing Bybon plans`() {
-        val result = StrongCsvParser.parse(readStrongBackupSample(javaClass.classLoader)).toStrongImport()
+        val result = StrongCsvParser.parse(
+            readStrongBackupSample(javaClass.classLoader),
+        ).toStrongImport()
 
         assert(result.plans.map { it.name } == listOf("Upper body A", "Upper body B"))
         assert(
@@ -99,7 +105,7 @@ class StrongCsvRowTest {
                 "upright-row-db",
                 "skullcrusher-db",
                 "crunch-machine",
-            )
+            ),
         )
         assert(
             result.plans.first { it.name == "Upper body B" }.sets.map { it.exercise.id } == listOf(
@@ -108,7 +114,7 @@ class StrongCsvRowTest {
                 "lateral-raise-db",
                 "incline-curl-db",
                 "crunch-machine",
-            )
+            ),
         )
     }
 
@@ -123,7 +129,12 @@ class StrongCsvRowTest {
         val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
 
         assert(result.exercises == emptyList<ExerciseDefinition>())
-        assert(result.sessionHistory.single().exercises.map { it.id } == listOf("bench-press-bb", "squat-bb"))
+        assert(
+            result.sessionHistory.single().exercises.map { it.id } == listOf(
+                "bench-press-bb",
+                "squat-bb",
+            ),
+        )
     }
 
     @Test
@@ -197,7 +208,10 @@ class StrongCsvRowTest {
         assert(result.plans.map { it.name } == listOf("Upper body A"))
         assert(result.sessionHistory.single().planId == WorkoutPlanId("upper-body-a"))
         assert(
-            result.plans.single().sets.map { it.exercise.id } == listOf("bench-press-bb", "crunch-machine")
+            result.plans.single().sets.map { it.exercise.id } == listOf(
+                "bench-press-bb",
+                "crunch-machine",
+            ),
         )
         assert(result.plans.single().sets.map { it.sets } == listOf(3, 3))
     }
@@ -214,7 +228,12 @@ class StrongCsvRowTest {
             name = "Full Body B",
             sets = listOf(
                 PlanedExercise(
-                    ExerciseDefinition("rdl-bb", "Romanian Deadlift (barbell)", MuscleGroup.Legs, Equipment.Barbell),
+                    ExerciseDefinition(
+                        "rdl-bb",
+                        "Romanian Deadlift (barbell)",
+                        MuscleGroup.Legs,
+                        Equipment.Barbell,
+                    ),
                     3,
                     8..10,
                 ),

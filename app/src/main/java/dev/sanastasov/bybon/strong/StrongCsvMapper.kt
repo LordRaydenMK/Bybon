@@ -129,31 +129,29 @@ private fun List<StrongCsvRow>.toParsedWorkout(
     )
 }
 
-private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession =
-    WorkoutSession(
-        planId = plan.id,
-        planName = plan.name,
-        planDescription = workoutNotes ?: plan.description,
-        exercises = exercises,
-        state = WorkoutState.Completed(
-            startedAt = startedAt,
-            duration = duration,
-        ),
-    )
+private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession = WorkoutSession(
+    planId = plan.id,
+    planName = plan.name,
+    planDescription = workoutNotes ?: plan.description,
+    exercises = exercises,
+    state = WorkoutState.Completed(
+        startedAt = startedAt,
+        duration = duration,
+    ),
+)
 
-private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan =
-    WorkoutPlan(
-        id = WorkoutPlanId(planName.slugify()),
-        name = planName,
-        description = null,
-        sets = exercises.map { exercise ->
-            PlanedExercise(
-                exercise = exercise.exerciseDefinition,
-                sets = exercise.sets.size,
-                repRange = exercise.repRange,
-            )
-        },
-    )
+private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
+    id = WorkoutPlanId(planName.slugify()),
+    name = planName,
+    description = null,
+    sets = exercises.map { exercise ->
+        PlanedExercise(
+            exercise = exercise.exerciseDefinition,
+            sets = exercise.sets.size,
+            repRange = exercise.repRange,
+        )
+    },
+)
 
 private fun List<WorkoutPlan>.findMatchingPlan(
     strongName: String,
@@ -266,23 +264,20 @@ private fun inferMuscleGroup(name: String): MuscleGroup {
     }
 }
 
-private fun String.normalizedExerciseName(): String =
-    lowercase()
-        .replace("(rdl)", "")
-        .replace(Regex("\\s+"), " ")
-        .trim()
+private fun String.normalizedExerciseName(): String = lowercase()
+    .replace("(rdl)", "")
+    .replace(Regex("\\s+"), " ")
+    .trim()
 
-private fun String.normalizedPlanName(): String =
-    lowercase()
-        .replace(Regex("[^a-z0-9]+"), " ")
-        .split(" ")
-        .filter { it.isNotEmpty() && it !in planNameFillers }
-        .joinToString(" ")
+private fun String.normalizedPlanName(): String = lowercase()
+    .replace(Regex("[^a-z0-9]+"), " ")
+    .split(" ")
+    .filter { it.isNotEmpty() && it !in planNameFillers }
+    .joinToString(" ")
 
-private fun String.slugify(): String =
-    lowercase()
-        .replace(Regex("[^a-z0-9]+"), "-")
-        .trim('-')
+private fun String.slugify(): String = lowercase()
+    .replace(Regex("[^a-z0-9]+"), "-")
+    .trim('-')
 
 private fun levenshtein(left: String, right: String): Int {
     val previous = IntArray(right.length + 1) { it }

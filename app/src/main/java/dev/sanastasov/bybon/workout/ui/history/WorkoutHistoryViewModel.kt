@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.cancellation.CancellationException
 
 class WorkoutHistoryViewModel(
     private val repository: WorkoutsRepository,
@@ -78,7 +78,9 @@ class WorkoutHistoryViewModel(
     private sealed class ImportPhase {
         data object Idle : ImportPhase()
         data object Importing : ImportPhase()
-        data class Summary(val summary: ImportSummaryUi) : ImportPhase()
+        data class Summary(
+            val summary: ImportSummaryUi,
+        ) : ImportPhase()
     }
 }
 

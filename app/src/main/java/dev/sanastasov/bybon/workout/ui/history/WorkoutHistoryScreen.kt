@@ -69,7 +69,7 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
                     "text/csv",
                     "text/comma-separated-values",
                     "application/csv",
-                )
+                ),
             )
         },
         onImportDone = { viewModel.onAction(WorkoutHistoryAction.OnImportDone) },
@@ -145,10 +145,7 @@ private fun ImportingIndicator() {
 }
 
 @Composable
-private fun ImportSummary(
-    summary: ImportSummaryUi,
-    onImportDone: () -> Unit,
-) {
+private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
     Column(
         Modifier
             .fillMaxSize()
@@ -169,7 +166,11 @@ private fun ImportSummary(
             Text("${plan.planName}: ${plan.sessionCount}")
         }
         Text("${summary.plansCreatedCount} ${plansLabel(summary.plansCreatedCount)} created")
-        Text("${summary.exercisesImportedCount} ${exercisesLabel(summary.exercisesImportedCount)} imported")
+        Text(
+            "${summary.exercisesImportedCount} ${exercisesLabel(
+                summary.exercisesImportedCount,
+            )} imported",
+        )
         Text("${summary.workingSetCount} working sets imported")
         val firstDate = summary.firstSessionDate
         val lastDate = summary.lastSessionDate

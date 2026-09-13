@@ -24,14 +24,23 @@ class WorkoutOverviewViewModelTest {
             viewModel.onAction(WorkoutOverviewAction.OnIncreaseWorkout)
             val increased = awaitItem()!!
             assert(repository.workoutSessions().first().isEmpty())
-            assert(increased.exercises.first().sets.first().reps == draft.exercises.first().sets.first().reps + 1)
-            assert(increased.exercises.first().sets.first().oneRm!! > draft.exercises.first().sets.first().oneRm!!)
+            assert(
+                increased.exercises.first().sets.first().reps ==
+                    draft.exercises.first().sets.first().reps + 1,
+            )
+            assert(
+                increased.exercises.first().sets.first().oneRm!! >
+                    draft.exercises.first().sets.first().oneRm!!,
+            )
 
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
             assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
             val saved = repository.workoutSessions().first().single()
             assert(saved.exercises.first().sets.first().setState == SetState.InProgress)
-            assert(saved.exercises.first().sets.first().reps == increased.exercises.first().sets.first().reps)
+            assert(
+                saved.exercises.first().sets.first().reps ==
+                    increased.exercises.first().sets.first().reps,
+            )
         }
     }
 }

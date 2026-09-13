@@ -43,16 +43,16 @@ import androidx.compose.ui.unit.dp
 val FontAwesomeWeight: ImageVector
     get() {
         if (_FontAwesomeWeight != null) return _FontAwesomeWeight!!
-        
+
         _FontAwesomeWeight = ImageVector.Builder(
             name = "weight",
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
             viewportWidth = 512f,
-            viewportHeight = 512f
+            viewportHeight = 512f,
         ).apply {
             path(
-                fill = SolidColor(Color.Black)
+                fill = SolidColor(Color.Black),
             ) {
                 moveTo(448f, 64f)
                 horizontalLineToRelative(-25.98f)
@@ -87,7 +87,7 @@ val FontAwesomeWeight: ImageVector
                 close()
             }
         }.build()
-        
+
         return _FontAwesomeWeight!!
     }
 

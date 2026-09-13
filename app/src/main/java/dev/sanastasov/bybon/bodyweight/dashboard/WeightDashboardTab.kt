@@ -30,7 +30,7 @@ fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> 
         Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (state.showLogWeight) {
             LogWeight(onLogWeightClicked)
@@ -69,7 +69,7 @@ private fun LogWeight(onLogWeightClicked: () -> Unit) {
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text("Enter today's weight")
 
@@ -89,7 +89,7 @@ private fun WeightComparison(comparison: BodyWeightComparison) {
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text("CW ${comparison.currentWeekNo} average")
             Spacer(Modifier.height(8.dp))
@@ -97,7 +97,7 @@ private fun WeightComparison(comparison: BodyWeightComparison) {
             Text(
                 comparison.currentWeightWeight,
                 fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.height(8.dp))
 
@@ -133,7 +133,7 @@ private fun WeightDashboardPreview() {
         BodyWeightComparison(
             33,
             "65 kg",
-            PreviousWeekData(32, "+0.5 kg")
+            PreviousWeekData(32, "+0.5 kg"),
         ),
         listOf(
             BodyWeightEntry(LocalDate.now().minusDays(1), BodyWeight.parseFromString("65.2")),
@@ -142,8 +142,8 @@ private fun WeightDashboardPreview() {
         listOf(
             WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
             WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
-            WeeklyAverageEntryUi("CW 30", "64.7 kg", null)
-        )
+            WeeklyAverageEntryUi("CW 30", "64.7 kg", null),
+        ),
     )
     Surface {
         WeightDashboardTab(state, {})

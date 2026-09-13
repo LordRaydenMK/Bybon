@@ -11,7 +11,7 @@ val fullBodyA = WorkoutPlan(
         PlanedExercise(exercisesMap["leg-curl"]!!, 3, 12..14),
         PlanedExercise(exercisesMap["upright-row-db"]!!, 3, 10..14),
         PlanedExercise(exercisesMap["skullcrusher-db"]!!, 3, 10..16),
-    )
+    ),
 )
 
 val fullBodyB = WorkoutPlan(

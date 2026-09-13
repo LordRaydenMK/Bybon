@@ -10,8 +10,5 @@ interface WorkoutsRepository {
 
     fun workoutSessions(): Flow<List<WorkoutSession>>
 
-    suspend fun importHistory(
-        plans: List<WorkoutPlan>,
-        sessions: List<WorkoutSession>,
-    )
+    suspend fun importHistory(plans: List<WorkoutPlan>, sessions: List<WorkoutSession>)
 }

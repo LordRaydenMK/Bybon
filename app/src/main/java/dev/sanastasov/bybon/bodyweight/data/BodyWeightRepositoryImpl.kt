@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class BodyWeightRepositoryImpl(
-    private val weightEntryDao: WeightDao
+    private val weightEntryDao: WeightDao,
 ) : BodyWeightRepository {
 
     override fun entries(): Flow<List<BodyWeightEntry>> = weightEntryDao.weightEntries()

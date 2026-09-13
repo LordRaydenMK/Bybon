@@ -14,7 +14,6 @@ interface BodyWeightModule : DbModule {
             object : BodyWeightModule, DbModule by dbModule {
                 override val bodyWeightRepository: BodyWeightRepository
                     get() = BodyWeightRepositoryImpl(bybonDb.weightEntryDao())
-
             }
     }
 }

@@ -16,7 +16,7 @@ class WorkoutSessionTest {
                 Weight.kilograms(50),
                 8,
                 SetState.Completed,
-            )
+            ),
         )
         assert(
             actual.workoutSets[1] == ExerciseSet(
@@ -24,7 +24,7 @@ class WorkoutSessionTest {
                 Weight.kilograms(50),
                 8,
                 SetState.InProgress,
-            )
+            ),
         )
         assert(actual.workoutSets.drop(2) == session.workoutSets.drop(2))
     }
@@ -111,7 +111,7 @@ class WorkoutSessionTest {
                                 reps = 9,
                                 setState = SetState.Completed,
                             )
-                        }
+                        },
                     )
                 },
                 state = WorkoutState.Completed(
@@ -125,7 +125,7 @@ class WorkoutSessionTest {
 
         val firstSet = actual.exercises.first().sets.first()
         assert(
-            firstSet.previous == PreviousSetPerformance(Weight.kilograms(40), 9)
+            firstSet.previous == PreviousSetPerformance(Weight.kilograms(40), 9),
         )
         assert(firstSet.weight == Weight.kilograms(40))
         assert(firstSet.reps == 9)
@@ -140,13 +140,16 @@ class WorkoutSessionTest {
         val session = fullBodyA.toWorkoutSession().let { session ->
             session.copy(
                 exercises = session.exercises.mapIndexed { exerciseIndex, exercise ->
-                    if (exerciseIndex != 0) exercise
-                    else exercise.copy(
-                        sets = exercise.sets.mapIndexed { setIndex, set ->
-                            if (setIndex != 0) set else set.copy(previous = previous)
-                        }
-                    )
-                }
+                    if (exerciseIndex != 0) {
+                        exercise
+                    } else {
+                        exercise.copy(
+                            sets = exercise.sets.mapIndexed { setIndex, set ->
+                                if (setIndex != 0) set else set.copy(previous = previous)
+                            },
+                        )
+                    }
+                },
             )
         }
 
@@ -167,7 +170,7 @@ class WorkoutSessionTest {
                                 reps = 9,
                                 setState = SetState.Completed,
                             )
-                        }
+                        },
                     )
                 },
                 state = WorkoutState.Completed(
@@ -183,7 +186,12 @@ class WorkoutSessionTest {
         assert(actual.workoutSets.none { it.setState == SetState.InProgress })
         assert(actual.exercises.first().sets.first().weight == Weight.kilograms(40))
         assert(actual.exercises.first().sets.first().reps == 9)
-        assert(actual.exercises.first().sets.first().previous == PreviousSetPerformance(Weight.kilograms(40), 9))
+        assert(
+            actual.exercises.first().sets.first().previous == PreviousSetPerformance(
+                Weight.kilograms(40),
+                9,
+            ),
+        )
     }
 
     @Test

@@ -37,10 +37,10 @@ val TablerBarbell: ImageVector
             defaultWidth = 24.dp,
             defaultHeight = 24.dp,
             viewportWidth = 24f,
-            viewportHeight = 24f
+            viewportHeight = 24f,
         ).apply {
             path(
-                fill = SolidColor(Color.Black)
+                fill = SolidColor(Color.Black),
             ) {
                 moveTo(4f, 7f)
                 arcToRelative(1f, 1f, 0f, false, true, 1f, 1f)
@@ -54,7 +54,7 @@ val TablerBarbell: ImageVector
                 arcToRelative(1f, 1f, 0f, false, true, 1f, -1f)
             }
             path(
-                fill = SolidColor(Color.Black)
+                fill = SolidColor(Color.Black),
             ) {
                 moveTo(20f, 7f)
                 arcToRelative(1f, 1f, 0f, false, true, 1f, 1f)
@@ -68,7 +68,7 @@ val TablerBarbell: ImageVector
                 arcToRelative(1f, 1f, 0f, false, true, 1f, -1f)
             }
             path(
-                fill = SolidColor(Color.Black)
+                fill = SolidColor(Color.Black),
             ) {
                 moveTo(16f, 5f)
                 arcToRelative(2f, 2f, 0f, false, true, 2f, 2f)

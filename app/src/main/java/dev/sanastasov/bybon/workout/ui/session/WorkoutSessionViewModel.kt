@@ -42,7 +42,7 @@ class WorkoutSessionViewModel(
             val sessions = repository.workoutSessions().first()
             val inProgress = sessions.firstOrNull { session ->
                 session.planId == planId &&
-                        session.workoutSets.any { it.setState == SetState.InProgress }
+                    session.workoutSets.any { it.setState == SetState.InProgress }
             }
             if (inProgress == null) {
                 val plan = repository.workoutPlans().first().first { it.id == planId }
@@ -68,7 +68,7 @@ class WorkoutSessionViewModel(
                         session.updateWeight(
                             action.exercise,
                             action.index,
-                            Weight.kilograms(weight)
+                            Weight.kilograms(weight),
                         )
                     } ?: session
                 }
@@ -80,7 +80,7 @@ class WorkoutSessionViewModel(
                         session.updateReps(
                             action.exercise,
                             action.index,
-                            reps
+                            reps,
                         )
                     } ?: session
                 }
@@ -98,6 +98,5 @@ class WorkoutSessionViewModel(
                 }
             }
         }
-
     }
 }
