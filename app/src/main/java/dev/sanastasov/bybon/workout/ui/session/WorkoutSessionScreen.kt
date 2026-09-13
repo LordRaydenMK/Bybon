@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -176,6 +177,22 @@ private fun SetRow(
             previous.oneRm?.let { append(" @ ${formatOneRmKg(it)} kg 1RM") }
         }
     }
+    val setDescription = buildString {
+        append("Set ${index + 1}")
+        if (set.setState == SetState.InProgress) {
+            append(" in progress")
+        }
+        append(", ${set.weight.kilograms} kg by ${set.reps}")
+        if (oneRmLabel != null) {
+            append(", $oneRmLabel")
+        }
+        if (previousLabel != null) {
+            append(". Previous: $previousLabel")
+        }
+        if (set.setState == SetState.InProgress) {
+            append(". Double tap to mark complete.")
+        }
+    }
     val content: @Composable () -> Unit = {
         Row(
             Modifier
@@ -274,22 +291,21 @@ private fun SetRow(
             onClick = { onAction(WorkoutSessionAction.OnCompleteSet(exercise, index)) },
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics {
-                    contentDescription = buildString {
-                        append(
-                            "Set ${index + 1} in progress, ${set.weight.kilograms} kg by ${set.reps}"
-                        )
-                        if (oneRmLabel != null) {
-                            append(", $oneRmLabel")
-                        }
-                        if (previousLabel != null) {
-                            append(". Previous: $previousLabel")
-                        }
-                        append(". Double tap to mark complete.")
-                    }
+                .semantics(mergeDescendants = true) {
+                    contentDescription = setDescription
                 },
             shape = RoundedCornerShape(8.dp),
             color = MaterialTheme.colorScheme.tertiaryContainer,
+        ) {
+            content()
+        }
+    } else if (set.setState == SetState.NotStated) {
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) {
+                    contentDescription = setDescription
+                }
         ) {
             content()
         }
