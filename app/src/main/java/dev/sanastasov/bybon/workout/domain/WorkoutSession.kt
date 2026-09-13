@@ -487,26 +487,42 @@ private fun WorkoutSession.nextSetAfter(
     isWarmup: Boolean,
 ): SetRef? {
     val exercise = exercises.first { it.id == exerciseId }
-    val warmupSets = exercise.warmupSets
-    if (isWarmup) {
-        if (warmupSets != null && setIndex < warmupSets.lastIndex) {
-            return SetRef(exerciseId, setIndex + 1, isWarmup = true)
-        }
-        if (exercise.sets.isNotEmpty()) {
-            return SetRef(exerciseId, 0, isWarmup = false)
-        }
-    } else if (setIndex < exercise.sets.lastIndex) {
-        return SetRef(exerciseId, setIndex + 1, isWarmup = false)
+    val nextInExercise = if (isWarmup) {
+        nextSetAfterWarmup(exercise, setIndex)
+    } else {
+        nextSetAfterWork(exercise, setIndex)
     }
+    return nextInExercise ?: firstSetOfNextExercise(exerciseId)
+}
+
+private fun nextSetAfterWarmup(exercise: WorkoutExercise, setIndex: Int): SetRef? {
+    val warmupSets = exercise.warmupSets
+    return when {
+        warmupSets != null && setIndex < warmupSets.lastIndex ->
+            SetRef(exercise.id, setIndex + 1, isWarmup = true)
+
+        exercise.sets.isNotEmpty() ->
+            SetRef(exercise.id, 0, isWarmup = false)
+
+        else -> null
+    }
+}
+
+private fun nextSetAfterWork(exercise: WorkoutExercise, setIndex: Int): SetRef? =
+    if (setIndex < exercise.sets.lastIndex) {
+        SetRef(exercise.id, setIndex + 1, isWarmup = false)
+    } else {
+        null
+    }
+
+private fun WorkoutSession.firstSetOfNextExercise(exerciseId: String): SetRef? {
     val nextExercise = exercises.getOrNull(exercises.indexOfFirst { it.id == exerciseId } + 1)
         ?: return null
-    if (nextExercise.warmupSets != null) {
-        return SetRef(nextExercise.id, 0, isWarmup = true)
+    return when {
+        nextExercise.warmupSets != null -> SetRef(nextExercise.id, 0, isWarmup = true)
+        nextExercise.sets.isNotEmpty() -> SetRef(nextExercise.id, 0, isWarmup = false)
+        else -> null
     }
-    if (nextExercise.sets.isNotEmpty()) {
-        return SetRef(nextExercise.id, 0, isWarmup = false)
-    }
-    return null
 }
 
 private fun WorkoutSession.firstNotStartedSet(): SetRef? =
