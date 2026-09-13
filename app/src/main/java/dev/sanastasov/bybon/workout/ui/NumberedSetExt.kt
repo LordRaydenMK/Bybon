@@ -53,5 +53,4 @@ val NumberedSet.completedContentDescription: String
         oneRmLabel?.let { append(" $it") }
     }
 
-fun formatOneRmKg(kg: Float): String =
-    "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
+fun formatOneRmKg(kg: Float): String = "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
