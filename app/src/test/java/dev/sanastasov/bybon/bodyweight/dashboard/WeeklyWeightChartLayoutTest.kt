@@ -6,28 +6,13 @@ class WeeklyWeightChartLayoutTest {
 
     @Test
     fun `pads a flat series so the y axis is not a single line`() {
-        assert(yAxisRange(listOf(65f, 65f)) == 64f..66f)
+        assert(yAxisRange(listOf(65.0, 65.0)) == 64.0..66.0)
     }
 
     @Test
     fun `adds padding around the observed range`() {
-        val range = yAxisRange(listOf(64f, 66f))
-        assert(range.start < 64f)
-        assert(range.endInclusive > 66f)
-    }
-
-    @Test
-    fun `always draws the last x label and thins earlier ones`() {
-        assert(shouldDrawXLabel(15, 16, isLast = true))
-        assert(shouldDrawXLabel(0, 16, isLast = false))
-        assert(!shouldDrawXLabel(1, 16, isLast = false))
-        assert(shouldDrawXLabel(3, 16, isLast = false))
-    }
-
-    @Test
-    fun `places a single week in the middle of the plot`() {
-        assert(xForIndex(0, 1, 0f, 100f) == 50f)
-        assert(xForIndex(0, 3, 0f, 100f) == 0f)
-        assert(xForIndex(2, 3, 0f, 100f) == 100f)
+        val range = yAxisRange(listOf(64.0, 66.0))
+        assert(range.start < 64.0)
+        assert(range.endInclusive > 66.0)
     }
 }

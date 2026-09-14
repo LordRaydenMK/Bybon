@@ -1,6 +1,6 @@
 package dev.sanastasov.bybon.bodyweight.dashboard
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,23 +10,27 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import ir.ehsannarmani.compose_charts.LineChart
+import ir.ehsannarmani.compose_charts.extensions.format
+import ir.ehsannarmani.compose_charts.models.DividerProperties
+import ir.ehsannarmani.compose_charts.models.DotProperties
+import ir.ehsannarmani.compose_charts.models.DrawStyle
+import ir.ehsannarmani.compose_charts.models.GridProperties
+import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
+import ir.ehsannarmani.compose_charts.models.IndicatorCount
+import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
+import ir.ehsannarmani.compose_charts.models.LabelProperties
+import ir.ehsannarmani.compose_charts.models.Line
+import ir.ehsannarmani.compose_charts.models.LineProperties
+import ir.ehsannarmani.compose_charts.models.PopupProperties
 
 @Composable
 fun WeeklyWeightTrendCard(points: List<WeeklyTrendPointUi>, modifier: Modifier = Modifier) {
@@ -63,207 +67,128 @@ fun WeeklyWeightTrendCard(points: List<WeeklyTrendPointUi>, modifier: Modifier =
 
 @Composable
 private fun WeeklyWeightChart(points: List<WeeklyTrendPointUi>, modifier: Modifier = Modifier) {
-    val lineColor = MaterialTheme.colorScheme.primary
-    val fillColor = lineColor.copy(alpha = 0.18f)
-    val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.8f)
-    val pointColor = MaterialTheme.colorScheme.primary
-    val surfaceColor = MaterialTheme.colorScheme.surface
-    val labelStyle = MaterialTheme.typography.labelSmall.copy(
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    val colors = weeklyChartColors()
+    val values = remember(points) { points.map { it.kilograms.toDouble() } }
+    val yRange = remember(values) { yAxisRange(values) }
+    val lines = remember(values, colors.line, colors.surface) {
+        listOf(weeklyAverageLine(values, colors.line, colors.surface))
+    }
+    val description = weeklyTrendDescription(points)
+
+    WeeklyAverageLineChart(
+        points,
+        yRange,
+        lines,
+        colors,
+        modifier.semantics { contentDescription = description },
     )
-    val textMeasurer = rememberTextMeasurer()
-    val colors = ChartColors(
-        line = lineColor,
-        fill = fillColor,
-        grid = gridColor,
-        point = pointColor,
-        surface = surfaceColor,
+}
+
+@Composable
+private fun WeeklyAverageLineChart(
+    points: List<WeeklyTrendPointUi>,
+    yRange: ClosedFloatingPointRange<Double>,
+    lines: List<Line>,
+    colors: WeeklyChartColors,
+    modifier: Modifier = Modifier,
+) {
+    LineChart(
+        modifier = modifier,
+        data = lines,
+        curvedEdges = false,
+        animationDelay = 80,
+        minValue = yRange.start,
+        maxValue = yRange.endInclusive,
+        labelHelperProperties = LabelHelperProperties(enabled = false),
+        dividerProperties = DividerProperties(
+            xAxisProperties = LineProperties(color = SolidColor(colors.outline)),
+            yAxisProperties = LineProperties(color = SolidColor(colors.outline)),
+        ),
+        gridProperties = GridProperties(
+            xAxisProperties = GridProperties.AxisProperties(
+                color = SolidColor(colors.outline.copy(alpha = 0.7f)),
+                lineCount = 4,
+            ),
+            yAxisProperties = GridProperties.AxisProperties(enabled = false),
+        ),
+        indicatorProperties = HorizontalIndicatorProperties(
+            textStyle = colors.labelStyle,
+            count = IndicatorCount.CountBased(count = 4),
+            padding = 8.dp,
+            contentBuilder = { value -> value.format(1) },
+        ),
+        labelProperties = LabelProperties(
+            enabled = true,
+            textStyle = colors.labelStyle,
+            padding = 8.dp,
+            labels = points.map { it.weekLabel },
+        ),
+        popupProperties = PopupProperties(
+            textStyle = colors.popupTextStyle,
+            containerColor = colors.popupContainer,
+            mode = PopupProperties.Mode.PointMode(),
+            contentBuilder = { popup -> weeklyTrendPopupText(points, popup) },
+        ),
     )
-    val description = points.joinToString(prefix = "Weekly body weight averages. ") {
+}
+
+private data class WeeklyChartColors(
+    val line: Color,
+    val surface: Color,
+    val outline: Color,
+    val labelStyle: TextStyle,
+    val popupTextStyle: TextStyle,
+    val popupContainer: Color,
+)
+
+@Composable
+private fun weeklyChartColors(): WeeklyChartColors {
+    val colorScheme = MaterialTheme.colorScheme
+    val labelStyle = MaterialTheme.typography.labelSmall.copy(color = colorScheme.onSurfaceVariant)
+    return WeeklyChartColors(
+        line = colorScheme.primary,
+        surface = colorScheme.surface,
+        outline = colorScheme.outlineVariant,
+        labelStyle = labelStyle,
+        popupTextStyle = MaterialTheme.typography.labelSmall.copy(
+            color = colorScheme.inverseOnSurface,
+        ),
+        popupContainer = colorScheme.inverseSurface,
+    )
+}
+
+private fun weeklyAverageLine(values: List<Double>, lineColor: Color, surfaceColor: Color): Line =
+    Line(
+        label = "Weekly average",
+        values = values,
+        color = SolidColor(lineColor),
+        firstGradientFillColor = lineColor.copy(alpha = 0.28f),
+        secondGradientFillColor = Color.Transparent,
+        curvedEdges = false,
+        drawStyle = DrawStyle.Stroke(width = 2.5.dp),
+        strokeAnimationSpec = tween(700),
+        gradientAnimationSpec = tween(700),
+        gradientAnimationDelay = 150,
+        dotProperties = DotProperties(
+            enabled = true,
+            radius = 4.dp,
+            color = SolidColor(surfaceColor),
+            strokeWidth = 2.dp,
+            strokeColor = SolidColor(lineColor),
+        ),
+    )
+
+private fun weeklyTrendDescription(points: List<WeeklyTrendPointUi>): String =
+    points.joinToString(prefix = "Weekly body weight averages. ") {
         val suffix = if (it.isLastSevenDaysFallback) " last 7 day average" else ""
         "CW ${it.weekLabel} ${it.kilograms} kg$suffix"
     }
 
-    Canvas(modifier.semantics { contentDescription = description }) {
-        val layout = chartLayout(points, textMeasurer, labelStyle)
-        drawGrid(layout, colors.grid, textMeasurer, labelStyle)
-        drawSeries(points, layout, colors)
-        drawXAxisLabels(points, layout, textMeasurer, labelStyle)
-    }
-}
-
-private data class ChartLayout(
-    val points: List<Offset>,
-    val yLabels: List<Pair<String, Float>>,
-    val plotLeft: Float,
-    val plotRight: Float,
-    val plotTop: Float,
-    val plotBottom: Float,
-    val slotCount: Int,
-)
-
-private fun DrawScope.chartLayout(
+private fun weeklyTrendPopupText(
     points: List<WeeklyTrendPointUi>,
-    textMeasurer: TextMeasurer,
-    labelStyle: TextStyle,
-): ChartLayout {
-    val kilograms = points.map { it.kilograms }
-    val yRange = yAxisRange(kilograms)
-    val yLabels = yAxisLabels(yRange)
-    val yLabelWidth = yLabels.maxOf { textMeasurer.measure(it, labelStyle).size.width.toFloat() }
-    val plotLeft = yLabelWidth + 8.dp.toPx()
-    val plotRight = size.width - 4.dp.toPx()
-    val plotTop = 8.dp.toPx()
-    val plotBottom = size.height - 22.dp.toPx()
-    val slotCount = maxOf(points.maxOf { it.weekIndex } + 1, 1)
-
-    val plotted = points.map { point ->
-        Offset(
-            xForIndex(point.weekIndex, slotCount, plotLeft, plotRight),
-            yForValue(point.kilograms, yRange, plotTop, plotBottom),
-        )
-    }
-    val labeledGrid = yLabels.mapIndexed { index, label ->
-        val y = plotTop + (plotBottom - plotTop) * index / (yLabels.lastIndex.coerceAtLeast(1))
-        label to y
-    }
-    return ChartLayout(plotted, labeledGrid, plotLeft, plotRight, plotTop, plotBottom, slotCount)
-}
-
-private data class ChartColors(
-    val line: Color,
-    val fill: Color,
-    val grid: Color,
-    val point: Color,
-    val surface: Color,
-)
-
-private fun DrawScope.drawGrid(
-    layout: ChartLayout,
-    gridColor: Color,
-    textMeasurer: TextMeasurer,
-    labelStyle: TextStyle,
-) {
-    layout.yLabels.forEach { (label, y) ->
-        drawLine(
-            color = gridColor,
-            start = Offset(layout.plotLeft, y),
-            end = Offset(layout.plotRight, y),
-            strokeWidth = 1.dp.toPx(),
-        )
-        val measured = textMeasurer.measure(label, labelStyle)
-        drawText(
-            textLayoutResult = measured,
-            topLeft = Offset(
-                layout.plotLeft - measured.size.width - 6.dp.toPx(),
-                y - measured.size.height / 2f,
-            ),
-        )
-    }
-}
-
-private fun DrawScope.drawSeries(
-    points: List<WeeklyTrendPointUi>,
-    layout: ChartLayout,
-    colors: ChartColors,
-) {
-    if (layout.points.isEmpty()) return
-
-    val fillPath = Path()
-    layout.points.forEachIndexed { index, offset ->
-        if (index == 0) {
-            fillPath.moveTo(offset.x, layout.plotBottom)
-            fillPath.lineTo(offset.x, offset.y)
-        } else {
-            fillPath.lineTo(offset.x, offset.y)
-        }
-    }
-    fillPath.lineTo(layout.points.last().x, layout.plotBottom)
-    fillPath.close()
-    drawPath(
-        fillPath,
-        Brush.verticalGradient(
-            colors = listOf(colors.fill, colors.fill.copy(alpha = 0f)),
-            startY = layout.plotTop,
-            endY = layout.plotBottom,
-        ),
-    )
-
-    val fallbackIndex = points.indexOfFirst { it.isLastSevenDaysFallback }
-    val solidEnd = if (fallbackIndex > 0) fallbackIndex else layout.points.size
-    drawLinePath(layout.points.take(solidEnd), colors.line)
-    if (fallbackIndex > 0) {
-        drawLinePath(
-            layout.points.slice(fallbackIndex - 1..fallbackIndex),
-            colors.line.copy(alpha = 0.85f),
-            PathEffect.dashPathEffect(floatArrayOf(10.dp.toPx(), 8.dp.toPx())),
-        )
-    }
-
-    layout.points.forEachIndexed { index, offset ->
-        val radius = if (index == layout.points.lastIndex) 5.dp.toPx() else 4.dp.toPx()
-        if (points[index].isLastSevenDaysFallback) {
-            drawCircle(color = colors.surface, radius = radius, center = offset)
-            drawCircle(
-                color = colors.point,
-                radius = radius,
-                center = offset,
-                style = Stroke(width = 2.dp.toPx()),
-            )
-        } else {
-            drawCircle(color = colors.point, radius = radius, center = offset)
-            drawCircle(color = colors.surface, radius = radius / 2.5f, center = offset)
-        }
-    }
-}
-
-private fun DrawScope.drawLinePath(
-    points: List<Offset>,
-    color: Color,
-    pathEffect: PathEffect? = null,
-) {
-    if (points.size < 2) return
-    val path = Path().apply {
-        moveTo(points.first().x, points.first().y)
-        points.drop(1).forEach { lineTo(it.x, it.y) }
-    }
-    drawPath(
-        path,
-        color,
-        style = Stroke(
-            width = 2.5.dp.toPx(),
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round,
-            pathEffect = pathEffect,
-        ),
-    )
-}
-
-private fun DrawScope.drawXAxisLabels(
-    points: List<WeeklyTrendPointUi>,
-    layout: ChartLayout,
-    textMeasurer: TextMeasurer,
-    labelStyle: TextStyle,
-) {
-    val lastIndex = points.lastIndex
-    points.forEachIndexed { index, point ->
-        if (
-            !shouldDrawXLabel(
-                point.weekIndex,
-                layout.slotCount,
-                index == lastIndex,
-            )
-        ) {
-            return@forEachIndexed
-        }
-        val measured = textMeasurer.measure(point.weekLabel, labelStyle)
-        val x = layout.points[index].x - measured.size.width / 2f
-        drawText(
-            textLayoutResult = measured,
-            topLeft = Offset(
-                x.coerceIn(layout.plotLeft, layout.plotRight - measured.size.width),
-                layout.plotBottom + 4.dp.toPx(),
-            ),
-        )
-    }
+    popup: PopupProperties.Popup,
+): String {
+    val point = points.getOrNull(popup.valueIndex)
+    val fallback = if (point?.isLastSevenDaysFallback == true) " · 7d" else ""
+    return "CW ${point?.weekLabel ?: ""} · ${popup.value.format(1)} kg$fallback"
 }
