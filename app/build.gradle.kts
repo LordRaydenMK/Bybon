@@ -131,6 +131,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.core)
 
     implementation(libs.retained)
+    implementation(libs.compose.charts)
 
     testFixturesImplementation(platform(libs.androidx.compose.bom))
     testFixturesImplementation(libs.androidx.compose.runtime)

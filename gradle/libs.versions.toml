@@ -19,6 +19,7 @@ turbine = "1.2.1"
 roomVersion = "3.0.3"
 roomCommon = "2.8.5"
 detekt = "2.0.0-alpha.6"
+composeCharts = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -53,6 +54,8 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 
 retained = { module = "dev.marcellogalhardo:retained-compose", version = "2.0.0-alpha01" }
+
+compose-charts = { group = "io.github.ehsannarmani", name = "compose-charts", version.ref = "composeCharts" }
 
 detekt-rules-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
 

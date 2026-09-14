@@ -3,10 +3,12 @@ package dev.sanastasov.bybon.bodyweight.dashboard
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.WeeklyTrendPoint
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
 import dev.sanastasov.bybon.domain.weekOfYear
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -40,7 +42,20 @@ class WeightDashboardViewModel(
                     delta?.kilograms?.let { "$it kg" },
                 )
             },
+            weeklyTrend = weeklyTrend?.toTrendUi(),
         )
+
+    private fun List<WeeklyTrendPoint>.toTrendUi(): List<WeeklyTrendPointUi> {
+        val firstWeekStart = minOf { it.weekStart }
+        return map { point ->
+            WeeklyTrendPointUi(
+                weekLabel = point.weekOfYear.toString(),
+                weekIndex = ChronoUnit.WEEKS.between(firstWeekStart, point.weekStart).toInt(),
+                kilograms = point.averageWeight.kilograms,
+                isLastSevenDaysFallback = point.isLastSevenDaysFallback,
+            )
+        }
+    }
 
     private fun BodyWeightDashboard.heroComparison(): BodyWeightComparison? {
         val (title, average) = when {
