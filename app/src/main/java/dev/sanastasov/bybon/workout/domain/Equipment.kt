@@ -15,3 +15,14 @@ val Equipment.weightIncrement: Weight
         Equipment.Machine, Equipment.AssistedBodyWeight -> Weight.kilograms(2.5f)
         Equipment.Bodyweight -> Weight.kilograms(0)
     }
+
+val Equipment.defaultWarmupWeight: Weight
+    get() = when (this) {
+        Equipment.Dumbbell -> Weight.kilograms(10)
+
+        Equipment.Barbell,
+        Equipment.Machine,
+        Equipment.AssistedBodyWeight,
+        Equipment.Bodyweight,
+        -> Weight.kilograms(20)
+    }

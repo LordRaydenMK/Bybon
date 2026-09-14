@@ -9,6 +9,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
+import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
+import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExercise
 import dev.sanastasov.bybon.workout.domain.resetTo
@@ -107,17 +109,28 @@ class WorkoutOverviewViewModel(
     ): WorkoutSession = when (action) {
         is WorkoutOverviewAction.OnWeightUpdated ->
             action.newWeight.toFloatOrNull()?.let { weight ->
-                session.updateWeight(action.exercise, action.index, Weight.kilograms(weight))
+                session.updateWeight(
+                    action.exercise,
+                    action.index,
+                    Weight.kilograms(weight),
+                    action.isWarmup,
+                )
             } ?: session
 
         is WorkoutOverviewAction.OnRepsUpdated ->
             action.newReps.toIntOrNull()?.let { reps ->
-                session.updateReps(action.exercise, action.index, reps)
+                session.updateReps(action.exercise, action.index, reps, action.isWarmup)
             } ?: session
 
         is WorkoutOverviewAction.OnAddSet -> session.addSet(action.exercise)
 
         is WorkoutOverviewAction.RemoveLastSet -> session.removeLastSet(action.exercise)
+
+        is WorkoutOverviewAction.OnConvertToWarmup ->
+            session.convertFirstWorkSetToWarmup(action.exercise)
+
+        is WorkoutOverviewAction.OnConvertToWorkSet ->
+            session.convertLastWarmupToWorkSet(action.exercise)
 
         else -> session
     }

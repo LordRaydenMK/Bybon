@@ -5,12 +5,15 @@ import dev.sanastasov.bybon.strong.readStrongBackupSample
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
+import dev.sanastasov.bybon.workout.domain.exercisesMap
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import java.time.LocalDate
@@ -143,6 +146,35 @@ class WorkoutHistoryViewModelTest {
             assert(actual.sessions.size == 1)
             assert(actual.sessions.single().planName == "Full Body B")
             assert(actual.sessions.single().date == LocalDate.of(2026, 8, 13))
+        }
+    }
+
+    @Test
+    fun `history top set ignores warmup sets`() = runTest {
+        val bench = completedExercise("bench-press-bb", 80f to 8, 80f to 7).copy(
+            warmupSets = listOf(
+                ExerciseSet(
+                    exerciseDefinition = exercisesMap.getValue("bench-press-bb"),
+                    weight = Weight.kilograms(200),
+                    reps = 1,
+                    setState = SetState.Completed,
+                ),
+            ),
+        )
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(bench),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val actual = awaitItem() as WorkoutHistoryUiState.History
+            assert(actual.sessions.single().exercises.single().weightKg == "80")
+            assert(actual.sessions.single().exercises.single().reps == 8)
         }
     }
 

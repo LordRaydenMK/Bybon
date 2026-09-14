@@ -10,6 +10,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.completeSet
+import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
+import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
@@ -58,7 +60,7 @@ class WorkoutSessionViewModel(
         when (action) {
             is WorkoutSessionAction.OnCompleteSet -> coroutineScope.launch {
                 repository.updateWorkout(planId) { session ->
-                    session.completeSet(action.exercise, action.index)
+                    session.completeSet(action.exercise, action.index, action.isWarmup)
                 }
             }
 
@@ -69,6 +71,7 @@ class WorkoutSessionViewModel(
                             action.exercise,
                             action.index,
                             Weight.kilograms(weight),
+                            action.isWarmup,
                         )
                     } ?: session
                 }
@@ -81,6 +84,7 @@ class WorkoutSessionViewModel(
                             action.exercise,
                             action.index,
                             reps,
+                            action.isWarmup,
                         )
                     } ?: session
                 }
@@ -95,6 +99,18 @@ class WorkoutSessionViewModel(
             is WorkoutSessionAction.RemoveLastSet -> coroutineScope.launch {
                 repository.updateWorkout(planId) { session ->
                     session.removeLastSet(action.exercise)
+                }
+            }
+
+            is WorkoutSessionAction.OnConvertToWarmup -> coroutineScope.launch {
+                repository.updateWorkout(planId) { session ->
+                    session.convertFirstWorkSetToWarmup(action.exercise)
+                }
+            }
+
+            is WorkoutSessionAction.OnConvertToWorkSet -> coroutineScope.launch {
+                repository.updateWorkout(planId) { session ->
+                    session.convertLastWarmupToWorkSet(action.exercise)
                 }
             }
         }

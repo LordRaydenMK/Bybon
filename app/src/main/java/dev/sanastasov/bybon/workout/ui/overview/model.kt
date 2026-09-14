@@ -15,18 +15,26 @@ sealed class WorkoutOverviewAction {
         val newWeight: String,
         val exercise: WorkoutExercise,
         val index: Int,
+        val isWarmup: Boolean = false,
     ) : WorkoutOverviewAction()
 
     data class OnRepsUpdated(
         val newReps: String,
         val exercise: WorkoutExercise,
         val index: Int,
+        val isWarmup: Boolean = false,
     ) : WorkoutOverviewAction()
 
     data class OnAddSet(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
     data class RemoveLastSet(
+        val exercise: WorkoutExercise,
+    ) : WorkoutOverviewAction()
+    data class OnConvertToWarmup(
+        val exercise: WorkoutExercise,
+    ) : WorkoutOverviewAction()
+    data class OnConvertToWorkSet(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
     data object OnResetWorkout : WorkoutOverviewAction()
