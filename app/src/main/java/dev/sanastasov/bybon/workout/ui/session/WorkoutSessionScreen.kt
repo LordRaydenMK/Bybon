@@ -33,8 +33,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.components.NumberInputField
-import dev.sanastasov.bybon.ui.components.SyncedTextField
-import dev.sanastasov.bybon.ui.components.rememberSyncedTextField
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -128,40 +126,10 @@ private fun SessionWarmupSets(
 ) {
     val warmupSets = exercise.numberedWarmupSets ?: return
     warmupSets.forEach { numbered ->
-        val index = numbered.index
-        val set = numbered.set
-        val weightState = rememberSyncedTextField(
-            key = "${exercise.id}-w$index-weight",
-            initialText = set.weight.kilograms,
-        ) { weight ->
-            onAction(
-                WorkoutSessionAction.OnWeightUpdated(
-                    weight,
-                    exercise,
-                    index,
-                    isWarmup = true,
-                ),
-            )
-        }
-        val repState = rememberSyncedTextField(
-            key = "${exercise.id}-w$index-reps",
-            initialText = set.reps.toString(),
-        ) { reps ->
-            onAction(
-                WorkoutSessionAction.OnRepsUpdated(
-                    reps,
-                    exercise,
-                    index,
-                    isWarmup = true,
-                ),
-            )
-        }
         SetRow(
             exercise = exercise,
             numbered = numbered,
-            weightState = weightState,
-            repState = repState,
-            onBadgeClick = if (index == warmupSets.lastIndex) {
+            onBadgeClick = if (numbered.index == warmupSets.lastIndex) {
                 { onAction(WorkoutSessionAction.OnConvertToWorkSet(exercise)) }
             } else {
                 null
@@ -174,26 +142,10 @@ private fun SessionWarmupSets(
 @Composable
 private fun SessionWorkSets(exercise: WorkoutExercise, onAction: (WorkoutSessionAction) -> Unit) {
     exercise.numberedWorkSets.forEach { numbered ->
-        val index = numbered.index
-        val set = numbered.set
-        val weightState = rememberSyncedTextField(
-            key = "${exercise.id}-s$index-weight",
-            initialText = set.weight.kilograms,
-        ) { weight ->
-            onAction(WorkoutSessionAction.OnWeightUpdated(weight, exercise, index))
-        }
-        val repState = rememberSyncedTextField(
-            key = "${exercise.id}-s$index-reps",
-            initialText = set.reps.toString(),
-        ) { reps ->
-            onAction(WorkoutSessionAction.OnRepsUpdated(reps, exercise, index))
-        }
         SetRow(
             exercise = exercise,
             numbered = numbered,
-            weightState = weightState,
-            repState = repState,
-            onBadgeClick = if (index == 0) {
+            onBadgeClick = if (numbered.index == 0) {
                 { onAction(WorkoutSessionAction.OnConvertToWarmup(exercise)) }
             } else {
                 null
@@ -218,13 +170,55 @@ private fun SessionSetActions(exercise: WorkoutExercise, onAction: (WorkoutSessi
     }
 }
 
+@Composable
+private fun SessionWeightField(
+    exercise: WorkoutExercise,
+    numbered: NumberedSet,
+    onAction: (WorkoutSessionAction) -> Unit,
+) {
+    val slot = if (numbered.isWarmup) "w" else "s"
+    NumberInputField(
+        key = "${exercise.id}-$slot${numbered.index}-weight",
+        initialText = numbered.set.weight.kilograms,
+    ) { weight ->
+        onAction(
+            WorkoutSessionAction.OnWeightUpdated(
+                weight,
+                exercise,
+                numbered.index,
+                numbered.isWarmup,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun SessionRepsField(
+    exercise: WorkoutExercise,
+    numbered: NumberedSet,
+    onAction: (WorkoutSessionAction) -> Unit,
+) {
+    val slot = if (numbered.isWarmup) "w" else "s"
+    NumberInputField(
+        key = "${exercise.id}-$slot${numbered.index}-reps",
+        initialText = numbered.set.reps.toString(),
+    ) { reps ->
+        onAction(
+            WorkoutSessionAction.OnRepsUpdated(
+                reps,
+                exercise,
+                numbered.index,
+                numbered.isWarmup,
+            ),
+        )
+    }
+}
+
 @Suppress("LongMethod", "CyclomaticComplexMethod")
 @Composable
 private fun SetRow(
     exercise: WorkoutExercise,
     numbered: NumberedSet,
-    weightState: SyncedTextField,
-    repState: SyncedTextField,
     onBadgeClick: (() -> Unit)?,
     onAction: (WorkoutSessionAction) -> Unit,
 ) {
@@ -277,14 +271,14 @@ private fun SetRow(
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
                             )
-                            NumberInputField(weightState)
+                            SessionWeightField(exercise, numbered, onAction)
                             Text(
                                 " kg x ",
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.labelLarge,
                             )
-                            NumberInputField(repState)
+                            SessionRepsField(exercise, numbered, onAction)
                             if (oneRmLabel != null) {
                                 Text(
                                     oneRmLabel,
@@ -305,9 +299,9 @@ private fun SetRow(
                             workSetNumber = numbered.workSetNumber,
                             onClick = onBadgeClick,
                         )
-                        NumberInputField(weightState)
+                        SessionWeightField(exercise, numbered, onAction)
                         Text(" kg x ")
-                        NumberInputField(repState)
+                        SessionRepsField(exercise, numbered, onAction)
                         if (oneRmLabel != null) {
                             Text(oneRmLabel)
                         }

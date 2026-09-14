@@ -33,8 +33,6 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.components.NumberInputField
-import dev.sanastasov.bybon.ui.components.SyncedTextField
-import dev.sanastasov.bybon.ui.components.rememberSyncedTextField
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
@@ -160,39 +158,11 @@ private fun OverviewWarmupSets(
 ) {
     val warmupSets = exercise.numberedWarmupSets ?: return
     warmupSets.forEach { numbered ->
-        val index = numbered.index
-        val set = numbered.set
-        val weightState = rememberSyncedTextField(
-            key = "${exercise.id}-w$index-weight",
-            initialText = set.weight.kilograms,
-        ) { weight ->
-            onAction(
-                WorkoutOverviewAction.OnWeightUpdated(
-                    weight,
-                    exercise,
-                    index,
-                    isWarmup = true,
-                ),
-            )
-        }
-        val repState = rememberSyncedTextField(
-            key = "${exercise.id}-w$index-reps",
-            initialText = set.reps.toString(),
-        ) { reps ->
-            onAction(
-                WorkoutOverviewAction.OnRepsUpdated(
-                    reps,
-                    exercise,
-                    index,
-                    isWarmup = true,
-                ),
-            )
-        }
         OverviewSetRow(
+            exercise = exercise,
             numbered = numbered,
-            weightState = weightState,
-            repState = repState,
-            onBadgeClick = if (index == warmupSets.lastIndex) {
+            onAction = onAction,
+            onBadgeClick = if (numbered.index == warmupSets.lastIndex) {
                 { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
             } else {
                 null
@@ -207,25 +177,11 @@ private fun OverviewWorkSets(
     onAction: (WorkoutOverviewAction) -> Unit,
 ) {
     exercise.numberedWorkSets.forEach { numbered ->
-        val index = numbered.index
-        val set = numbered.set
-        val weightState = rememberSyncedTextField(
-            key = "${exercise.id}-s$index-weight",
-            initialText = set.weight.kilograms,
-        ) { weight ->
-            onAction(WorkoutOverviewAction.OnWeightUpdated(weight, exercise, index))
-        }
-        val repState = rememberSyncedTextField(
-            key = "${exercise.id}-s$index-reps",
-            initialText = set.reps.toString(),
-        ) { reps ->
-            onAction(WorkoutOverviewAction.OnRepsUpdated(reps, exercise, index))
-        }
         OverviewSetRow(
+            exercise = exercise,
             numbered = numbered,
-            weightState = weightState,
-            repState = repState,
-            onBadgeClick = if (index == 0) {
+            onAction = onAction,
+            onBadgeClick = if (numbered.index == 0) {
                 { onAction(WorkoutOverviewAction.OnConvertToWarmup(exercise)) }
             } else {
                 null
@@ -282,13 +238,11 @@ private fun OverviewExerciseSetActions(
 
 @Composable
 private fun OverviewSetRow(
+    exercise: WorkoutExercise,
     numbered: NumberedSet,
-    weightState: SyncedTextField,
-    repState: SyncedTextField,
+    onAction: (WorkoutOverviewAction) -> Unit,
     onBadgeClick: (() -> Unit)?,
 ) {
-    val oneRmLabel = numbered.oneRmLabel
-    val previousLabel = numbered.previousLabel
     Box(
         Modifier
             .fillMaxWidth()
@@ -307,23 +261,8 @@ private fun OverviewSetRow(
                 Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    SetNumberBadge(
-                        isWarmup = numbered.isWarmup,
-                        workSetNumber = numbered.workSetNumber,
-                        onClick = onBadgeClick,
-                    )
-                    NumberInputField(weightState)
-                    Text(" kg x ")
-                    NumberInputField(repState)
-                    if (oneRmLabel != null) {
-                        Text(oneRmLabel)
-                    }
-                }
-                if (previousLabel != null) {
+                OverviewSetInputs(exercise, numbered, onAction, onBadgeClick)
+                numbered.previousLabel?.let { previousLabel ->
                     Text(
                         previousLabel,
                         style = MaterialTheme.typography.bodySmall,
@@ -332,6 +271,56 @@ private fun OverviewSetRow(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun OverviewSetInputs(
+    exercise: WorkoutExercise,
+    numbered: NumberedSet,
+    onAction: (WorkoutOverviewAction) -> Unit,
+    onBadgeClick: (() -> Unit)?,
+) {
+    val index = numbered.index
+    val set = numbered.set
+    val slot = if (numbered.isWarmup) "w" else "s"
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SetNumberBadge(
+            isWarmup = numbered.isWarmup,
+            workSetNumber = numbered.workSetNumber,
+            onClick = onBadgeClick,
+        )
+        NumberInputField(
+            key = "${exercise.id}-$slot$index-weight",
+            initialText = set.weight.kilograms,
+        ) { weight ->
+            onAction(
+                WorkoutOverviewAction.OnWeightUpdated(
+                    weight,
+                    exercise,
+                    index,
+                    numbered.isWarmup,
+                ),
+            )
+        }
+        Text(" kg x ")
+        NumberInputField(
+            key = "${exercise.id}-$slot$index-reps",
+            initialText = set.reps.toString(),
+        ) { reps ->
+            onAction(
+                WorkoutOverviewAction.OnRepsUpdated(
+                    reps,
+                    exercise,
+                    index,
+                    numbered.isWarmup,
+                ),
+            )
+        }
+        numbered.oneRmLabel?.let { Text(it) }
     }
 }
 

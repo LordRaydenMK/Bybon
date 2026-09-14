@@ -25,22 +25,13 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 
-class SyncedTextField(
-    val state: TextFieldState,
-    val onFocusChanged: (Boolean) -> Unit,
-)
-
 /**
  * [key] should be an identity that does not change when the parsed value changes.
  * `Weight` stores hundredths, so typing a digit updates weight and 1RM and would recreate
  * a field keyed on the whole `WorkoutExercise`.
  */
 @Composable
-fun rememberSyncedTextField(
-    key: Any?,
-    initialText: String,
-    onTextChanged: (String) -> Unit,
-): SyncedTextField {
+fun NumberInputField(key: Any?, initialText: String, onTextChanged: (String) -> Unit) {
     val state = rememberSaveable(key, saver = TextFieldState.Saver) {
         TextFieldState(initialText)
     }
@@ -55,16 +46,11 @@ fun rememberSyncedTextField(
             .drop(1)
             .collectLatest(onTextChanged)
     }
-    return SyncedTextField(state) { focused = it }
-}
-
-@Composable
-fun NumberInputField(field: SyncedTextField) {
     TextField(
-        field.state,
+        state,
         Modifier
             .width(72.dp)
-            .onFocusChanged { field.onFocusChanged(it.isFocused) },
+            .onFocusChanged { focused = it.isFocused },
         textStyle = MaterialTheme.typography.labelLarge.copy(textAlign = TextAlign.Center),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         lineLimits = TextFieldLineLimits.SingleLine,
