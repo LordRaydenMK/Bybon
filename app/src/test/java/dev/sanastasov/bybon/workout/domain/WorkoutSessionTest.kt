@@ -275,7 +275,9 @@ class WorkoutSessionTest {
             exercises = notStarted.exercises.map { exercise ->
                 exercise.copy(
                     sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
-                    warmupSets = exercise.warmupSets?.map { it.copy(setState = SetState.Completed) },
+                    warmupSets = exercise.warmupSets?.map {
+                        it.copy(setState = SetState.Completed)
+                    },
                 )
             },
             state = WorkoutState.Completed(Duration.ZERO),
