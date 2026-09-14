@@ -46,9 +46,8 @@ androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecy
 androidx-material3-adaptive-navigation3 = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation3", version.ref = "material3AdaptiveNav3" }
 androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref = "roomVersion" }
 androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "roomVersion" }
-androidx-room3-testing = { module = "androidx.room3:room3-testing", version.ref = "roomVersion" }
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
-androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqliteBundled" }
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled-jvm", version.ref = "sqliteBundled" }
 
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
 kotlin-csv = { module = "com.jsoizo:kotlin-csv-jvm", version.ref = "kotlinCsv" }

@@ -143,7 +143,6 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
-    testImplementation(libs.androidx.room3.testing)
     testImplementation(libs.androidx.sqlite.bundled)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
