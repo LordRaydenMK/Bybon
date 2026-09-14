@@ -37,14 +37,14 @@ fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> 
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        if (state.comparison != null) {
+            WeightComparison(state.comparison)
+        }
+
         when (state.logWeightPrompt) {
             LogWeightPrompt.Prominent -> LogWeight(onLogWeightClicked)
             LogWeightPrompt.Compact -> CompactLogWeight(onLogWeightClicked)
             LogWeightPrompt.Hidden -> Unit
-        }
-
-        if (state.comparison != null) {
-            WeightComparison(state.comparison)
         }
 
         if (state.dailyEntries != null) {
