@@ -299,6 +299,10 @@ class WorkoutSessionTest {
     fun `weight formats whole kilos one decimal and two decimal values`() {
         assert(Weight.kilograms(50).kilograms == "50")
         assert(Weight.kilograms(52.5f).kilograms == "52.5")
+        assert(Weight.kilograms(50.50f) == Weight.kilograms(50.5f))
+        assert(Weight.kilograms(50.50f).kilograms == "50.5")
+        assert(Weight.parseString("50.50").kilograms == "50.5")
+        assert(Weight.kilograms(50.25f).kilograms == "50.25")
         assert(Weight.kilograms(74.48f).kilograms == "74.48")
     }
 

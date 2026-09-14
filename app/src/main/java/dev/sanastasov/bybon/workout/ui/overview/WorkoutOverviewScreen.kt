@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
@@ -22,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -35,6 +33,7 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.components.NumberInputField
+import dev.sanastasov.bybon.ui.components.SyncedTextField
 import dev.sanastasov.bybon.ui.components.rememberSyncedTextField
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.NumberedSet
@@ -164,8 +163,8 @@ private fun OverviewWarmupSets(
         val index = numbered.index
         val set = numbered.set
         val weightState = rememberSyncedTextField(
-            key = exercise to "w$index",
-            initialText = remember(exercise, index) { set.weight.kilograms },
+            key = "${exercise.id}-w$index-weight",
+            initialText = set.weight.kilograms,
         ) { weight ->
             onAction(
                 WorkoutOverviewAction.OnWeightUpdated(
@@ -177,8 +176,8 @@ private fun OverviewWarmupSets(
             )
         }
         val repState = rememberSyncedTextField(
-            key = exercise to "wr$index",
-            initialText = remember(exercise, index) { set.reps.toString() },
+            key = "${exercise.id}-w$index-reps",
+            initialText = set.reps.toString(),
         ) { reps ->
             onAction(
                 WorkoutOverviewAction.OnRepsUpdated(
@@ -211,14 +210,14 @@ private fun OverviewWorkSets(
         val index = numbered.index
         val set = numbered.set
         val weightState = rememberSyncedTextField(
-            key = exercise to "s$index",
-            initialText = remember(exercise, index) { set.weight.kilograms },
+            key = "${exercise.id}-s$index-weight",
+            initialText = set.weight.kilograms,
         ) { weight ->
             onAction(WorkoutOverviewAction.OnWeightUpdated(weight, exercise, index))
         }
         val repState = rememberSyncedTextField(
-            key = exercise to "sr$index",
-            initialText = remember(exercise, index) { set.reps.toString() },
+            key = "${exercise.id}-s$index-reps",
+            initialText = set.reps.toString(),
         ) { reps ->
             onAction(WorkoutOverviewAction.OnRepsUpdated(reps, exercise, index))
         }
@@ -284,8 +283,8 @@ private fun OverviewExerciseSetActions(
 @Composable
 private fun OverviewSetRow(
     numbered: NumberedSet,
-    weightState: TextFieldState,
-    repState: TextFieldState,
+    weightState: SyncedTextField,
+    repState: SyncedTextField,
     onBadgeClick: (() -> Unit)?,
 ) {
     val oneRmLabel = numbered.oneRmLabel
