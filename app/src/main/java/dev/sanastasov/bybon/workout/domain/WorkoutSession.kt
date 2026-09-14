@@ -148,6 +148,11 @@ data class WorkoutSession(
     }
 }
 
+fun WorkoutSession.completedSessionKey(): String? {
+    val completed = state as? WorkoutState.Completed ?: return null
+    return "${planId.id}-${completed.startedAt}"
+}
+
 fun WorkoutSession.completeSet(exercise: WorkoutExercise, setIndex: Int): WorkoutSession {
     val exerciseAndIndex = if (setIndex < exercise.sets.lastIndex) {
         exercise to setIndex + 1

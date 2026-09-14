@@ -43,7 +43,10 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 @Composable
-fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
+fun WorkoutModule.WorkoutHistoryScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToSummary: (String) -> Unit,
+) {
     val contentResolver = LocalContext.current.contentResolver
     val viewModel = retain {
         WorkoutHistoryViewModel(
@@ -63,6 +66,7 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
     WorkoutHistoryContent(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
+        onSessionClick = onNavigateToSummary,
         onImportHistoryClick = {
             documentPicker.launch(
                 arrayOf(
@@ -82,6 +86,7 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
 private fun WorkoutHistoryContent(
     uiState: WorkoutHistoryUiState,
     onNavigateBack: () -> Unit,
+    onSessionClick: (String) -> Unit,
     onImportHistoryClick: () -> Unit,
     onImportDone: () -> Unit,
     modifier: Modifier = Modifier,
@@ -101,7 +106,7 @@ private fun WorkoutHistoryContent(
                 WorkoutHistoryUiState.Empty -> EmptyHistory(onImportHistoryClick)
                 WorkoutHistoryUiState.Importing -> ImportingIndicator()
                 is WorkoutHistoryUiState.Summary -> ImportSummary(uiState.summary, onImportDone)
-                is WorkoutHistoryUiState.History -> HistoryList(uiState.sessions)
+                is WorkoutHistoryUiState.History -> HistoryList(uiState.sessions, onSessionClick)
             }
         }
     }
@@ -190,7 +195,10 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
 }
 
 @Composable
-private fun HistoryList(sessions: List<WorkoutSessionHistoryUi>) {
+private fun HistoryList(
+    sessions: List<WorkoutSessionHistoryUi>,
+    onSessionClick: (String) -> Unit,
+) {
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -198,14 +206,20 @@ private fun HistoryList(sessions: List<WorkoutSessionHistoryUi>) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(sessions, key = { it.key }) { session ->
-            WorkoutSessionHistoryCard(session)
+            WorkoutSessionHistoryCard(session, onSessionClick)
         }
     }
 }
 
 @Composable
-private fun WorkoutSessionHistoryCard(session: WorkoutSessionHistoryUi) {
-    Card(Modifier.fillMaxWidth()) {
+private fun WorkoutSessionHistoryCard(
+    session: WorkoutSessionHistoryUi,
+    onSessionClick: (String) -> Unit,
+) {
+    Card(
+        onClick = { onSessionClick(session.key) },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         Column(
             Modifier
                 .padding(8.dp)
@@ -271,6 +285,7 @@ private fun WorkoutHistoryContentPreview() {
                 ),
             ),
             onNavigateBack = {},
+            onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
         )
@@ -284,6 +299,7 @@ private fun WorkoutHistoryEmptyPreview() {
         WorkoutHistoryContent(
             uiState = WorkoutHistoryUiState.Empty,
             onNavigateBack = {},
+            onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
         )
@@ -312,6 +328,7 @@ private fun WorkoutHistoryImportSummaryPreview() {
                 ),
             ),
             onNavigateBack = {},
+            onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
         )

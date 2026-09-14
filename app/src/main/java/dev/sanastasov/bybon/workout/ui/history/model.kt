@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.completedSessionKey
 import java.time.LocalDate
 
 sealed class WorkoutHistoryUiState {
@@ -63,7 +64,7 @@ internal fun List<WorkoutSession>.toHistoryUi(): List<WorkoutSessionHistoryUi> =
 internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
     val completed = state as WorkoutState.Completed
     return WorkoutSessionHistoryUi(
-        key = "${planId.id}-${completed.startedAt}",
+        key = checkNotNull(completedSessionKey()),
         planName = planName,
         date = completed.startedAt.toLocalDate(),
         exercises = exercises.mapNotNull { it.toTopSetUi() },

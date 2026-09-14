@@ -25,4 +25,9 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data object WorkoutHistory : Screen
+
+    @Serializable
+    data class WorkoutSummary(
+        val sessionKey: String,
+    ) : Screen
 }
