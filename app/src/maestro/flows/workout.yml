@@ -30,12 +30,14 @@ appId: dev.sanastasov.bybon.debug
 - tapOn:
       text: "50"
       index: 0
-- eraseText
+      point: "90%, 50%" # Cursor at end so backspace clears both digits
+- eraseText: 8
 - inputText: "60"
 - tapOn:
       text: "8"
       index: 1
-- eraseText
+      point: "90%, 50%"
+- eraseText: 8
 - inputText: "10"
 - hideKeyboard
 - assertVisible: "Set 1 in progress, 60 kg by 8, @ 74.48 kg 1RM. Double tap to mark complete."
