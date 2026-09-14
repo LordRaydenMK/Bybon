@@ -229,6 +229,25 @@ class BodyWeightUseCaseTest {
         assert(dashboard.onTrack == true)
     }
 
+    @Test
+    fun `dashboard combines entries with the open diet phase`() = runTest {
+        val weekStart = today.isoWeekStart()
+        val startWeight = BodyWeight.parseFromString("65.0")
+        val repository = FakeBodyWeightRepository(
+            officialWeek(weekStart, "65.0") + officialWeek(weekStart.minusWeeks(1), "64.8"),
+            DietPhaseRecord(
+                1,
+                DietPhase(DietPhaseKind.Maintain, weekStart, startWeight, startWeight),
+            ),
+        )
+
+        val dashboard = repository.bodyWeightDashboard(today).first()
+
+        assert(dashboard.dietPhaseIsMaintain())
+        assert(dashboard.onTrack == true)
+        assert(dashboard.weeklyTrend?.any { it.isFuture } == true)
+    }
+
     private fun BodyWeightDashboard.dietPhaseIsMaintain(): Boolean =
         (effectivePhase as? EffectiveDietPhase.On)?.phase?.kind == DietPhaseKind.Maintain
 

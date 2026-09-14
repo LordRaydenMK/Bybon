@@ -10,4 +10,10 @@ interface BodyWeightRepository {
     suspend fun insert(entry: BodyWeightEntry)
 
     suspend fun deleteEntry(entry: BodyWeightEntry)
+
+    fun openPhase(): Flow<DietPhaseRecord?>
+
+    suspend fun apply(phase: DietPhase)
+
+    suspend fun clear()
 }

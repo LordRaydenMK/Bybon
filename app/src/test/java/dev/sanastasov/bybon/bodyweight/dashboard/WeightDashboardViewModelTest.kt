@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.bodyweight.dashboard
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
-import dev.sanastasov.bybon.bodyweight.FakeDietPhaseRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhase
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
@@ -28,7 +27,6 @@ class WeightDashboardViewModelTest {
         )
         val viewModel = WeightDashboardViewModel(
             repository,
-            FakeDietPhaseRepository(),
             backgroundScope,
             today,
         )
@@ -49,7 +47,6 @@ class WeightDashboardViewModelTest {
         )
         val viewModel = WeightDashboardViewModel(
             repository,
-            FakeDietPhaseRepository(),
             backgroundScope,
             today,
         )
@@ -70,7 +67,6 @@ class WeightDashboardViewModelTest {
         )
         val viewModel = WeightDashboardViewModel(
             repository,
-            FakeDietPhaseRepository(),
             backgroundScope,
             today,
         )
@@ -92,7 +88,6 @@ class WeightDashboardViewModelTest {
         )
         val viewModel = WeightDashboardViewModel(
             repository,
-            FakeDietPhaseRepository(),
             backgroundScope,
             today,
         )
@@ -121,7 +116,6 @@ class WeightDashboardViewModelTest {
         )
         val viewModel = WeightDashboardViewModel(
             repository,
-            FakeDietPhaseRepository(),
             backgroundScope,
             today,
         )
@@ -143,8 +137,6 @@ class WeightDashboardViewModelTest {
         val repository = FakeBodyWeightRepository(
             officialWeek(weekStart, "66.0") +
                 officialWeek(weekStart.minusWeeks(1), "66.0"),
-        )
-        val dietPhase = FakeDietPhaseRepository(
             DietPhaseRecord(
                 1,
                 DietPhase(DietPhaseKind.Maintain, weekStart, startWeight, startWeight),
@@ -152,7 +144,6 @@ class WeightDashboardViewModelTest {
         )
         val viewModel = WeightDashboardViewModel(
             repository,
-            dietPhase,
             backgroundScope,
             today,
         )

@@ -5,7 +5,6 @@ import dev.sanastasov.bybon.bodyweight.domain.BodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhase
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
-import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRepository
 import dev.sanastasov.bybon.bodyweight.domain.EffectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.WeeklyTrendPoint
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
@@ -21,13 +20,12 @@ import kotlinx.coroutines.flow.map
 
 class WeightDashboardViewModel(
     private val repository: BodyWeightRepository,
-    private val dietPhaseRepository: DietPhaseRepository,
     private val coroutineScope: CoroutineScope,
     private val today: LocalDate = LocalDate.now(),
 ) {
 
     val uiState: StateFlow<WeightDashboardUiState> =
-        repository.bodyWeightDashboard(today, dietPhaseRepository.openPhase())
+        repository.bodyWeightDashboard(today)
             .map { dashboard -> dashboard.toDashboardUi() }
             .stateInWhileInForeground(
                 coroutineScope,

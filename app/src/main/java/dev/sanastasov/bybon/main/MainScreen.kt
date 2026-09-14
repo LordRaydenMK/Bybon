@@ -66,7 +66,7 @@ fun MainModule.MainScreen(
     val oneRmUiState by oneRmViewModel.uiState.collectAsStateWithLifecycle()
 
     val weightViewModel = retain {
-        WeightDashboardViewModel(bodyWeightRepository, dietPhaseRepository, it.coroutineScope)
+        WeightDashboardViewModel(bodyWeightRepository, it.coroutineScope)
     }
     val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 

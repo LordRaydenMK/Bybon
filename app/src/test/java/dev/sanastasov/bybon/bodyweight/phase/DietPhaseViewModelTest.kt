@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.bodyweight.phase
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
-import dev.sanastasov.bybon.bodyweight.FakeDietPhaseRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,7 +21,6 @@ class DietPhaseViewModelTest {
     fun `rejects a gain target below the start average`() = runTest {
         val viewModel = DietPhaseViewModel(
             officialAverageRepo(),
-            FakeDietPhaseRepository(),
             backgroundScope,
             today,
         )
@@ -39,10 +37,9 @@ class DietPhaseViewModelTest {
 
     @Test
     fun `apply persist a valid maintain phase`() = runTest {
-        val dietPhase = FakeDietPhaseRepository()
+        val repository = officialAverageRepo()
         val viewModel = DietPhaseViewModel(
-            officialAverageRepo(),
-            dietPhase,
+            repository,
             backgroundScope,
             today,
         )
@@ -57,7 +54,7 @@ class DietPhaseViewModelTest {
         viewModel.onAction(DietPhaseEditorAction.OnApplyClicked)
         viewModel.effects.first { it == DietPhaseEditorEffect.NavigateBack }
 
-        val open = dietPhase.openPhase().first()
+        val open = repository.openPhase().first()
         assert(open?.phase?.kind == DietPhaseKind.Maintain)
         assert(open?.phase?.targetWeight == BodyWeight.parseFromString("65.0"))
     }

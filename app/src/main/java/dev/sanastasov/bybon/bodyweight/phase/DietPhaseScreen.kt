@@ -33,7 +33,7 @@ import dev.sanastasov.bybon.ui.components.NumberInputField
 @Composable
 fun BodyWeightModule.DietPhaseScreen(onNavigateBack: () -> Unit) {
     val viewModel = retain {
-        DietPhaseViewModel(bodyWeightRepository, dietPhaseRepository, it.coroutineScope)
+        DietPhaseViewModel(bodyWeightRepository, it.coroutineScope)
     }
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {

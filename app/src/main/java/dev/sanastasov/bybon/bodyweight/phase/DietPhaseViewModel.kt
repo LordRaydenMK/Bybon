@@ -3,11 +3,9 @@ package dev.sanastasov.bybon.bodyweight.phase
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
-import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseValidation
 import dev.sanastasov.bybon.bodyweight.domain.EffectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
-import dev.sanastasov.bybon.bodyweight.domain.effectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.validateDietPhase
 import dev.sanastasov.bybon.domain.isoWeekStart
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
@@ -23,8 +21,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class DietPhaseViewModel(
-    private val bodyWeightRepository: BodyWeightRepository,
-    private val dietPhaseRepository: DietPhaseRepository,
+    private val repository: BodyWeightRepository,
     private val coroutineScope: CoroutineScope,
     private val today: LocalDate = LocalDate.now(),
 ) {
@@ -68,15 +65,9 @@ class DietPhaseViewModel(
     }
 
     private suspend fun primeEditor() {
-        val dashboard = bodyWeightRepository.bodyWeightDashboard(today).first()
+        val dashboard = repository.bodyWeightDashboard(today).first()
         val start = dashboard.currentAverage
-        val open = dietPhaseRepository.openPhase().first()
-        val effective = effectiveDietPhase(
-            open,
-            today,
-            dashboard.thisWeekAverage ?: dashboard.lastKnownWeekAverage ?: start,
-        )
-        when (effective) {
+        when (val effective = dashboard.effectivePhase) {
             is EffectiveDietPhase.On -> {
                 val phase = effective.phase
                 selectedKind.value = phase.kind
@@ -100,9 +91,9 @@ class DietPhaseViewModel(
             when (validation) {
                 is DietPhaseValidation.Valid -> {
                     if (validation.phase == null) {
-                        dietPhaseRepository.clear()
+                        repository.clear()
                     } else {
-                        dietPhaseRepository.apply(validation.phase)
+                        repository.apply(validation.phase)
                     }
                     _effects.send(DietPhaseEditorEffect.NavigateBack)
                 }

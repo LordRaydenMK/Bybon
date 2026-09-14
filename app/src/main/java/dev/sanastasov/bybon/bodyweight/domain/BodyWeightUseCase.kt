@@ -10,7 +10,6 @@ import java.time.LocalDate
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
 
 internal const val WEEKLY_TREND_WEEKS = 16
 
@@ -49,14 +48,9 @@ data class BodyWeightDashboard(
 }
 
 fun BodyWeightRepository.bodyWeightDashboard(today: LocalDate): Flow<BodyWeightDashboard> =
-    bodyWeightDashboard(today, flowOf(null))
-
-fun BodyWeightRepository.bodyWeightDashboard(
-    today: LocalDate,
-    openPhase: Flow<DietPhaseRecord?>,
-): Flow<BodyWeightDashboard> = combine(entries(), openPhase) { allEntries, phase ->
-    computeBodyWeightDashboard(allEntries, phase, today)
-}
+    combine(entries(), openPhase()) { allEntries, phase ->
+        computeBodyWeightDashboard(allEntries, phase, today)
+    }
 
 internal fun computeBodyWeightDashboard(
     allEntries: List<BodyWeightEntry>,
