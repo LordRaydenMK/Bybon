@@ -42,6 +42,8 @@ fun WorkoutPlan.toWorkoutSession(
                         },
                     )
                 },
+                restAfterWorkSet = previousExercise?.restAfterWorkSet
+                    ?: planedExercise.restAfterWorkSet,
             )
         },
         startedAt,
@@ -141,6 +143,7 @@ data class WorkoutExercise(
     val repRange: IntRange,
     val warmupSets: List<ExerciseSet>? = null,
     val sets: List<ExerciseSet>,
+    val restAfterWorkSet: Duration = exerciseDefinition.defaultRest,
 ) {
     init {
         require(warmupSets == null || warmupSets.isNotEmpty()) {

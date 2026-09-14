@@ -5,7 +5,9 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
+import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -113,6 +115,31 @@ class WorkoutSessionViewModelTest {
             }
             assert(session.exercises.first().sets.all { it.setState == SetState.Completed })
             assert(session.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
+        }
+    }
+
+    @Test
+    fun `session rest timers match compound isolation and default durations`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            assert(session.exercises.first().restAfterWorkSet == 2.minutes)
+            assert(session.exercises.first().restAfterWorkSet.formatRestClock() == "2:00")
+            assert(
+                session.exercises.first {
+                    it.id == "leg-curl"
+                }.restAfterWorkSet.formatRestClock() ==
+                    "1:30",
+            )
+            assert(
+                session.exercises.first {
+                    it.id == "skullcrusher-db"
+                }.restAfterWorkSet.formatRestClock() ==
+                    "1:00",
+            )
         }
     }
 }

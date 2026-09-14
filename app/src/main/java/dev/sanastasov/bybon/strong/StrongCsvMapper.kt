@@ -14,6 +14,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.defaultRest
 import dev.sanastasov.bybon.workout.domain.exercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
@@ -150,6 +151,7 @@ private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
             warmupSets = exercise.warmupSets?.size ?: 0,
             sets = exercise.sets.size,
             repRange = exercise.repRange,
+            restAfterWorkSet = exercise.restAfterWorkSet,
         )
     },
 )
@@ -218,6 +220,13 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
     val reps = workingRows.mapNotNull { it.reps }
     val repRange = if (reps.isEmpty()) 0..0 else reps.min()..reps.max()
 
+    val restAfterWorkSet = filter { it.setOrder.equals("Rest Timer", ignoreCase = true) }
+        .mapNotNull { it.seconds }
+        .firstOrNull()
+        ?.toLong()
+        ?.seconds
+        ?: definition.defaultRest
+
     return WorkoutExercise(
         exerciseDefinition = definition,
         repRange = repRange,
@@ -237,6 +246,7 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
                 setState = SetState.Completed,
             )
         },
+        restAfterWorkSet = restAfterWorkSet,
     )
 }
 
