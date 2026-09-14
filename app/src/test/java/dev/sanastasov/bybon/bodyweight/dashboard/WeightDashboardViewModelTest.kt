@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.bodyweight.dashboard
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
+import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -77,5 +78,39 @@ class WeightDashboardViewModelTest {
         assert(state.comparison?.title == "Last 7d average")
         assert(state.comparison?.currentWeightWeight == "65.0 kg")
         assert(state.dailyHeaderText == "This week (8 Sep 2026) CW 37")
+        assert(
+            state.weeklyTrend?.single() == WeeklyTrendPointUi(
+                "37",
+                0,
+                65.0f,
+                isLastSevenDaysFallback = true,
+            ),
+        )
     }
+
+    @Test
+    fun `maps weekly trend points onto a calendar week axis`() = runTest {
+        val weekStart = today.with(DayOfWeek.MONDAY)
+        val repository = FakeBodyWeightRepository(
+            officialWeek(weekStart, "66.0") +
+                officialWeek(weekStart.minusWeeks(2), "64.0"),
+        )
+        val viewModel = WeightDashboardViewModel(repository, backgroundScope, today)
+
+        val state = viewModel.uiState.first { it.logWeightPrompt != LogWeightPrompt.Hidden }
+
+        assert(
+            state.weeklyTrend == listOf(
+                WeeklyTrendPointUi("35", 0, 64.0f),
+                WeeklyTrendPointUi("37", 2, 66.0f),
+            ),
+        )
+    }
+
+    private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =
+        listOf(
+            BodyWeightEntry(weekStart, BodyWeight.parseFromString(kilograms)),
+            BodyWeightEntry(weekStart.plusDays(1), BodyWeight.parseFromString(kilograms)),
+            BodyWeightEntry(weekStart.plusDays(2), BodyWeight.parseFromString(kilograms)),
+        )
 }

@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
@@ -31,6 +33,7 @@ fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> 
     Column(
         Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -49,6 +52,10 @@ fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> 
             state.dailyEntries.forEach {
                 DailyEntry(it)
             }
+        }
+
+        if (state.weeklyTrend != null) {
+            WeeklyWeightTrendCard(state.weeklyTrend)
         }
 
         if (state.weeklyAverages != null) {
@@ -160,6 +167,7 @@ private fun WeightDashboardPreview() {
             WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
             WeeklyAverageEntryUi("CW 30", "64.7 kg", null),
         ),
+        previewTrendPoints(),
     )
     Surface {
         WeightDashboardTab(state, {})
@@ -183,8 +191,22 @@ private fun WeightDashboardLoggedTodayPreview() {
         listOf(
             WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
         ),
+        listOf(
+            WeeklyTrendPointUi("32", 0, 64.8f),
+            WeeklyTrendPointUi("33", 1, 65.0f, isLastSevenDaysFallback = true),
+        ),
     )
     Surface {
         WeightDashboardTab(state, {})
+    }
+}
+
+private fun previewTrendPoints(): List<WeeklyTrendPointUi> {
+    val kilograms = listOf(
+        67.4f, 67.1f, 66.8f, 66.9f, 66.4f, 66.1f, 65.8f, 65.9f,
+        65.5f, 65.3f, 65.0f, 64.8f, 64.9f, 64.7f, 64.8f, 65.0f,
+    )
+    return kilograms.mapIndexed { index, value ->
+        WeeklyTrendPointUi((22 + index).toString(), index, value)
     }
 }
