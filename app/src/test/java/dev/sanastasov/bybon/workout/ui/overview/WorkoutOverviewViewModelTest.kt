@@ -133,6 +133,9 @@ class WorkoutOverviewViewModelTest {
                                 setState = SetState.Completed,
                             )
                         },
+                        warmupSets = exercise.warmupSets?.map { set ->
+                            set.copy(setState = SetState.Completed)
+                        },
                     )
                 },
                 startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),

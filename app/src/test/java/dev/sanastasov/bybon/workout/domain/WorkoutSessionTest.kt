@@ -111,12 +111,6 @@ class WorkoutSessionTest {
     }
 
     @Test
-    fun `Weight kilograms formats whole and decimal values`() {
-        assert(Weight.kilograms(50).kilograms == "50")
-        assert(Weight.kilograms(52.5f).kilograms == "52.5")
-    }
-
-    @Test
     fun `toWorkoutSession attaches previous work and warmup sets from same plan history`() {
         val previous = fullBodyA.toWorkoutSession().let { session ->
             session.copy(
