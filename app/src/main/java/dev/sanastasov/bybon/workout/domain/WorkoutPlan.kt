@@ -13,7 +13,11 @@ data class PlanedExercise(
     val warmupSets: Int = 0,
     val sets: Int,
     val repRange: IntRange,
-)
+) {
+    init {
+        require(warmupSets >= 0) { "warmupSets must be >= 0" }
+    }
+}
 
 data class WorkoutPlan(
     val id: WorkoutPlanId,

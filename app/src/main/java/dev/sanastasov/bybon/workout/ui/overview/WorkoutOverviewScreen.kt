@@ -159,7 +159,8 @@ private fun OverviewWarmupSets(
     exercise: WorkoutExercise,
     onAction: (WorkoutOverviewAction) -> Unit,
 ) {
-    exercise.numberedWarmupSets.forEach { numbered ->
+    val warmupSets = exercise.numberedWarmupSets ?: return
+    warmupSets.forEach { numbered ->
         val index = numbered.index
         val set = numbered.set
         val weightState = rememberSyncedTextField(
@@ -192,7 +193,7 @@ private fun OverviewWarmupSets(
             numbered = numbered,
             weightState = weightState,
             repState = repState,
-            onBadgeClick = if (index == exercise.numberedWarmupSets.lastIndex) {
+            onBadgeClick = if (index == warmupSets.lastIndex) {
                 { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
             } else {
                 null

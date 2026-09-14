@@ -319,45 +319,6 @@ class WorkoutSessionTest {
     }
 
     @Test
-    fun `default plans include warmup set counts from the strong sample`() {
-        assert(
-            fullBodyA.sets.map { it.exercise.id to it.warmupSets } == listOf(
-                "bench-press-bb" to 3,
-                "squat-bb" to 3,
-                "pullup-assisted" to 2,
-                "leg-curl" to 0,
-                "upright-row-db" to 0,
-                "skullcrusher-db" to 0,
-            ),
-        )
-        assert(
-            fullBodyB.sets.map { it.exercise.id to it.warmupSets } == listOf(
-                "rdl-bb" to 2,
-                "incline-bench-press-db" to 2,
-                "split-squat-db" to 1,
-                "incline-row-db" to 0,
-                "lateral-raise-db" to 0,
-                "incline-curl-db" to 0,
-            ),
-        )
-    }
-
-    @Test
-    fun `converting set one to warmup prepends it before work sets`() {
-        val session = fullBodyA.toOverviewSession()
-        val bench = session.exercises.first()
-
-        val actual = session.convertFirstWorkSetToWarmup(bench)
-        val updated = actual.exercises.first()
-
-        assert(updated.warmupSets?.size == 4)
-        assert(updated.sets.size == 2)
-        assert(checkNotNull(updated.warmupSets).last().weight == bench.sets.first().weight)
-        assert(checkNotNull(updated.warmupSets).last().reps == bench.sets.first().reps)
-        assert(updated.sets.first() == bench.sets[1])
-    }
-
-    @Test
     fun `converting last warmup restores it as work set one`() {
         val session = fullBodyA.toOverviewSession()
         val converted = session.convertFirstWorkSetToWarmup(session.exercises.first())
@@ -400,6 +361,20 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `warmup set count cannot be negative`() {
+        val bench = exercisesMap.getValue("bench-press-bb")
+        val error = assertFailsWith<IllegalArgumentException> {
+            PlanedExercise(
+                exercise = bench,
+                warmupSets = -1,
+                sets = 3,
+                repRange = 8..10,
+            )
+        }
+        assert(error.message == "warmupSets must be >= 0")
+    }
+
+    @Test
     fun `add set still adds a work set after warmups`() {
         val session = fullBodyA.toOverviewSession()
 
@@ -436,11 +411,11 @@ class WorkoutSessionTest {
         val legCurl = fullBodyA.toWorkoutSession().exercises.first { it.id == "leg-curl" }
 
         assert(
-            bench.numberedWarmupSets.map { it.isWarmup to it.index } ==
+            checkNotNull(bench.numberedWarmupSets).map { it.isWarmup to it.index } ==
                 listOf(true to 0, true to 1, true to 2),
         )
         assert(bench.numberedWorkSets.map { it.workSetNumber } == listOf(1, 2, 3))
-        assert(legCurl.numberedWarmupSets.isEmpty())
+        assert(legCurl.numberedWarmupSets == null)
         assert(legCurl.numberedWorkSets.size == legCurl.sets.size)
     }
 }

@@ -54,7 +54,8 @@ private fun warmupSetsFromPlan(
     count: Int,
     previousWarmups: List<ExerciseSet>?,
 ): List<ExerciseSet>? {
-    if (count <= 0) return null
+    require(count >= 0) { "warmupSets must be >= 0" }
+    if (count == 0) return null
     return List(count) { index ->
         val previousWarmup = previousWarmups?.getOrNull(index)
         ExerciseSet(
@@ -152,10 +153,10 @@ data class WorkoutExercise(
     val orderedSets: List<ExerciseSet>
         get() = warmupSets.orEmpty() + sets
 
-    val numberedWarmupSets: List<NumberedSet>
+    val numberedWarmupSets: List<NumberedSet>?
         get() = warmupSets?.mapIndexed { index, set ->
             NumberedSet(set, isWarmup = true, index)
-        }.orEmpty()
+        }
 
     val numberedWorkSets: List<NumberedSet>
         get() = sets.mapIndexed { index, set ->
