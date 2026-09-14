@@ -3,8 +3,14 @@ package dev.sanastasov.bybon.bodyweight.dashboard
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.DietPhase
+import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
+import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRepository
+import dev.sanastasov.bybon.bodyweight.domain.EffectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.WeeklyTrendPoint
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
+import dev.sanastasov.bybon.bodyweight.domain.plannedRatePerWeek
+import dev.sanastasov.bybon.bodyweight.domain.weeksRemaining
 import dev.sanastasov.bybon.domain.weekOfYear
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import java.time.LocalDate
@@ -15,16 +21,18 @@ import kotlinx.coroutines.flow.map
 
 class WeightDashboardViewModel(
     private val repository: BodyWeightRepository,
+    private val dietPhaseRepository: DietPhaseRepository,
     private val coroutineScope: CoroutineScope,
     private val today: LocalDate = LocalDate.now(),
 ) {
 
-    val uiState: StateFlow<WeightDashboardUiState> = repository.bodyWeightDashboard(today)
-        .map { dashboard -> dashboard.toDashboardUi() }
-        .stateInWhileInForeground(
-            coroutineScope,
-            WeightDashboardUiState(),
-        )
+    val uiState: StateFlow<WeightDashboardUiState> =
+        repository.bodyWeightDashboard(today, dietPhaseRepository.openPhase())
+            .map { dashboard -> dashboard.toDashboardUi() }
+            .stateInWhileInForeground(
+                coroutineScope,
+                WeightDashboardUiState(),
+            )
 
     private fun BodyWeightDashboard.toDashboardUi(): WeightDashboardUiState =
         WeightDashboardUiState(
@@ -43,7 +51,22 @@ class WeightDashboardViewModel(
                 )
             },
             weeklyTrend = weeklyTrend?.toTrendUi(),
+            dietPhaseSummary = dietPhaseSummary(),
+            onTrack = onTrack == true,
         )
+
+    private fun BodyWeightDashboard.dietPhaseSummary(): DietPhaseSummaryUi? {
+        if (currentAverage == null) return null
+        return when (val phase = effectivePhase) {
+            EffectiveDietPhase.Off -> DietPhaseSummaryUi(
+                kindLabel = "None",
+                detailLines = listOf("No target"),
+                actionLabel = "Set phase",
+            )
+
+            is EffectiveDietPhase.On -> phase.phase.toSummaryUi(today)
+        }
+    }
 
     private fun List<WeeklyTrendPoint>.toTrendUi(): List<WeeklyTrendPointUi> {
         val firstWeekStart = minOf { it.weekStart }
@@ -51,8 +74,12 @@ class WeightDashboardViewModel(
             WeeklyTrendPointUi(
                 weekLabel = point.weekOfYear.toString(),
                 weekIndex = ChronoUnit.WEEKS.between(firstWeekStart, point.weekStart).toInt(),
-                kilograms = point.averageWeight.kilograms,
+                kilograms = point.averageWeight?.kilograms,
                 isLastSevenDaysFallback = point.isLastSevenDaysFallback,
+                projectedKilograms = point.projectedWeight?.kilograms,
+                maintainLowKilograms = point.maintainLow?.kilograms,
+                maintainHighKilograms = point.maintainHigh?.kilograms,
+                isFuture = point.isFuture,
             )
         }
     }
@@ -75,10 +102,21 @@ class WeightDashboardViewModel(
     }
 
     private fun BodyWeightDashboard.previousWeekData(average: BodyWeight): PreviousWeekData? =
-        lastWeekAverage?.let { lastWeekAvg ->
+        lastKnownWeekAverage?.let { lastWeekAvg ->
             PreviousWeekData(
-                today.weekOfYear - 1,
+                previousWeeksAverages?.firstOrNull()?.weekOfYear ?: (today.weekOfYear - 1),
                 "${(average.value - lastWeekAvg.value) / 100f} kg",
             )
         }
+}
+
+private fun DietPhase.toSummaryUi(today: LocalDate): DietPhaseSummaryUi {
+    val details = buildList {
+        add("Target ${targetWeight.kilograms} kg")
+        if (kind != DietPhaseKind.Maintain) {
+            add(plannedRatePerWeek().formatRate(startWeight))
+            add("${weeksRemaining(today)} of $durationWeeks weeks left")
+        }
+    }
+    return DietPhaseSummaryUi(kind.name, details, "Edit")
 }

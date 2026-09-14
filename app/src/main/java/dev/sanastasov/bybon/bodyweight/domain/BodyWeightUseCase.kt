@@ -2,26 +2,33 @@ package dev.sanastasov.bybon.bodyweight.domain
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.WeightDelta
+import dev.sanastasov.bybon.bodyweight.minusToDelta
 import dev.sanastasov.bybon.domain.isoWeekStart
 import dev.sanastasov.bybon.domain.weekOfYear
 import java.time.LocalDate
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 
 internal const val WEEKLY_TREND_WEEKS = 16
 
 data class WeeklyAverageEntry(
     val weekOfYear: Int,
     val averageWeight: BodyWeight,
-    val delta: BodyWeight?,
+    val delta: WeightDelta?,
 )
 
 data class WeeklyTrendPoint(
     val weekStart: LocalDate,
     val weekOfYear: Int,
-    val averageWeight: BodyWeight,
+    val averageWeight: BodyWeight? = null,
     val isLastSevenDaysFallback: Boolean = false,
+    val projectedWeight: BodyWeight? = null,
+    val maintainLow: BodyWeight? = null,
+    val maintainHigh: BodyWeight? = null,
+    val isFuture: Boolean = false,
 )
 
 data class BodyWeightDashboard(
@@ -29,49 +36,94 @@ data class BodyWeightDashboard(
     val previousWeeksAverages: List<WeeklyAverageEntry>?,
     val lastSevenDaysAverage: BodyWeight? = null,
     val weeklyTrend: List<WeeklyTrendPoint>? = null,
+    val lastKnownWeekAverage: BodyWeight? = null,
+    val effectivePhase: EffectiveDietPhase = EffectiveDietPhase.Off,
+    val onTrack: Boolean? = null,
 ) {
 
     val thisWeekAverage: BodyWeight? = thisWeekValues?.averageWeight()?.weight
 
-    val lastWeekAverage: BodyWeight? =
-        thisWeekValues?.firstOrNull()?.date?.weekOfYear?.let { currentWeekNo ->
-            previousWeeksAverages?.firstOrNull { it.weekOfYear == currentWeekNo - 1 }?.averageWeight
-        }
+    val currentAverage: BodyWeight? = thisWeekAverage ?: lastSevenDaysAverage
+
+    val lastWeekAverage: BodyWeight? = lastKnownWeekAverage
 }
 
 fun BodyWeightRepository.bodyWeightDashboard(today: LocalDate): Flow<BodyWeightDashboard> =
-    entries().map { allEntries ->
-        val currentWeekStart = today.isoWeekStart()
-        val lastSevenDaysStart = today.minusDays(6)
-        val windowStart = currentWeekStart.minusWeeks((WEEKLY_TREND_WEEKS - 1).toLong())
+    bodyWeightDashboard(today, flowOf(null))
 
-        val thisWeekValues = allEntries.filter { entry ->
-            entry.date.isoWeekStart() == currentWeekStart
-        }
+fun BodyWeightRepository.bodyWeightDashboard(
+    today: LocalDate,
+    openPhase: Flow<DietPhaseRecord?>,
+): Flow<BodyWeightDashboard> = combine(entries(), openPhase) { allEntries, phase ->
+    computeBodyWeightDashboard(allEntries, phase, today)
+}
 
-        val lastSevenDaysAverage = allEntries.filter { entry ->
-            entry.date in lastSevenDaysStart..today
-        }.averageWeight()?.weight
+internal fun computeBodyWeightDashboard(
+    allEntries: List<BodyWeightEntry>,
+    openPhase: DietPhaseRecord?,
+    today: LocalDate,
+): BodyWeightDashboard {
+    val currentWeekStart = today.isoWeekStart()
+    val lastSevenDaysStart = today.minusDays(6)
+    val windowStart = currentWeekStart.minusWeeks((WEEKLY_TREND_WEEKS - 1).toLong())
 
-        val entriesByWeekStart = allEntries.filter { entry ->
-            entry.date >= windowStart.minusWeeks(1) && entry.date <= today
-        }.groupBy { it.date.isoWeekStart() }
+    val thisWeekValues = allEntries.filter { entry ->
+        entry.date.isoWeekStart() == currentWeekStart
+    }
 
-        val previousWeeksAverages = previousWeeksAverages(currentWeekStart, entriesByWeekStart)
-        val weeklyTrend = weeklyTrend(
+    val lastSevenDaysAverage = allEntries.filter { entry ->
+        entry.date in lastSevenDaysStart..today
+    }.averageWeight()?.weight
+
+    val entriesByWeekStart = allEntries.filter { entry ->
+        entry.date >= windowStart.minusWeeks(1) && entry.date <= today
+    }.groupBy { it.date.isoWeekStart() }
+
+    val previousWeeksAverages = previousWeeksAverages(currentWeekStart, entriesByWeekStart)
+    val lastKnownWeekAverage = previousWeeksAverages.firstOrNull()?.averageWeight
+    val thisWeekAverage = thisWeekValues.averageWeight()?.weight
+    val currentAverage = thisWeekAverage ?: lastSevenDaysAverage
+    val lastOfficialAverage = thisWeekAverage ?: lastKnownWeekAverage
+    val effectivePhase = effectiveDietPhase(openPhase, today, lastOfficialAverage)
+
+    val baseTrend = weeklyTrend(
+        currentWeekStart,
+        windowStart,
+        entriesByWeekStart,
+        lastSevenDaysAverage,
+    )
+    val weeklyTrend = when (effectivePhase) {
+        EffectiveDietPhase.Off -> baseTrend
+
+        is EffectiveDietPhase.On -> extendTrendForPhase(
+            baseTrend,
             currentWeekStart,
-            windowStart,
-            entriesByWeekStart,
-            lastSevenDaysAverage,
-        )
-
-        BodyWeightDashboard(
-            thisWeekValues.takeIf { it.isNotEmpty() },
-            previousWeeksAverages.takeIf { it.isNotEmpty() },
-            lastSevenDaysAverage,
-            weeklyTrend.takeIf { it.isNotEmpty() },
+            effectivePhase.phase,
         )
     }
+
+    val onTrack = when {
+        currentAverage == null -> null
+
+        effectivePhase is EffectiveDietPhase.On -> isOnTrack(
+            effectivePhase.phase,
+            currentAverage,
+            lastKnownWeekAverage,
+        )
+
+        else -> null
+    }
+
+    return BodyWeightDashboard(
+        thisWeekValues.takeIf { it.isNotEmpty() },
+        previousWeeksAverages.takeIf { it.isNotEmpty() },
+        lastSevenDaysAverage,
+        weeklyTrend.takeIf { it.isNotEmpty() },
+        lastKnownWeekAverage,
+        effectivePhase,
+        onTrack,
+    )
+}
 
 private fun previousWeeksAverages(
     currentWeekStart: LocalDate,
@@ -84,7 +136,7 @@ private fun previousWeeksAverages(
         WeeklyAverageEntry(
             weekStart.weekOfYear,
             average.weight,
-            previousAverage?.let { average.weight - it },
+            previousAverage?.let { average.weight.minusToDelta(it) },
         )
     }
 }

@@ -11,6 +11,7 @@ import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.navigation3.runtime.serialization.NavKeySerializer
 import androidx.navigation3.ui.NavDisplay
 import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
+import dev.sanastasov.bybon.bodyweight.phase.DietPhaseScreen
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryScreen
@@ -44,6 +45,7 @@ fun MainModule.BybonApp() {
                 Screen.MainScreen -> NavEntry(key) {
                     MainScreen(
                         onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
+                        onNavigateToDietPhase = { backStack.add(Screen.DietPhaseScreen) },
                         onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
                         onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
                         onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) },
@@ -67,6 +69,10 @@ fun MainModule.BybonApp() {
 
                 Screen.WeightEntryScreen -> NavEntry(key) {
                     WeightInputScreen { backStack.removeLastOrNull() }
+                }
+
+                Screen.DietPhaseScreen -> NavEntry(key) {
+                    DietPhaseScreen { backStack.removeLastOrNull() }
                 }
 
                 Screen.WorkoutHistory -> NavEntry(key) {

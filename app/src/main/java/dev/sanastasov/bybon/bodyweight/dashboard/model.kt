@@ -30,8 +30,18 @@ data class WeeklyAverageEntryUi(
 data class WeeklyTrendPointUi(
     val weekLabel: String,
     val weekIndex: Int,
-    val kilograms: Float,
+    val kilograms: Float? = null,
     val isLastSevenDaysFallback: Boolean = false,
+    val projectedKilograms: Float? = null,
+    val maintainLowKilograms: Float? = null,
+    val maintainHighKilograms: Float? = null,
+    val isFuture: Boolean = false,
+)
+
+data class DietPhaseSummaryUi(
+    val kindLabel: String,
+    val detailLines: List<String>,
+    val actionLabel: String,
 )
 
 data class WeightDashboardUiState(
@@ -40,6 +50,8 @@ data class WeightDashboardUiState(
     val dailyEntries: List<BodyWeightEntry>? = null,
     val weeklyAverages: List<WeeklyAverageEntryUi>? = null,
     val weeklyTrend: List<WeeklyTrendPointUi>? = null,
+    val dietPhaseSummary: DietPhaseSummaryUi? = null,
+    val onTrack: Boolean = false,
 ) {
 
     val dailyHeaderText: String? =

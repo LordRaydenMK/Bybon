@@ -3,6 +3,10 @@ package dev.sanastasov.bybon.bodyweight.dashboard
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.FakeDietPhaseRepository
+import dev.sanastasov.bybon.bodyweight.domain.DietPhase
+import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
+import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
@@ -22,7 +26,12 @@ class WeightDashboardViewModelTest {
                 BodyWeightEntry(today.minusDays(3), BodyWeight.parseFromString("65.0")),
             ),
         )
-        val viewModel = WeightDashboardViewModel(repository, backgroundScope, today)
+        val viewModel = WeightDashboardViewModel(
+            repository,
+            FakeDietPhaseRepository(),
+            backgroundScope,
+            today,
+        )
 
         val state = viewModel.uiState.first { it.logWeightPrompt != LogWeightPrompt.Hidden }
 
@@ -38,7 +47,12 @@ class WeightDashboardViewModelTest {
                 BodyWeightEntry(today.minusDays(2), BodyWeight.parseFromString("65.0")),
             ),
         )
-        val viewModel = WeightDashboardViewModel(repository, backgroundScope, today)
+        val viewModel = WeightDashboardViewModel(
+            repository,
+            FakeDietPhaseRepository(),
+            backgroundScope,
+            today,
+        )
 
         val state = viewModel.uiState.first { it.logWeightPrompt != LogWeightPrompt.Hidden }
 
@@ -54,7 +68,12 @@ class WeightDashboardViewModelTest {
                 BodyWeightEntry(today.minusDays(2), BodyWeight.parseFromString("66.0")),
             ),
         )
-        val viewModel = WeightDashboardViewModel(repository, backgroundScope, today)
+        val viewModel = WeightDashboardViewModel(
+            repository,
+            FakeDietPhaseRepository(),
+            backgroundScope,
+            today,
+        )
 
         val state = viewModel.uiState.first { it.logWeightPrompt != LogWeightPrompt.Hidden }
 
@@ -71,7 +90,12 @@ class WeightDashboardViewModelTest {
                 BodyWeightEntry(today.minusDays(5), BodyWeight.parseFromString("65.0")),
             ),
         )
-        val viewModel = WeightDashboardViewModel(repository, backgroundScope, today)
+        val viewModel = WeightDashboardViewModel(
+            repository,
+            FakeDietPhaseRepository(),
+            backgroundScope,
+            today,
+        )
 
         val state = viewModel.uiState.first { it.logWeightPrompt != LogWeightPrompt.Hidden }
 
@@ -95,7 +119,12 @@ class WeightDashboardViewModelTest {
             officialWeek(weekStart, "66.0") +
                 officialWeek(weekStart.minusWeeks(2), "64.0"),
         )
-        val viewModel = WeightDashboardViewModel(repository, backgroundScope, today)
+        val viewModel = WeightDashboardViewModel(
+            repository,
+            FakeDietPhaseRepository(),
+            backgroundScope,
+            today,
+        )
 
         val state = viewModel.uiState.first { it.logWeightPrompt != LogWeightPrompt.Hidden }
 
@@ -105,6 +134,36 @@ class WeightDashboardViewModelTest {
                 WeeklyTrendPointUi("37", 2, 66.0f),
             ),
         )
+    }
+
+    @Test
+    fun `shows diet phase summary and on-track check when maintaining`() = runTest {
+        val weekStart = today.with(DayOfWeek.MONDAY)
+        val startWeight = BodyWeight.parseFromString("66.0")
+        val repository = FakeBodyWeightRepository(
+            officialWeek(weekStart, "66.0") +
+                officialWeek(weekStart.minusWeeks(1), "66.0"),
+        )
+        val dietPhase = FakeDietPhaseRepository(
+            DietPhaseRecord(
+                1,
+                DietPhase(DietPhaseKind.Maintain, weekStart, startWeight, startWeight),
+            ),
+        )
+        val viewModel = WeightDashboardViewModel(
+            repository,
+            dietPhase,
+            backgroundScope,
+            today,
+        )
+
+        val state = viewModel.uiState.first { it.dietPhaseSummary != null }
+
+        assert(state.dietPhaseSummary?.kindLabel == "Maintain")
+        assert(state.dietPhaseSummary?.actionLabel == "Edit")
+        assert(state.onTrack)
+        assert(state.weeklyTrend?.any { it.isFuture } == true)
+        assert(state.weeklyTrend?.any { it.maintainLowKilograms != null } == true)
     }
 
     private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =

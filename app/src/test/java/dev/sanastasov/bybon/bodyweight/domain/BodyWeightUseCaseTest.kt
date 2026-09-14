@@ -199,6 +199,39 @@ class BodyWeightUseCaseTest {
         )
     }
 
+    @Test
+    fun `diet phase extends the weekly trend four weeks ahead`() = runTest {
+        val weekStart = today.isoWeekStart()
+        val startWeight = BodyWeight.parseFromString("65.0")
+        val entries = officialWeek(weekStart, "65.0") +
+            officialWeek(weekStart.minusWeeks(1), "64.8")
+        val phase = DietPhase(
+            DietPhaseKind.Maintain,
+            weekStart,
+            startWeight,
+            startWeight,
+        )
+        val dashboard = computeBodyWeightDashboard(
+            entries,
+            DietPhaseRecord(1, phase),
+            today,
+        )
+
+        val future = dashboard.weeklyTrend?.filter { it.isFuture }.orEmpty()
+        assert(future.size == CHART_FUTURE_WEEKS)
+        assert(future.last().weekStart == weekStart.plusWeeks(CHART_FUTURE_WEEKS.toLong()))
+        assert(
+            dashboard.weeklyTrend?.all { point ->
+                point.maintainLow != null && point.maintainHigh != null
+            } == true,
+        )
+        assert(dashboard.dietPhaseIsMaintain())
+        assert(dashboard.onTrack == true)
+    }
+
+    private fun BodyWeightDashboard.dietPhaseIsMaintain(): Boolean =
+        (effectivePhase as? EffectiveDietPhase.On)?.phase?.kind == DietPhaseKind.Maintain
+
     private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =
         listOf(
             BodyWeightEntry(weekStart, BodyWeight.parseFromString(kilograms)),
