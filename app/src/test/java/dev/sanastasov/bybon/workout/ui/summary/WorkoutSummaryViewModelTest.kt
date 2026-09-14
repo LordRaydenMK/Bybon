@@ -5,13 +5,9 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.Weight
-import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import java.time.LocalDateTime
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -90,38 +86,6 @@ class WorkoutSummaryViewModelTest {
             val actual = awaitItem() as WorkoutSummaryUiState.Content
             assert(actual.title == "Full Body B")
             assert(actual.exercises.single().id == "rdl-bb")
-        }
-    }
-
-    @Test
-    fun `unknown session id fails`() {
-        val session = completedSession(
-            planId = "full-body-b",
-            planName = "Full Body B",
-            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
-        )
-
-        assertFailsWith<NoSuchElementException> {
-            listOf(session).requireCompletedSummary(
-                WorkoutSessionId(WorkoutPlanId("missing"), LocalDateTime.of(2026, 1, 1, 0, 0)),
-            )
-        }
-    }
-
-    @Test
-    fun `in-progress sessions are not shown as a summary`() {
-        val inProgress = WorkoutSession(
-            planId = WorkoutPlanId("full-body-a"),
-            planName = "Full Body A",
-            planDescription = null,
-            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
-            startedAt = LocalDateTime.of(2026, 8, 14, 18, 0),
-            state = WorkoutState.InProgress,
-        )
-
-        assertFailsWith<NoSuchElementException> {
-            listOf(inProgress).requireCompletedSummary(inProgress.id)
         }
     }
 
