@@ -21,7 +21,8 @@ fun completedSession(
     planName = planName,
     planDescription = null,
     exercises = exercises,
-    state = WorkoutState.Completed(startedAt, 40.minutes),
+    startedAt = startedAt,
+    state = WorkoutState.Completed(40.minutes),
 )
 
 fun completedExercise(

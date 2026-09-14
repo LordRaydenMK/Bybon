@@ -37,13 +37,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.Locale
 
 @Composable
-fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
+fun WorkoutModule.WorkoutHistoryScreen(
+    onNavigateBack: () -> Unit,
+    onNavigateToSummary: (WorkoutSessionId) -> Unit,
+) {
     val contentResolver = LocalContext.current.contentResolver
     val viewModel = retain {
         WorkoutHistoryViewModel(
@@ -63,6 +68,7 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
     WorkoutHistoryContent(
         uiState = uiState,
         onNavigateBack = onNavigateBack,
+        onSessionClick = onNavigateToSummary,
         onImportHistoryClick = {
             documentPicker.launch(
                 arrayOf(
@@ -82,6 +88,7 @@ fun WorkoutModule.WorkoutHistoryScreen(onNavigateBack: () -> Unit) {
 private fun WorkoutHistoryContent(
     uiState: WorkoutHistoryUiState,
     onNavigateBack: () -> Unit,
+    onSessionClick: (WorkoutSessionId) -> Unit,
     onImportHistoryClick: () -> Unit,
     onImportDone: () -> Unit,
     modifier: Modifier = Modifier,
@@ -101,7 +108,7 @@ private fun WorkoutHistoryContent(
                 WorkoutHistoryUiState.Empty -> EmptyHistory(onImportHistoryClick)
                 WorkoutHistoryUiState.Importing -> ImportingIndicator()
                 is WorkoutHistoryUiState.Summary -> ImportSummary(uiState.summary, onImportDone)
-                is WorkoutHistoryUiState.History -> HistoryList(uiState.sessions)
+                is WorkoutHistoryUiState.History -> HistoryList(uiState.sessions, onSessionClick)
             }
         }
     }
@@ -190,22 +197,31 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
 }
 
 @Composable
-private fun HistoryList(sessions: List<WorkoutSessionHistoryUi>) {
+private fun HistoryList(
+    sessions: List<WorkoutSessionHistoryUi>,
+    onSessionClick: (WorkoutSessionId) -> Unit,
+) {
     LazyColumn(
         Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        items(sessions, key = { it.key }) { session ->
-            WorkoutSessionHistoryCard(session)
+        items(sessions, key = { it.id.toString() }) { session ->
+            WorkoutSessionHistoryCard(session, onSessionClick)
         }
     }
 }
 
 @Composable
-private fun WorkoutSessionHistoryCard(session: WorkoutSessionHistoryUi) {
-    Card(Modifier.fillMaxWidth()) {
+private fun WorkoutSessionHistoryCard(
+    session: WorkoutSessionHistoryUi,
+    onSessionClick: (WorkoutSessionId) -> Unit,
+) {
+    Card(
+        onClick = { onSessionClick(session.id) },
+        modifier = Modifier.fillMaxWidth(),
+    ) {
         Column(
             Modifier
                 .padding(8.dp)
@@ -240,13 +256,8 @@ private fun exercisesLabel(count: Int): String = if (count == 1) "exercise" else
 
 private fun ExerciseTopSetUi.summary(): String = buildString {
     append("$name: $weightKg kg x $reps")
-    estimatedOneRmKg?.let { oneRm ->
-        append(" @ ${formatOneRmKg(oneRm)} kg 1RM")
-    }
+    oneRm?.let { append(" @ ${it.kilograms} kg 1RM") }
 }
-
-private fun formatOneRmKg(kg: Float): String =
-    "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
 
 @Preview
 @Composable
@@ -256,7 +267,10 @@ private fun WorkoutHistoryContentPreview() {
             uiState = WorkoutHistoryUiState.History(
                 listOf(
                     WorkoutSessionHistoryUi(
-                        key = "full-body-b-preview",
+                        id = WorkoutSessionId(
+                            WorkoutPlanId("full-body-b"),
+                            LocalDate.of(2026, 8, 13).atTime(18, 0),
+                        ),
                         planName = "Full Body B",
                         date = LocalDate.of(2026, 8, 13),
                         exercises = listOf(
@@ -264,13 +278,14 @@ private fun WorkoutHistoryContentPreview() {
                                 name = "Romanian Deadlift (RDL) (barbell)",
                                 weightKg = "45",
                                 reps = 12,
-                                estimatedOneRmKg = 63f,
+                                oneRm = Weight.kilograms(63f),
                             ),
                         ),
                     ),
                 ),
             ),
             onNavigateBack = {},
+            onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
         )
@@ -284,6 +299,7 @@ private fun WorkoutHistoryEmptyPreview() {
         WorkoutHistoryContent(
             uiState = WorkoutHistoryUiState.Empty,
             onNavigateBack = {},
+            onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
         )
@@ -312,6 +328,7 @@ private fun WorkoutHistoryImportSummaryPreview() {
                 ),
             ),
             onNavigateBack = {},
+            onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
         )

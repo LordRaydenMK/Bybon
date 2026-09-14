@@ -48,7 +48,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import java.time.LocalDateTime
-import java.util.Locale
 import kotlin.time.Duration
 
 @Composable
@@ -225,11 +224,11 @@ private fun OverviewSetRow(
     weightState: TextFieldState,
     repState: TextFieldState,
 ) {
-    val oneRmLabel = set.oneRm?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
+    val oneRmLabel = set.oneRm?.let { "@ ${it.kilograms} kg 1RM" }
     val previousLabel = set.previous?.let { previous ->
         buildString {
             append("${previous.weight.kilograms} kg x ${previous.reps}")
-            previous.oneRm?.let { append(" @ ${formatOneRmKg(it)} kg 1RM") }
+            previous.oneRm?.let { append(" @ ${it.kilograms} kg 1RM") }
         }
     }
     val setDescription = buildString {
@@ -314,9 +313,6 @@ private fun AdjustButtons(
     }
 }
 
-private fun formatOneRmKg(kg: Float): String =
-    "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
-
 @Preview
 @Composable
 private fun OverviewScreenContentPreview() {
@@ -334,10 +330,8 @@ private fun OverviewScreenContentPreview() {
                     },
                 )
             },
-            state = WorkoutState.Completed(
-                startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-                duration = Duration.ZERO,
-            ),
+            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+            state = WorkoutState.Completed(Duration.ZERO),
         )
     }
     OverviewScreenContent(fullBodyA.toOverviewSession(previous), {}, {})

@@ -3,68 +3,70 @@
 package dev.sanastasov.bybon.workout.domain
 
 import java.time.LocalDateTime
+import java.util.Locale
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 
-fun WorkoutPlan.toWorkoutSession(previousSession: WorkoutSession? = null): WorkoutSession =
-    WorkoutSession(
-        id,
-        name,
-        description,
-        sets.mapIndexed { index, planedExercise ->
-            val previousExercise = previousSession?.exercises?.firstOrNull {
-                it.id == planedExercise.exercise.id
-            }
-            WorkoutExercise(
-                planedExercise.exercise,
-                planedExercise.repRange,
-                (1..planedExercise.sets).map { setNumber ->
-                    val setIndex = setNumber - 1
-                    val previousSet = previousExercise?.sets?.getOrNull(setIndex)
-                    ExerciseSet(
-                        planedExercise.exercise,
-                        previousSet?.weight ?: Weight.kilograms(50),
-                        previousSet?.reps ?: planedExercise.repRange.first,
-                        if (index == 0 &&
-                            setNumber == 1
-                        ) {
-                            SetState.InProgress
-                        } else {
-                            SetState.NotStated
-                        },
-                        previous = previousSet?.let {
-                            PreviousSetPerformance(it.weight, it.reps)
-                        },
-                    )
-                },
-            )
-        },
-    )
+fun WorkoutPlan.toWorkoutSession(
+    previousSession: WorkoutSession? = null,
+    startedAt: LocalDateTime = LocalDateTime.now(),
+): WorkoutSession = WorkoutSession(
+    id,
+    name,
+    description,
+    sets.mapIndexed { index, planedExercise ->
+        val previousExercise = previousSession?.exercises?.firstOrNull {
+            it.id == planedExercise.exercise.id
+        }
+        WorkoutExercise(
+            planedExercise.exercise,
+            planedExercise.repRange,
+            (1..planedExercise.sets).map { setNumber ->
+                val setIndex = setNumber - 1
+                val previousSet = previousExercise?.sets?.getOrNull(setIndex)
+                ExerciseSet(
+                    planedExercise.exercise,
+                    previousSet?.weight ?: Weight.kilograms(50),
+                    previousSet?.reps ?: planedExercise.repRange.first,
+                    if (index == 0 &&
+                        setNumber == 1
+                    ) {
+                        SetState.InProgress
+                    } else {
+                        SetState.NotStated
+                    },
+                    previous = previousSet?.let {
+                        PreviousSetPerformance(it.weight, it.reps)
+                    },
+                )
+            },
+        )
+    },
+    startedAt,
+)
 
 @JvmInline
 value class Weight(
     private val value: Int,
-) {
+) : Comparable<Weight> {
 
     val kilograms: String
-        get() = if (value % 10 == 0) {
-            (value / 10).toString()
-        } else {
-            (value / 10f).toString()
-        }
+        get() = "%.2f".format(Locale.US, kilogramsValue).trimEnd('0').trimEnd('.')
 
     val kilogramsValue: Float
-        get() = value / 10f
+        get() = value / 100f
 
     operator fun plus(other: Weight): Weight = Weight(value + other.value)
 
     operator fun minus(other: Weight): Weight = Weight((value - other.value).coerceAtLeast(0))
 
+    override fun compareTo(other: Weight): Int = value.compareTo(other.value)
+
     companion object {
 
-        fun kilograms(value: Int): Weight = Weight(value * 10)
+        fun kilograms(value: Int): Weight = Weight(value * 100)
 
-        fun kilograms(value: Float): Weight = Weight((value * 10).roundToInt())
+        fun kilograms(value: Float): Weight = Weight((value * 100).roundToInt())
 
         fun parseString(value: String): Weight = kilograms(value.toFloat())
     }
@@ -87,7 +89,7 @@ data class PreviousSetPerformance(
     val weight: Weight,
     val reps: Int,
 ) {
-    val oneRm: Float?
+    val oneRm: Weight?
         get() = oneRmOrNull(weight, reps)
 }
 
@@ -98,14 +100,14 @@ data class ExerciseSet(
     val setState: SetState,
     val previous: PreviousSetPerformance? = null,
 ) {
-    val oneRm: Float?
+    val oneRm: Weight?
         get() = oneRmOrNull(weight, reps)
 }
 
-private fun oneRmOrNull(weight: Weight, reps: Int): Float? {
+private fun oneRmOrNull(weight: Weight, reps: Int): Weight? {
     val kg = weight.kilogramsValue
     if (kg <= 0f || reps <= 0) return null
-    return estimateOneRmKg(kg, reps)
+    return Weight.kilograms(estimateOneRmKg(kg, reps))
 }
 
 data class WorkoutExercise(
@@ -121,11 +123,8 @@ data class WorkoutExercise(
 
 sealed class WorkoutState {
     data object NotStarted : WorkoutState()
-    data class InProgress(
-        val startedAt: LocalDateTime,
-    ) : WorkoutState()
+    data object InProgress : WorkoutState()
     data class Completed(
-        val startedAt: LocalDateTime,
         val duration: Duration,
     ) : WorkoutState()
 }
@@ -135,8 +134,12 @@ data class WorkoutSession(
     val planName: String,
     val planDescription: String?,
     val exercises: List<WorkoutExercise>,
+    val startedAt: LocalDateTime,
     val state: WorkoutState = WorkoutState.NotStarted,
 ) {
+    val id: WorkoutSessionId
+        get() = WorkoutSessionId(planId, startedAt)
+
     val workoutSets: List<ExerciseSet> = exercises.flatMap { it.sets }
 
     init {
@@ -144,6 +147,12 @@ data class WorkoutSession(
             "At most 1 set can be in progress. Found ${workoutSets.filter {
                 it.setState == SetState.InProgress
             }}"
+        }
+        if (state is WorkoutState.Completed) {
+            val incomplete = workoutSets.filter { it.setState != SetState.Completed }
+            require(workoutSets.isNotEmpty() && incomplete.isEmpty()) {
+                "Completed workout $id has incomplete sets: $incomplete"
+            }
         }
     }
 }

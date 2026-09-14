@@ -34,10 +34,8 @@ val sampleFullBodyBCompleted = WorkoutSession(
             listOf(22f to 14, 22f to 12, 22f to 10),
         ),
     ),
-    state = WorkoutState.Completed(
-        startedAt = LocalDateTime.of(2026, 8, 13, 18, 25, 54),
-        duration = 2864.seconds,
-    ),
+    startedAt = LocalDateTime.of(2026, 8, 13, 18, 25, 54),
+    state = WorkoutState.Completed(2864.seconds),
 )
 
 private fun completedExercise(

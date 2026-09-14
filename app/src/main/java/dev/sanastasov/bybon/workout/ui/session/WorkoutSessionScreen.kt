@@ -46,7 +46,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
-import java.util.Locale
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -160,11 +159,11 @@ private fun SetRow(
     repState: TextFieldState,
     onAction: (WorkoutSessionAction) -> Unit,
 ) {
-    val oneRmLabel = set.oneRm?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
+    val oneRmLabel = set.oneRm?.let { "@ ${it.kilograms} kg 1RM" }
     val previousLabel = set.previous?.let { previous ->
         buildString {
             append("${previous.weight.kilograms} kg x ${previous.reps}")
-            previous.oneRm?.let { append(" @ ${formatOneRmKg(it)} kg 1RM") }
+            previous.oneRm?.let { append(" @ ${it.kilograms} kg 1RM") }
         }
     }
     val setDescription = buildString {
@@ -303,9 +302,6 @@ private fun SetRow(
         content()
     }
 }
-
-private fun formatOneRmKg(kg: Float): String =
-    "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
 
 @Preview
 @Composable

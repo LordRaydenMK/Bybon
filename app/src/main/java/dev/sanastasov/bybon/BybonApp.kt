@@ -16,6 +16,7 @@ import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryScreen
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewScreen
 import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionScreen
+import dev.sanastasov.bybon.workout.ui.summary.WorkoutSummaryScreen
 
 typealias BackStack = NavBackStack<Screen>
 
@@ -69,7 +70,19 @@ fun MainModule.BybonApp() {
                 }
 
                 Screen.WorkoutHistory -> NavEntry(key) {
-                    WorkoutHistoryScreen { backStack.removeLastOrNull() }
+                    WorkoutHistoryScreen(
+                        onNavigateBack = { backStack.removeLastOrNull() },
+                        onNavigateToSummary = { sessionId ->
+                            backStack.add(Screen.WorkoutSummary(sessionId))
+                        },
+                    )
+                }
+
+                is Screen.WorkoutSummary -> NavEntry(key) {
+                    WorkoutSummaryScreen(
+                        sessionId = key.sessionId,
+                        onNavigateBack = { backStack.removeLastOrNull() },
+                    )
                 }
             }
         },
