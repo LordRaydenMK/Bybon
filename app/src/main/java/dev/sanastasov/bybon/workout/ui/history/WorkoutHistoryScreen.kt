@@ -207,7 +207,7 @@ private fun HistoryList(
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        items(sessions, key = { it.id }) { session ->
+        items(sessions, key = { it.id.toString() }) { session ->
             WorkoutSessionHistoryCard(session, onSessionClick)
         }
     }
