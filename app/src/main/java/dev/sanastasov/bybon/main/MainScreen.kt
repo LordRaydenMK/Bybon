@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.dashboard.LogWeightPrompt
 import dev.sanastasov.bybon.bodyweight.dashboard.WeeklyAverageEntryUi
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardTab
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardUiState
@@ -186,7 +187,7 @@ private fun MainScreenContentWorkoutsPreview() {
         "10",
         OneRmUiState(null, emptyList()),
         {},
-        WeightDashboardUiState(true, null, emptyList(), emptyList()),
+        WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
@@ -210,7 +211,7 @@ private fun MainScreenContentOneRmCalcPreview() {
             emptyList(),
         ),
         {},
-        WeightDashboardUiState(true, null, emptyList(), emptyList()),
+        WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
@@ -235,7 +236,7 @@ private fun MainScreenContentWeightTrackPreview() {
         ),
         {},
         WeightDashboardUiState(
-            true,
+            LogWeightPrompt.Prominent,
             null,
             listOf(
                 BodyWeightEntry(LocalDate.now().minusDays(1), BodyWeight.parseFromString("65.2")),

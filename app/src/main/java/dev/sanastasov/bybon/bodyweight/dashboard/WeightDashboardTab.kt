@@ -13,6 +13,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.domain.toDisplayDate
 import java.time.LocalDate
 
 @Composable
@@ -32,8 +34,10 @@ fun WeightDashboardTab(state: WeightDashboardUiState, onLogWeightClicked: () -> 
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        if (state.showLogWeight) {
-            LogWeight(onLogWeightClicked)
+        when (state.logWeightPrompt) {
+            LogWeightPrompt.Prominent -> LogWeight(onLogWeightClicked)
+            LogWeightPrompt.Compact -> CompactLogWeight(onLogWeightClicked)
+            LogWeightPrompt.Hidden -> Unit
         }
 
         if (state.comparison != null) {
@@ -83,6 +87,18 @@ private fun LogWeight(onLogWeightClicked: () -> Unit) {
 }
 
 @Composable
+private fun CompactLogWeight(onLogWeightClicked: () -> Unit) {
+    Column(
+        Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        TextButton(onLogWeightClicked) {
+            Text("Log Weight")
+        }
+    }
+}
+
+@Composable
 private fun WeightComparison(comparison: BodyWeightComparison) {
     Card(Modifier.fillMaxWidth()) {
         Column(
@@ -91,7 +107,7 @@ private fun WeightComparison(comparison: BodyWeightComparison) {
                 .padding(horizontal = 16.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text("CW ${comparison.currentWeekNo} average")
+            Text(comparison.title)
             Spacer(Modifier.height(8.dp))
 
             Text(
@@ -120,7 +136,7 @@ private fun WeeklyAverage(entry: WeeklyAverageEntryUi) {
 @Composable
 private fun DailyEntry(entry: BodyWeightEntry) {
     Row(Modifier.padding(8.dp)) {
-        Text(entry.date.toString(), Modifier.weight(1f))
+        Text(entry.date.toDisplayDate(), Modifier.weight(1f))
         Text("${entry.weight.kilograms} kg", Modifier.weight(1f))
     }
 }
@@ -129,9 +145,9 @@ private fun DailyEntry(entry: BodyWeightEntry) {
 @Composable
 private fun WeightDashboardPreview() {
     val state = WeightDashboardUiState(
-        true,
+        LogWeightPrompt.Prominent,
         BodyWeightComparison(
-            33,
+            "CW 33 average",
             "65 kg",
             PreviousWeekData(32, "+0.5 kg"),
         ),
@@ -143,6 +159,29 @@ private fun WeightDashboardPreview() {
             WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
             WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
             WeeklyAverageEntryUi("CW 30", "64.7 kg", null),
+        ),
+    )
+    Surface {
+        WeightDashboardTab(state, {})
+    }
+}
+
+@Preview
+@Composable
+private fun WeightDashboardLoggedTodayPreview() {
+    val today = LocalDate.of(2026, 8, 10)
+    val state = WeightDashboardUiState(
+        LogWeightPrompt.Compact,
+        BodyWeightComparison(
+            "Last 7d average",
+            "65.0 kg",
+        ),
+        listOf(
+            BodyWeightEntry(today, BodyWeight.parseFromString("65.2")),
+            BodyWeightEntry(today.minusDays(4), BodyWeight.parseFromString("64.8")),
+        ),
+        listOf(
+            WeeklyAverageEntryUi("CW 32", "64.8 kg", "+0.1 vs CW 31"),
         ),
     )
     Surface {

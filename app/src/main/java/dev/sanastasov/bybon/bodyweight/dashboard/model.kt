@@ -1,8 +1,14 @@
 package dev.sanastasov.bybon.bodyweight.dashboard
 
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.domain.weekOfYear
-import java.time.format.DateTimeFormatter
+
+enum class LogWeightPrompt {
+    Hidden,
+    Prominent,
+    Compact,
+}
 
 data class PreviousWeekData(
     val previousWeekNo: Int,
@@ -10,7 +16,7 @@ data class PreviousWeekData(
 )
 
 data class BodyWeightComparison(
-    val currentWeekNo: Int,
+    val title: String,
     val currentWeightWeight: String,
     val previousWeek: PreviousWeekData? = null,
 )
@@ -21,10 +27,8 @@ data class WeeklyAverageEntryUi(
     val delta: String?,
 )
 
-private val DAY_MONTH_DATE_FORMAT = DateTimeFormatter.ofPattern("d MMM")
-
 data class WeightDashboardUiState(
-    val showLogWeight: Boolean,
+    val logWeightPrompt: LogWeightPrompt = LogWeightPrompt.Hidden,
     val comparison: BodyWeightComparison? = null,
     val dailyEntries: List<BodyWeightEntry>? = null,
     val weeklyAverages: List<WeeklyAverageEntryUi>? = null,
@@ -32,6 +36,6 @@ data class WeightDashboardUiState(
 
     val dailyHeaderText: String? =
         dailyEntries?.lastOrNull()?.let { entry ->
-            "This week (${DAY_MONTH_DATE_FORMAT.format(entry.date)}) CW ${entry.date.weekOfYear}"
+            "This week (${entry.date.toDisplayDate()}) CW ${entry.date.weekOfYear}"
         }
 }
