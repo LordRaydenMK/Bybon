@@ -97,10 +97,8 @@ class WorkoutOverviewViewModelTest {
                         },
                     )
                 },
-                state = WorkoutState.Completed(
-                    startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-                    duration = Duration.ZERO,
-                ),
+                startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+                state = WorkoutState.Completed(Duration.ZERO),
             )
         }
         val repository = FakeWorkoutsRepository(

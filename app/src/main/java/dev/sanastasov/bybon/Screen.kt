@@ -2,6 +2,7 @@ package dev.sanastasov.bybon
 
 import androidx.navigation3.runtime.NavKey
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -28,6 +29,6 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data class WorkoutSummary(
-        val sessionKey: String,
+        val sessionId: WorkoutSessionId,
     ) : Screen
 }

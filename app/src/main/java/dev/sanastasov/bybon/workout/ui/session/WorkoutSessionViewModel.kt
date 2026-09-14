@@ -48,7 +48,7 @@ class WorkoutSessionViewModel(
                 val plan = repository.workoutPlans().first().first { it.id == planId }
                 val previousSession = sessions
                     .filter { it.planId == planId && it.state is WorkoutState.Completed }
-                    .maxByOrNull { (it.state as WorkoutState.Completed).startedAt }
+                    .maxByOrNull { it.startedAt }
                 repository.updateWorkout(plan.toWorkoutSession(previousSession))
             }
         }

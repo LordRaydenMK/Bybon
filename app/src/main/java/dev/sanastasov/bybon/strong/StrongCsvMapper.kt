@@ -136,10 +136,8 @@ private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession = 
     planName = plan.name,
     planDescription = workoutNotes ?: plan.description,
     exercises = exercises,
-    state = WorkoutState.Completed(
-        startedAt = startedAt,
-        duration = duration,
-    ),
+    startedAt = startedAt,
+    state = WorkoutState.Completed(duration),
 )
 
 private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(

@@ -1,5 +1,8 @@
 package dev.sanastasov.bybon.workout.domain
 
+import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
+import kotlin.time.Duration
 import org.junit.Test
 
 class WorkoutSessionTest {
@@ -114,10 +117,8 @@ class WorkoutSessionTest {
                         },
                     )
                 },
-                state = WorkoutState.Completed(
-                    startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
-                    duration = kotlin.time.Duration.ZERO,
-                ),
+                state = WorkoutState.Completed(kotlin.time.Duration.ZERO),
+                startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
             )
         }
 
@@ -173,10 +174,8 @@ class WorkoutSessionTest {
                         },
                     )
                 },
-                state = WorkoutState.Completed(
-                    startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
-                    duration = kotlin.time.Duration.ZERO,
-                ),
+                state = WorkoutState.Completed(kotlin.time.Duration.ZERO),
+                startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
             )
         }
 
@@ -233,5 +232,52 @@ class WorkoutSessionTest {
 
         assert(actual.exercises.first() == previous.exercises.first())
         assert(actual.exercises.drop(1) == increased.exercises.drop(1))
+    }
+
+    @Test
+    fun `session id is plan id plus started at for every state`() {
+        val startedAt = LocalDateTime.of(2026, 8, 13, 18, 0)
+        val notStarted = fullBodyA.toWorkoutSession(startedAt = startedAt)
+        val expectedId = WorkoutSessionId(fullBodyA.id, startedAt)
+
+        assert(notStarted.id == expectedId)
+        assert(notStarted.copy(state = WorkoutState.InProgress).id == expectedId)
+
+        val completed = notStarted.copy(
+            exercises = notStarted.exercises.map { exercise ->
+                exercise.copy(sets = exercise.sets.map { it.copy(setState = SetState.Completed) })
+            },
+            state = WorkoutState.Completed(Duration.ZERO),
+        )
+        assert(completed.id == expectedId)
+    }
+
+    @Test
+    fun `completed session cannot have incomplete sets`() {
+        val session = fullBodyA.toWorkoutSession(startedAt = LocalDateTime.of(2026, 1, 1, 12, 0))
+
+        val error = assertFailsWith<IllegalArgumentException> {
+            session.copy(state = WorkoutState.Completed(Duration.ZERO))
+        }
+        assert(error.message!!.contains("incomplete sets"))
+    }
+
+    @Test
+    fun `weight formats whole kilos one decimal and two decimal values`() {
+        assert(Weight.kilograms(50).kilograms == "50")
+        assert(Weight.kilograms(52.5f).kilograms == "52.5")
+        assert(Weight.kilograms(74.48f).kilograms == "74.48")
+    }
+
+    @Test
+    fun `estimated one RM is a Weight`() {
+        val set = ExerciseSet(
+            exercisesMap.getValue("bench-press-bb"),
+            Weight.kilograms(60),
+            8,
+            SetState.Completed,
+        )
+        assert(set.oneRm == Weight.kilograms(estimateOneRmKg(60f, 8)))
+        assert(set.oneRm!!.kilograms == "74.48")
     }
 }

@@ -5,15 +5,12 @@ import dev.sanastasov.bybon.strong.readStrongBackupSample
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
-import dev.sanastasov.bybon.workout.domain.ExerciseSet
-import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
-import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
-import dev.sanastasov.bybon.workout.domain.exercisesMap
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import java.time.LocalDate
@@ -76,7 +73,10 @@ class WorkoutHistoryViewModelTest {
         val expected = WorkoutHistoryUiState.History(
             listOf(
                 WorkoutSessionHistoryUi(
-                    key = "full-body-b-2026-08-13T18:00",
+                    id = WorkoutSessionId(
+                        WorkoutPlanId("full-body-b"),
+                        LocalDateTime.of(2026, 8, 13, 18, 0),
+                    ),
                     planName = "Full Body B",
                     date = LocalDate.of(2026, 8, 13),
                     exercises = listOf(
@@ -84,12 +84,15 @@ class WorkoutHistoryViewModelTest {
                             name = "Romanian Deadlift (RDL) (barbell)",
                             weightKg = "45",
                             reps = 12,
-                            estimatedOneRmKg = estimateOneRmKg(45f, 12),
+                            oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
                         ),
                     ),
                 ),
                 WorkoutSessionHistoryUi(
-                    key = "full-body-a-2026-08-10T18:00",
+                    id = WorkoutSessionId(
+                        WorkoutPlanId("full-body-a"),
+                        LocalDateTime.of(2026, 8, 10, 18, 0),
+                    ),
                     planName = "Full Body A",
                     date = LocalDate.of(2026, 8, 10),
                     exercises = listOf(
@@ -97,13 +100,13 @@ class WorkoutHistoryViewModelTest {
                             name = "Bench Press (barbell)",
                             weightKg = "80",
                             reps = 8,
-                            estimatedOneRmKg = estimateOneRmKg(80f, 8),
+                            oneRm = Weight.kilograms(estimateOneRmKg(80f, 8)),
                         ),
                         ExerciseTopSetUi(
                             name = "Squat (barbell)",
                             weightKg = "100",
                             reps = 5,
-                            estimatedOneRmKg = estimateOneRmKg(100f, 5),
+                            oneRm = Weight.kilograms(estimateOneRmKg(100f, 5)),
                         ),
                     ),
                 ),
@@ -128,7 +131,8 @@ class WorkoutHistoryViewModelTest {
             planName = "Full Body A",
             planDescription = null,
             exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
-            state = WorkoutState.InProgress(LocalDateTime.of(2026, 8, 14, 18, 0)),
+            startedAt = LocalDateTime.of(2026, 8, 14, 18, 0),
+            state = WorkoutState.InProgress,
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(inProgress, completed))
         val viewModel = historyViewModel(repository)
@@ -165,44 +169,7 @@ class WorkoutHistoryViewModelTest {
                 .sessions.single().exercises.single()
             assert(topSet.weightKg == "50")
             assert(topSet.reps == 5)
-            assert(topSet.estimatedOneRmKg == estimateOneRmKg(50f, 5))
-        }
-    }
-
-    @Test
-    fun `exercises without completed sets are omitted`() = runTest {
-        val bench = exercisesMap.getValue("bench-press-bb")
-        val squat = exercisesMap.getValue("squat-bb")
-        val session = completedSession(
-            planId = "full-body-a",
-            planName = "Full Body A",
-            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
-            exercises = listOf(
-                WorkoutExercise(
-                    bench,
-                    8..10,
-                    listOf(
-                        ExerciseSet(bench, Weight.kilograms(80), 8, SetState.Completed),
-                    ),
-                ),
-                WorkoutExercise(
-                    squat,
-                    8..10,
-                    listOf(
-                        ExerciseSet(squat, Weight.kilograms(100), 8, SetState.NotStated),
-                    ),
-                ),
-            ),
-        )
-        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
-        val viewModel = historyViewModel(repository)
-
-        viewModel.uiState.test {
-            skipItems(1)
-            val exercises = (awaitItem() as WorkoutHistoryUiState.History)
-                .sessions.single().exercises
-            assert(exercises.size == 1)
-            assert(exercises.single().name == "Bench Press (barbell)")
+            assert(topSet.oneRm == Weight.kilograms(estimateOneRmKg(50f, 5)))
         }
     }
 
@@ -219,7 +186,10 @@ class WorkoutHistoryViewModelTest {
         val expected = WorkoutHistoryUiState.History(
             listOf(
                 WorkoutSessionHistoryUi(
-                    key = "full-body-b-2026-08-13T18:00",
+                    id = WorkoutSessionId(
+                        WorkoutPlanId("full-body-b"),
+                        LocalDateTime.of(2026, 8, 13, 18, 0),
+                    ),
                     planName = "Full Body B",
                     date = LocalDate.of(2026, 8, 13),
                     exercises = listOf(
@@ -227,7 +197,7 @@ class WorkoutHistoryViewModelTest {
                             name = "Romanian Deadlift (RDL) (barbell)",
                             weightKg = "45",
                             reps = 12,
-                            estimatedOneRmKg = estimateOneRmKg(45f, 12),
+                            oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
                         ),
                     ),
                 ),

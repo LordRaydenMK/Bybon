@@ -1,11 +1,11 @@
 package dev.sanastasov.bybon.workout.ui.history
 
 import android.net.Uri
-import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
-import dev.sanastasov.bybon.workout.domain.completedSessionKey
 import java.time.LocalDate
 
 sealed class WorkoutHistoryUiState {
@@ -36,7 +36,7 @@ data class PlanSessionCountUi(
 )
 
 data class WorkoutSessionHistoryUi(
-    val key: String,
+    val id: WorkoutSessionId,
     val planName: String,
     val date: LocalDate,
     val exercises: List<ExerciseTopSetUi>,
@@ -46,7 +46,7 @@ data class ExerciseTopSetUi(
     val name: String,
     val weightKg: String,
     val reps: Int,
-    val estimatedOneRmKg: Float?,
+    val oneRm: Weight?,
 )
 
 sealed class WorkoutHistoryAction {
@@ -58,32 +58,32 @@ sealed class WorkoutHistoryAction {
 
 internal fun List<WorkoutSession>.toHistoryUi(): List<WorkoutSessionHistoryUi> =
     filter { it.state is WorkoutState.Completed }
-        .sortedByDescending { (it.state as WorkoutState.Completed).startedAt }
+        .sortedByDescending { it.startedAt }
         .map { it.toHistoryUi() }
 
 internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
-    val completed = state as WorkoutState.Completed
+    check(state is WorkoutState.Completed) {
+        "History UI requires a completed session, was $state"
+    }
     return WorkoutSessionHistoryUi(
-        key = checkNotNull(completedSessionKey()),
+        id = id,
         planName = planName,
-        date = completed.startedAt.toLocalDate(),
+        date = startedAt.toLocalDate(),
         exercises = exercises.mapNotNull { it.toTopSetUi() },
     )
 }
 
 private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi? {
-    val topSet = sets
-        .filter { it.setState == SetState.Completed }
-        .maxWithOrNull(
-            compareBy(
-                { it.weight.kilogramsValue },
-                { it.reps },
-            ),
-        ) ?: return null
+    val topSet = sets.maxWithOrNull(
+        compareBy(
+            { it.weight },
+            { it.reps },
+        ),
+    ) ?: return null
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
         weightKg = topSet.weight.kilograms,
         reps = topSet.reps,
-        estimatedOneRmKg = topSet.oneRm,
+        oneRm = topSet.oneRm,
     )
 }

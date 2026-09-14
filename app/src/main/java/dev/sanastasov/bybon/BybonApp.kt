@@ -72,15 +72,15 @@ fun MainModule.BybonApp() {
                 Screen.WorkoutHistory -> NavEntry(key) {
                     WorkoutHistoryScreen(
                         onNavigateBack = { backStack.removeLastOrNull() },
-                        onNavigateToSummary = { sessionKey ->
-                            backStack.add(Screen.WorkoutSummary(sessionKey))
+                        onNavigateToSummary = { sessionId ->
+                            backStack.add(Screen.WorkoutSummary(sessionId))
                         },
                     )
                 }
 
                 is Screen.WorkoutSummary -> NavEntry(key) {
                     WorkoutSummaryScreen(
-                        sessionKey = key.sessionKey,
+                        sessionId = key.sessionId,
                         onNavigateBack = { backStack.removeLastOrNull() },
                     )
                 }

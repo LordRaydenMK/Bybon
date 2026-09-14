@@ -4,17 +4,14 @@ import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
-import dev.sanastasov.bybon.workout.domain.ExerciseSet
-import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
-import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
-import dev.sanastasov.bybon.workout.domain.completedSessionKey
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
-import dev.sanastasov.bybon.workout.domain.exercisesMap
 import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -50,17 +47,17 @@ class WorkoutSummaryViewModelTest {
                     id = "rdl-bb",
                     name = "Romanian Deadlift (RDL) (barbell)",
                     sets = listOf(
-                        WorkoutSummarySetUi(1, "45", 12, estimateOneRmKg(45f, 12)),
-                        WorkoutSummarySetUi(2, "45", 11, estimateOneRmKg(45f, 11)),
+                        WorkoutSummarySetUi(1, "45", 12, oneRm(45f, 12)),
+                        WorkoutSummarySetUi(2, "45", 11, oneRm(45f, 11)),
                     ),
                 ),
                 WorkoutSummaryExerciseUi(
                     id = "incline-bench-press-db",
                     name = "Incline Bench Press (dumbbell)",
                     sets = listOf(
-                        WorkoutSummarySetUi(1, "20", 13, estimateOneRmKg(20f, 13)),
-                        WorkoutSummarySetUi(2, "20", 11, estimateOneRmKg(20f, 11)),
-                        WorkoutSummarySetUi(3, "20", 8, estimateOneRmKg(20f, 8)),
+                        WorkoutSummarySetUi(1, "20", 13, oneRm(20f, 13)),
+                        WorkoutSummarySetUi(2, "20", 11, oneRm(20f, 11)),
+                        WorkoutSummarySetUi(3, "20", 8, oneRm(20f, 8)),
                     ),
                 ),
             ),
@@ -86,11 +83,7 @@ class WorkoutSummaryViewModelTest {
             exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(other, matching))
-        val viewModel = WorkoutSummaryViewModel(
-            checkNotNull(matching.completedSessionKey()),
-            repository,
-            backgroundScope,
-        )
+        val viewModel = WorkoutSummaryViewModel(matching.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             skipItems(1)
@@ -101,149 +94,68 @@ class WorkoutSummaryViewModelTest {
     }
 
     @Test
-    fun `incomplete sets are omitted and completed set numbers are preserved`() = runTest {
-        val bench = exercisesMap.getValue("bench-press-bb")
-        val session = completedSession(
-            planId = "full-body-a",
-            planName = "Full Body A",
-            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
-            exercises = listOf(
-                WorkoutExercise(
-                    bench,
-                    8..10,
-                    listOf(
-                        ExerciseSet(bench, Weight.kilograms(80), 8, SetState.Completed),
-                        ExerciseSet(bench, Weight.kilograms(80), 7, SetState.InProgress),
-                        ExerciseSet(bench, Weight.kilograms(80), 6, SetState.NotStated),
-                    ),
-                ),
-            ),
-        )
-        val viewModel = summaryViewModel(session)
-
-        viewModel.uiState.test {
-            skipItems(1)
-            val sets = (awaitItem() as WorkoutSummaryUiState.Content)
-                .exercises.single().sets
-            assert(sets == listOf(WorkoutSummarySetUi(1, "80", 8, estimateOneRmKg(80f, 8))))
-        }
-    }
-
-    @Test
-    fun `exercises without completed sets are omitted`() = runTest {
-        val bench = exercisesMap.getValue("bench-press-bb")
-        val squat = exercisesMap.getValue("squat-bb")
-        val session = completedSession(
-            planId = "full-body-a",
-            planName = "Full Body A",
-            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
-            exercises = listOf(
-                WorkoutExercise(
-                    bench,
-                    8..10,
-                    listOf(
-                        ExerciseSet(bench, Weight.kilograms(80), 8, SetState.Completed),
-                    ),
-                ),
-                WorkoutExercise(
-                    squat,
-                    8..10,
-                    listOf(
-                        ExerciseSet(squat, Weight.kilograms(100), 8, SetState.NotStated),
-                    ),
-                ),
-            ),
-        )
-        val viewModel = summaryViewModel(session)
-
-        viewModel.uiState.test {
-            skipItems(1)
-            val exercises = (awaitItem() as WorkoutSummaryUiState.Content).exercises
-            assert(exercises.size == 1)
-            assert(exercises.single().name == "Bench Press (barbell)")
-        }
-    }
-
-    @Test
-    fun `unknown session key emits not found`() = runTest {
+    fun `unknown session id fails`() {
         val session = completedSession(
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
         )
-        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
-        val viewModel = WorkoutSummaryViewModel(
-            "missing-session",
-            repository,
-            backgroundScope,
-        )
 
-        viewModel.uiState.test {
-            assert(awaitItem() == WorkoutSummaryUiState.Loading)
-            assert(awaitItem() == WorkoutSummaryUiState.NotFound)
+        assertFailsWith<NoSuchElementException> {
+            listOf(session).requireCompletedSummary(
+                WorkoutSessionId(WorkoutPlanId("missing"), LocalDateTime.of(2026, 1, 1, 0, 0)),
+            )
         }
     }
 
     @Test
-    fun `in-progress sessions are not shown as a summary`() = runTest {
+    fun `in-progress sessions are not shown as a summary`() {
         val inProgress = WorkoutSession(
             planId = WorkoutPlanId("full-body-a"),
             planName = "Full Body A",
             planDescription = null,
             exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
-            state = WorkoutState.InProgress(LocalDateTime.of(2026, 8, 14, 18, 0)),
-        )
-        val repository = FakeWorkoutsRepository(initialSessions = listOf(inProgress))
-        val viewModel = WorkoutSummaryViewModel(
-            "full-body-a-2026-08-14T18:00",
-            repository,
-            backgroundScope,
+            startedAt = LocalDateTime.of(2026, 8, 14, 18, 0),
+            state = WorkoutState.InProgress,
         )
 
-        viewModel.uiState.test {
-            skipItems(1)
-            assert(awaitItem() == WorkoutSummaryUiState.NotFound)
+        assertFailsWith<NoSuchElementException> {
+            listOf(inProgress).requireCompletedSummary(inProgress.id)
         }
     }
 
     @Test
-    fun `ui state updates when the repository emits the session`() = runTest {
-        val repository = FakeWorkoutsRepository()
-        val session = completedSession(
+    fun `ui state updates when the repository emits a new version of the session`() = runTest {
+        val original = completedSession(
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
         )
-        val viewModel = WorkoutSummaryViewModel(
-            checkNotNull(session.completedSessionKey()),
-            repository,
-            backgroundScope,
+        val updated = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(completedExercise("rdl-bb", 50f to 10)),
         )
-        val expected = WorkoutSummaryUiState.Content(
-            title = "Full Body B",
-            exercises = listOf(
-                WorkoutSummaryExerciseUi(
-                    id = "rdl-bb",
-                    name = "Romanian Deadlift (RDL) (barbell)",
-                    sets = listOf(
-                        WorkoutSummarySetUi(1, "45", 12, estimateOneRmKg(45f, 12)),
-                    ),
-                ),
-            ),
-        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(original))
+        val viewModel = WorkoutSummaryViewModel(original.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutSummaryUiState.Loading)
-            assert(awaitItem() == WorkoutSummaryUiState.NotFound)
-            repository.emitSessions(listOf(session))
-            assert(awaitItem() == expected)
+            assert(awaitItem() is WorkoutSummaryUiState.Content)
+            repository.emitSessions(listOf(updated))
+            val content = awaitItem() as WorkoutSummaryUiState.Content
+            assert(content.exercises.single().sets.single().weightKg == "50")
+            assert(content.exercises.single().sets.single().reps == 10)
         }
     }
 
+    private fun oneRm(kg: Float, reps: Int): Weight = Weight.kilograms(estimateOneRmKg(kg, reps))
+
     private fun TestScope.summaryViewModel(session: WorkoutSession) = WorkoutSummaryViewModel(
-        checkNotNull(session.completedSessionKey()),
+        session.id,
         FakeWorkoutsRepository(initialSessions = listOf(session)),
         backgroundScope,
     )

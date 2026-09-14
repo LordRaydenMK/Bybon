@@ -106,9 +106,9 @@ private fun StrongImportResult.toSummaryUi(): ImportSummaryUi {
         .map { (planName, sessionCount) ->
             PlanSessionCountUi(planName, sessionCount)
         }
-    val dates = sessionHistory.mapNotNull { session ->
-        (session.state as? WorkoutState.Completed)?.startedAt?.toLocalDate()
-    }
+    val dates = sessionHistory
+        .filter { it.state is WorkoutState.Completed }
+        .map { it.startedAt.toLocalDate() }
     return ImportSummaryUi(
         sessionCount = sessionHistory.size,
         sessionsByPlan = sessionsByPlan,

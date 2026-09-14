@@ -29,12 +29,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
-import java.util.Locale
+import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 
 @Composable
-fun WorkoutModule.WorkoutSummaryScreen(sessionKey: String, onNavigateBack: () -> Unit) {
+fun WorkoutModule.WorkoutSummaryScreen(sessionId: WorkoutSessionId, onNavigateBack: () -> Unit) {
     val viewModel = retain {
-        WorkoutSummaryViewModel(sessionKey, workoutsRepository, it.coroutineScope)
+        WorkoutSummaryViewModel(sessionId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     WorkoutSummaryContent(uiState, onNavigateBack)
@@ -61,7 +62,6 @@ private fun WorkoutSummaryContent(
         ) {
             when (uiState) {
                 WorkoutSummaryUiState.Loading -> LoadingIndicator()
-                WorkoutSummaryUiState.NotFound -> NotFoundMessage()
                 is WorkoutSummaryUiState.Content -> SummaryList(uiState.exercises)
             }
         }
@@ -75,16 +75,6 @@ private fun LoadingIndicator() {
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator()
-    }
-}
-
-@Composable
-private fun NotFoundMessage() {
-    Box(
-        Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text("Workout not found")
     }
 }
 
@@ -126,7 +116,7 @@ private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
 
 @Composable
 private fun CompletedSetRow(set: WorkoutSummarySetUi) {
-    val oneRmLabel = set.estimatedOneRmKg?.let { "@ ${formatOneRmKg(it)} kg 1RM" }
+    val oneRmLabel = set.oneRm?.let { "@ ${it.kilograms} kg 1RM" }
     val summary = buildString {
         append("${set.number}. ${set.weightKg} kg x ${set.reps}")
         if (oneRmLabel != null) {
@@ -152,9 +142,6 @@ private fun CompletedSetRow(set: WorkoutSummarySetUi) {
     }
 }
 
-private fun formatOneRmKg(kg: Float): String =
-    "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
-
 @Preview
 @Composable
 private fun WorkoutSummaryContentPreview() {
@@ -167,17 +154,17 @@ private fun WorkoutSummaryContentPreview() {
                         id = "rdl-bb",
                         name = "Romanian Deadlift (RDL) (barbell)",
                         sets = listOf(
-                            WorkoutSummarySetUi(1, "45", 12, 63f),
-                            WorkoutSummarySetUi(2, "45", 12, 63f),
+                            WorkoutSummarySetUi(1, "45", 12, Weight.kilograms(63f)),
+                            WorkoutSummarySetUi(2, "45", 12, Weight.kilograms(63f)),
                         ),
                     ),
                     WorkoutSummaryExerciseUi(
                         id = "incline-bench-press-db",
                         name = "Incline Bench Press (dumbbell)",
                         sets = listOf(
-                            WorkoutSummarySetUi(1, "20", 13, 28.67f),
-                            WorkoutSummarySetUi(2, "20", 11, 27.33f),
-                            WorkoutSummarySetUi(3, "20", 8, 24.83f),
+                            WorkoutSummarySetUi(1, "20", 13, Weight.kilograms(28.67f)),
+                            WorkoutSummarySetUi(2, "20", 11, Weight.kilograms(27.33f)),
+                            WorkoutSummarySetUi(3, "20", 8, Weight.kilograms(24.83f)),
                         ),
                     ),
                 ),

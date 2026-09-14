@@ -1,12 +1,13 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
-import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 
 sealed class WorkoutSummaryUiState {
     data object Loading : WorkoutSummaryUiState()
-    data object NotFound : WorkoutSummaryUiState()
     data class Content(
         val title: String,
         val exercises: List<WorkoutSummaryExerciseUi>,
@@ -23,8 +24,13 @@ data class WorkoutSummarySetUi(
     val number: Int,
     val weightKg: String,
     val reps: Int,
-    val estimatedOneRmKg: Float?,
+    val oneRm: Weight?,
 )
+
+internal fun List<WorkoutSession>.requireCompletedSummary(
+    sessionId: WorkoutSessionId,
+): WorkoutSummaryUiState.Content =
+    first { it.id == sessionId && it.state is WorkoutState.Completed }.toSummaryUi()
 
 internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content =
     WorkoutSummaryUiState.Content(
@@ -33,22 +39,17 @@ internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content =
     )
 
 private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
-    val completedSets = sets.mapIndexedNotNull { index, set ->
-        if (set.setState != SetState.Completed) {
-            null
-        } else {
+    if (sets.isEmpty()) return null
+    return WorkoutSummaryExerciseUi(
+        id = id,
+        name = exerciseDefinition.name,
+        sets = sets.mapIndexed { index, set ->
             WorkoutSummarySetUi(
                 number = index + 1,
                 weightKg = set.weight.kilograms,
                 reps = set.reps,
-                estimatedOneRmKg = set.oneRm,
+                oneRm = set.oneRm,
             )
-        }
-    }
-    if (completedSets.isEmpty()) return null
-    return WorkoutSummaryExerciseUi(
-        id = id,
-        name = exerciseDefinition.name,
-        sets = completedSets,
+        },
     )
 }

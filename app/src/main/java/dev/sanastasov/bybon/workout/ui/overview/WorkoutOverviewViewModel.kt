@@ -47,7 +47,7 @@ class WorkoutOverviewViewModel(
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
             val previousSession = sessions
                 .filter { it.planId == planId && it.state is WorkoutState.Completed }
-                .maxByOrNull { (it.state as WorkoutState.Completed).startedAt }
+                .maxByOrNull { it.startedAt }
             plan.toOverviewSession(previousSession)
         }
             .distinctUntilChanged()
