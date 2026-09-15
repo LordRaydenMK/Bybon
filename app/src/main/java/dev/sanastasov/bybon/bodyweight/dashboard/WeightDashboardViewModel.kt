@@ -72,8 +72,12 @@ class WeightDashboardViewModel(
             WeeklyTrendPointUi(
                 weekLabel = point.weekOfYear.toString(),
                 weekIndex = ChronoUnit.WEEKS.between(firstWeekStart, point.weekStart).toInt(),
-                kilograms = point.averageWeight.kilograms,
+                kilograms = point.averageWeight?.kilograms,
                 isLastSevenDaysFallback = point.isLastSevenDaysFallback,
+                projectedKilograms = point.projectedWeight?.kilograms,
+                maintainLowKilograms = point.maintainLow?.kilograms,
+                maintainHighKilograms = point.maintainHigh?.kilograms,
+                isFuture = point.isFuture,
             )
         }
     }
