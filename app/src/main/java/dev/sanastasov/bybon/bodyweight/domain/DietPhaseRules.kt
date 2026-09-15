@@ -31,18 +31,16 @@ fun effectiveDietPhase(
     }
 }
 
-fun DietPhase.isOnTrack(
-    currentAverage: BodyWeight,
-    lastKnownWeekAverage: BodyWeight?,
-): Boolean? = when (this) {
-    is DietPhase.Maintain -> {
-        currentAverage.minusToDelta(targetWeight).absolute() <= WeightDelta.WaterNoise
-    }
+fun DietPhase.isOnTrack(currentAverage: BodyWeight, lastKnownWeekAverage: BodyWeight?): Boolean? =
+    when (this) {
+        is DietPhase.Maintain -> {
+            currentAverage.minusToDelta(targetWeight).absolute() <= WeightDelta.WaterNoise
+        }
 
-    is DietPhase.Gain, is DietPhase.Lose -> lastKnownWeekAverage?.let { lastKnown ->
-        currentAverage.minusToDelta(lastKnown) in onTrackDeltaRange()
+        is DietPhase.Gain, is DietPhase.Lose -> lastKnownWeekAverage?.let { lastKnown ->
+            currentAverage.minusToDelta(lastKnown) in onTrackDeltaRange()
+        }
     }
-}
 
 fun DietPhase.onTrackDeltaRange(): ClosedRange<WeightDelta> {
     val planned = plannedRatePerWeek()
