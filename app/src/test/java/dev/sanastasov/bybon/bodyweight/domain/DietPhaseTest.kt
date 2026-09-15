@@ -83,8 +83,7 @@ class DietPhaseTest {
 
     @Test
     fun `expired gain becomes maintain at last official average`() {
-        val phase = DietPhase(
-            DietPhaseKind.Gain,
+        val phase = DietPhase.Gain(
             start,
             startWeight,
             BodyWeight.parseFromString("67.0"),
@@ -95,27 +94,25 @@ class DietPhaseTest {
         val effective = effectiveDietPhase(record, start.plusWeeks(4), lastOfficial)
         assert(effective is EffectiveDietPhase.On)
         val on = effective as EffectiveDietPhase.On
-        assert(on.phase.kind == DietPhaseKind.Maintain)
+        assert(on.phase is DietPhase.Maintain)
         assert(on.phase.targetWeight == lastOfficial)
     }
 
     @Test
     fun `active gain stays gain`() {
-        val phase = DietPhase(
-            DietPhaseKind.Gain,
+        val phase = DietPhase.Gain(
             start,
             startWeight,
             BodyWeight.parseFromString("67.0"),
             12,
         )
         val effective = effectiveDietPhase(DietPhaseRecord(1, phase), today, startWeight)
-        assert((effective as EffectiveDietPhase.On).phase.kind == DietPhaseKind.Gain)
+        assert((effective as EffectiveDietPhase.On).phase is DietPhase.Gain)
     }
 
     @Test
     fun `gain on-track range uses 500g water floor`() {
-        val phase = DietPhase(
-            DietPhaseKind.Gain,
+        val phase = DietPhase.Gain(
             start,
             startWeight,
             BodyWeight.parseFromString("67.0"),
@@ -130,8 +127,7 @@ class DietPhaseTest {
     fun `max gain on-track at 120kg uses 0_5 percent cap`() {
         val heavyStart = BodyWeight.parseFromString("120.0")
         val cap = heavyStart.percentOf(MAX_GAIN_PERCENT_PER_WEEK)
-        val phase = DietPhase(
-            DietPhaseKind.Gain,
+        val phase = DietPhase.Gain(
             start,
             heavyStart,
             BodyWeight(heavyStart.value + cap.value * 8),
@@ -143,8 +139,7 @@ class DietPhaseTest {
 
     @Test
     fun `losing during a gain is off track`() {
-        val phase = DietPhase(
-            DietPhaseKind.Gain,
+        val phase = DietPhase.Gain(
             start,
             startWeight,
             BodyWeight.parseFromString("67.0"),
@@ -157,15 +152,14 @@ class DietPhaseTest {
 
     @Test
     fun `maintain is on track within 0_5 kg of target`() {
-        val phase = DietPhase(DietPhaseKind.Maintain, start, startWeight, startWeight)
+        val phase = DietPhase.Maintain(start, startWeight, startWeight)
         assert(isOnTrack(phase, BodyWeight.parseFromString("65.4"), null) == true)
         assert(isOnTrack(phase, BodyWeight.parseFromString("65.6"), null) == false)
     }
 
     @Test
     fun `projects linearly from start to target`() {
-        val phase = DietPhase(
-            DietPhaseKind.Gain,
+        val phase = DietPhase.Gain(
             start,
             startWeight,
             BodyWeight.parseFromString("67.4"),

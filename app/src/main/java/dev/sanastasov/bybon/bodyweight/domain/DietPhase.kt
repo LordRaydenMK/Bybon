@@ -19,13 +19,31 @@ enum class DietPhaseKind {
     Lose,
 }
 
-data class DietPhase(
-    val kind: DietPhaseKind,
-    val startDate: LocalDate,
-    val startWeight: BodyWeight,
-    val targetWeight: BodyWeight,
-    val durationWeeks: Int? = null,
-)
+sealed class DietPhase {
+    abstract val startDate: LocalDate
+    abstract val startWeight: BodyWeight
+    abstract val targetWeight: BodyWeight
+
+    data class Maintain(
+        override val startDate: LocalDate,
+        override val startWeight: BodyWeight,
+        override val targetWeight: BodyWeight,
+    ) : DietPhase()
+
+    data class Gain(
+        override val startDate: LocalDate,
+        override val startWeight: BodyWeight,
+        override val targetWeight: BodyWeight,
+        val durationWeeks: Int,
+    ) : DietPhase()
+
+    data class Lose(
+        override val startDate: LocalDate,
+        override val startWeight: BodyWeight,
+        override val targetWeight: BodyWeight,
+        val durationWeeks: Int,
+    ) : DietPhase()
+}
 
 data class DietPhaseRecord(
     val id: Long,
@@ -56,30 +74,46 @@ sealed interface DietPhaseValidation {
     ) : DietPhaseValidation
 }
 
-fun DietPhase.endExclusive(): LocalDate? = durationWeeks?.let { startDate.plusWeeks(it.toLong()) }
+val DietPhase.kind: DietPhaseKind
+    get() = when (this) {
+        is DietPhase.Maintain -> DietPhaseKind.Maintain
+        is DietPhase.Gain -> DietPhaseKind.Gain
+        is DietPhase.Lose -> DietPhaseKind.Lose
+    }
 
-fun DietPhase.isExpired(today: LocalDate): Boolean {
-    val end = endExclusive() ?: return false
-    return !today.isBefore(end)
+val DietPhase.durationWeeksOrNull: Int?
+    get() = when (this) {
+        is DietPhase.Maintain -> null
+        is DietPhase.Gain -> durationWeeks
+        is DietPhase.Lose -> durationWeeks
+    }
+
+fun DietPhase.endExclusive(): LocalDate? = when (this) {
+    is DietPhase.Maintain -> null
+    is DietPhase.Gain -> startDate.plusWeeks(durationWeeks.toLong())
+    is DietPhase.Lose -> startDate.plusWeeks(durationWeeks.toLong())
 }
 
+fun DietPhase.isExpired(today: LocalDate): Boolean =
+    endExclusive()?.let { end -> !today.isBefore(end) } == true
+
 fun DietPhase.plannedRatePerWeek(): WeightDelta {
-    val weeks = durationWeeks ?: return WeightDelta.Zero
+    val weeks = durationWeeksOrNull ?: return WeightDelta.Zero
     val raw = (targetWeight.value - startWeight.value).toFloat() / weeks
     val roundedTo5 = (raw / 5f).roundToInt() * 5
     return WeightDelta(roundedTo5)
 }
 
 fun DietPhase.weeksRemaining(today: LocalDate): Int {
-    val duration = durationWeeks ?: return 0
+    val duration = durationWeeksOrNull ?: return 0
     val elapsed = ChronoUnit.WEEKS.between(startDate, today.isoWeekStart()).toInt()
     return (duration - elapsed).coerceAtLeast(0)
 }
 
-fun maxWeeklyRate(kind: DietPhaseKind, startWeight: BodyWeight): WeightDelta = when (kind) {
-    DietPhaseKind.Gain -> startWeight.percentOf(MAX_GAIN_PERCENT_PER_WEEK)
-    DietPhaseKind.Lose -> startWeight.percentOf(MAX_LOSE_PERCENT_PER_WEEK)
-    DietPhaseKind.Maintain -> WeightDelta.WaterNoise
+fun DietPhase.maxWeeklyRate(): WeightDelta = when (this) {
+    is DietPhase.Maintain -> WeightDelta.WaterNoise
+    is DietPhase.Gain -> startWeight.percentOf(MAX_GAIN_PERCENT_PER_WEEK)
+    is DietPhase.Lose -> startWeight.percentOf(MAX_LOSE_PERCENT_PER_WEEK)
 }
 
 internal operator fun BodyWeight.compareTo(other: BodyWeight): Int = value.compareTo(other.value)

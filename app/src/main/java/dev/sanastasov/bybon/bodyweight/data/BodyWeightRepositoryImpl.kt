@@ -6,14 +6,14 @@ import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhase
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
-import java.time.LocalDate
+import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
+import dev.sanastasov.bybon.bodyweight.domain.kind
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class BodyWeightRepositoryImpl(
     private val weightEntryDao: WeightDao,
     private val dietPhaseDao: DietPhaseDao,
-    private val today: () -> LocalDate = { LocalDate.now() },
 ) : BodyWeightRepository {
 
     override fun entries(): Flow<List<BodyWeightEntry>> = weightEntryDao.weightEntries()
@@ -29,37 +29,47 @@ class BodyWeightRepositoryImpl(
         weightEntryDao.deleteEntry(dto)
     }
 
-    override fun openPhase(): Flow<DietPhaseRecord?> = dietPhaseDao.openPhase().map { entity ->
-        entity?.toRecord()
+    override fun phases(): Flow<List<DietPhaseRecord>> = dietPhaseDao.phases().map { entities ->
+        entities.map { it.toRecord() }
     }
 
-    override suspend fun apply(phase: DietPhase) {
-        dietPhaseDao.endOpenPhases(today())
-        dietPhaseDao.insert(phase.toEntity())
-    }
-
-    override suspend fun clear() {
-        dietPhaseDao.endOpenPhases(today())
+    override suspend fun updatePhase(record: DietPhaseRecord) {
+        dietPhaseDao.upsert(record.toEntity())
     }
 }
 
-private fun DietPhase.toEntity(): DietPhaseEntity = DietPhaseEntity(
-    kind = kind.name,
-    startDate = startDate,
-    startWeight = startWeight.value,
-    targetWeight = targetWeight.value,
-    durationWeeks = durationWeeks,
-    endedAt = null,
+private fun DietPhaseRecord.toEntity(): DietPhaseEntity = DietPhaseEntity(
+    id = id,
+    kind = phase.kind.name,
+    startDate = phase.startDate,
+    startWeight = phase.startWeight.value,
+    targetWeight = phase.targetWeight.value,
+    durationWeeks = phase.durationWeeksOrNull,
+    endedAt = endedAt,
 )
 
 private fun DietPhaseEntity.toRecord(): DietPhaseRecord = DietPhaseRecord(
     id = id,
-    phase = DietPhase(
-        kind = DietPhaseKind.valueOf(kind),
-        startDate = startDate,
-        startWeight = BodyWeight(startWeight),
-        targetWeight = BodyWeight(targetWeight),
-        durationWeeks = durationWeeks,
-    ),
+    phase = when (DietPhaseKind.valueOf(kind)) {
+        DietPhaseKind.Maintain -> DietPhase.Maintain(
+            startDate,
+            BodyWeight(startWeight),
+            BodyWeight(targetWeight),
+        )
+
+        DietPhaseKind.Gain -> DietPhase.Gain(
+            startDate,
+            BodyWeight(startWeight),
+            BodyWeight(targetWeight),
+            checkNotNull(durationWeeks),
+        )
+
+        DietPhaseKind.Lose -> DietPhase.Lose(
+            startDate,
+            BodyWeight(startWeight),
+            BodyWeight(targetWeight),
+            checkNotNull(durationWeeks),
+        )
+    },
     endedAt = endedAt,
 )

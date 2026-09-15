@@ -3,9 +3,12 @@ package dev.sanastasov.bybon.bodyweight.phase
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
+import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseValidation
 import dev.sanastasov.bybon.bodyweight.domain.EffectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
+import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
+import dev.sanastasov.bybon.bodyweight.domain.kind
 import dev.sanastasov.bybon.bodyweight.domain.validateDietPhase
 import dev.sanastasov.bybon.domain.isoWeekStart
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
@@ -71,7 +74,7 @@ class DietPhaseViewModel(
             is EffectiveDietPhase.On -> {
                 val phase = effective.phase
                 selectedKind.value = phase.kind
-                weeks.value = phase.durationWeeks?.toString().orEmpty()
+                weeks.value = phase.durationWeeksOrNull?.toString().orEmpty()
                 targetKg.value = phase.targetWeight.kilograms.toString()
             }
 
@@ -90,10 +93,11 @@ class DietPhaseViewModel(
         coroutineScope.launch {
             when (validation) {
                 is DietPhaseValidation.Valid -> {
-                    if (validation.phase == null) {
-                        repository.clear()
-                    } else {
-                        repository.apply(validation.phase)
+                    repository.openPhase().first()?.let { open ->
+                        repository.endPhase(open, today)
+                    }
+                    validation.phase?.let { phase ->
+                        repository.updatePhase(DietPhaseRecord(0, phase))
                     }
                     _effects.send(DietPhaseEditorEffect.NavigateBack)
                 }

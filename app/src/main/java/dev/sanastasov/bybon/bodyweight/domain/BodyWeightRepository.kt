@@ -1,7 +1,9 @@
 package dev.sanastasov.bybon.bodyweight.domain
 
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 interface BodyWeightRepository {
 
@@ -11,9 +13,14 @@ interface BodyWeightRepository {
 
     suspend fun deleteEntry(entry: BodyWeightEntry)
 
-    fun openPhase(): Flow<DietPhaseRecord?>
+    fun phases(): Flow<List<DietPhaseRecord>>
 
-    suspend fun apply(phase: DietPhase)
+    suspend fun updatePhase(record: DietPhaseRecord)
 
-    suspend fun clear()
+    fun openPhase(): Flow<DietPhaseRecord?> =
+        phases().map { records -> records.firstOrNull { it.endedAt == null } }
+
+    suspend fun endPhase(record: DietPhaseRecord, endedAt: LocalDate) {
+        updatePhase(record.copy(endedAt = endedAt))
+    }
 }

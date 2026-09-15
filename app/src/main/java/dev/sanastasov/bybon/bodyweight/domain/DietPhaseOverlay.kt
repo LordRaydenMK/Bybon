@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 fun projectedWeightOn(phase: DietPhase, weekStart: LocalDate): BodyWeight {
-    val duration = phase.durationWeeks ?: return phase.targetWeight
+    val duration = phase.durationWeeksOrNull ?: return phase.targetWeight
     val elapsed = ChronoUnit.WEEKS.between(phase.startDate, weekStart).toInt()
     return when {
         elapsed <= 0 -> phase.startWeight
@@ -29,17 +29,16 @@ fun WeeklyTrendPoint.withOverlay(phase: DietPhase): WeeklyTrendPoint {
     val low = phase.targetWeight - WeightDelta.WaterNoise
     val high = phase.targetWeight + WeightDelta.WaterNoise
     val end = phase.endExclusive()
-    return when (phase.kind) {
-        DietPhaseKind.Maintain -> copy(maintainLow = low, maintainHigh = high)
+    return when (phase) {
+        is DietPhase.Maintain -> copy(maintainLow = low, maintainHigh = high)
 
-        DietPhaseKind.Gain, DietPhaseKind.Lose -> {
-            if (end != null && !weekStart.isBefore(end)) {
-                copy(maintainLow = low, maintainHigh = high)
-            } else if (!weekStart.isBefore(phase.startDate)) {
+        is DietPhase.Gain, is DietPhase.Lose -> when {
+            end != null && !weekStart.isBefore(end) -> copy(maintainLow = low, maintainHigh = high)
+
+            !weekStart.isBefore(phase.startDate) ->
                 copy(projectedWeight = projectedWeightOn(phase, weekStart))
-            } else {
-                this
-            }
+
+            else -> this
         }
     }
 }

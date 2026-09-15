@@ -205,8 +205,7 @@ class BodyWeightUseCaseTest {
         val startWeight = BodyWeight.parseFromString("65.0")
         val entries = officialWeek(weekStart, "65.0") +
             officialWeek(weekStart.minusWeeks(1), "64.8")
-        val phase = DietPhase(
-            DietPhaseKind.Maintain,
+        val phase = DietPhase.Maintain(
             weekStart,
             startWeight,
             startWeight,
@@ -237,7 +236,7 @@ class BodyWeightUseCaseTest {
             officialWeek(weekStart, "65.0") + officialWeek(weekStart.minusWeeks(1), "64.8"),
             DietPhaseRecord(
                 1,
-                DietPhase(DietPhaseKind.Maintain, weekStart, startWeight, startWeight),
+                DietPhase.Maintain(weekStart, startWeight, startWeight),
             ),
         )
 
@@ -249,7 +248,7 @@ class BodyWeightUseCaseTest {
     }
 
     private fun BodyWeightDashboard.dietPhaseIsMaintain(): Boolean =
-        (effectivePhase as? EffectiveDietPhase.On)?.phase?.kind == DietPhaseKind.Maintain
+        (effectivePhase as? EffectiveDietPhase.On)?.phase is DietPhase.Maintain
 
     private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =
         listOf(

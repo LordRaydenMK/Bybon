@@ -4,7 +4,6 @@ import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhase
-import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -139,7 +138,7 @@ class WeightDashboardViewModelTest {
                 officialWeek(weekStart.minusWeeks(1), "66.0"),
             DietPhaseRecord(
                 1,
-                DietPhase(DietPhaseKind.Maintain, weekStart, startWeight, startWeight),
+                DietPhase.Maintain(weekStart, startWeight, startWeight),
             ),
         )
         val viewModel = WeightDashboardViewModel(

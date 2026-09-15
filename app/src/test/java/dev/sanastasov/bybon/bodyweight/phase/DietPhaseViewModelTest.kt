@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.bodyweight.phase
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.DietPhase
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -55,7 +56,7 @@ class DietPhaseViewModelTest {
         viewModel.effects.first { it == DietPhaseEditorEffect.NavigateBack }
 
         val open = repository.openPhase().first()
-        assert(open?.phase?.kind == DietPhaseKind.Maintain)
+        assert(open?.phase is DietPhase.Maintain)
         assert(open?.phase?.targetWeight == BodyWeight.parseFromString("65.0"))
     }
 

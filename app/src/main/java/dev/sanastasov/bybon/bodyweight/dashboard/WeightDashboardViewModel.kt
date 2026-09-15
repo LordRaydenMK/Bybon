@@ -4,10 +4,11 @@ import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhase
-import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.bodyweight.domain.EffectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.WeeklyTrendPoint
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
+import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
+import dev.sanastasov.bybon.bodyweight.domain.kind
 import dev.sanastasov.bybon.bodyweight.domain.plannedRatePerWeek
 import dev.sanastasov.bybon.bodyweight.domain.weeksRemaining
 import dev.sanastasov.bybon.domain.weekOfYear
@@ -111,9 +112,9 @@ class WeightDashboardViewModel(
 private fun DietPhase.toSummaryUi(today: LocalDate): DietPhaseSummaryUi {
     val details = buildList {
         add("Target ${targetWeight.kilograms} kg")
-        if (kind != DietPhaseKind.Maintain) {
+        if (this@toSummaryUi !is DietPhase.Maintain) {
             add(plannedRatePerWeek().formatRate(startWeight))
-            add("${weeksRemaining(today)} of $durationWeeks weeks left")
+            add("${weeksRemaining(today)} of $durationWeeksOrNull weeks left")
         }
     }
     return DietPhaseSummaryUi(kind.name, details, "Edit")
