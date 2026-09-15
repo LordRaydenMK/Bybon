@@ -33,6 +33,8 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.components.NumberInputField
+import dev.sanastasov.bybon.ui.components.NumberInputRepsMinWidth
+import dev.sanastasov.bybon.ui.components.NumberInputWeightMinWidth
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
@@ -44,8 +46,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
-import dev.sanastasov.bybon.workout.ui.RestTimerRow
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
+import dev.sanastasov.bybon.workout.ui.SetPreviousAndRestRow
 import dev.sanastasov.bybon.workout.ui.oneRmLabel
 import dev.sanastasov.bybon.workout.ui.overviewContentDescription
 import dev.sanastasov.bybon.workout.ui.previousLabel
@@ -141,11 +143,9 @@ private fun OverviewExerciseCard(
         Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Spacer(Modifier.height(8.dp))
         OverviewExerciseHeader(exercise, onAction)
-        Spacer(Modifier.height(4.dp))
         OverviewWarmupSets(exercise, onAction)
         OverviewWorkSets(exercise, onAction)
         OverviewExerciseSetActions(exercise, onAction)
@@ -187,8 +187,8 @@ private fun OverviewWorkSets(
             } else {
                 null
             },
+            rest = exercise.restAfterWorkSet,
         )
-        RestTimerRow(exercise.restAfterWorkSet)
     }
 }
 
@@ -244,35 +244,31 @@ private fun OverviewSetRow(
     numbered: NumberedSet,
     onAction: (WorkoutOverviewAction) -> Unit,
     onBadgeClick: (() -> Unit)?,
+    rest: Duration? = null,
 ) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .semantics(mergeDescendants = true) {
-                contentDescription = numbered.overviewContentDescription
-            },
-    ) {
-        Row(
+    Column(Modifier.fillMaxWidth()) {
+        Box(
             Modifier
-                .defaultMinSize(minHeight = 48.dp)
                 .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .semantics(mergeDescendants = true) {
+                    contentDescription = numbered.overviewContentDescription
+                },
         ) {
-            Column(
-                Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+            Row(
+                Modifier
+                    .defaultMinSize(minHeight = 40.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 OverviewSetInputs(exercise, numbered, onAction, onBadgeClick)
-                numbered.previousLabel?.let { previousLabel ->
-                    Text(
-                        previousLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
         }
+        SetPreviousAndRestRow(
+            numbered.previousLabel,
+            rest,
+            Modifier.padding(horizontal = 8.dp),
+        )
     }
 }
 
@@ -298,6 +294,7 @@ private fun OverviewSetInputs(
         NumberInputField(
             key = "${exercise.id}-$slot$index-weight",
             initialText = set.weight.kilograms,
+            minWidth = NumberInputWeightMinWidth,
         ) { weight ->
             onAction(
                 WorkoutOverviewAction.OnWeightUpdated(
@@ -312,6 +309,7 @@ private fun OverviewSetInputs(
         NumberInputField(
             key = "${exercise.id}-$slot$index-reps",
             initialText = set.reps.toString(),
+            minWidth = NumberInputRepsMinWidth,
         ) { reps ->
             onAction(
                 WorkoutOverviewAction.OnRepsUpdated(

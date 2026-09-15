@@ -2,7 +2,7 @@ package dev.sanastasov.bybon.workout.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -10,8 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.ui.icons.Clock
 import dev.sanastasov.bybon.workout.domain.formatRestClock
@@ -21,11 +23,9 @@ import kotlin.time.Duration
 fun RestTimerRow(duration: Duration, modifier: Modifier = Modifier) {
     val formatted = duration.formatRestClock()
     Row(
-        modifier
-            .padding(horizontal = 8.dp, vertical = 2.dp)
-            .semantics(mergeDescendants = true) {
-                contentDescription = "Rest $formatted"
-            },
+        modifier.semantics(mergeDescendants = true) {
+            contentDescription = "Rest $formatted"
+        },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -40,5 +40,31 @@ fun RestTimerRow(duration: Duration, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+@Composable
+fun SetPreviousAndRestRow(previousLabel: String?, rest: Duration?, modifier: Modifier = Modifier) {
+    if (previousLabel == null && rest == null) return
+    Row(
+        modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (previousLabel != null) {
+            Text(
+                previousLabel,
+                Modifier
+                    .weight(1f)
+                    .clearAndSetSemantics { },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        if (rest != null) {
+            RestTimerRow(rest)
+        }
     }
 }
