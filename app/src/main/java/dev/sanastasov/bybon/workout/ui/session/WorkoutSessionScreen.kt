@@ -12,17 +12,14 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -34,13 +31,14 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.canUncompleteSet
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
-import dev.sanastasov.bybon.workout.domain.inProgressExerciseIndex
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
 import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import java.time.LocalDateTime
 import kotlin.time.Duration
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -52,12 +50,29 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
         SessionScreenContent(
             it,
             viewModel::onAction,
+            viewModel.effects,
         )
     }
 }
 
 @Composable
-private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
+private fun SessionScreenContent(
+    state: WorkoutSession,
+    onAction: (WorkoutSessionAction) -> Unit,
+    effects: Flow<WorkoutSessionEffect> = emptyFlow(),
+) {
+    val pagerState = rememberPagerState(0) {
+        state.exercises.size
+    }
+    effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            is WorkoutSessionEffect.ShowExercise -> {
+                if (effect.index in 0 until pagerState.pageCount) {
+                    pagerState.animateScrollToPage(effect.index)
+                }
+            }
+        }
+    }
     Scaffold(
         topBar = { BybonTopAppBar(state.planName, {}) },
     ) { contentPadding ->
@@ -70,21 +85,6 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
             state.planDescription?.let {
                 Text(it)
                 Spacer(Modifier.height(8.dp))
-            }
-            val pagerState = rememberPagerState(0) {
-                state.exercises.size
-            }
-            val inProgressExerciseIndex = state.inProgressExerciseIndex()
-            var previousInProgressExercise by remember {
-                mutableIntStateOf(inProgressExerciseIndex)
-            }
-            LaunchedEffect(inProgressExerciseIndex) {
-                if (inProgressExerciseIndex > previousInProgressExercise &&
-                    inProgressExerciseIndex < pagerState.pageCount
-                ) {
-                    pagerState.animateScrollToPage(inProgressExerciseIndex)
-                }
-                previousInProgressExercise = inProgressExerciseIndex
             }
             HorizontalPager(
                 pagerState,
