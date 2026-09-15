@@ -12,7 +12,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +34,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.canUncompleteSet
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.inProgressExerciseIndex
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
 import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
@@ -68,6 +73,16 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
             }
             val pagerState = rememberPagerState(0) {
                 state.exercises.size
+            }
+            val inProgressExerciseIndex = state.inProgressExerciseIndex()
+            var previousInProgressExercise by remember {
+                mutableIntStateOf(inProgressExerciseIndex)
+            }
+            LaunchedEffect(inProgressExerciseIndex) {
+                if (inProgressExerciseIndex > previousInProgressExercise) {
+                    pagerState.animateScrollToPage(inProgressExerciseIndex)
+                }
+                previousInProgressExercise = inProgressExerciseIndex
             }
             HorizontalPager(
                 pagerState,
