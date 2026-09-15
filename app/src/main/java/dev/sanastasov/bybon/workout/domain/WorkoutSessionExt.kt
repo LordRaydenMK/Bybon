@@ -13,6 +13,18 @@ fun WorkoutSession.updateExercise(
     },
 )
 
+internal fun WorkoutSession.clearInProgressSets(): WorkoutSession = copy(
+    exercises = exercises.map { exercise ->
+        exercise.copy(
+            warmupSets = exercise.warmupSets?.map { it.notStartedIfInProgress() },
+            sets = exercise.sets.map { it.notStartedIfInProgress() },
+        )
+    },
+)
+
+private fun ExerciseSet.notStartedIfInProgress(): ExerciseSet =
+    if (setState == SetState.InProgress) copy(setState = SetState.NotStated) else this
+
 fun WorkoutSession.updateExerciseSet(
     exercise: WorkoutExercise,
     setIndex: Int,
