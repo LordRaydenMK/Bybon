@@ -79,7 +79,9 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
                 mutableIntStateOf(inProgressExerciseIndex)
             }
             LaunchedEffect(inProgressExerciseIndex) {
-                if (inProgressExerciseIndex > previousInProgressExercise) {
+                if (inProgressExerciseIndex > previousInProgressExercise &&
+                    inProgressExerciseIndex < pagerState.pageCount
+                ) {
                     pagerState.animateScrollToPage(inProgressExerciseIndex)
                 }
                 previousInProgressExercise = inProgressExerciseIndex

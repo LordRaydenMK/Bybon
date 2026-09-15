@@ -78,8 +78,10 @@ appId: dev.sanastasov.bybon.debug
 - tapOn:
     text: "Set 3 in progress, 50 kg by 8, @ 62.07 kg 1RM. Double tap to mark complete."
     point: "90%, 50%"
+- extendedWaitUntil:
+    visible: "Exercise 2 / 6"
+    timeout: 5000
 - assertVisible: "3 x Squat (barbell) in 8 - 10"
-- assertVisible: "Exercise 2 / 6"
 - assertVisible: "Warmup set in progress, 20 kg by 8. Double tap to mark complete."
 - assertVisible: "Set 1, 50 kg by 8, @ 62.07 kg 1RM"
 - back
