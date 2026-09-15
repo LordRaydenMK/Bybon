@@ -9,44 +9,44 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
-fun projectedWeightOn(phase: DietPhase, weekStart: LocalDate): BodyWeight {
-    val duration = phase.durationWeeksOrNull ?: return phase.targetWeight
-    val elapsed = ChronoUnit.WEEKS.between(phase.startDate, weekStart).toInt()
+fun DietPhase.projectedWeightOn(weekStart: LocalDate): BodyWeight {
+    val duration = durationWeeksOrNull ?: return targetWeight
+    val elapsed = ChronoUnit.WEEKS.between(startDate, weekStart).toInt()
     return when {
-        elapsed <= 0 -> phase.startWeight
+        elapsed <= 0 -> startWeight
 
-        elapsed >= duration -> phase.targetWeight
+        elapsed >= duration -> targetWeight
 
         else -> {
-            val raw = phase.startWeight.value +
-                (phase.targetWeight.value - phase.startWeight.value) * elapsed / duration.toFloat()
+            val raw = startWeight.value +
+                (targetWeight.value - startWeight.value) * elapsed / duration.toFloat()
             BodyWeight((raw / 5f).roundToInt() * 5)
         }
     }
 }
 
-fun WeeklyTrendPoint.withOverlay(phase: DietPhase): WeeklyTrendPoint {
-    val low = phase.targetWeight - WeightDelta.WaterNoise
-    val high = phase.targetWeight + WeightDelta.WaterNoise
-    val end = phase.endExclusive()
-    return when (phase) {
-        is DietPhase.Maintain -> copy(maintainLow = low, maintainHigh = high)
+fun DietPhase.overlayOn(point: WeeklyTrendPoint): WeeklyTrendPoint {
+    val low = targetWeight - WeightDelta.WaterNoise
+    val high = targetWeight + WeightDelta.WaterNoise
+    val end = endExclusive()
+    return when (this) {
+        is DietPhase.Maintain -> point.copy(maintainLow = low, maintainHigh = high)
 
         is DietPhase.Gain, is DietPhase.Lose -> when {
-            end != null && !weekStart.isBefore(end) -> copy(maintainLow = low, maintainHigh = high)
+            end != null && !point.weekStart.isBefore(end) ->
+                point.copy(maintainLow = low, maintainHigh = high)
 
-            !weekStart.isBefore(phase.startDate) ->
-                copy(projectedWeight = projectedWeightOn(phase, weekStart))
+            !point.weekStart.isBefore(startDate) ->
+                point.copy(projectedWeight = projectedWeightOn(point.weekStart))
 
-            else -> this
+            else -> point
         }
     }
 }
 
-fun extendTrendForPhase(
+fun DietPhase.extendTrend(
     trend: List<WeeklyTrendPoint>,
     currentWeekStart: LocalDate,
-    phase: DietPhase,
 ): List<WeeklyTrendPoint> {
     val lastStart = trend.maxOfOrNull { it.weekStart } ?: currentWeekStart
     val future = (1..CHART_FUTURE_WEEKS).mapNotNull { weeksAhead ->
@@ -58,5 +58,5 @@ fun extendTrendForPhase(
             isFuture = true,
         )
     }
-    return (trend + future).map { it.withOverlay(phase) }
+    return (trend + future).map(::overlayOn)
 }

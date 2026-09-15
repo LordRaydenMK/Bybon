@@ -89,18 +89,16 @@ internal fun computeBodyWeightDashboard(
     val weeklyTrend = when (effectivePhase) {
         EffectiveDietPhase.Off -> baseTrend
 
-        is EffectiveDietPhase.On -> extendTrendForPhase(
+        is EffectiveDietPhase.On -> effectivePhase.phase.extendTrend(
             baseTrend,
             currentWeekStart,
-            effectivePhase.phase,
         )
     }
 
     val onTrack = when {
         currentAverage == null -> null
 
-        effectivePhase is EffectiveDietPhase.On -> isOnTrack(
-            effectivePhase.phase,
+        effectivePhase is EffectiveDietPhase.On -> effectivePhase.phase.isOnTrack(
             currentAverage,
             lastKnownWeekAverage,
         )

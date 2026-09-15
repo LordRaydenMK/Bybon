@@ -129,7 +129,7 @@ class DietPhaseTest {
     @Test
     fun `gain on-track range uses 500g water floor`() {
         val phase = gain("67.0", 12)
-        val range = onTrackDeltaRange(phase)
+        val range = phase.onTrackDeltaRange()
         assert(range.start == WeightDelta.Zero)
         assert(range.endInclusive == WeightDelta.WaterNoise)
     }
@@ -146,7 +146,7 @@ class DietPhaseTest {
             target,
             8,
         ).requireValid()
-        val range = onTrackDeltaRange(phase)
+        val range = phase.onTrackDeltaRange()
         assert(range.endInclusive == cap)
     }
 
@@ -155,22 +155,22 @@ class DietPhaseTest {
         val phase = gain("67.0", 12)
         val current = BodyWeight.parseFromString("64.9")
         val lastWeek = BodyWeight.parseFromString("65.0")
-        assert(isOnTrack(phase, current, lastWeek) == false)
+        assert(phase.isOnTrack(current, lastWeek) == false)
     }
 
     @Test
     fun `maintain is on track within 0_5 kg of target`() {
         val phase = maintain()
-        assert(isOnTrack(phase, BodyWeight.parseFromString("65.4"), null) == true)
-        assert(isOnTrack(phase, BodyWeight.parseFromString("65.6"), null) == false)
+        assert(phase.isOnTrack(BodyWeight.parseFromString("65.4"), null) == true)
+        assert(phase.isOnTrack(BodyWeight.parseFromString("65.6"), null) == false)
     }
 
     @Test
     fun `projects linearly from start to target`() {
         val phase = gain("67.4", 8)
-        assert(projectedWeightOn(phase, start) == startWeight)
-        assert(projectedWeightOn(phase, start.plusWeeks(8)) == BodyWeight.parseFromString("67.4"))
-        val mid = projectedWeightOn(phase, start.plusWeeks(4))
+        assert(phase.projectedWeightOn(start) == startWeight)
+        assert(phase.projectedWeightOn(start.plusWeeks(8)) == BodyWeight.parseFromString("67.4"))
+        val mid = phase.projectedWeightOn(start.plusWeeks(4))
         assert(mid == BodyWeight.parseFromString("66.2"))
     }
 
