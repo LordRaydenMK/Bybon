@@ -153,6 +153,8 @@ private fun ExerciseCardEvent.toOverviewAction(exercise: WorkoutExercise): Worko
         ExerciseCardEvent.OnConvertToWorkSet -> WorkoutOverviewAction.OnConvertToWorkSet(exercise)
 
         is ExerciseCardEvent.OnCompleteSet -> error("Complete set is not supported in overview")
+
+        is ExerciseCardEvent.OnUncompleteSet -> error("Uncomplete set is not supported in overview")
     }
 
 @Composable

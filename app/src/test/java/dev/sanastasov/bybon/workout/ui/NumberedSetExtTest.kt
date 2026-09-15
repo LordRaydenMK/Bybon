@@ -35,6 +35,10 @@ class NumberedSetExtTest {
                 "Set 1, 50 kg by 8, @ 62.07 kg 1RM. Previous: 45 x 9",
         )
         assert(numbered.completedContentDescription == "1. 50 kg x 8 @ 62.07 kg 1RM")
+        assert(
+            numbered.uncompleteContentDescription ==
+                "1. 50 kg x 8 @ 62.07 kg 1RM. Double tap to undo complete.",
+        )
     }
 
     @Test

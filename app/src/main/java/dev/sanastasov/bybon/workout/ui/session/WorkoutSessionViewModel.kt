@@ -16,6 +16,7 @@ import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.domain.uncompleteSet
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeight
 import dev.sanastasov.bybon.workout.domain.updateWorkout
@@ -114,6 +115,9 @@ class WorkoutSessionViewModel(
     ): WorkoutSession = when (action) {
         is WorkoutSessionAction.OnCompleteSet ->
             session.completeSet(action.exercise, action.index, action.isWarmup)
+
+        is WorkoutSessionAction.OnUncompleteSet ->
+            session.uncompleteSet(action.exercise, action.index, action.isWarmup)
 
         is WorkoutSessionAction.OnIncreaseExercise ->
             session.adjustExercise(action.exercise, increase = true)
