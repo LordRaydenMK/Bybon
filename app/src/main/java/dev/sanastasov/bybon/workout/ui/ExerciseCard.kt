@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -61,31 +62,35 @@ fun ExerciseCard(
         )
         val warmupSets = exercise.numberedWarmupSets
         warmupSets?.forEach { numbered ->
-            ExerciseSetBlock(
-                exercise = exercise,
-                numbered = numbered,
-                mode = mode,
-                onEvent = onEvent,
-                onBadgeClick = if (numbered.index == warmupSets.lastIndex) {
-                    { onEvent(ExerciseCardEvent.OnConvertToWorkSet) }
-                } else {
-                    null
-                },
-            )
+            key(numbered.index, true) {
+                ExerciseSetBlock(
+                    exercise = exercise,
+                    numbered = numbered,
+                    mode = mode,
+                    onEvent = onEvent,
+                    onBadgeClick = if (numbered.index == warmupSets.lastIndex) {
+                        { onEvent(ExerciseCardEvent.OnConvertToWorkSet) }
+                    } else {
+                        null
+                    },
+                )
+            }
         }
         exercise.numberedWorkSets.forEach { numbered ->
-            ExerciseSetBlock(
-                exercise = exercise,
-                numbered = numbered,
-                mode = mode,
-                onEvent = onEvent,
-                onBadgeClick = if (numbered.index == 0) {
-                    { onEvent(ExerciseCardEvent.OnConvertToWarmup) }
-                } else {
-                    null
-                },
-                rest = exercise.restAfterWorkSet,
-            )
+            key(numbered.index, false) {
+                ExerciseSetBlock(
+                    exercise = exercise,
+                    numbered = numbered,
+                    mode = mode,
+                    onEvent = onEvent,
+                    onBadgeClick = if (numbered.index == 0) {
+                        { onEvent(ExerciseCardEvent.OnConvertToWarmup) }
+                    } else {
+                        null
+                    },
+                    rest = exercise.restAfterWorkSet,
+                )
+            }
         }
         ExerciseSetActions(exercise, mode, onEvent)
     }

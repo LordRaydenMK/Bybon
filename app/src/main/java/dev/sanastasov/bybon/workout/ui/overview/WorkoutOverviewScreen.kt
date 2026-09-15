@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -105,14 +106,12 @@ private fun OverviewScreenContent(
                 Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(state.exercises, key = { it.id }) { exercise ->
-                    Card(Modifier.fillMaxWidth()) {
-                        ExerciseCard(
-                            exercise = exercise,
-                            mode = ExerciseCardMode.Overview,
-                            onEvent = { event -> onAction(event.toOverviewAction(exercise)) },
-                        )
-                    }
+                items(
+                    items = state.exercises,
+                    key = { it.id },
+                    contentType = { "exercise-card" },
+                ) { exercise ->
+                    OverviewExerciseCard(exercise, onAction)
                 }
             }
 
@@ -124,6 +123,23 @@ private fun OverviewScreenContent(
                 Text("Start Workout")
             }
         }
+    }
+}
+
+@Composable
+private fun OverviewExerciseCard(
+    exercise: WorkoutExercise,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    Card(
+        Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        ExerciseCard(
+            exercise = exercise,
+            mode = ExerciseCardMode.Overview,
+            onEvent = { event -> onAction(event.toOverviewAction(exercise)) },
+        )
     }
 }
 
