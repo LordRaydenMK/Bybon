@@ -46,10 +46,10 @@ jobs:
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Create debug APK
-        run: ./gradlew assembleDebug
+      - name: Create debug APKs
+        run: ./gradlew assembleDebug assembleDebugAndroidTest
 
-      - name: Run Maestro E2E Tests
+      - name: Run instrumented and Maestro E2E tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 36
@@ -59,9 +59,19 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
+            ./gradlew connectedDebugAndroidTest
             ./gradlew installDebug
             bash .github/scripts/seed-strong-csv.sh
             maestro test app/src/maestro/flows
+
+      - name: Archive Android instrumented test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-instrumented-test-results
+          path: |
+            app/build/reports/androidTests/connected/
+            app/build/outputs/androidTest-results/
 
       - name: Archive Maestro test results on failure
         if: failure()

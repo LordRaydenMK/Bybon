@@ -13,7 +13,10 @@ interface BodyWeightModule : DbModule {
         fun create(dbModule: DbModule): BodyWeightModule =
             object : BodyWeightModule, DbModule by dbModule {
                 override val bodyWeightRepository: BodyWeightRepository
-                    get() = BodyWeightRepositoryImpl(bybonDb.weightEntryDao())
+                    get() = BodyWeightRepositoryImpl(
+                        bybonDb.weightEntryDao(),
+                        bybonDb.dietPhaseDao(),
+                    )
             }
     }
 }
