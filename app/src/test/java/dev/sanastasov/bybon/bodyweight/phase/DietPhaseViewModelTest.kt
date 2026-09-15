@@ -26,7 +26,8 @@ class DietPhaseViewModelTest {
             today,
         )
 
-        viewModel.uiState.first { it.startWeightKg != null && it.canApply }
+        val primed = viewModel.uiState.first { it.startWeightKg != null && it.canApply }
+        assert(primed.kinds == listOf(null) + DietPhaseKind.entries)
         viewModel.onAction(DietPhaseEditorAction.OnKindSelected(DietPhaseKind.Gain))
         viewModel.onAction(DietPhaseEditorAction.OnWeeksChanged("8"))
         viewModel.onAction(DietPhaseEditorAction.OnTargetChanged("64.0"))

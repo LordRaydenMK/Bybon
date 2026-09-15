@@ -123,6 +123,7 @@ class DietPhaseViewModel(
         }
         val phase = (result as? DietPhaseValidation.Valid)?.phase
         return DietPhaseEditorUi(
+            kinds = listOf(null) + DietPhaseKind.entries,
             selectedKind = kind,
             weeks = weeksText,
             targetKg = targetText,

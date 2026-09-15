@@ -51,7 +51,6 @@ private fun DietPhaseEditorContent(
     state: DietPhaseEditorUi,
     onAction: (DietPhaseEditorAction) -> Unit,
 ) {
-    val kinds = listOf(null) + DietPhaseKind.entries
     Scaffold(
         topBar = {
             BybonTopAppBar("Diet phase", { onAction(DietPhaseEditorAction.OnBackClicked) })
@@ -65,7 +64,7 @@ private fun DietPhaseEditorContent(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            PhaseKindSelector(state.selectedKind, kinds, onAction)
+            PhaseKindSelector(state.selectedKind, state.kinds, onAction)
             StartAverageLabel(state.startWeightKg)
 
             if (state.selectedKind == DietPhaseKind.Maintain) {

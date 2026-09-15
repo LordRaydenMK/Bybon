@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.bodyweight.phase
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 
 data class DietPhaseEditorUi(
+    val kinds: List<DietPhaseKind?> = listOf(null) + DietPhaseKind.entries,
     val selectedKind: DietPhaseKind? = null,
     val weeks: String = "",
     val targetKg: String = "",
