@@ -9,7 +9,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import dev.sanastasov.bybon.bodyweight.data.DietPhaseEntity
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,7 +28,7 @@ class BybonDatabaseMigrationTest {
     )
 
     @Test
-    fun migrateFrom1To2PreservesWeightEntriesAndAddsDietPhaseTable() = runTest {
+    fun migrateFrom1To2PreservesWeightEntriesAndAddsDietPhaseTable() = runBlocking {
         helper.createDatabase(1).use { connection ->
             connection.execSQL(
                 "INSERT INTO weight_entry (date, weight) VALUES ('2026-09-09', 6500)",
