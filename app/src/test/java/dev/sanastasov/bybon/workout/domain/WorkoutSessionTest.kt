@@ -362,7 +362,7 @@ class WorkoutSessionTest {
     @Test
     fun `estimated one RM is a Weight`() {
         val set = ExerciseSet(
-            exercisesMap.getValue("bench-press-bb"),
+            catalogExercise("bench-press-bb"),
             Weight.kilograms(60),
             8,
             SetState.Completed,
@@ -399,7 +399,7 @@ class WorkoutSessionTest {
 
     @Test
     fun `warmup sets cannot be an empty list`() {
-        val bench = exercisesMap.getValue("bench-press-bb")
+        val bench = catalogExercise("bench-press-bb")
         val error = assertFailsWith<IllegalArgumentException> {
             WorkoutExercise(
                 exerciseDefinition = bench,
@@ -415,7 +415,7 @@ class WorkoutSessionTest {
 
     @Test
     fun `warmup set count cannot be negative`() {
-        val bench = exercisesMap.getValue("bench-press-bb")
+        val bench = catalogExercise("bench-press-bb")
         val error = assertFailsWith<IllegalArgumentException> {
             PlanedExercise(
                 exercise = bench,
@@ -474,13 +474,13 @@ class WorkoutSessionTest {
 
     @Test
     fun `default rest is 2 minutes for compounds, 1 for isolation, 1_5 otherwise`() {
-        assert(exercisesMap.getValue("bench-press-bb").defaultRest == 2.minutes)
-        assert(exercisesMap.getValue("squat-bb").defaultRest == 2.minutes)
-        assert(exercisesMap.getValue("rdl-bb").defaultRest == 2.minutes)
-        assert(exercisesMap.getValue("skullcrusher-db").defaultRest == 1.minutes)
-        assert(exercisesMap.getValue("incline-curl-db").defaultRest == 1.minutes)
-        assert(exercisesMap.getValue("leg-curl").defaultRest == 90.seconds)
-        assert(exercisesMap.getValue("leg-extension").defaultRest == 90.seconds)
+        assert(catalogExercise("bench-press-bb").defaultRest == 2.minutes)
+        assert(catalogExercise("squat-bb").defaultRest == 2.minutes)
+        assert(catalogExercise("rdl-bb").defaultRest == 2.minutes)
+        assert(catalogExercise("skullcrusher-db").defaultRest == 1.minutes)
+        assert(catalogExercise("incline-curl-db").defaultRest == 1.minutes)
+        assert(catalogExercise("leg-curl").defaultRest == 90.seconds)
+        assert(catalogExercise("leg-extension").defaultRest == 90.seconds)
         assert(2.minutes.formatRestClock() == "2:00")
         assert(90.seconds.formatRestClock() == "1:30")
         assert(1.minutes.formatRestClock() == "1:00")

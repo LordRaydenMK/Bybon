@@ -5,12 +5,12 @@ import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
-import dev.sanastasov.bybon.workout.domain.exercises
+import dev.sanastasov.bybon.workout.domain.catalogExercise
 import org.junit.Test
 
 class NumberedSetExtTest {
 
-    private val bench = exercises.first { it.id == "bench-press-bb" }
+    private val bench = catalogExercise("bench-press-bb")
 
     @Test
     fun `work set labels use set number and 1RM`() {

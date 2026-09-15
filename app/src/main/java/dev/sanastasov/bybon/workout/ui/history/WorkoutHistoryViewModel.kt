@@ -56,10 +56,14 @@ class WorkoutHistoryViewModel(
             try {
                 val csv = withContext(ioDispatcher) { contentResolverReader.read(uri) }
                 val existingPlans = repository.workoutPlans().first()
+                val existingExercises = repository.exercises().first()
                 val result = withContext(defaultDispatcher) {
-                    StrongCsvParser.parse(csv).toStrongImport(existingPlans)
+                    StrongCsvParser.parse(csv).toStrongImport(
+                        plans = existingPlans,
+                        exerciseCatalog = existingExercises,
+                    )
                 }
-                repository.importHistory(result.plans, result.sessionHistory)
+                repository.importHistory(result.plans, result.sessionHistory, result.exercises)
                 importPhase.value = ImportPhase.Summary(result.toSummaryUi())
             } catch (e: CancellationException) {
                 throw e

@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.data
 
+import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
@@ -11,10 +12,14 @@ import kotlinx.coroutines.flow.update
 class FakeWorkoutsRepository(
     initialPlans: List<WorkoutPlan> = emptyList(),
     initialSessions: List<WorkoutSession> = emptyList(),
+    initialExercises: List<ExerciseDefinition> = emptyList(),
 ) : WorkoutsRepository {
 
+    private val exercises = MutableStateFlow(initialExercises)
     private val plans = MutableStateFlow(initialPlans)
     private val sessions = MutableStateFlow(initialSessions)
+
+    override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
 
     override fun workoutPlans(): Flow<List<WorkoutPlan>> = plans
 
@@ -36,7 +41,9 @@ class FakeWorkoutsRepository(
     override suspend fun importHistory(
         plans: List<WorkoutPlan>,
         sessions: List<WorkoutSession>,
+        exercises: List<ExerciseDefinition>,
     ) {
+        this.exercises.update { it + exercises }
         this.plans.update { it + plans }
         this.sessions.update { it + sessions }
     }
