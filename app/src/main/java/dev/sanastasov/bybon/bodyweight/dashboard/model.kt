@@ -34,12 +34,20 @@ data class WeeklyTrendPointUi(
     val isLastSevenDaysFallback: Boolean = false,
 )
 
+data class DietPhaseSummaryUi(
+    val kindLabel: String,
+    val detailLines: List<String>,
+    val actionLabel: String,
+)
+
 data class WeightDashboardUiState(
     val logWeightPrompt: LogWeightPrompt = LogWeightPrompt.Hidden,
     val comparison: BodyWeightComparison? = null,
     val dailyEntries: List<BodyWeightEntry>? = null,
     val weeklyAverages: List<WeeklyAverageEntryUi>? = null,
     val weeklyTrend: List<WeeklyTrendPointUi>? = null,
+    val dietPhaseSummary: DietPhaseSummaryUi? = null,
+    val onTrack: Boolean = false,
 ) {
 
     val dailyHeaderText: String? =
