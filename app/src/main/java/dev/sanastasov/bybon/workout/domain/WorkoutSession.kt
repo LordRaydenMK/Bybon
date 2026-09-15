@@ -3,7 +3,7 @@
 package dev.sanastasov.bybon.workout.domain
 
 import java.time.LocalDateTime
-import java.util.Locale
+import java.util.*
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 
@@ -171,6 +171,9 @@ data class WorkoutExercise(
             val last = orderedSets.lastOrNull() ?: return false
             return last.setState != SetState.Completed
         }
+
+    val hasPreviousPerformance: Boolean
+        get() = orderedSets.any { it.previous != null }
 }
 
 sealed class WorkoutState {

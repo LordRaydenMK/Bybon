@@ -41,10 +41,12 @@ import dev.sanastasov.bybon.ui.components.NumberInputWeightMinWidth
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -55,6 +57,7 @@ import dev.sanastasov.bybon.workout.ui.oneRmLabel
 import dev.sanastasov.bybon.workout.ui.previousLabel
 import dev.sanastasov.bybon.workout.ui.sessionContentDescription
 import dev.sanastasov.bybon.workout.ui.weightRepsLabel
+import java.time.LocalDateTime
 import kotlin.time.Duration
 
 @Composable
@@ -92,8 +95,9 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
             HorizontalPager(
                 pagerState,
                 Modifier.weight(1f),
+                verticalAlignment = Alignment.Top,
             ) { page ->
-                Card(Modifier.fillMaxSize()) {
+                Card(Modifier.fillMaxWidth()) {
                     ExerciseCard(
                         exercise = state.exercises[page],
                         onAction = onAction,
@@ -265,7 +269,7 @@ private fun SetRow(
                                 workSetNumber = numbered.workSetNumber,
                                 onClick = onBadgeClick,
                             )
-                            Text(summary)
+                            Text(summary, style = MaterialTheme.typography.labelMedium)
                         }
                     }
 
@@ -287,7 +291,7 @@ private fun SetRow(
                                 " kg x ",
                                 color = labelColor,
                                 fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.labelLarge,
+                                style = MaterialTheme.typography.labelMedium,
                             )
                             SessionRepsField(exercise, numbered, onAction)
                             if (oneRmLabel != null) {
@@ -295,7 +299,7 @@ private fun SetRow(
                                     oneRmLabel,
                                     color = labelColor,
                                     fontWeight = FontWeight.Bold,
-                                    style = MaterialTheme.typography.labelLarge,
+                                    style = MaterialTheme.typography.labelMedium,
                                 )
                             }
                         }
@@ -311,10 +315,10 @@ private fun SetRow(
                             onClick = onBadgeClick,
                         )
                         SessionWeightField(exercise, numbered, onAction)
-                        Text(" kg x ")
+                        Text(" kg x ", style = MaterialTheme.typography.labelMedium)
                         SessionRepsField(exercise, numbered, onAction)
                         if (oneRmLabel != null) {
-                            Text(oneRmLabel)
+                            Text(oneRmLabel, style = MaterialTheme.typography.labelMedium)
                         }
                     }
                 }
@@ -410,4 +414,34 @@ private fun SessionScreenContentPage1CompletedExercisePreview() {
 @Composable
 private fun SessionScreenContentInitialPreview() {
     SessionScreenContent(fullBodyA.toWorkoutSession(), {})
+}
+
+@Preview
+@Composable
+private fun SessionScreenContentWithPreviousPreview() {
+    val previous = fullBodyA.toWorkoutSession().let { session ->
+        session.copy(
+            exercises = session.exercises.map { exercise ->
+                exercise.copy(
+                    sets = exercise.sets.mapIndexed { index, set ->
+                        set.copy(
+                            weight = Weight.kilograms(40 + index),
+                            reps = 9,
+                            setState = SetState.Completed,
+                        )
+                    },
+                    warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
+                        set.copy(
+                            weight = Weight.kilograms(22 + index),
+                            reps = 6,
+                            setState = SetState.Completed,
+                        )
+                    },
+                )
+            },
+            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+            state = WorkoutState.Completed(Duration.ZERO),
+        )
+    }
+    SessionScreenContent(fullBodyA.toWorkoutSession(previous), {})
 }

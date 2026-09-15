@@ -62,7 +62,7 @@ fun NumberInputField(
             .drop(1)
             .collectLatest(onTextChanged)
     }
-    val textStyle = MaterialTheme.typography.labelLarge.copy(textAlign = TextAlign.Center)
+    val textStyle = MaterialTheme.typography.labelMedium.copy(textAlign = TextAlign.Center)
     val fieldWidth = rememberNumberInputWidth(state.text.toString(), minWidth, textStyle)
     TextField(
         state,

@@ -103,7 +103,11 @@ private fun OverviewScreenContent(
                 AdjustButtons(
                     onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseWorkout) },
                     onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseWorkout) },
-                    onReset = { onAction(WorkoutOverviewAction.OnResetWorkout) },
+                    onReset = if (state.exercises.any { it.hasPreviousPerformance }) {
+                        { onAction(WorkoutOverviewAction.OnResetWorkout) }
+                    } else {
+                        null
+                    },
                     decreaseContentDescription = "Decrease weight and reps for all exercises",
                     increaseContentDescription = "Increase weight and reps for all exercises",
                     resetContentDescription = "Reset all exercises to previous session",
@@ -212,7 +216,11 @@ private fun OverviewExerciseHeader(
         AdjustButtons(
             onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseExercise(exercise)) },
             onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseExercise(exercise)) },
-            onReset = { onAction(WorkoutOverviewAction.OnResetExercise(exercise)) },
+            onReset = if (exercise.hasPreviousPerformance) {
+                { onAction(WorkoutOverviewAction.OnResetExercise(exercise)) }
+            } else {
+                null
+            },
             decreaseContentDescription = "Decrease weight and reps for ${exercise.exerciseDefinition.name}",
             increaseContentDescription = "Increase weight and reps for ${exercise.exerciseDefinition.name}",
             resetContentDescription = "Reset ${exercise.exerciseDefinition.name} to previous session",
@@ -305,7 +313,7 @@ private fun OverviewSetInputs(
                 ),
             )
         }
-        Text(" kg x ")
+        Text(" kg x ", style = MaterialTheme.typography.labelMedium)
         NumberInputField(
             key = "${exercise.id}-$slot$index-reps",
             initialText = set.reps.toString(),
@@ -320,7 +328,9 @@ private fun OverviewSetInputs(
                 ),
             )
         }
-        numbered.oneRmLabel?.let { Text(it) }
+        numbered.oneRmLabel?.let {
+            Text(it, style = MaterialTheme.typography.labelMedium)
+        }
     }
 }
 
@@ -328,17 +338,19 @@ private fun OverviewSetInputs(
 private fun AdjustButtons(
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
-    onReset: () -> Unit,
+    onReset: (() -> Unit)?,
     decreaseContentDescription: String,
     increaseContentDescription: String,
     resetContentDescription: String,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        TextButton(
-            onReset,
-            Modifier.semantics { contentDescription = resetContentDescription },
-        ) {
-            Text("Reset")
+        if (onReset != null) {
+            TextButton(
+                onReset,
+                Modifier.semantics { contentDescription = resetContentDescription },
+            ) {
+                Text("Reset")
+            }
         }
         IconButton(
             onDecrease,
