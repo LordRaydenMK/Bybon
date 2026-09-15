@@ -6,7 +6,7 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
-import dev.sanastasov.bybon.workout.domain.exercisesMap
+import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.seconds
@@ -42,7 +42,7 @@ private fun completedExercise(
     exerciseId: String,
     weightAndReps: List<Pair<Float, Int>>,
 ): WorkoutExercise {
-    val definition = exercisesMap[exerciseId]!!
+    val definition = catalogExercise(exerciseId)
     val reps = weightAndReps.map { it.second }
     return WorkoutExercise(
         exerciseDefinition = definition,

@@ -15,9 +15,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.defaultRest
-import dev.sanastasov.bybon.workout.domain.exercises
-import dev.sanastasov.bybon.workout.domain.fullBodyA
-import dev.sanastasov.bybon.workout.domain.fullBodyB
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.math.max
@@ -44,13 +41,13 @@ data class StrongImportResult(
 )
 
 fun List<StrongCsvRow>.toWorkoutSessions(
-    plans: List<WorkoutPlan> = listOf(fullBodyA, fullBodyB),
-    exerciseCatalog: List<ExerciseDefinition> = exercises,
+    plans: List<WorkoutPlan>,
+    exerciseCatalog: List<ExerciseDefinition>,
 ): List<WorkoutSession> = toStrongImport(plans, exerciseCatalog).sessionHistory
 
 fun List<StrongCsvRow>.toStrongImport(
-    plans: List<WorkoutPlan> = listOf(fullBodyA, fullBodyB),
-    exerciseCatalog: List<ExerciseDefinition> = exercises,
+    plans: List<WorkoutPlan>,
+    exerciseCatalog: List<ExerciseDefinition>,
 ): StrongImportResult {
     val catalogByNormalizedName = exerciseCatalog.associateBy { it.name.normalizedExerciseName() }
     val catalogById = exerciseCatalog.associateBy { it.id }

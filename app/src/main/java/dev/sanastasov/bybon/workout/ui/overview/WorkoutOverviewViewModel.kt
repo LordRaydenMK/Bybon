@@ -12,8 +12,8 @@ import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.removeLastSet
-import dev.sanastasov.bybon.workout.domain.resetExercise
-import dev.sanastasov.bybon.workout.domain.resetTo
+import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
+import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.updateReps
@@ -55,7 +55,7 @@ class WorkoutOverviewViewModel(
             .distinctUntilChanged()
             .filterNotNull()
             .flatMapLatest { seed ->
-                actions.scan(seed) { session, action -> reduce(session, action, seed) }
+                actions.scan(seed) { session, action -> reduce(session, action) }
             }
             .stateInWhileInForeground(coroutineScope, null)
 
@@ -75,16 +75,12 @@ class WorkoutOverviewViewModel(
         }
     }
 
-    private fun reduce(
-        session: WorkoutSession,
-        action: WorkoutOverviewAction,
-        seed: WorkoutSession,
-    ): WorkoutSession = reduceProgression(session, action, seed) ?: reduceEdits(session, action)
+    private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
+        reduceProgression(session, action) ?: reduceEdits(session, action)
 
     private fun reduceProgression(
         session: WorkoutSession,
         action: WorkoutOverviewAction,
-        seed: WorkoutSession,
     ): WorkoutSession? = when (action) {
         WorkoutOverviewAction.OnIncreaseWorkout -> session.adjustAll(increase = true)
 
@@ -96,9 +92,11 @@ class WorkoutOverviewViewModel(
         is WorkoutOverviewAction.OnDecreaseExercise ->
             session.adjustExercise(action.exercise, increase = false)
 
-        WorkoutOverviewAction.OnResetWorkout -> session.resetTo(seed)
+        is WorkoutOverviewAction.OnResetExercise ->
+            session.resetExerciseToPrevious(action.exercise)
 
-        is WorkoutOverviewAction.OnResetExercise -> session.resetExercise(action.exercise, seed)
+        is WorkoutOverviewAction.OnResetSet ->
+            session.resetSetToPrevious(action.exercise, action.index, action.isWarmup)
 
         else -> null
     }
