@@ -55,4 +55,7 @@ val NumberedSet.completedContentDescription: String
         }
     }
 
+val NumberedSet.uncompleteContentDescription: String
+    get() = "$completedContentDescription. Double tap to undo complete."
+
 fun formatOneRmKg(kg: Float): String = "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')

@@ -42,6 +42,7 @@ fun ExerciseCard(
     mode: ExerciseCardMode,
     onEvent: (ExerciseCardEvent) -> Unit,
     modifier: Modifier = Modifier,
+    canUncompleteSet: (index: Int, isWarmup: Boolean) -> Boolean = { _, _ -> false },
 ) {
     val scrollable = if (mode == ExerciseCardMode.Session) {
         modifier.verticalScroll(rememberScrollState())
@@ -71,6 +72,7 @@ fun ExerciseCard(
                 } else {
                     null
                 },
+                canUncomplete = canUncompleteSet(numbered.index, numbered.isWarmup),
             )
         }
         exercise.numberedWorkSets.forEach { numbered ->
@@ -85,6 +87,7 @@ fun ExerciseCard(
                     null
                 },
                 rest = exercise.restAfterWorkSet,
+                canUncomplete = canUncompleteSet(numbered.index, numbered.isWarmup),
             )
         }
         ExerciseSetActions(exercise, mode, onEvent)

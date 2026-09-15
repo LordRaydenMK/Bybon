@@ -41,7 +41,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn:
       text: "50"
       index: 0
-      point: "90%, 50%" # Cursor at end so backspace clears both digits
+      point: "90%, 50%" # Select-all on focus; eraseText still clears the value
 - eraseText: 8
 - inputText: "60"
 - tapOn:
@@ -58,7 +58,15 @@ appId: dev.sanastasov.bybon.debug
 - tapOn:
     text: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."
     point: "90%, 50%" # Tap on the right side to avoid the TextInput
-- assertVisible: "1. 60 kg x 10 @ 80 kg 1RM"
+- assertVisible: "1. 60 kg x 10 @ 80 kg 1RM. Double tap to undo complete."
+- tapOn:
+    text: "1. 60 kg x 10 @ 80 kg 1RM. Double tap to undo complete."
+    point: "90%, 50%"
+- assertVisible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."
+- tapOn:
+    text: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."
+    point: "90%, 50%"
+- assertVisible: "1. 60 kg x 10 @ 80 kg 1RM. Double tap to undo complete."
 - assertVisible: "Set 2 in progress, 50 kg by 8, @ 62.07 kg 1RM. Double tap to mark complete."
 - tapOn:
       text: "Set 2 in progress, 50 kg by 8, @ 62.07 kg 1RM. Double tap to mark complete."
@@ -67,11 +75,14 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "4 x Bench Press (barbell) in 8 - 10"
 - tapOn: "Remove last set"
 - assertVisible: "3 x Bench Press (barbell) in 8 - 10"
-- swipe:
-      start: 80%, 20%
-      end: 20%, 20%
+- tapOn:
+    text: "Set 3 in progress, 50 kg by 8, @ 62.07 kg 1RM. Double tap to mark complete."
+    point: "90%, 50%"
+- extendedWaitUntil:
+    visible: "Exercise 2 / 6"
+    timeout: 5000
 - assertVisible: "3 x Squat (barbell) in 8 - 10"
-- assertVisible: "Exercise 2 / 6"
+- assertVisible: "Warmup set in progress, 20 kg by 8. Double tap to mark complete."
 - assertVisible: "Set 1, 50 kg by 8, @ 62.07 kg 1RM"
 - back
 - assertVisible: "Active"

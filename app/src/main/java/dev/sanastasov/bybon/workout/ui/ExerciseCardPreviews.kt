@@ -9,6 +9,7 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.canUncompleteSet
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -65,6 +66,9 @@ private fun SessionExerciseCardPreview() {
             progressed.exercises.first(),
             ExerciseCardMode.Session,
             {},
+            canUncompleteSet = { index, isWarmup ->
+                progressed.canUncompleteSet(progressed.exercises.first().id, index, isWarmup)
+            },
         )
     }
 }
@@ -83,6 +87,9 @@ private fun SessionExerciseCardWarmupsCompletedPreview() {
             progressed.exercises.first(),
             ExerciseCardMode.Session,
             {},
+            canUncompleteSet = { index, isWarmup ->
+                progressed.canUncompleteSet(progressed.exercises.first().id, index, isWarmup)
+            },
         )
     }
 }

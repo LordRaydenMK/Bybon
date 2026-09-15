@@ -47,6 +47,68 @@ class WorkoutSessionTest {
         assert(actual.exercises.first().sets.all { it.setState == SetState.Completed })
         assert(checkNotNull(squat.warmupSets).first().setState == SetState.InProgress)
         assert(squat.sets.all { it.setState == SetState.NotStated })
+        assert(actual.inProgressExerciseIndex() == 1)
+    }
+
+    @Test
+    fun `uncomplete last completed warmup restores it and demotes the next warmup`() {
+        val started = fullBodyA.toWorkoutSession()
+        val session = started.completeSet(started.exercises.first(), 0, isWarmup = true)
+        val bench = session.exercises.first()
+
+        val actual = session.uncompleteSet(bench, 0, isWarmup = true)
+        val warmupSets = checkNotNull(actual.exercises.first().warmupSets)
+
+        assert(warmupSets[0].setState == SetState.InProgress)
+        assert(warmupSets[1].setState == SetState.NotStated)
+        assert(warmupSets[2].setState == SetState.NotStated)
+        assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
+        assert(!actual.canUncompleteSet(bench.id, 0, isWarmup = true))
+    }
+
+    @Test
+    fun `uncomplete ignores a completed set that is not last`() {
+        val started = fullBodyA.toWorkoutSession()
+        val session = started
+            .completeSet(started.exercises.first(), 0, isWarmup = true)
+            .let { current -> current.completeSet(current.exercises.first(), 1, isWarmup = true) }
+        val bench = session.exercises.first()
+
+        val actual = session.uncompleteSet(bench, 0, isWarmup = true)
+
+        assert(actual == session)
+        assert(!session.canUncompleteSet(bench.id, 0, isWarmup = true))
+        assert(session.canUncompleteSet(bench.id, 1, isWarmup = true))
+    }
+
+    @Test
+    fun `uncomplete last work set of an exercise demotes the next exercise`() {
+        val session = fullBodyA.toWorkoutSession()
+            .completeWarmups(0)
+            .completeWorkSets(0, count = 3)
+        val bench = session.exercises.first()
+
+        val actual = session.uncompleteSet(bench, 2)
+
+        assert(actual.exercises.first().sets.last().setState == SetState.InProgress)
+        assert(checkNotNull(actual.exercises[1].warmupSets).first().setState == SetState.NotStated)
+        assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
+    }
+
+    @Test
+    fun `add set to a completed exercise starts the new set and resets the next exercise`() {
+        val session = fullBodyA.toWorkoutSession()
+            .completeWarmups(0)
+            .completeWorkSets(0, count = 3)
+
+        val actual = session.addSet(session.exercises.first())
+        val bench = actual.exercises.first()
+
+        assert(bench.sets.size == 4)
+        assert(bench.sets.last().setState == SetState.InProgress)
+        assert(bench.sets.dropLast(1).all { it.setState == SetState.Completed })
+        assert(checkNotNull(actual.exercises[1].warmupSets).first().setState == SetState.NotStated)
+        assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
     }
 
     @Test

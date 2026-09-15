@@ -1,12 +1,15 @@
 package dev.sanastasov.bybon.workout.ui.session
 
+import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -115,6 +118,46 @@ class WorkoutSessionViewModelTest {
             assert(session.exercises.first().sets.all { it.setState == SetState.Completed })
             assert(session.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
         }
+        assert(viewModel.effects.first() == WorkoutSessionEffect.ShowExercise(1))
+    }
+
+    @Test
+    fun `uncomplete last work set restores it and demotes the next exercise`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            var session = awaitItem()!!
+            session = completeFirstExercise(viewModel, session)
+            assert(session.exercises.first().sets.all { it.setState == SetState.Completed })
+            assert(session.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
+
+            viewModel.onAction(
+                WorkoutSessionAction.OnUncompleteSet(session.exercises.first(), 2),
+            )
+            session = awaitItem()!!
+            assert(session.exercises.first().sets.last().setState == SetState.InProgress)
+            assert(session.exercises[1].warmupSets!!.first().setState == SetState.NotStated)
+        }
+    }
+
+    @Test
+    fun `adding a set to a completed exercise starts it and resets the next exercise`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            var session = awaitItem()!!
+            session = completeFirstExercise(viewModel, session)
+
+            viewModel.onAction(WorkoutSessionAction.OnAddSet(session.exercises.first()))
+            session = awaitItem()!!
+            assert(session.exercises.first().sets.size == 4)
+            assert(session.exercises.first().sets.last().setState == SetState.InProgress)
+            assert(session.exercises[1].warmupSets!!.first().setState == SetState.NotStated)
+        }
     }
 
     @Test
@@ -141,4 +184,26 @@ class WorkoutSessionViewModelTest {
             )
         }
     }
+}
+
+private suspend fun ReceiveTurbine<WorkoutSession?>.completeFirstExercise(
+    viewModel: WorkoutSessionViewModel,
+    initial: WorkoutSession,
+): WorkoutSession {
+    var session = initial
+    checkNotNull(session.exercises.first().warmupSets).indices.forEach { index ->
+        viewModel.onAction(
+            WorkoutSessionAction.OnCompleteSet(
+                session.exercises.first(),
+                index,
+                isWarmup = true,
+            ),
+        )
+        session = awaitItem()!!
+    }
+    session.exercises.first().sets.indices.forEach { index ->
+        viewModel.onAction(WorkoutSessionAction.OnCompleteSet(session.exercises.first(), index))
+        session = awaitItem()!!
+    }
+    return session
 }

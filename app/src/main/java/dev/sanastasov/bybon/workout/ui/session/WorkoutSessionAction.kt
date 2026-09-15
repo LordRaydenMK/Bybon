@@ -9,6 +9,12 @@ sealed class WorkoutSessionAction {
         val isWarmup: Boolean = false,
     ) : WorkoutSessionAction()
 
+    data class OnUncompleteSet(
+        val exercise: WorkoutExercise,
+        val index: Int,
+        val isWarmup: Boolean = false,
+    ) : WorkoutSessionAction()
+
     data class OnWeightUpdated(
         val newWeight: String,
         val exercise: WorkoutExercise,
@@ -56,4 +62,10 @@ sealed class WorkoutSessionAction {
     data class OnResetExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
+}
+
+sealed class WorkoutSessionEffect {
+    data class ShowExercise(
+        val index: Int,
+    ) : WorkoutSessionEffect()
 }

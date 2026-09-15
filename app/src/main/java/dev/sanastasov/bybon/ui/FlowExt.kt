@@ -22,7 +22,7 @@ fun <A> Flow<A>.collectEffectWithLifecycle(
     lifecycleOwner: LifecycleOwner = LocalLifecycleOwner.current,
     minActiveState: Lifecycle.State = Lifecycle.State.STARTED,
     context: CoroutineContext = EmptyCoroutineContext,
-    action: (A) -> Unit,
+    action: suspend (A) -> Unit,
 ) = LaunchedEffect(Unit) {
     flowWithLifecycle(lifecycleOwner.lifecycle, minActiveState)
         .flowOn(context)

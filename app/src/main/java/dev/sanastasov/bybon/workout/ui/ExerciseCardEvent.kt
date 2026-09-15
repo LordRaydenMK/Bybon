@@ -34,4 +34,9 @@ sealed class ExerciseCardEvent {
         val index: Int,
         val isWarmup: Boolean,
     ) : ExerciseCardEvent()
+
+    data class OnUncompleteSet(
+        val index: Int,
+        val isWarmup: Boolean,
+    ) : ExerciseCardEvent()
 }

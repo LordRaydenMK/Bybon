@@ -12,18 +12,23 @@ import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
+import dev.sanastasov.bybon.workout.domain.inProgressExerciseIndex
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.domain.uncompleteSet
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeight
 import dev.sanastasov.bybon.workout.domain.updateWorkout
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class WorkoutSessionViewModel(
@@ -31,6 +36,9 @@ class WorkoutSessionViewModel(
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
 ) {
+    private val _effects = Channel<WorkoutSessionEffect>(Channel.BUFFERED)
+    val effects: Flow<WorkoutSessionEffect> = _effects.receiveAsFlow()
+
     val uiState: StateFlow<WorkoutSession?> =
         repository.workoutSessions()
             .map { sessions ->
@@ -60,10 +68,24 @@ class WorkoutSessionViewModel(
 
     fun onAction(action: WorkoutSessionAction) {
         coroutineScope.launch {
+            var showExercise: Int? = null
             repository.updateWorkout(planId) { session ->
-                reduce(session, action)
+                val updated = reduce(session, action)
+                showExercise = pageToShowAfter(action, session, updated)
+                updated
             }
+            showExercise?.let { _effects.trySend(WorkoutSessionEffect.ShowExercise(it)) }
         }
+    }
+
+    private fun pageToShowAfter(
+        action: WorkoutSessionAction,
+        before: WorkoutSession,
+        after: WorkoutSession,
+    ): Int? = if (action !is WorkoutSessionAction.OnCompleteSet) {
+        null
+    } else {
+        after.inProgressExerciseIndex().takeIf { it > before.inProgressExerciseIndex() }
     }
 
     private fun reduce(session: WorkoutSession, action: WorkoutSessionAction): WorkoutSession =
@@ -114,6 +136,9 @@ class WorkoutSessionViewModel(
     ): WorkoutSession = when (action) {
         is WorkoutSessionAction.OnCompleteSet ->
             session.completeSet(action.exercise, action.index, action.isWarmup)
+
+        is WorkoutSessionAction.OnUncompleteSet ->
+            session.uncompleteSet(action.exercise, action.index, action.isWarmup)
 
         is WorkoutSessionAction.OnIncreaseExercise ->
             session.adjustExercise(action.exercise, increase = true)
