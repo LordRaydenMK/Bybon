@@ -37,7 +37,11 @@ sealed class WorkoutOverviewAction {
     data class OnConvertToWorkSet(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
-    data object OnResetWorkout : WorkoutOverviewAction()
+    data class OnResetSet(
+        val exercise: WorkoutExercise,
+        val index: Int,
+        val isWarmup: Boolean = false,
+    ) : WorkoutOverviewAction()
     data class OnResetExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()

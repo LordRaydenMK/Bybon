@@ -265,6 +265,57 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `resetSetToPrevious restores weight and reps from previous performance`() {
+        val session = fullBodyA.toOverviewSession().let { draft ->
+            draft.copy(
+                exercises = draft.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.mapIndexed { index, set ->
+                            set.copy(
+                                weight = Weight.kilograms(60),
+                                reps = 10,
+                                previous = PreviousSetPerformance(Weight.kilograms(40 + index), 9),
+                            )
+                        },
+                    )
+                },
+            )
+        }
+
+        val actual = session.resetSetToPrevious(session.exercises.first(), 0, isWarmup = false)
+
+        assert(actual.exercises.first().sets.first().weight == Weight.kilograms(40))
+        assert(actual.exercises.first().sets.first().reps == 9)
+        assert(actual.exercises.first().sets[1].weight == Weight.kilograms(60))
+    }
+
+    @Test
+    fun `resetExerciseToPrevious restores all sets with previous performance`() {
+        val session = fullBodyA.toOverviewSession().let { draft ->
+            draft.copy(
+                exercises = draft.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.map { set ->
+                            set.copy(
+                                weight = Weight.kilograms(60),
+                                reps = 10,
+                                previous = PreviousSetPerformance(Weight.kilograms(40), 9),
+                            )
+                        },
+                    )
+                },
+            )
+        }
+
+        val actual = session.resetExerciseToPrevious(session.exercises.first())
+
+        assert(
+            actual.exercises.first().sets.all { it.weight == Weight.kilograms(40) && it.reps == 9 },
+        )
+        assert(actual.exercises[1].sets.first().weight == Weight.kilograms(60))
+    }
+
+    @Test
     fun `session id is plan id plus started at for every state`() {
         val startedAt = LocalDateTime.of(2026, 8, 13, 18, 0)
         val notStarted = fullBodyA.toWorkoutSession(startedAt = startedAt)

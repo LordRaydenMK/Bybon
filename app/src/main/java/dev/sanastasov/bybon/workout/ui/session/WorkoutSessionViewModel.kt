@@ -9,10 +9,13 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addSet
+import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.removeLastSet
+import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
+import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeight
@@ -57,62 +60,72 @@ class WorkoutSessionViewModel(
     }
 
     fun onAction(action: WorkoutSessionAction) {
-        when (action) {
-            is WorkoutSessionAction.OnCompleteSet -> coroutineScope.launch {
-                repository.updateWorkout(planId) { session ->
-                    session.completeSet(action.exercise, action.index, action.isWarmup)
-                }
-            }
-
-            is WorkoutSessionAction.OnWeightUpdated -> coroutineScope.launch {
-                repository.updateWorkout(planId) { session ->
-                    action.newWeight.toFloatOrNull()?.let { weight ->
-                        session.updateWeight(
-                            action.exercise,
-                            action.index,
-                            Weight.kilograms(weight),
-                            action.isWarmup,
-                        )
-                    } ?: session
-                }
-            }
-
-            is WorkoutSessionAction.OnRepsUpdated -> coroutineScope.launch {
-                repository.updateWorkout(planId) { session ->
-                    action.newReps.toIntOrNull()?.let { reps ->
-                        session.updateReps(
-                            action.exercise,
-                            action.index,
-                            reps,
-                            action.isWarmup,
-                        )
-                    } ?: session
-                }
-            }
-
-            is WorkoutSessionAction.OnAddSet -> coroutineScope.launch {
-                repository.updateWorkout(planId) { session ->
-                    session.addSet(action.exercise)
-                }
-            }
-
-            is WorkoutSessionAction.RemoveLastSet -> coroutineScope.launch {
-                repository.updateWorkout(planId) { session ->
-                    session.removeLastSet(action.exercise)
-                }
-            }
-
-            is WorkoutSessionAction.OnConvertToWarmup -> coroutineScope.launch {
-                repository.updateWorkout(planId) { session ->
-                    session.convertFirstWorkSetToWarmup(action.exercise)
-                }
-            }
-
-            is WorkoutSessionAction.OnConvertToWorkSet -> coroutineScope.launch {
-                repository.updateWorkout(planId) { session ->
-                    session.convertLastWarmupToWorkSet(action.exercise)
-                }
+        coroutineScope.launch {
+            repository.updateWorkout(planId) { session ->
+                reduce(session, action)
             }
         }
+    }
+
+    private fun reduce(session: WorkoutSession, action: WorkoutSessionAction): WorkoutSession =
+        reduceEdits(session, action) ?: reduceProgression(session, action)
+
+    private fun reduceEdits(
+        session: WorkoutSession,
+        action: WorkoutSessionAction,
+    ): WorkoutSession? = when (action) {
+        is WorkoutSessionAction.OnWeightUpdated ->
+            action.newWeight.toFloatOrNull()?.let { weight ->
+                session.updateWeight(
+                    action.exercise,
+                    action.index,
+                    Weight.kilograms(weight),
+                    action.isWarmup,
+                )
+            } ?: session
+
+        is WorkoutSessionAction.OnRepsUpdated ->
+            action.newReps.toIntOrNull()?.let { reps ->
+                session.updateReps(
+                    action.exercise,
+                    action.index,
+                    reps,
+                    action.isWarmup,
+                )
+            } ?: session
+
+        is WorkoutSessionAction.OnAddSet -> session.addSet(action.exercise)
+
+        is WorkoutSessionAction.RemoveLastSet -> session.removeLastSet(action.exercise)
+
+        is WorkoutSessionAction.OnConvertToWarmup ->
+            session.convertFirstWorkSetToWarmup(action.exercise)
+
+        is WorkoutSessionAction.OnConvertToWorkSet ->
+            session.convertLastWarmupToWorkSet(action.exercise)
+
+        else -> null
+    }
+
+    private fun reduceProgression(
+        session: WorkoutSession,
+        action: WorkoutSessionAction,
+    ): WorkoutSession = when (action) {
+        is WorkoutSessionAction.OnCompleteSet ->
+            session.completeSet(action.exercise, action.index, action.isWarmup)
+
+        is WorkoutSessionAction.OnIncreaseExercise ->
+            session.adjustExercise(action.exercise, increase = true)
+
+        is WorkoutSessionAction.OnDecreaseExercise ->
+            session.adjustExercise(action.exercise, increase = false)
+
+        is WorkoutSessionAction.OnResetSet ->
+            session.resetSetToPrevious(action.exercise, action.index, action.isWarmup)
+
+        is WorkoutSessionAction.OnResetExercise ->
+            session.resetExerciseToPrevious(action.exercise)
+
+        else -> session
     }
 }

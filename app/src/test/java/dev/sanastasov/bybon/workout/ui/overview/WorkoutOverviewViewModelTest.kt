@@ -95,19 +95,36 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
-    fun `reset restores previous session values at workout and exercise level`() = runTest {
-        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+    fun `reset restores previous performance at exercise and set level`() = runTest {
+        val previous = fullBodyA.toWorkoutSession().let { session ->
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.map { set ->
+                            set.copy(
+                                weight = Weight.kilograms(40),
+                                reps = 9,
+                                setState = SetState.Completed,
+                            )
+                        },
+                        warmupSets = exercise.warmupSets?.map { set ->
+                            set.copy(setState = SetState.Completed)
+                        },
+                    )
+                },
+                startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+                state = WorkoutState.Completed(Duration.ZERO),
+            )
+        }
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(previous),
+        )
         val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
             val draft = awaitItem()!!
-
-            viewModel.onAction(WorkoutOverviewAction.OnIncreaseWorkout)
-            awaitItem()
-            viewModel.onAction(WorkoutOverviewAction.OnResetWorkout)
-            val workoutReset = awaitItem()!!
-            assert(workoutReset.exercises == draft.exercises)
 
             viewModel.onAction(WorkoutOverviewAction.OnIncreaseExercise(draft.exercises.first()))
             val exerciseIncreased = awaitItem()!!
@@ -118,7 +135,20 @@ class WorkoutOverviewViewModelTest {
                 WorkoutOverviewAction.OnResetExercise(exerciseIncreased.exercises.first()),
             )
             val exerciseReset = awaitItem()!!
-            assert(exerciseReset.exercises == draft.exercises)
+            assert(exerciseReset.exercises.first().sets == draft.exercises.first().sets)
+
+            viewModel.onAction(WorkoutOverviewAction.OnIncreaseExercise(draft.exercises.first()))
+            val increasedAgain = awaitItem()!!
+            viewModel.onAction(
+                WorkoutOverviewAction.OnResetSet(
+                    increasedAgain.exercises.first(),
+                    index = 0,
+                    isWarmup = false,
+                ),
+            )
+            val setReset = awaitItem()!!
+            assert(setReset.exercises.first().sets.first().weight == Weight.kilograms(40))
+            assert(setReset.exercises.first().sets.first().reps == 9)
         }
     }
 
@@ -160,11 +190,12 @@ class WorkoutOverviewViewModelTest {
             val increased = awaitItem()!!
             assert(increased.exercises.first().sets.first() != draft.exercises.first().sets.first())
 
-            viewModel.onAction(WorkoutOverviewAction.OnResetWorkout)
+            viewModel.onAction(
+                WorkoutOverviewAction.OnResetExercise(increased.exercises.first()),
+            )
             val reset = awaitItem()!!
             assert(reset.exercises.first().sets.first().weight == Weight.kilograms(40))
             assert(reset.exercises.first().sets.first().reps == 9)
-            assert(reset.exercises == draft.exercises)
         }
     }
 

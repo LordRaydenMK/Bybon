@@ -1,11 +1,9 @@
 package dev.sanastasov.bybon.workout.ui.overview
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +16,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,11 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
-import dev.sanastasov.bybon.ui.components.NumberInputField
-import dev.sanastasov.bybon.ui.components.NumberInputRepsMinWidth
-import dev.sanastasov.bybon.ui.components.NumberInputWeightMinWidth
 import dev.sanastasov.bybon.workout.WorkoutModule
-import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -46,11 +39,9 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
-import dev.sanastasov.bybon.workout.ui.SetNumberBadge
-import dev.sanastasov.bybon.workout.ui.SetPreviousAndRestRow
-import dev.sanastasov.bybon.workout.ui.oneRmLabel
-import dev.sanastasov.bybon.workout.ui.overviewContentDescription
-import dev.sanastasov.bybon.workout.ui.previousLabel
+import dev.sanastasov.bybon.workout.ui.ExerciseCard
+import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
+import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
@@ -103,14 +94,8 @@ private fun OverviewScreenContent(
                 AdjustButtons(
                     onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseWorkout) },
                     onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseWorkout) },
-                    onReset = if (state.exercises.any { it.hasPreviousPerformance }) {
-                        { onAction(WorkoutOverviewAction.OnResetWorkout) }
-                    } else {
-                        null
-                    },
                     decreaseContentDescription = "Decrease weight and reps for all exercises",
                     increaseContentDescription = "Increase weight and reps for all exercises",
-                    resetContentDescription = "Reset all exercises to previous session",
                 )
             }
 
@@ -122,7 +107,11 @@ private fun OverviewScreenContent(
             ) {
                 items(state.exercises, key = { it.id }) { exercise ->
                     Card(Modifier.fillMaxWidth()) {
-                        OverviewExerciseCard(exercise, onAction)
+                        ExerciseCard(
+                            exercise = exercise,
+                            mode = ExerciseCardMode.Overview,
+                            onEvent = { event -> onAction(event.toOverviewAction(exercise)) },
+                        )
                     }
                 }
             }
@@ -138,220 +127,42 @@ private fun OverviewScreenContent(
     }
 }
 
-@Composable
-private fun OverviewExerciseCard(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutOverviewAction) -> Unit,
-) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        OverviewExerciseHeader(exercise, onAction)
-        OverviewWarmupSets(exercise, onAction)
-        OverviewWorkSets(exercise, onAction)
-        OverviewExerciseSetActions(exercise, onAction)
-    }
-}
+private fun ExerciseCardEvent.toOverviewAction(exercise: WorkoutExercise): WorkoutOverviewAction =
+    when (this) {
+        ExerciseCardEvent.OnIncrease -> WorkoutOverviewAction.OnIncreaseExercise(exercise)
 
-@Composable
-private fun OverviewWarmupSets(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutOverviewAction) -> Unit,
-) {
-    val warmupSets = exercise.numberedWarmupSets ?: return
-    warmupSets.forEach { numbered ->
-        OverviewSetRow(
-            exercise = exercise,
-            numbered = numbered,
-            onAction = onAction,
-            onBadgeClick = if (numbered.index == warmupSets.lastIndex) {
-                { onAction(WorkoutOverviewAction.OnConvertToWorkSet(exercise)) }
-            } else {
-                null
-            },
-        )
-    }
-}
+        ExerciseCardEvent.OnDecrease -> WorkoutOverviewAction.OnDecreaseExercise(exercise)
 
-@Composable
-private fun OverviewWorkSets(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutOverviewAction) -> Unit,
-) {
-    exercise.numberedWorkSets.forEach { numbered ->
-        OverviewSetRow(
-            exercise = exercise,
-            numbered = numbered,
-            onAction = onAction,
-            onBadgeClick = if (numbered.index == 0) {
-                { onAction(WorkoutOverviewAction.OnConvertToWarmup(exercise)) }
-            } else {
-                null
-            },
-            rest = exercise.restAfterWorkSet,
-        )
-    }
-}
+        ExerciseCardEvent.OnResetAllSets -> WorkoutOverviewAction.OnResetExercise(exercise)
 
-@Composable
-private fun OverviewExerciseHeader(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutOverviewAction) -> Unit,
-) {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val title =
-            "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
-                "in ${exercise.repRange.first} - ${exercise.repRange.last}"
-        Text(
-            title,
-            Modifier.weight(1f),
-            fontWeight = FontWeight.Bold,
-        )
-        AdjustButtons(
-            onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseExercise(exercise)) },
-            onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseExercise(exercise)) },
-            onReset = if (exercise.hasPreviousPerformance) {
-                { onAction(WorkoutOverviewAction.OnResetExercise(exercise)) }
-            } else {
-                null
-            },
-            decreaseContentDescription = "Decrease weight and reps for ${exercise.exerciseDefinition.name}",
-            increaseContentDescription = "Increase weight and reps for ${exercise.exerciseDefinition.name}",
-            resetContentDescription = "Reset ${exercise.exerciseDefinition.name} to previous session",
-        )
-    }
-}
+        is ExerciseCardEvent.OnResetSet ->
+            WorkoutOverviewAction.OnResetSet(exercise, index, isWarmup)
 
-@Composable
-private fun OverviewExerciseSetActions(
-    exercise: WorkoutExercise,
-    onAction: (WorkoutOverviewAction) -> Unit,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TextButton({ onAction(WorkoutOverviewAction.OnAddSet(exercise)) }) {
-            Text("Add set")
-        }
+        is ExerciseCardEvent.OnWeightUpdated ->
+            WorkoutOverviewAction.OnWeightUpdated(weight, exercise, index, isWarmup)
 
-        if (exercise.sets.size > 1) {
-            TextButton({ onAction(WorkoutOverviewAction.RemoveLastSet(exercise)) }) {
-                Text("Remove last set")
-            }
-        }
-    }
-}
+        is ExerciseCardEvent.OnRepsUpdated ->
+            WorkoutOverviewAction.OnRepsUpdated(reps, exercise, index, isWarmup)
 
-@Composable
-private fun OverviewSetRow(
-    exercise: WorkoutExercise,
-    numbered: NumberedSet,
-    onAction: (WorkoutOverviewAction) -> Unit,
-    onBadgeClick: (() -> Unit)?,
-    rest: Duration? = null,
-) {
-    Column(Modifier.fillMaxWidth()) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
-                    contentDescription = numbered.overviewContentDescription
-                },
-        ) {
-            Row(
-                Modifier
-                    .defaultMinSize(minHeight = 40.dp)
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OverviewSetInputs(exercise, numbered, onAction, onBadgeClick)
-            }
-        }
-        SetPreviousAndRestRow(
-            numbered.previousLabel,
-            rest,
-            Modifier.padding(horizontal = 8.dp),
-        )
-    }
-}
+        ExerciseCardEvent.OnAddSet -> WorkoutOverviewAction.OnAddSet(exercise)
 
-@Composable
-private fun OverviewSetInputs(
-    exercise: WorkoutExercise,
-    numbered: NumberedSet,
-    onAction: (WorkoutOverviewAction) -> Unit,
-    onBadgeClick: (() -> Unit)?,
-) {
-    val index = numbered.index
-    val set = numbered.set
-    val slot = if (numbered.isWarmup) "w" else "s"
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        SetNumberBadge(
-            isWarmup = numbered.isWarmup,
-            workSetNumber = numbered.workSetNumber,
-            onClick = onBadgeClick,
-        )
-        NumberInputField(
-            key = "${exercise.id}-$slot$index-weight",
-            initialText = set.weight.kilograms,
-            minWidth = NumberInputWeightMinWidth,
-        ) { weight ->
-            onAction(
-                WorkoutOverviewAction.OnWeightUpdated(
-                    weight,
-                    exercise,
-                    index,
-                    numbered.isWarmup,
-                ),
-            )
-        }
-        Text(" kg x ", style = MaterialTheme.typography.labelMedium)
-        NumberInputField(
-            key = "${exercise.id}-$slot$index-reps",
-            initialText = set.reps.toString(),
-            minWidth = NumberInputRepsMinWidth,
-        ) { reps ->
-            onAction(
-                WorkoutOverviewAction.OnRepsUpdated(
-                    reps,
-                    exercise,
-                    index,
-                    numbered.isWarmup,
-                ),
-            )
-        }
-        numbered.oneRmLabel?.let {
-            Text(it, style = MaterialTheme.typography.labelMedium)
-        }
+        ExerciseCardEvent.OnRemoveLastSet -> WorkoutOverviewAction.RemoveLastSet(exercise)
+
+        ExerciseCardEvent.OnConvertToWarmup -> WorkoutOverviewAction.OnConvertToWarmup(exercise)
+
+        ExerciseCardEvent.OnConvertToWorkSet -> WorkoutOverviewAction.OnConvertToWorkSet(exercise)
+
+        is ExerciseCardEvent.OnCompleteSet -> error("Complete set is not supported in overview")
     }
-}
 
 @Composable
 private fun AdjustButtons(
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
-    onReset: (() -> Unit)?,
     decreaseContentDescription: String,
     increaseContentDescription: String,
-    resetContentDescription: String,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (onReset != null) {
-            TextButton(
-                onReset,
-                Modifier.semantics { contentDescription = resetContentDescription },
-            ) {
-                Text("Reset")
-            }
-        }
         IconButton(
             onDecrease,
             Modifier.semantics { contentDescription = decreaseContentDescription },

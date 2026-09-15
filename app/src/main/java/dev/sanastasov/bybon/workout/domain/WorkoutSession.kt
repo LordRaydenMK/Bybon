@@ -349,6 +349,25 @@ fun WorkoutSession.resetExercise(
     return updateExercise(exercise.id) { restored }
 }
 
+fun WorkoutSession.resetSetToPrevious(
+    exercise: WorkoutExercise,
+    index: Int,
+    isWarmup: Boolean,
+): WorkoutSession = updateExerciseSet(exercise, index, isWarmup) { it.withPreviousPerformance() }
+
+fun WorkoutSession.resetExerciseToPrevious(exercise: WorkoutExercise): WorkoutSession =
+    updateExercise(exercise.id) { current ->
+        current.copy(
+            warmupSets = current.warmupSets?.map { it.withPreviousPerformance() },
+            sets = current.sets.map { it.withPreviousPerformance() },
+        )
+    }
+
+private fun ExerciseSet.withPreviousPerformance(): ExerciseSet {
+    val previous = previous ?: return this
+    return copy(weight = previous.weight, reps = previous.reps)
+}
+
 private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
     val originalFirst = sets.firstOrNull() ?: return this
     val increment = exerciseDefinition.equipment.weightIncrement
@@ -580,6 +599,24 @@ sealed class WorkoutSessionAction {
     ) : WorkoutSessionAction()
 
     data class OnConvertToWorkSet(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
+
+    data class OnIncreaseExercise(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
+
+    data class OnDecreaseExercise(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
+
+    data class OnResetSet(
+        val exercise: WorkoutExercise,
+        val index: Int,
+        val isWarmup: Boolean = false,
+    ) : WorkoutSessionAction()
+
+    data class OnResetExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
 }
