@@ -323,7 +323,7 @@ private fun WorkoutHistoryImportSummaryPreview() {
                     exercisesImportedCount = 1,
                     firstSessionDate = LocalDate.of(2026, 2, 17),
                     lastSessionDate = LocalDate.of(2026, 8, 20),
-                    workingSetCount = 854,
+                    workingSetCount = 825,
                 ),
             ),
             onNavigateBack = {},

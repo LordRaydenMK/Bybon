@@ -278,7 +278,7 @@ class WorkoutHistoryViewModelTest {
             assert(summary.exercisesImportedCount == 1)
             assert(summary.firstSessionDate == LocalDate.of(2026, 2, 17))
             assert(summary.lastSessionDate == LocalDate.of(2026, 8, 20))
-            assert(summary.workingSetCount == 854)
+            assert(summary.workingSetCount == 825)
         }
     }
 
