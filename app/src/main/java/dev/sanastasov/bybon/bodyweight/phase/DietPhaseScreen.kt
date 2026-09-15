@@ -29,6 +29,8 @@ import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.components.NumberInputField
+import dev.sanastasov.bybon.ui.components.NumberInputRepsMinWidth
+import dev.sanastasov.bybon.ui.components.NumberInputWeightMinWidth
 
 @Composable
 fun BodyWeightModule.DietPhaseScreen(onNavigateBack: () -> Unit) {
@@ -128,7 +130,11 @@ private fun GainLoseFields(state: DietPhaseEditorUi, onAction: (DietPhaseEditorA
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text("Weeks")
-        NumberInputField("diet-phase-weeks", state.weeks) {
+        NumberInputField(
+            key = "diet-phase-weeks",
+            initialText = state.weeks,
+            minWidth = NumberInputRepsMinWidth,
+        ) {
             onAction(DietPhaseEditorAction.OnWeeksChanged(it))
         }
     }
@@ -145,7 +151,11 @@ private fun TargetRow(state: DietPhaseEditorUi, onAction: (DietPhaseEditorAction
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text("Target")
-        NumberInputField("diet-phase-target-${state.selectedKind}", state.targetKg) {
+        NumberInputField(
+            key = "diet-phase-target-${state.selectedKind}",
+            initialText = state.targetKg,
+            minWidth = NumberInputWeightMinWidth,
+        ) {
             onAction(DietPhaseEditorAction.OnTargetChanged(it))
         }
         Text("kg")
