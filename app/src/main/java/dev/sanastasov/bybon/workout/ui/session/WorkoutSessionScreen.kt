@@ -36,6 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.components.NumberInputField
+import dev.sanastasov.bybon.ui.components.NumberInputRepsMinWidth
+import dev.sanastasov.bybon.ui.components.NumberInputWeightMinWidth
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -46,13 +48,14 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
-import dev.sanastasov.bybon.workout.ui.RestTimerRow
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
+import dev.sanastasov.bybon.workout.ui.SetPreviousAndRestRow
 import dev.sanastasov.bybon.workout.ui.completedContentDescription
 import dev.sanastasov.bybon.workout.ui.oneRmLabel
 import dev.sanastasov.bybon.workout.ui.previousLabel
 import dev.sanastasov.bybon.workout.ui.sessionContentDescription
 import dev.sanastasov.bybon.workout.ui.weightRepsLabel
+import kotlin.time.Duration
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -113,7 +116,6 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Spacer(Modifier.height(8.dp))
         val title =
             "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
                 "in ${exercise.repRange.first} - ${exercise.repRange.last}"
@@ -121,7 +123,6 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
             title,
             fontWeight = FontWeight.Bold,
         )
-        Spacer(Modifier.height(4.dp))
         SessionWarmupSets(exercise, onAction)
         SessionWorkSets(exercise, onAction)
         SessionSetActions(exercise, onAction)
@@ -160,8 +161,8 @@ private fun SessionWorkSets(exercise: WorkoutExercise, onAction: (WorkoutSession
                 null
             },
             onAction = onAction,
+            rest = exercise.restAfterWorkSet,
         )
-        RestTimerRow(exercise.restAfterWorkSet)
     }
 }
 
@@ -190,6 +191,7 @@ private fun SessionWeightField(
     NumberInputField(
         key = "${exercise.id}-$slot${numbered.index}-weight",
         initialText = numbered.set.weight.kilograms,
+        minWidth = NumberInputWeightMinWidth,
     ) { weight ->
         onAction(
             WorkoutSessionAction.OnWeightUpdated(
@@ -212,6 +214,7 @@ private fun SessionRepsField(
     NumberInputField(
         key = "${exercise.id}-$slot${numbered.index}-reps",
         initialText = numbered.set.reps.toString(),
+        minWidth = NumberInputRepsMinWidth,
     ) { reps ->
         onAction(
             WorkoutSessionAction.OnRepsUpdated(
@@ -231,6 +234,7 @@ private fun SetRow(
     numbered: NumberedSet,
     onBadgeClick: (() -> Unit)?,
     onAction: (WorkoutSessionAction) -> Unit,
+    rest: Duration? = null,
 ) {
     val set = numbered.set
     val oneRmLabel = numbered.oneRmLabel
@@ -238,15 +242,12 @@ private fun SetRow(
     val content: @Composable () -> Unit = {
         Row(
             Modifier
-                .defaultMinSize(minHeight = 48.dp)
+                .defaultMinSize(minHeight = 40.dp)
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 8.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(
-                Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
+            Box(Modifier.weight(1f)) {
                 when (set.setState) {
                     SetState.Completed -> {
                         val summary = buildString {
@@ -317,13 +318,6 @@ private fun SetRow(
                         }
                     }
                 }
-                if (previousLabel != null) {
-                    Text(
-                        previousLabel,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
             }
             when (set.setState) {
                 SetState.InProgress -> Checkbox(
@@ -351,47 +345,54 @@ private fun SetRow(
         }
     }
 
-    if (set.setState == SetState.InProgress) {
-        Surface(
-            onClick = {
-                onAction(
-                    WorkoutSessionAction.OnCompleteSet(
-                        exercise,
-                        numbered.index,
-                        numbered.isWarmup,
-                    ),
-                )
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
-                    contentDescription = numbered.sessionContentDescription
+    Column(Modifier.fillMaxWidth()) {
+        if (set.setState == SetState.InProgress) {
+            Surface(
+                onClick = {
+                    onAction(
+                        WorkoutSessionAction.OnCompleteSet(
+                            exercise,
+                            numbered.index,
+                            numbered.isWarmup,
+                        ),
+                    )
                 },
-            shape = RoundedCornerShape(8.dp),
-            color = MaterialTheme.colorScheme.tertiaryContainer,
-        ) {
-            content()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = numbered.sessionContentDescription
+                    },
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+            ) {
+                content()
+            }
+        } else if (set.setState == SetState.NotStated) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = numbered.sessionContentDescription
+                    },
+            ) {
+                content()
+            }
+        } else {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = numbered.completedContentDescription
+                    },
+            ) {
+                content()
+            }
         }
-    } else if (set.setState == SetState.NotStated) {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
-                    contentDescription = numbered.sessionContentDescription
-                },
-        ) {
-            content()
-        }
-    } else {
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
-                    contentDescription = numbered.completedContentDescription
-                },
-        ) {
-            content()
-        }
+        SetPreviousAndRestRow(
+            previousLabel,
+            rest,
+            Modifier.padding(horizontal = 8.dp),
+        )
     }
 }
 
