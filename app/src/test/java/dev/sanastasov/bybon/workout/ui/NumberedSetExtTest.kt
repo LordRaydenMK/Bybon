@@ -29,16 +29,16 @@ class NumberedSetExtTest {
         assert(numbered.workSetNumber == 1)
         assert(numbered.setTitle == "Set 1")
         assert(numbered.oneRmLabel == "@ 62.07 kg 1RM")
-        assert(numbered.previousLabel == "45 kg x 9 @ 57.86 kg 1RM")
+        assert(numbered.previousLabel == "45 x 9")
         assert(
             numbered.overviewContentDescription ==
-                "Set 1, 50 kg by 8, @ 62.07 kg 1RM. Previous: 45 kg x 9 @ 57.86 kg 1RM",
+                "Set 1, 50 kg by 8, @ 62.07 kg 1RM. Previous: 45 x 9",
         )
         assert(numbered.completedContentDescription == "1. 50 kg x 8 @ 62.07 kg 1RM")
     }
 
     @Test
-    fun `in-progress warmup description includes complete hint`() {
+    fun `in-progress warmup description omits 1RM and includes complete hint`() {
         val numbered = NumberedSet(
             set = ExerciseSet(
                 bench,
@@ -53,11 +53,8 @@ class NumberedSetExtTest {
         assert(numbered.setTitle == "Warmup set")
         assert(
             numbered.sessionContentDescription ==
-                "Warmup set in progress, 20 kg by 8, @ 24.83 kg 1RM. Double tap to mark complete.",
+                "Warmup set in progress, 20 kg by 8. Double tap to mark complete.",
         )
-        assert(
-            numbered.overviewContentDescription ==
-                "Warmup set, 20 kg by 8, @ 24.83 kg 1RM",
-        )
+        assert(numbered.overviewContentDescription == "Warmup set, 20 kg by 8")
     }
 }

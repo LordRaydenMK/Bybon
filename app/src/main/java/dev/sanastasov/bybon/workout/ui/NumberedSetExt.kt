@@ -2,17 +2,14 @@ package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
-import java.util.Locale
+import java.util.*
 
 val NumberedSet.oneRmLabel: String?
     get() = set.oneRm?.let { "@ ${formatOneRmKg(it.kilogramsValue)} kg 1RM" }
 
 val NumberedSet.previousLabel: String?
     get() = set.previous?.let { previous ->
-        buildString {
-            append("${previous.weight.kilograms} kg x ${previous.reps}")
-            previous.oneRm?.let { append(" @ ${formatOneRmKg(it.kilogramsValue)} kg 1RM") }
-        }
+        "${previous.weight.kilograms} x ${previous.reps}"
     }
 
 val NumberedSet.weightRepsLabel: String
@@ -24,7 +21,9 @@ val NumberedSet.setTitle: String
 val NumberedSet.overviewContentDescription: String
     get() = buildString {
         append("$setTitle, ${set.weight.kilograms} kg by ${set.reps}")
-        oneRmLabel?.let { append(", $it") }
+        if (!isWarmup) {
+            oneRmLabel?.let { append(", $it") }
+        }
         previousLabel?.let { append(". Previous: $it") }
     }
 
@@ -35,7 +34,9 @@ val NumberedSet.sessionContentDescription: String
             append(" in progress")
         }
         append(", ${set.weight.kilograms} kg by ${set.reps}")
-        oneRmLabel?.let { append(", $it") }
+        if (!isWarmup) {
+            oneRmLabel?.let { append(", $it") }
+        }
         previousLabel?.let { append(". Previous: $it") }
         if (set.setState == SetState.InProgress) {
             append(". Double tap to mark complete.")
@@ -46,11 +47,12 @@ val NumberedSet.completedContentDescription: String
     get() = buildString {
         if (isWarmup) {
             append("Warmup set, ")
+            append(weightRepsLabel)
         } else {
             append("$workSetNumber. ")
+            append(weightRepsLabel)
+            oneRmLabel?.let { append(" $it") }
         }
-        append(weightRepsLabel)
-        oneRmLabel?.let { append(" $it") }
     }
 
 fun formatOneRmKg(kg: Float): String = "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
