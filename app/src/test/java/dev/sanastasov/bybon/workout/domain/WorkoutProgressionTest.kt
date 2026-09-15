@@ -20,12 +20,12 @@ class WorkoutProgressionTest {
         assert(after1.reps == 9)
         assert(after2.weight == Weight.kilograms(50))
         assert(after2.reps == 10)
-        assert(Weight.kilograms(estimateOneRmKg(52.5f, 8)) < after2.oneRm!!)
+        assert(Weight.kilograms(estimateOneRmKg(52.5f, 8)) < after2.oneRm)
         assert(after3.weight == Weight.kilograms(52.5f))
         assert(after3.reps == 9)
-        assert(after1.oneRm!! > start.oneRm!!)
-        assert(after2.oneRm!! > after1.oneRm!!)
-        assert(after3.oneRm!! > after2.oneRm!!)
+        assert(after1.oneRm > start.oneRm)
+        assert(after2.oneRm > after1.oneRm)
+        assert(after3.oneRm > after2.oneRm)
     }
 
     @Test
@@ -33,7 +33,7 @@ class WorkoutProgressionTest {
         val steps = generateSequence(benchSet(50f, 8)) { it.increase() }.take(12).toList()
 
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm!! > previous.oneRm!!)
+            assert(next.oneRm > previous.oneRm)
         }
         assert(
             steps.map { it.weight to it.reps } == listOf(
@@ -64,12 +64,12 @@ class WorkoutProgressionTest {
         assert(after1.reps == 9)
         assert(after2.weight == Weight.kilograms(50))
         assert(after2.reps == 8)
-        assert(Weight.kilograms(estimateOneRmKg(47.5f, 10)) > after2.oneRm!!)
+        assert(Weight.kilograms(estimateOneRmKg(47.5f, 10)) > after2.oneRm)
         assert(after3.weight == Weight.kilograms(47.5f))
         assert(after3.reps == 9)
-        assert(after1.oneRm!! < start.oneRm!!)
-        assert(after2.oneRm!! < after1.oneRm!!)
-        assert(after3.oneRm!! < after2.oneRm!!)
+        assert(after1.oneRm < start.oneRm)
+        assert(after2.oneRm < after1.oneRm)
+        assert(after3.oneRm < after2.oneRm)
     }
 
     @Test
@@ -77,7 +77,7 @@ class WorkoutProgressionTest {
         val steps = generateSequence(benchSet(50f, 8)) { it.decrease() }.take(8).toList()
 
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm!! < previous.oneRm!!)
+            assert(next.oneRm < previous.oneRm)
         }
     }
 
@@ -99,7 +99,7 @@ class WorkoutProgressionTest {
             ),
         )
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm!! > previous.oneRm!!)
+            assert(next.oneRm > previous.oneRm)
         }
     }
 
@@ -108,7 +108,7 @@ class WorkoutProgressionTest {
         val steps = generateSequence(lateralSet(10f, 10)) { it.increaseLateral() }.take(20).toList()
 
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm!! > previous.oneRm!!)
+            assert(next.oneRm > previous.oneRm)
         }
     }
 
@@ -119,7 +119,7 @@ class WorkoutProgressionTest {
 
         assert(decreased.weight == Weight.kilograms(10))
         assert(decreased.reps == 16)
-        assert(decreased.oneRm!! < start.oneRm!!)
+        assert(decreased.oneRm < start.oneRm)
     }
 
     @Test
@@ -138,7 +138,7 @@ class WorkoutProgressionTest {
             ),
         )
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm!! < previous.oneRm!!)
+            assert(next.oneRm < previous.oneRm)
         }
     }
 
@@ -150,7 +150,7 @@ class WorkoutProgressionTest {
             MuscleGroup.Chest,
             Equipment.Bodyweight,
         )
-        val set = ExerciseSet(definition, Weight.kilograms(0), 10, SetState.NotStated)
+        val set = ExerciseSet(definition, Weight.kilograms(70), 10, SetState.NotStated)
         val range = 8..10
 
         val atTop = set.adjust(range, Equipment.Bodyweight.weightIncrement, increase = true)
@@ -159,7 +159,7 @@ class WorkoutProgressionTest {
         ).adjust(range, Equipment.Bodyweight.weightIncrement, increase = true)
 
         assert(atTop == set)
-        assert(within.weight == Weight.kilograms(0))
+        assert(within.weight == Weight.kilograms(70))
         assert(within.reps == 9)
     }
 
@@ -180,8 +180,8 @@ class WorkoutProgressionTest {
         assert(sets[1].reps == 7)
         assert(sets[1].reps !in benchRange)
         assert(actual.exercises.drop(1) == session.exercises.drop(1))
-        assert(sets[0].oneRm!! > benchExercise.sets[0].oneRm!!)
-        assert(sets[1].oneRm!! > benchExercise.sets[1].oneRm!!)
+        assert(sets[0].oneRm > benchExercise.sets[0].oneRm)
+        assert(sets[1].oneRm > benchExercise.sets[1].oneRm)
         assert(actual.exercises.first().warmupSets == benchExercise.warmupSets)
     }
 
@@ -195,7 +195,7 @@ class WorkoutProgressionTest {
 
         assert(sets.all { it.weight == Weight.kilograms(50) })
         assert(sets.all { it.reps == 9 })
-        assert(sets[0].oneRm!! > benchExercise.sets[0].oneRm!!)
+        assert(sets[0].oneRm > benchExercise.sets[0].oneRm)
     }
 
     @Test
@@ -211,7 +211,7 @@ class WorkoutProgressionTest {
         assert(first.weight == Weight.kilograms(52.5f))
         assert(first.reps == 11)
         assert(first.reps !in benchRange)
-        assert(first.oneRm!! > start.oneRm!!)
+        assert(first.oneRm > start.oneRm)
         assert(actual.exercises.first().sets.all { it.weight == first.weight })
     }
 
@@ -231,8 +231,8 @@ class WorkoutProgressionTest {
         assert(sets.all { it.weight == sets[0].weight })
         assert(sets[1].reps == 12)
         assert(sets[1].reps !in benchRange)
-        assert(sets[0].oneRm!! < benchExercise.sets[0].oneRm!!)
-        assert(sets[1].oneRm!! < benchExercise.sets[1].oneRm!!)
+        assert(sets[0].oneRm < benchExercise.sets[0].oneRm)
+        assert(sets[1].oneRm < benchExercise.sets[1].oneRm)
     }
 
     @Test

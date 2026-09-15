@@ -23,7 +23,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Upper body B: 3"
 - assertVisible: "2 plans created"
 - assertVisible: "1 exercise imported"
-- assertVisible: "854 working sets imported"
+- assertVisible: "825 working sets imported"
 - tapOn: "Done"
 - assertVisible: "History"
 - assertVisible: "Upper body B"

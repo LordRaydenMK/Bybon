@@ -36,8 +36,8 @@ class WorkoutOverviewViewModelTest {
                     draft.exercises.first().sets.first().reps + 1,
             )
             assert(
-                increased.exercises.first().sets.first().oneRm!! >
-                    draft.exercises.first().sets.first().oneRm!!,
+                increased.exercises.first().sets.first().oneRm >
+                    draft.exercises.first().sets.first().oneRm,
             )
             assert(
                 increased.exercises.first().sets.all {

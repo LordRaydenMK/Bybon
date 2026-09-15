@@ -42,7 +42,7 @@ internal fun SetValuesRow(
     valueFontWeight: FontWeight? = null,
 ) {
     val oneRm = numbered.set.oneRm
-        ?.takeUnless { numbered.isWarmup }
+        .takeUnless { numbered.isWarmup }
         ?.let { formatOneRmKg(it.kilogramsValue) }
     Row(
         Modifier

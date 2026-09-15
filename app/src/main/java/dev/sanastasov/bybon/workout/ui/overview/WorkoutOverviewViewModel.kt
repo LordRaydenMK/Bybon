@@ -106,17 +106,19 @@ class WorkoutOverviewViewModel(
         action: WorkoutOverviewAction,
     ): WorkoutSession = when (action) {
         is WorkoutOverviewAction.OnWeightUpdated ->
-            action.newWeight.toFloatOrNull()?.let { weight ->
-                session.updateWeight(
-                    action.exercise,
-                    action.index,
-                    Weight.kilograms(weight),
-                    action.isWarmup,
-                )
-            } ?: session
+            action.newWeight.toFloatOrNull()
+                ?.let { Weight.kilogramsOrNull(it) }
+                ?.let { weight ->
+                    session.updateWeight(
+                        action.exercise,
+                        action.index,
+                        weight,
+                        action.isWarmup,
+                    )
+                } ?: session
 
         is WorkoutOverviewAction.OnRepsUpdated ->
-            action.newReps.toIntOrNull()?.let { reps ->
+            action.newReps.toIntOrNull()?.takeIf { it > 0 }?.let { reps ->
                 session.updateReps(action.exercise, action.index, reps, action.isWarmup)
             } ?: session
 
