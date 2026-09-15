@@ -7,7 +7,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
-import dev.sanastasov.bybon.workout.domain.exercisesMap
+import dev.sanastasov.bybon.workout.domain.catalogExercise
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
 
@@ -29,7 +29,7 @@ fun completedExercise(
     exerciseId: String,
     vararg weightAndReps: Pair<Float, Int>,
 ): WorkoutExercise {
-    val definition = exercisesMap.getValue(exerciseId)
+    val definition = catalogExercise(exerciseId)
     return WorkoutExercise(
         exerciseDefinition = definition,
         repRange = 8..12,
