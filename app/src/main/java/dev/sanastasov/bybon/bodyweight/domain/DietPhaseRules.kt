@@ -9,63 +9,6 @@ import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-internal fun createMaintain(
-    startDate: LocalDate,
-    startWeight: BodyWeight,
-    targetWeight: BodyWeight?,
-): DietPhaseValidation = when (targetWeight) {
-    null -> DietPhaseValidation.Invalid("Enter a target weight")
-    else -> DietPhaseValidation.Valid(DietPhase.Maintain(startDate, startWeight, targetWeight))
-}
-
-internal fun createGain(
-    startDate: LocalDate,
-    startWeight: BodyWeight,
-    targetWeight: BodyWeight?,
-    durationWeeks: Int?,
-): DietPhaseValidation = when {
-    targetWeight == null -> DietPhaseValidation.Invalid("Enter a target weight")
-
-    durationWeeks == null || durationWeeks !in 1..MAX_PHASE_WEEKS ->
-        DietPhaseValidation.Invalid("Enter 1–$MAX_PHASE_WEEKS weeks")
-
-    targetWeight <= startWeight ->
-        DietPhaseValidation.Invalid("Gain target must be above current weight")
-
-    else -> rateOrValid(
-        startWeight,
-        targetWeight,
-        checkNotNull(durationWeeks),
-        MAX_GAIN_PERCENT_PER_WEEK,
-    ) { weeks ->
-        DietPhase.Gain(startDate, startWeight, targetWeight, weeks)
-    }
-}
-
-internal fun createLose(
-    startDate: LocalDate,
-    startWeight: BodyWeight,
-    targetWeight: BodyWeight?,
-    durationWeeks: Int?,
-): DietPhaseValidation = when {
-    targetWeight == null -> DietPhaseValidation.Invalid("Enter a target weight")
-
-    durationWeeks == null || durationWeeks !in 1..MAX_PHASE_WEEKS ->
-        DietPhaseValidation.Invalid("Enter 1–$MAX_PHASE_WEEKS weeks")
-
-    targetWeight >= startWeight ->
-        DietPhaseValidation.Invalid("Lose target must be below current weight")
-
-    else -> rateOrValid(
-        startWeight,
-        targetWeight,
-        checkNotNull(durationWeeks),
-        MAX_LOSE_PERCENT_PER_WEEK,
-    ) { weeks ->
-        DietPhase.Lose(startDate, startWeight, targetWeight, weeks)
-    }
-}
-
 fun effectiveDietPhase(
     openRecord: DietPhaseRecord?,
     today: LocalDate,
@@ -140,24 +83,5 @@ internal fun requireValidRate(
     val cap = startWeight.percentOf(percentCap)
     require(rate.absolute() <= cap) {
         "Weekly rate ${rate.signedKilograms()} kg exceeds cap ${cap.signedKilograms()} kg ($percentCap%)"
-    }
-}
-
-private fun rateOrValid(
-    startWeight: BodyWeight,
-    targetWeight: BodyWeight,
-    weeks: Int,
-    percentCap: Float,
-    construct: (Int) -> DietPhase,
-): DietPhaseValidation {
-    val rate = weeklyRate(startWeight, targetWeight, weeks)
-    val cap = startWeight.percentOf(percentCap)
-    return if (rate.absolute() > cap) {
-        DietPhaseValidation.Invalid(
-            "Too fast: max ${cap.signedKilograms()} kg/week ($percentCap%). " +
-                "Increase weeks or reduce the target.",
-        )
-    } else {
-        DietPhaseValidation.Valid(construct(weeks))
     }
 }
