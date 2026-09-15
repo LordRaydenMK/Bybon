@@ -1,17 +1,15 @@
 package dev.sanastasov.bybon.data
 
+import androidx.room3.Room
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
+import dev.sanastasov.bybon.bodyweight.data.DietPhaseEntity
 import java.nio.file.Files
+import java.time.LocalDate
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
-/**
- * Runs the generated Room AutoMigration from v1 to v2 on bundled SQLite.
- *
- * Unit tests here cannot use MigrationTestHelper: the Android artifact needs Instrumentation,
- * and the JVM artifact does not match this module's Android Room runtime.
- */
 class BybonDatabaseMigrationTest {
 
     @Test
@@ -25,32 +23,44 @@ class BybonDatabaseMigrationTest {
             connection.execSQL(
                 "INSERT INTO weight_entry (date, weight) VALUES ('2026-09-09', 6500)",
             )
+            connection.execSQL(
+                "CREATE TABLE IF NOT EXISTS room_master_table " +
+                    "(id INTEGER PRIMARY KEY, identity_hash TEXT)",
+            )
+            connection.execSQL(
+                "INSERT OR REPLACE INTO room_master_table (id, identity_hash) " +
+                    "VALUES (42, 'bbc4abb1e3bfc4307b4505c150f16ad2')",
+            )
+            connection.execSQL("PRAGMA user_version = 1")
+        }
 
-            BybonDatabase_AutoMigration_1_2_Impl().migrate(connection)
+        val db = Room.databaseBuilder(databasePath.toString()) { BybonDatabase_Impl() }
+            .setDriver(BundledSQLiteDriver())
+            .build()
+        try {
+            val weights = db.weightEntryDao().weightEntries().first()
+            assert(weights.single().date == LocalDate.of(2026, 9, 9))
+            assert(weights.single().weight == 6500)
 
-            connection.prepare("SELECT date, weight FROM weight_entry").use { statement ->
-                assert(statement.step())
-                assert(statement.getText(0) == "2026-09-09")
-                assert(statement.getLong(1) == 6500L)
-                assert(!statement.step())
-            }
-            connection.prepare(
-                "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'diet_phase'",
-            ).use { statement ->
-                assert(statement.step())
-                val sql = statement.getText(0)
-                assert(sql.contains("`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL"))
-                assert(sql.contains("`kind` TEXT NOT NULL"))
-                assert(sql.contains("`startDate` TEXT NOT NULL"))
-                assert(sql.contains("`startWeight` INTEGER NOT NULL"))
-                assert(sql.contains("`targetWeight` INTEGER NOT NULL"))
-                assert(sql.contains("`durationWeeks` INTEGER"))
-                assert(sql.contains("`endedAt` TEXT"))
-            }
-            connection.prepare("SELECT COUNT(*) FROM diet_phase").use { statement ->
-                assert(statement.step())
-                assert(statement.getLong(0) == 0L)
-            }
+            val dietPhaseDao = db.dietPhaseDao()
+            assert(dietPhaseDao.phases().first().isEmpty())
+
+            dietPhaseDao.upsert(
+                DietPhaseEntity(
+                    kind = "Maintain",
+                    startDate = LocalDate.of(2026, 9, 7),
+                    startWeight = 6500,
+                    targetWeight = 6500,
+                    durationWeeks = null,
+                    endedAt = null,
+                ),
+            )
+            val phases = dietPhaseDao.phases().first()
+            assert(phases.single().kind == "Maintain")
+            assert(phases.single().startWeight == 6500)
+            assert(phases.single().endedAt == null)
+        } finally {
+            db.close()
         }
     }
 }
