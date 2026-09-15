@@ -143,7 +143,7 @@ private fun OverviewExerciseCard(
         Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         OverviewExerciseHeader(exercise, onAction)
         OverviewWarmupSets(exercise, onAction)

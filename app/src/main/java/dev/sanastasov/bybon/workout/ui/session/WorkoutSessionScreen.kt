@@ -114,7 +114,7 @@ private fun ExerciseCard(exercise: WorkoutExercise, onAction: (WorkoutSessionAct
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         val title =
             "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
