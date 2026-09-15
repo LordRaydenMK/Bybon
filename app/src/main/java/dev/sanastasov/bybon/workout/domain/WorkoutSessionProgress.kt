@@ -69,16 +69,15 @@ private fun WorkoutSession.firstSetOfNextExercise(exerciseId: String): SetRef? {
     }
 }
 
-fun WorkoutSession.firstNotStartedSet(): SetRef? =
-    exercises.firstNotNullOfOrNull { exercise ->
-        val warmupIndex = exercise.warmupSets?.indexOfFirst { it.setState == SetState.NotStated }
-        when {
-            warmupIndex != null && warmupIndex >= 0 ->
-                SetRef(exercise.id, warmupIndex, isWarmup = true)
+fun WorkoutSession.firstNotStartedSet(): SetRef? = exercises.firstNotNullOfOrNull { exercise ->
+    val warmupIndex = exercise.warmupSets?.indexOfFirst { it.setState == SetState.NotStated }
+    when {
+        warmupIndex != null && warmupIndex >= 0 ->
+            SetRef(exercise.id, warmupIndex, isWarmup = true)
 
-            else -> {
-                val workIndex = exercise.sets.indexOfFirst { it.setState == SetState.NotStated }
-                if (workIndex >= 0) SetRef(exercise.id, workIndex, isWarmup = false) else null
-            }
+        else -> {
+            val workIndex = exercise.sets.indexOfFirst { it.setState == SetState.NotStated }
+            if (workIndex >= 0) SetRef(exercise.id, workIndex, isWarmup = false) else null
         }
     }
+}

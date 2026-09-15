@@ -46,30 +46,30 @@ private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
     )
 }
 
-fun ExerciseSet.adjust(
-    repRange: IntRange,
-    increment: Weight?,
-    increase: Boolean,
-): ExerciseSet = when {
-    increase && reps < repRange.last -> copy(reps = reps + 1)
-    !increase && reps > repRange.first -> copy(reps = reps - 1)
-    increment == null -> this
-    else -> {
-        val expandedRange = repRange.expanded()
-        generateSequence(
-            if (increase) weight + increment else weight.minusOrNull(increment),
-        ) { current ->
-            if (increase) current + increment else current.minusOrNull(increment)
-        }.take(64).firstNotNullOfOrNull { newWeight ->
-            withWeightPreservingOneRm(
-                newWeight,
-                preferredRange = repRange,
-                fallbackRange = expandedRange,
-                increase = increase,
-            )
-        } ?: this
+fun ExerciseSet.adjust(repRange: IntRange, increment: Weight?, increase: Boolean): ExerciseSet =
+    when {
+        increase && reps < repRange.last -> copy(reps = reps + 1)
+
+        !increase && reps > repRange.first -> copy(reps = reps - 1)
+
+        increment == null -> this
+
+        else -> {
+            val expandedRange = repRange.expanded()
+            generateSequence(
+                if (increase) weight + increment else weight.minusOrNull(increment),
+            ) { current ->
+                if (increase) current + increment else current.minusOrNull(increment)
+            }.take(64).firstNotNullOfOrNull { newWeight ->
+                withWeightPreservingOneRm(
+                    newWeight,
+                    preferredRange = repRange,
+                    fallbackRange = expandedRange,
+                    increase = increase,
+                )
+            } ?: this
+        }
     }
-}
 
 private fun ExerciseSet.followFirstWorkSet(
     originalFirst: ExerciseSet,

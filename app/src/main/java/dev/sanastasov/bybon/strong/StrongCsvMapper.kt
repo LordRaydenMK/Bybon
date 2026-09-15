@@ -227,26 +227,24 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
     return WorkoutExercise(
         exerciseDefinition = definition,
         repRange = repRange,
-        warmupSets = warmupRows.mapNotNull { it.toCompletedSet(definition) }.takeIf { it.isNotEmpty() },
+        warmupSets = warmupRows
+            .mapNotNull { it.toCompletedSet(definition) }
+            .takeIf { it.isNotEmpty() },
         sets = workingRows.mapNotNull { it.toCompletedSet(definition) },
         restAfterWorkSet = restAfterWorkSet,
     )
 }
 
 private fun StrongCsvRow.toCompletedSet(definition: ExerciseDefinition): ExerciseSet? {
-    val kg = weightKg
-    val reps = reps
-    val weight = kg?.toFloat()?.let { Weight.kilogramsOrNull(it) }
-    return if (kg != null && reps != null && reps > 0 && weight != null) {
-        ExerciseSet(
-            exerciseDefinition = definition,
-            weight = weight,
-            reps = reps,
-            setState = SetState.Completed,
-        )
-    } else {
-        null
-    }
+    val reps = reps?.takeIf { it > 0 }
+    val weight = weightKg?.toFloat()?.let { Weight.kilogramsOrNull(it) }
+    if (reps == null || weight == null) return null
+    return ExerciseSet(
+        exerciseDefinition = definition,
+        weight = weight,
+        reps = reps,
+        setState = SetState.Completed,
+    )
 }
 
 @Suppress("ReturnCount")
