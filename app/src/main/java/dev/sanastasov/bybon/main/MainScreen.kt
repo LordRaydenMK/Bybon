@@ -53,6 +53,7 @@ import java.time.LocalDate
 @Composable
 fun MainModule.MainScreen(
     onNavigateToWeightEntry: () -> Unit,
+    onNavigateToDietPhase: () -> Unit,
     onNavigateToStartSession: (WorkoutPlan) -> Unit,
     onNavigateToOverview: (WorkoutPlan) -> Unit,
     onNavigateToHistory: () -> Unit,
@@ -89,6 +90,7 @@ fun MainModule.MainScreen(
         oneRmViewModel::onAction,
         weightState,
         onNavigateToWeightEntry,
+        onNavigateToDietPhase,
         plansState,
         workoutPlansViewModel::onAction,
         onNavigateToHistory,
@@ -106,6 +108,7 @@ private fun MainScreenContent(
     onOneRmAction: (OneRmCalcAction) -> Unit,
     weightState: WeightDashboardUiState,
     onLogWeightClicked: () -> Unit,
+    onDietPhaseClicked: () -> Unit,
     plans: List<WorkoutPlanUi>,
     onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
     onHistoryClicked: () -> Unit,
@@ -169,7 +172,7 @@ private fun MainScreenContent(
                     Modifier.fillMaxSize(),
                 )
 
-                2 -> WeightDashboardTab(weightState, onLogWeightClicked)
+                2 -> WeightDashboardTab(weightState, onLogWeightClicked, onDietPhaseClicked)
 
                 else -> error("Not yet implemented")
             }
@@ -188,6 +191,7 @@ private fun MainScreenContentWorkoutsPreview() {
         OneRmUiState(null, emptyList()),
         {},
         WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
+        {},
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
@@ -212,6 +216,7 @@ private fun MainScreenContentOneRmCalcPreview() {
         ),
         {},
         WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
+        {},
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
@@ -247,6 +252,7 @@ private fun MainScreenContentWeightTrackPreview() {
                 WeeklyAverageEntryUi("CW 31", "64.7 kg", "same as CW 30"),
             ),
         ),
+        {},
         {},
         listOf(
             WorkoutPlanUi(fullBodyA, isActive = false),
