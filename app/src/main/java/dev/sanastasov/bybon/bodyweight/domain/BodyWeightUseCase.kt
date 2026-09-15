@@ -20,8 +20,12 @@ data class WeeklyAverageEntry(
 data class WeeklyTrendPoint(
     val weekStart: LocalDate,
     val weekOfYear: Int,
-    val averageWeight: BodyWeight,
+    val averageWeight: BodyWeight? = null,
     val isLastSevenDaysFallback: Boolean = false,
+    val projectedWeight: BodyWeight? = null,
+    val maintainLow: BodyWeight? = null,
+    val maintainHigh: BodyWeight? = null,
+    val isFuture: Boolean = false,
 )
 
 data class BodyWeightDashboard(
@@ -74,12 +78,20 @@ internal fun computeBodyWeightDashboard(
     val lastOfficialAverage = thisWeekAverage ?: lastKnownWeekAverage
     val effectivePhase = effectiveDietPhase(openPhase, today, lastOfficialAverage)
 
-    val weeklyTrend = weeklyTrend(
+    val baseTrend = weeklyTrend(
         currentWeekStart,
         windowStart,
         entriesByWeekStart,
         lastSevenDaysAverage,
     )
+    val weeklyTrend = when (effectivePhase) {
+        EffectiveDietPhase.Off -> baseTrend
+
+        is EffectiveDietPhase.On -> effectivePhase.phase.extendTrend(
+            baseTrend,
+            currentWeekStart,
+        )
+    }
 
     val onTrack = when {
         currentAverage == null -> null

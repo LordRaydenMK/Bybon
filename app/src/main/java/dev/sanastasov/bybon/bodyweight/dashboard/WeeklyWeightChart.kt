@@ -31,13 +31,16 @@ import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import ir.ehsannarmani.compose_charts.models.LineProperties
 import ir.ehsannarmani.compose_charts.models.PopupProperties
+import ir.ehsannarmani.compose_charts.models.StrokeStyle
 
 @Composable
 fun WeeklyWeightTrendCard(points: List<WeeklyTrendPointUi>, modifier: Modifier = Modifier) {
-    val slotCount = points.maxOf { it.weekIndex } + 1
+    val lastHistoricalIndex = points.filterNot { it.isFuture }.maxOfOrNull { it.weekIndex } ?: 0
+    val futureCount = points.count { it.isFuture }
     val usesFallback = points.any { it.isLastSevenDaysFallback }
     val caption = buildString {
-        append("Last $slotCount weeks")
+        append("Last ${lastHistoricalIndex + 1} weeks")
+        if (futureCount > 0) append(" · $futureCount weeks ahead")
         if (usesFallback) append(" · current week uses last 7d average")
     }
 
@@ -68,10 +71,37 @@ fun WeeklyWeightTrendCard(points: List<WeeklyTrendPointUi>, modifier: Modifier =
 @Composable
 private fun WeeklyWeightChart(points: List<WeeklyTrendPointUi>, modifier: Modifier = Modifier) {
     val colors = weeklyChartColors()
-    val values = remember(points) { points.map { it.kilograms.toDouble() } }
-    val yRange = remember(values) { yAxisRange(values) }
-    val lines = remember(values, colors.line, colors.surface) {
-        listOf(weeklyAverageLine(values, colors.line, colors.surface))
+    val actualValues = remember(points) { actualLineValues(points) }
+    val yRange = remember(points, actualValues) {
+        yAxisRange(chartRangeValues(points, actualValues))
+    }
+    val hasFuture = points.any { it.isFuture }
+    val lines = remember(points, actualValues, colors, hasFuture) {
+        buildList {
+            add(
+                weeklyAverageLine(
+                    actualValues,
+                    colors.line,
+                    colors.surface,
+                    !hasFuture,
+                ),
+            )
+            overlayLine(
+                points.map { point -> point.projectedKilograms },
+                "Projected",
+                colors.overlay,
+            )?.let(::add)
+            overlayLine(
+                points.map { point -> point.maintainHighKilograms },
+                "High",
+                colors.overlay,
+            )?.let(::add)
+            overlayLine(
+                points.map { point -> point.maintainLowKilograms },
+                "Low",
+                colors.overlay,
+            )?.let(::add)
+        }
     }
     val description = weeklyTrendDescription(points)
 
@@ -136,6 +166,7 @@ private data class WeeklyChartColors(
     val line: Color,
     val surface: Color,
     val outline: Color,
+    val overlay: Color,
     val labelStyle: TextStyle,
     val popupTextStyle: TextStyle,
     val popupContainer: Color,
@@ -149,6 +180,7 @@ private fun weeklyChartColors(): WeeklyChartColors {
         line = colorScheme.primary,
         surface = colorScheme.surface,
         outline = colorScheme.outlineVariant,
+        overlay = colorScheme.tertiary,
         labelStyle = labelStyle,
         popupTextStyle = MaterialTheme.typography.labelSmall.copy(
             color = colorScheme.inverseOnSurface,
@@ -157,31 +189,86 @@ private fun weeklyChartColors(): WeeklyChartColors {
     )
 }
 
-private fun weeklyAverageLine(values: List<Double>, lineColor: Color, surfaceColor: Color): Line =
-    Line(
-        label = "Weekly average",
-        values = values,
-        color = SolidColor(lineColor),
-        firstGradientFillColor = lineColor.copy(alpha = 0.28f),
+private fun weeklyAverageLine(
+    values: List<Double>,
+    lineColor: Color,
+    surfaceColor: Color,
+    dotsEnabled: Boolean,
+): Line = Line(
+    label = "Weekly average",
+    values = values,
+    color = SolidColor(lineColor),
+    firstGradientFillColor = lineColor.copy(alpha = 0.28f),
+    secondGradientFillColor = Color.Transparent,
+    curvedEdges = false,
+    drawStyle = DrawStyle.Stroke(width = 2.5.dp),
+    strokeAnimationSpec = tween(700),
+    gradientAnimationSpec = tween(700),
+    gradientAnimationDelay = 150,
+    dotProperties = DotProperties(
+        enabled = dotsEnabled,
+        radius = 4.dp,
+        color = SolidColor(surfaceColor),
+        strokeWidth = 2.dp,
+        strokeColor = SolidColor(lineColor),
+    ),
+)
+
+@Suppress("ReturnCount")
+private fun overlayLine(values: List<Float?>, label: String, color: Color): Line? {
+    if (values.all { it == null }) return null
+    var last = values.firstOrNull { it != null } ?: return null
+    val filled = values.map { value ->
+        val next = value ?: last
+        last = next
+        next.toDouble()
+    }
+    return Line(
+        label = label,
+        values = filled,
+        color = SolidColor(color),
+        firstGradientFillColor = Color.Transparent,
         secondGradientFillColor = Color.Transparent,
         curvedEdges = false,
-        drawStyle = DrawStyle.Stroke(width = 2.5.dp),
+        drawStyle = DrawStyle.Stroke(
+            width = 1.5.dp,
+            strokeStyle = StrokeStyle.Dashed(intervals = floatArrayOf(10f, 10f)),
+        ),
         strokeAnimationSpec = tween(700),
         gradientAnimationSpec = tween(700),
-        gradientAnimationDelay = 150,
-        dotProperties = DotProperties(
-            enabled = true,
-            radius = 4.dp,
-            color = SolidColor(surfaceColor),
-            strokeWidth = 2.dp,
-            strokeColor = SolidColor(lineColor),
-        ),
+        dotProperties = DotProperties(enabled = false),
     )
+}
+
+private fun actualLineValues(points: List<WeeklyTrendPointUi>): List<Double> {
+    var last = points.firstNotNullOfOrNull { it.kilograms } ?: 0f
+    return points.map { point ->
+        val next = point.kilograms ?: point.projectedKilograms ?: midpoint(point) ?: last
+        last = next
+        next.toDouble()
+    }
+}
+
+private fun midpoint(point: WeeklyTrendPointUi): Float? {
+    val low = point.maintainLowKilograms
+    val high = point.maintainHighKilograms
+    return if (low != null && high != null) (low + high) / 2f else null
+}
+
+private fun chartRangeValues(points: List<WeeklyTrendPointUi>, actual: List<Double>): List<Double> =
+    actual + points.flatMap { point ->
+        listOfNotNull(
+            point.projectedKilograms?.toDouble(),
+            point.maintainLowKilograms?.toDouble(),
+            point.maintainHighKilograms?.toDouble(),
+        )
+    }
 
 private fun weeklyTrendDescription(points: List<WeeklyTrendPointUi>): String =
     points.joinToString(prefix = "Weekly body weight averages. ") {
         val suffix = if (it.isLastSevenDaysFallback) " last 7 day average" else ""
-        "CW ${it.weekLabel} ${it.kilograms} kg$suffix"
+        val kg = it.kilograms?.toString() ?: "projected"
+        "CW ${it.weekLabel} $kg kg$suffix"
     }
 
 private fun weeklyTrendPopupText(
@@ -190,5 +277,6 @@ private fun weeklyTrendPopupText(
 ): String {
     val point = points.getOrNull(popup.valueIndex)
     val fallback = if (point?.isLastSevenDaysFallback == true) " · 7d" else ""
-    return "CW ${point?.weekLabel ?: ""} · ${popup.value.format(1)} kg$fallback"
+    val future = if (point?.isFuture == true) " · projected" else ""
+    return "CW ${point?.weekLabel ?: ""} · ${popup.value.format(1)} kg$fallback$future"
 }

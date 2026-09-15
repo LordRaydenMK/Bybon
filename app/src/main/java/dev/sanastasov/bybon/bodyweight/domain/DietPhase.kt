@@ -9,6 +9,7 @@ import dev.sanastasov.bybon.domain.isoWeekStart
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
+const val CHART_FUTURE_WEEKS = 4
 const val MAX_PHASE_WEEKS = 30
 const val MAX_GAIN_PERCENT_PER_WEEK = 0.5f
 const val MAX_LOSE_PERCENT_PER_WEEK = 1.0f

@@ -139,6 +139,8 @@ class WeightDashboardViewModelTest {
         assert(state.dietPhaseSummary?.kindLabel == "Maintain")
         assert(state.dietPhaseSummary?.actionLabel == "Edit")
         assert(state.onTrack)
+        assert(state.weeklyTrend?.any { it.isFuture } == true)
+        assert(state.weeklyTrend?.any { it.maintainLowKilograms != null } == true)
     }
 
     private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =

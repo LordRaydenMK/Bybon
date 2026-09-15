@@ -165,6 +165,15 @@ class DietPhaseTest {
         assert(phase.isOnTrack(BodyWeight.parseFromString("65.6"), null) == false)
     }
 
+    @Test
+    fun `projects linearly from start to target`() {
+        val phase = gain("67.4", 8)
+        assert(phase.projectedWeightOn(start) == startWeight)
+        assert(phase.projectedWeightOn(start.plusWeeks(8)) == BodyWeight.parseFromString("67.4"))
+        val mid = phase.projectedWeightOn(start.plusWeeks(4))
+        assert(mid == BodyWeight.parseFromString("66.2"))
+    }
+
     private fun maintain(): DietPhase = DietPhase.create(
         DietPhaseKind.Maintain,
         start,
