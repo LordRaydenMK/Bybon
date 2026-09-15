@@ -81,7 +81,6 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     },
 )
 
-@Suppress("ReturnCount")
 fun WorkoutSession.startWorkout(): WorkoutSession {
     val first = firstNotStartedSet() ?: return this
     val exercise = exercises.first { it.id == first.exerciseId }

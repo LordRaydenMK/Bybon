@@ -46,7 +46,7 @@ data class ExerciseTopSetUi(
     val name: String,
     val weightKg: String,
     val reps: Int,
-    val oneRm: Weight?,
+    val oneRm: Weight,
 )
 
 sealed class WorkoutHistoryAction {

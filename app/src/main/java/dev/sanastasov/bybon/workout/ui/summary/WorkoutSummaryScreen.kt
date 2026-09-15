@@ -116,13 +116,7 @@ private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
 
 @Composable
 private fun CompletedSetRow(set: WorkoutSummarySetUi) {
-    val oneRmLabel = set.oneRm?.let { "@ ${it.kilograms} kg 1RM" }
-    val summary = buildString {
-        append("${set.number}. ${set.weightKg} kg x ${set.reps}")
-        if (oneRmLabel != null) {
-            append(" $oneRmLabel")
-        }
-    }
+    val summary = "${set.number}. ${set.weightKg} kg x ${set.reps} @ ${set.oneRm.kilograms} kg 1RM"
     Row(
         Modifier
             .defaultMinSize(minHeight = 48.dp)

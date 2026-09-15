@@ -255,8 +255,7 @@ private fun plansLabel(count: Int): String = if (count == 1) "plan" else "plans"
 private fun exercisesLabel(count: Int): String = if (count == 1) "exercise" else "exercises"
 
 private fun ExerciseTopSetUi.summary(): String = buildString {
-    append("$name: $weightKg kg x $reps")
-    oneRm?.let { append(" @ ${it.kilograms} kg 1RM") }
+    append("$name: $weightKg kg x $reps @ ${oneRm.kilograms} kg 1RM")
 }
 
 @Preview

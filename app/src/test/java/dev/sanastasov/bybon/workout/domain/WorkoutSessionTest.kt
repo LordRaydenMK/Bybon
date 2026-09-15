@@ -357,6 +357,13 @@ class WorkoutSessionTest {
         assert(Weight.parseString("50.50").kilograms == "50.5")
         assert(Weight.kilograms(50.25f).kilograms == "50.25")
         assert(Weight.kilograms(74.48f).kilograms == "74.48")
+        assertFailsWith<IllegalArgumentException> { Weight.kilograms(0) }
+        assertFailsWith<IllegalArgumentException> { Weight.kilograms(0f) }
+        assertFailsWith<IllegalArgumentException> { Weight.kilograms(-2.5f) }
+        assert(Weight.kilogramsOrNull(0f) == null)
+        assertFailsWith<IllegalArgumentException> {
+            Weight.kilograms(2.5f) - Weight.kilograms(2.5f)
+        }
     }
 
     @Test
@@ -368,7 +375,7 @@ class WorkoutSessionTest {
             SetState.Completed,
         )
         assert(set.oneRm == Weight.kilograms(estimateOneRmKg(60f, 8)))
-        assert(set.oneRm!!.kilograms == "74.48")
+        assert(set.oneRm.kilograms == "74.48")
     }
 
     @Test
@@ -425,6 +432,15 @@ class WorkoutSessionTest {
             )
         }
         assert(error.message == "warmupSets must be >= 0")
+    }
+
+    @Test
+    fun `reps must be positive`() {
+        val bench = catalogExercise("bench-press-bb")
+        val error = assertFailsWith<IllegalArgumentException> {
+            ExerciseSet(bench, Weight.kilograms(50), 0, SetState.NotStated)
+        }
+        assert(error.message == "reps must be positive")
     }
 
     @Test

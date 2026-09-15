@@ -24,7 +24,7 @@ data class WorkoutSummarySetUi(
     val number: Int,
     val weightKg: String,
     val reps: Int,
-    val oneRm: Weight?,
+    val oneRm: Weight,
 )
 
 internal fun List<WorkoutSession>.requireCompletedSummary(

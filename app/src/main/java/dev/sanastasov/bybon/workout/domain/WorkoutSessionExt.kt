@@ -1,6 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
-internal fun WorkoutSession.updateExercise(
+fun WorkoutSession.updateExercise(
     exerciseId: String,
     update: (WorkoutExercise) -> WorkoutExercise,
 ): WorkoutSession = copy(
@@ -13,7 +13,7 @@ internal fun WorkoutSession.updateExercise(
     },
 )
 
-internal fun WorkoutSession.updateExerciseSet(
+fun WorkoutSession.updateExerciseSet(
     exercise: WorkoutExercise,
     setIndex: Int,
     isWarmup: Boolean = false,

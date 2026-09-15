@@ -94,6 +94,11 @@ class StrongCsvRowTest {
         )
         assert(firstRdl.sets.size == 3)
         assert(firstRdl.restAfterWorkSet == 120.seconds)
+        val firstSplitSquat = result.sessionHistory
+            .first { it.planId == fullBodyB.id }
+            .exercises
+            .first { it.id == "split-squat-db" }
+        assert(firstSplitSquat.warmupSets == null)
         val firstFullBodyA = result.sessionHistory.first { it.planId == fullBodyA.id }
         assert(
             firstFullBodyA.exercises.first { it.id == "bench-press-bb" }.restAfterWorkSet ==

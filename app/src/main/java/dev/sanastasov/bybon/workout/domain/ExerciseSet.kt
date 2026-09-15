@@ -4,8 +4,12 @@ data class PreviousSetPerformance(
     val weight: Weight,
     val reps: Int,
 ) {
-    val oneRm: Weight?
-        get() = oneRmOrNull(weight, reps)
+    init {
+        require(reps > 0) { "reps must be positive" }
+    }
+
+    val oneRm: Weight
+        get() = estimatedOneRm(weight, reps)
 }
 
 data class ExerciseSet(
@@ -15,6 +19,10 @@ data class ExerciseSet(
     val setState: SetState,
     val previous: PreviousSetPerformance? = null,
 ) {
-    val oneRm: Weight?
-        get() = oneRmOrNull(weight, reps)
+    init {
+        require(reps > 0) { "reps must be positive" }
+    }
+
+    val oneRm: Weight
+        get() = estimatedOneRm(weight, reps)
 }

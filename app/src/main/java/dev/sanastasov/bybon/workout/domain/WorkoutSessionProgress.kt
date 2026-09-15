@@ -19,7 +19,7 @@ fun WorkoutSession.completeSet(
     }
 }
 
-internal data class SetRef(
+data class SetRef(
     val exerciseId: String,
     val index: Int,
     val isWarmup: Boolean,
@@ -69,7 +69,7 @@ private fun WorkoutSession.firstSetOfNextExercise(exerciseId: String): SetRef? {
     }
 }
 
-internal fun WorkoutSession.firstNotStartedSet(): SetRef? =
+fun WorkoutSession.firstNotStartedSet(): SetRef? =
     exercises.firstNotNullOfOrNull { exercise ->
         val warmupIndex = exercise.warmupSets?.indexOfFirst { it.setState == SetState.NotStated }
         when {

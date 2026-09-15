@@ -2,10 +2,10 @@ package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
-import java.util.*
+import java.util.Locale
 
-val NumberedSet.oneRmLabel: String?
-    get() = set.oneRm?.let { "@ ${formatOneRmKg(it.kilogramsValue)} kg 1RM" }
+val NumberedSet.oneRmLabel: String
+    get() = "@ ${formatOneRmKg(set.oneRm.kilogramsValue)} kg 1RM"
 
 val NumberedSet.previousLabel: String?
     get() = set.previous?.let { previous ->
@@ -22,7 +22,7 @@ val NumberedSet.overviewContentDescription: String
     get() = buildString {
         append("$setTitle, ${set.weight.kilograms} kg by ${set.reps}")
         if (!isWarmup) {
-            oneRmLabel?.let { append(", $it") }
+            append(", $oneRmLabel")
         }
         previousLabel?.let { append(". Previous: $it") }
     }
@@ -35,7 +35,7 @@ val NumberedSet.sessionContentDescription: String
         }
         append(", ${set.weight.kilograms} kg by ${set.reps}")
         if (!isWarmup) {
-            oneRmLabel?.let { append(", $it") }
+            append(", $oneRmLabel")
         }
         previousLabel?.let { append(". Previous: $it") }
         if (set.setState == SetState.InProgress) {
@@ -51,7 +51,7 @@ val NumberedSet.completedContentDescription: String
         } else {
             append("$workSetNumber. ")
             append(weightRepsLabel)
-            oneRmLabel?.let { append(" $it") }
+            append(" $oneRmLabel")
         }
     }
 
