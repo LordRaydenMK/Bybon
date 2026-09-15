@@ -6,7 +6,7 @@ private fun planned(
     repRange: IntRange,
     warmupSets: Int = 0,
 ): PlanedExercise {
-    val exercise = exercisesMap.getValue(exerciseId)
+    val exercise = catalogExercise(exerciseId)
     return PlanedExercise(
         exercise = exercise,
         warmupSets = warmupSets,

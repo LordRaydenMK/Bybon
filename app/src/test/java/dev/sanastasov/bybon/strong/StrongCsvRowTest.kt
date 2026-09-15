@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlin.test.assertFailsWith
@@ -65,7 +66,10 @@ class StrongCsvRowTest {
     fun `imports completed session history from the strong backup sample`() {
         val result = StrongCsvParser.parse(
             readStrongBackupSample(javaClass.classLoader),
-        ).toStrongImport()
+        ).toStrongImport(
+            plans = listOf(fullBodyA, fullBodyB),
+            exerciseCatalog = catalogExercises,
+        )
 
         assert(result.sessionHistory.size == 52)
         assert(result.sessionHistory.all { it.state is WorkoutState.Completed })
@@ -112,7 +116,10 @@ class StrongCsvRowTest {
     fun `imports only exercises that do not already exist in Bybon`() {
         val result = StrongCsvParser.parse(
             readStrongBackupSample(javaClass.classLoader),
-        ).toStrongImport()
+        ).toStrongImport(
+            plans = listOf(fullBodyA, fullBodyB),
+            exerciseCatalog = catalogExercises,
+        )
 
         assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
         assert(result.exercises.single().id == "crunch-machine")
@@ -124,7 +131,10 @@ class StrongCsvRowTest {
     fun `imports only plans that do not match existing Bybon plans`() {
         val result = StrongCsvParser.parse(
             readStrongBackupSample(javaClass.classLoader),
-        ).toStrongImport()
+        ).toStrongImport(
+            plans = listOf(fullBodyA, fullBodyB),
+            exerciseCatalog = catalogExercises,
+        )
 
         assert(result.plans.map { it.name } == listOf("Upper body A", "Upper body B"))
         assert(

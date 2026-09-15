@@ -12,13 +12,15 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.catalogExercise
+import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
-import dev.sanastasov.bybon.workout.domain.exercisesMap
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -154,7 +156,7 @@ class WorkoutHistoryViewModelTest {
         val bench = completedExercise("bench-press-bb", 80f to 8, 80f to 7).copy(
             warmupSets = listOf(
                 ExerciseSet(
-                    exerciseDefinition = exercisesMap.getValue("bench-press-bb"),
+                    exerciseDefinition = catalogExercise("bench-press-bb"),
                     weight = Weight.kilograms(200),
                     reps = 1,
                     setState = SetState.Completed,
@@ -246,7 +248,10 @@ class WorkoutHistoryViewModelTest {
 
     @Test
     fun `importing the strong sample csv shows a spinner then a summary`() = runTest {
-        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB),
+            initialExercises = catalogExercises,
+        )
         val viewModel = historyViewModel(
             repository,
             csv = readStrongBackupSample(javaClass.classLoader),
@@ -278,8 +283,34 @@ class WorkoutHistoryViewModelTest {
     }
 
     @Test
+    fun `importing the strong sample csv stores new exercises in the repository`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = historyViewModel(
+            repository,
+            csv = readStrongBackupSample(javaClass.classLoader),
+        )
+
+        viewModel.uiState.test {
+            skipItems(2)
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
+            skipItems(1)
+            assert(awaitItem() is WorkoutHistoryUiState.Summary)
+        }
+
+        val stored = repository.exercises().first()
+        assert(stored.containsAll(catalogExercises))
+        assert(stored.single { it.id == "crunch-machine" }.name == "Crunch (Machine)")
+    }
+
+    @Test
     fun `done after import shows the imported history newest first`() = runTest {
-        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB),
+            initialExercises = catalogExercises,
+        )
         val viewModel = historyViewModel(
             repository,
             csv = readStrongBackupSample(javaClass.classLoader),

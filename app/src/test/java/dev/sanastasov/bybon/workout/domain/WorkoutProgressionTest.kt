@@ -4,8 +4,8 @@ import org.junit.Test
 
 class WorkoutProgressionTest {
 
-    private val bench = exercisesMap.getValue("bench-press-bb")
-    private val lateralRaise = exercisesMap.getValue("lateral-raise-db")
+    private val bench = catalogExercise("bench-press-bb")
+    private val lateralRaise = catalogExercise("lateral-raise-db")
     private val benchRange = 8..10
     private val lateralRange = 10..16
 
