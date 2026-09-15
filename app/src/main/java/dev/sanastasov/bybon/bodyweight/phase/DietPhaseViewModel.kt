@@ -2,14 +2,16 @@ package dev.sanastasov.bybon.bodyweight.phase
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.DietPhase
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseValidation
 import dev.sanastasov.bybon.bodyweight.domain.EffectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
+import dev.sanastasov.bybon.bodyweight.domain.endExclusive
 import dev.sanastasov.bybon.bodyweight.domain.kind
-import dev.sanastasov.bybon.bodyweight.domain.validateDietPhase
+import dev.sanastasov.bybon.bodyweight.domain.plannedRatePerWeek
 import dev.sanastasov.bybon.domain.isoWeekStart
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import java.time.LocalDate
@@ -89,21 +91,23 @@ class DietPhaseViewModel(
 
     private fun apply() {
         val start = startWeight.value ?: return
-        val validation = validateCurrent(start)
-        coroutineScope.launch {
-            when (validation) {
-                is DietPhaseValidation.Valid -> {
-                    repository.openPhase().first()?.let { open ->
-                        repository.endPhase(open, today)
-                    }
-                    validation.phase?.let { phase ->
-                        repository.updatePhase(DietPhaseRecord(0, phase))
-                    }
-                    _effects.send(DietPhaseEditorEffect.NavigateBack)
-                }
+        val kind = selectedKind.value
+        val phase = when (kind) {
+            null -> null
 
-                is DietPhaseValidation.Invalid -> Unit
+            else -> when (val result = createPhase(kind, start)) {
+                is DietPhaseValidation.Valid -> result.phase
+                is DietPhaseValidation.Invalid -> return
             }
+        }
+        coroutineScope.launch {
+            repository.openPhase().first()?.let { open ->
+                repository.endPhase(open, today)
+            }
+            phase?.let { created ->
+                repository.updatePhase(DietPhaseRecord(0, created))
+            }
+            _effects.send(DietPhaseEditorEffect.NavigateBack)
         }
     }
 
@@ -114,39 +118,39 @@ class DietPhaseViewModel(
         start: BodyWeight?,
         isPrimed: Boolean,
     ): DietPhaseEditorUi {
-        val validation = start?.let { validateCurrent(it, kind, weeksText, targetText) }
-        val preview = (validation as? DietPhaseValidation.Valid)?.preview
+        val result = start?.let { weight ->
+            kind?.let { createPhase(it, weight, weeksText, targetText) }
+        }
+        val phase = (result as? DietPhaseValidation.Valid)?.phase
         return DietPhaseEditorUi(
             selectedKind = kind,
             weeks = weeksText,
             targetKg = targetText,
             startWeightKg = start?.kilograms?.toString(),
-            rateCaption = if (start != null && preview != null) {
-                preview.ratePerWeek.formatRate(start)
+            rateCaption = if (start != null && phase?.endExclusive() != null) {
+                phase.plannedRatePerWeek().formatRate(start)
             } else {
                 null
             },
-            error = (validation as? DietPhaseValidation.Invalid)?.message,
-            canApply = isPrimed && validation is DietPhaseValidation.Valid,
+            error = (result as? DietPhaseValidation.Invalid)?.message,
+            canApply = isPrimed &&
+                start != null &&
+                (kind == null || result is DietPhaseValidation.Valid),
         )
     }
 
-    private fun validateCurrent(
+    private fun createPhase(
+        kind: DietPhaseKind,
         start: BodyWeight,
-        kind: DietPhaseKind? = selectedKind.value,
         weeksText: String = weeks.value,
         targetText: String = targetKg.value,
-    ): DietPhaseValidation {
-        val parsedWeeks = weeksText.toIntOrNull()
-        val parsedTarget = parseWeight(targetText)
-        return validateDietPhase(
-            kind,
-            today.isoWeekStart(),
-            start,
-            parsedTarget,
-            parsedWeeks,
-        )
-    }
+    ): DietPhaseValidation = DietPhase.create(
+        kind,
+        today.isoWeekStart(),
+        start,
+        parseWeight(targetText),
+        weeksText.toIntOrNull(),
+    )
 
     private fun parseWeight(value: String): BodyWeight? = try {
         BodyWeight.parseFromString(value)

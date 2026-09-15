@@ -3,24 +3,13 @@ package dev.sanastasov.bybon.bodyweight.domain
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.WeightDelta
 import dev.sanastasov.bybon.bodyweight.minusToDelta
+import dev.sanastasov.bybon.bodyweight.percentOf
 import dev.sanastasov.bybon.domain.isoWeekStart
 import java.time.LocalDate
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
-fun validateDietPhase(
-    kind: DietPhaseKind?,
-    startDate: LocalDate,
-    startWeight: BodyWeight,
-    targetWeight: BodyWeight?,
-    durationWeeks: Int?,
-): DietPhaseValidation = when (kind) {
-    null -> DietPhaseValidation.Valid(phase = null)
-    DietPhaseKind.Maintain -> validateMaintain(startDate, startWeight, targetWeight)
-    DietPhaseKind.Gain -> validateGain(startDate, startWeight, targetWeight, durationWeeks)
-    DietPhaseKind.Lose -> validateLose(startDate, startWeight, targetWeight, durationWeeks)
-}
-
-private fun validateMaintain(
+internal fun createMaintain(
     startDate: LocalDate,
     startWeight: BodyWeight,
     targetWeight: BodyWeight?,
@@ -29,7 +18,7 @@ private fun validateMaintain(
     else -> DietPhaseValidation.Valid(DietPhase.Maintain(startDate, startWeight, targetWeight))
 }
 
-private fun validateGain(
+internal fun createGain(
     startDate: LocalDate,
     startWeight: BodyWeight,
     targetWeight: BodyWeight?,
@@ -37,18 +26,23 @@ private fun validateGain(
 ): DietPhaseValidation = when {
     targetWeight == null -> DietPhaseValidation.Invalid("Enter a target weight")
 
-    invalidWeeks(durationWeeks) -> weeksError()
+    durationWeeks == null || durationWeeks !in 1..MAX_PHASE_WEEKS ->
+        DietPhaseValidation.Invalid("Enter 1–$MAX_PHASE_WEEKS weeks")
 
     targetWeight <= startWeight ->
         DietPhaseValidation.Invalid("Gain target must be above current weight")
 
-    else -> validateChangingRate(
-        DietPhase.Gain(startDate, startWeight, targetWeight, checkNotNull(durationWeeks)),
+    else -> rateOrValid(
+        startWeight,
+        targetWeight,
+        checkNotNull(durationWeeks),
         MAX_GAIN_PERCENT_PER_WEEK,
-    )
+    ) { weeks ->
+        DietPhase.Gain(startDate, startWeight, targetWeight, weeks)
+    }
 }
 
-private fun validateLose(
+internal fun createLose(
     startDate: LocalDate,
     startWeight: BodyWeight,
     targetWeight: BodyWeight?,
@@ -56,35 +50,19 @@ private fun validateLose(
 ): DietPhaseValidation = when {
     targetWeight == null -> DietPhaseValidation.Invalid("Enter a target weight")
 
-    invalidWeeks(durationWeeks) -> weeksError()
+    durationWeeks == null || durationWeeks !in 1..MAX_PHASE_WEEKS ->
+        DietPhaseValidation.Invalid("Enter 1–$MAX_PHASE_WEEKS weeks")
 
     targetWeight >= startWeight ->
         DietPhaseValidation.Invalid("Lose target must be below current weight")
 
-    else -> validateChangingRate(
-        DietPhase.Lose(startDate, startWeight, targetWeight, checkNotNull(durationWeeks)),
+    else -> rateOrValid(
+        startWeight,
+        targetWeight,
+        checkNotNull(durationWeeks),
         MAX_LOSE_PERCENT_PER_WEEK,
-    )
-}
-
-private fun invalidWeeks(weeks: Int?): Boolean = weeks == null || weeks !in 1..MAX_PHASE_WEEKS
-
-private fun weeksError(): DietPhaseValidation =
-    DietPhaseValidation.Invalid("Enter 1–$MAX_PHASE_WEEKS weeks")
-
-private fun validateChangingRate(phase: DietPhase, percentCap: Float): DietPhaseValidation {
-    val rate = phase.plannedRatePerWeek()
-    val cap = phase.maxWeeklyRate()
-    return if (rate.absolute() > cap) {
-        DietPhaseValidation.Invalid(
-            "Too fast: max ${cap.signedKilograms()} kg/week ($percentCap%). " +
-                "Increase weeks or reduce the target.",
-        )
-    } else {
-        DietPhaseValidation.Valid(
-            phase,
-            DietPhasePlanPreview(rate, checkNotNull(phase.endExclusive())),
-        )
+    ) { weeks ->
+        DietPhase.Lose(startDate, startWeight, targetWeight, weeks)
     }
 }
 
@@ -100,11 +78,12 @@ fun effectiveDietPhase(
     else -> {
         val maintainTarget = lastOfficialAverage ?: openRecord.phase.targetWeight
         EffectiveDietPhase.On(
-            DietPhase.Maintain(
+            DietPhase.create(
+                DietPhaseKind.Maintain,
                 openRecord.phase.endExclusive() ?: today.isoWeekStart(),
                 maintainTarget,
                 maintainTarget,
-            ),
+            ).requireValid(),
         )
     }
 }
@@ -132,5 +111,53 @@ fun onTrackDeltaRange(phase: DietPhase): ClosedRange<WeightDelta> {
         is DietPhase.Gain -> WeightDelta.Zero..far
         is DietPhase.Lose -> -far..WeightDelta.Zero
         is DietPhase.Maintain -> -WeightDelta.WaterNoise..WeightDelta.WaterNoise
+    }
+}
+
+internal fun weeklyRate(
+    startWeight: BodyWeight,
+    targetWeight: BodyWeight,
+    weeks: Int,
+): WeightDelta {
+    val raw = (targetWeight.value - startWeight.value).toFloat() / weeks
+    val roundedTo5 = (raw / 5f).roundToInt() * 5
+    return WeightDelta(roundedTo5)
+}
+
+internal fun requireValidDuration(durationWeeks: Int) {
+    require(durationWeeks in 1..MAX_PHASE_WEEKS) {
+        "Duration must be 1–$MAX_PHASE_WEEKS weeks. Found '$durationWeeks'"
+    }
+}
+
+internal fun requireValidRate(
+    startWeight: BodyWeight,
+    targetWeight: BodyWeight,
+    weeks: Int,
+    percentCap: Float,
+) {
+    val rate = weeklyRate(startWeight, targetWeight, weeks)
+    val cap = startWeight.percentOf(percentCap)
+    require(rate.absolute() <= cap) {
+        "Weekly rate ${rate.signedKilograms()} kg exceeds cap ${cap.signedKilograms()} kg ($percentCap%)"
+    }
+}
+
+private fun rateOrValid(
+    startWeight: BodyWeight,
+    targetWeight: BodyWeight,
+    weeks: Int,
+    percentCap: Float,
+    construct: (Int) -> DietPhase,
+): DietPhaseValidation {
+    val rate = weeklyRate(startWeight, targetWeight, weeks)
+    val cap = startWeight.percentOf(percentCap)
+    return if (rate.absolute() > cap) {
+        DietPhaseValidation.Invalid(
+            "Too fast: max ${cap.signedKilograms()} kg/week ($percentCap%). " +
+                "Increase weeks or reduce the target.",
+        )
+    } else {
+        DietPhaseValidation.Valid(construct(weeks))
     }
 }

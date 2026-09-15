@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
 import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
 import dev.sanastasov.bybon.bodyweight.domain.kind
+import dev.sanastasov.bybon.bodyweight.domain.requireValid
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -50,26 +51,12 @@ private fun DietPhaseRecord.toEntity(): DietPhaseEntity = DietPhaseEntity(
 
 private fun DietPhaseEntity.toRecord(): DietPhaseRecord = DietPhaseRecord(
     id = id,
-    phase = when (DietPhaseKind.valueOf(kind)) {
-        DietPhaseKind.Maintain -> DietPhase.Maintain(
-            startDate,
-            BodyWeight(startWeight),
-            BodyWeight(targetWeight),
-        )
-
-        DietPhaseKind.Gain -> DietPhase.Gain(
-            startDate,
-            BodyWeight(startWeight),
-            BodyWeight(targetWeight),
-            checkNotNull(durationWeeks),
-        )
-
-        DietPhaseKind.Lose -> DietPhase.Lose(
-            startDate,
-            BodyWeight(startWeight),
-            BodyWeight(targetWeight),
-            checkNotNull(durationWeeks),
-        )
-    },
+    phase = DietPhase.create(
+        DietPhaseKind.valueOf(kind),
+        startDate,
+        BodyWeight(startWeight),
+        BodyWeight(targetWeight),
+        durationWeeks,
+    ).requireValid(),
     endedAt = endedAt,
 )

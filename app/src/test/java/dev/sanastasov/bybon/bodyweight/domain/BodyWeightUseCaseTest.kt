@@ -205,11 +205,12 @@ class BodyWeightUseCaseTest {
         val startWeight = BodyWeight.parseFromString("65.0")
         val entries = officialWeek(weekStart, "65.0") +
             officialWeek(weekStart.minusWeeks(1), "64.8")
-        val phase = DietPhase.Maintain(
+        val phase = DietPhase.create(
+            DietPhaseKind.Maintain,
             weekStart,
             startWeight,
             startWeight,
-        )
+        ).requireValid()
         val dashboard = computeBodyWeightDashboard(
             entries,
             DietPhaseRecord(1, phase),
@@ -236,7 +237,12 @@ class BodyWeightUseCaseTest {
             officialWeek(weekStart, "65.0") + officialWeek(weekStart.minusWeeks(1), "64.8"),
             DietPhaseRecord(
                 1,
-                DietPhase.Maintain(weekStart, startWeight, startWeight),
+                DietPhase.create(
+                    DietPhaseKind.Maintain,
+                    weekStart,
+                    startWeight,
+                    startWeight,
+                ).requireValid(),
             ),
         )
 

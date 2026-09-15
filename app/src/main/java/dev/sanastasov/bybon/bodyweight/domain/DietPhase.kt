@@ -6,7 +6,6 @@ import dev.sanastasov.bybon.bodyweight.percentOf
 import dev.sanastasov.bybon.domain.isoWeekStart
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import kotlin.math.roundToInt
 
 const val CHART_FUTURE_WEEKS = 4
 const val MAX_PHASE_WEEKS = 30
@@ -24,25 +23,58 @@ sealed class DietPhase {
     abstract val startWeight: BodyWeight
     abstract val targetWeight: BodyWeight
 
-    data class Maintain(
+    @ConsistentCopyVisibility
+    data class Maintain internal constructor(
         override val startDate: LocalDate,
         override val startWeight: BodyWeight,
         override val targetWeight: BodyWeight,
     ) : DietPhase()
 
-    data class Gain(
+    @ConsistentCopyVisibility
+    data class Gain internal constructor(
         override val startDate: LocalDate,
         override val startWeight: BodyWeight,
         override val targetWeight: BodyWeight,
         val durationWeeks: Int,
-    ) : DietPhase()
+    ) : DietPhase() {
+        init {
+            requireValidDuration(durationWeeks)
+            require(targetWeight > startWeight) {
+                "Gain target must be above start weight. Found '$targetWeight' from '$startWeight'"
+            }
+            requireValidRate(startWeight, targetWeight, durationWeeks, MAX_GAIN_PERCENT_PER_WEEK)
+        }
+    }
 
-    data class Lose(
+    @ConsistentCopyVisibility
+    data class Lose internal constructor(
         override val startDate: LocalDate,
         override val startWeight: BodyWeight,
         override val targetWeight: BodyWeight,
         val durationWeeks: Int,
-    ) : DietPhase()
+    ) : DietPhase() {
+        init {
+            requireValidDuration(durationWeeks)
+            require(targetWeight < startWeight) {
+                "Lose target must be below start weight. Found '$targetWeight' from '$startWeight'"
+            }
+            requireValidRate(startWeight, targetWeight, durationWeeks, MAX_LOSE_PERCENT_PER_WEEK)
+        }
+    }
+
+    companion object {
+        fun create(
+            kind: DietPhaseKind,
+            startDate: LocalDate,
+            startWeight: BodyWeight,
+            targetWeight: BodyWeight?,
+            durationWeeks: Int? = null,
+        ): DietPhaseValidation = when (kind) {
+            DietPhaseKind.Maintain -> createMaintain(startDate, startWeight, targetWeight)
+            DietPhaseKind.Gain -> createGain(startDate, startWeight, targetWeight, durationWeeks)
+            DietPhaseKind.Lose -> createLose(startDate, startWeight, targetWeight, durationWeeks)
+        }
+    }
 }
 
 data class DietPhaseRecord(
@@ -58,20 +90,19 @@ sealed interface EffectiveDietPhase {
     ) : EffectiveDietPhase
 }
 
-data class DietPhasePlanPreview(
-    val ratePerWeek: WeightDelta,
-    val endDate: LocalDate,
-)
-
 sealed interface DietPhaseValidation {
     data class Valid(
-        val phase: DietPhase?,
-        val preview: DietPhasePlanPreview? = null,
+        val phase: DietPhase,
     ) : DietPhaseValidation
 
     data class Invalid(
         val message: String,
     ) : DietPhaseValidation
+}
+
+fun DietPhaseValidation.requireValid(): DietPhase = when (this) {
+    is DietPhaseValidation.Valid -> phase
+    is DietPhaseValidation.Invalid -> error(message)
 }
 
 val DietPhase.kind: DietPhaseKind
@@ -99,9 +130,7 @@ fun DietPhase.isExpired(today: LocalDate): Boolean =
 
 fun DietPhase.plannedRatePerWeek(): WeightDelta {
     val weeks = durationWeeksOrNull ?: return WeightDelta.Zero
-    val raw = (targetWeight.value - startWeight.value).toFloat() / weeks
-    val roundedTo5 = (raw / 5f).roundToInt() * 5
-    return WeightDelta(roundedTo5)
+    return weeklyRate(startWeight, targetWeight, weeks)
 }
 
 fun DietPhase.weeksRemaining(today: LocalDate): Int {

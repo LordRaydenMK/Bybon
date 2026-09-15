@@ -14,7 +14,7 @@ class DietPhaseTest {
 
     @Test
     fun `rejects gain target at or below start`() {
-        val result = validateDietPhase(
+        val result = DietPhase.create(
             DietPhaseKind.Gain,
             start,
             startWeight,
@@ -22,11 +22,15 @@ class DietPhaseTest {
             8,
         )
         assert(result is DietPhaseValidation.Invalid)
+        assert(
+            (result as DietPhaseValidation.Invalid).message ==
+                "Gain target must be above current weight",
+        )
     }
 
     @Test
     fun `rejects lose target at or above start`() {
-        val result = validateDietPhase(
+        val result = DietPhase.create(
             DietPhaseKind.Lose,
             start,
             startWeight,
@@ -34,11 +38,15 @@ class DietPhaseTest {
             8,
         )
         assert(result is DietPhaseValidation.Invalid)
+        assert(
+            (result as DietPhaseValidation.Invalid).message ==
+                "Lose target must be below current weight",
+        )
     }
 
     @Test
     fun `rejects gain faster than 0_5 percent per week`() {
-        val result = validateDietPhase(
+        val result = DietPhase.create(
             DietPhaseKind.Gain,
             start,
             startWeight,
@@ -52,13 +60,14 @@ class DietPhaseTest {
     fun `accepts gain at 0_5 percent per week`() {
         val cap = startWeight.percentOf(MAX_GAIN_PERCENT_PER_WEEK)
         val target = BodyWeight(startWeight.value + cap.value * 8)
-        val result = validateDietPhase(DietPhaseKind.Gain, start, startWeight, target, 8)
+        val result = DietPhase.create(DietPhaseKind.Gain, start, startWeight, target, 8)
         assert(result is DietPhaseValidation.Valid)
+        assert((result as DietPhaseValidation.Valid).phase is DietPhase.Gain)
     }
 
     @Test
     fun `rejects lose faster than 1 percent per week`() {
-        val result = validateDietPhase(
+        val result = DietPhase.create(
             DietPhaseKind.Lose,
             start,
             startWeight,
@@ -72,23 +81,35 @@ class DietPhaseTest {
     fun `rejects weeks outside 1 to 30`() {
         val target = BodyWeight.parseFromString("66.0")
         assert(
-            validateDietPhase(DietPhaseKind.Gain, start, startWeight, target, 0)
+            DietPhase.create(DietPhaseKind.Gain, start, startWeight, target, 0)
                 is DietPhaseValidation.Invalid,
         )
         assert(
-            validateDietPhase(DietPhaseKind.Gain, start, startWeight, target, 31)
+            DietPhase.create(DietPhaseKind.Gain, start, startWeight, target, 31)
                 is DietPhaseValidation.Invalid,
         )
     }
 
     @Test
+    fun `gain constructor rejects a target at or below start`() {
+        try {
+            DietPhase.Gain(start, startWeight, startWeight, 8)
+            error("expected constructor to fail")
+        } catch (error: IllegalArgumentException) {
+            assert(error.message?.contains("above start weight") == true)
+        }
+    }
+
+    @Test
+    fun `rejects missing target weight`() {
+        val result = DietPhase.create(DietPhaseKind.Maintain, start, startWeight, null)
+        assert(result is DietPhaseValidation.Invalid)
+        assert((result as DietPhaseValidation.Invalid).message == "Enter a target weight")
+    }
+
+    @Test
     fun `expired gain becomes maintain at last official average`() {
-        val phase = DietPhase.Gain(
-            start,
-            startWeight,
-            BodyWeight.parseFromString("67.0"),
-            4,
-        )
+        val phase = gain("66.2", 4)
         val record = DietPhaseRecord(1, phase)
         val lastOfficial = BodyWeight.parseFromString("66.2")
         val effective = effectiveDietPhase(record, start.plusWeeks(4), lastOfficial)
@@ -100,24 +121,14 @@ class DietPhaseTest {
 
     @Test
     fun `active gain stays gain`() {
-        val phase = DietPhase.Gain(
-            start,
-            startWeight,
-            BodyWeight.parseFromString("67.0"),
-            12,
-        )
+        val phase = gain("67.0", 12)
         val effective = effectiveDietPhase(DietPhaseRecord(1, phase), today, startWeight)
         assert((effective as EffectiveDietPhase.On).phase is DietPhase.Gain)
     }
 
     @Test
     fun `gain on-track range uses 500g water floor`() {
-        val phase = DietPhase.Gain(
-            start,
-            startWeight,
-            BodyWeight.parseFromString("67.0"),
-            12,
-        )
+        val phase = gain("67.0", 12)
         val range = onTrackDeltaRange(phase)
         assert(range.start == WeightDelta.Zero)
         assert(range.endInclusive == WeightDelta.WaterNoise)
@@ -127,24 +138,21 @@ class DietPhaseTest {
     fun `max gain on-track at 120kg uses 0_5 percent cap`() {
         val heavyStart = BodyWeight.parseFromString("120.0")
         val cap = heavyStart.percentOf(MAX_GAIN_PERCENT_PER_WEEK)
-        val phase = DietPhase.Gain(
+        val target = BodyWeight(heavyStart.value + cap.value * 8)
+        val phase = DietPhase.create(
+            DietPhaseKind.Gain,
             start,
             heavyStart,
-            BodyWeight(heavyStart.value + cap.value * 8),
+            target,
             8,
-        )
+        ).requireValid()
         val range = onTrackDeltaRange(phase)
         assert(range.endInclusive == cap)
     }
 
     @Test
     fun `losing during a gain is off track`() {
-        val phase = DietPhase.Gain(
-            start,
-            startWeight,
-            BodyWeight.parseFromString("67.0"),
-            12,
-        )
+        val phase = gain("67.0", 12)
         val current = BodyWeight.parseFromString("64.9")
         val lastWeek = BodyWeight.parseFromString("65.0")
         assert(isOnTrack(phase, current, lastWeek) == false)
@@ -152,28 +160,32 @@ class DietPhaseTest {
 
     @Test
     fun `maintain is on track within 0_5 kg of target`() {
-        val phase = DietPhase.Maintain(start, startWeight, startWeight)
+        val phase = maintain()
         assert(isOnTrack(phase, BodyWeight.parseFromString("65.4"), null) == true)
         assert(isOnTrack(phase, BodyWeight.parseFromString("65.6"), null) == false)
     }
 
     @Test
     fun `projects linearly from start to target`() {
-        val phase = DietPhase.Gain(
-            start,
-            startWeight,
-            BodyWeight.parseFromString("67.4"),
-            8,
-        )
+        val phase = gain("67.4", 8)
         assert(projectedWeightOn(phase, start) == startWeight)
         assert(projectedWeightOn(phase, start.plusWeeks(8)) == BodyWeight.parseFromString("67.4"))
         val mid = projectedWeightOn(phase, start.plusWeeks(4))
         assert(mid == BodyWeight.parseFromString("66.2"))
     }
 
-    @Test
-    fun `none is always valid`() {
-        val result = validateDietPhase(null, start, startWeight, null, null)
-        assert(result == DietPhaseValidation.Valid(null))
-    }
+    private fun maintain(): DietPhase = DietPhase.create(
+        DietPhaseKind.Maintain,
+        start,
+        startWeight,
+        startWeight,
+    ).requireValid()
+
+    private fun gain(targetKg: String, weeks: Int): DietPhase = DietPhase.create(
+        DietPhaseKind.Gain,
+        start,
+        startWeight,
+        BodyWeight.parseFromString(targetKg),
+        weeks,
+    ).requireValid()
 }
