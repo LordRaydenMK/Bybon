@@ -134,10 +134,11 @@ private fun List<StrongCsvRow>.toParsedWorkout(
 private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession = WorkoutSession(
     planId = plan.id,
     planName = plan.name,
-    planDescription = workoutNotes ?: plan.description,
+    planDescription = plan.description,
     exercises = exercises,
     startedAt = startedAt,
     duration = duration,
+    note = workoutNotes,
 )
 
 private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
@@ -151,6 +152,7 @@ private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
             sets = exercise.sets.size,
             repRange = exercise.repRange,
             restAfterWorkSet = exercise.restAfterWorkSet,
+            note = exercise.note,
         )
     },
 )
@@ -236,8 +238,15 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
             .takeIf { it.isNotEmpty() },
         sets = workSets,
         restAfterWorkSet = restAfterWorkSet,
+        note = mergedNote(),
     )
 }
+
+private fun List<StrongCsvRow>.mergedNote(): String? =
+    filter { it.setOrder.equals("Note", ignoreCase = true) }
+        .mapNotNull { it.notes?.trim()?.takeIf { note -> note.isNotEmpty() } }
+        .joinToString("\n")
+        .takeIf { it.isNotEmpty() }
 
 private fun StrongCsvRow.toCompletedSet(definition: ExerciseDefinition): ExerciseSet? {
     val reps = reps?.takeIf { it > 0 } ?: return null

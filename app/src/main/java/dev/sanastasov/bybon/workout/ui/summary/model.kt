@@ -12,6 +12,7 @@ sealed class WorkoutSummaryUiState {
     data class Content(
         val title: String,
         val exercises: List<WorkoutSummaryExerciseUi>,
+        val note: String? = null,
     ) : WorkoutSummaryUiState()
 }
 
@@ -19,6 +20,7 @@ data class WorkoutSummaryExerciseUi(
     val id: String,
     val name: String,
     val sets: List<WorkoutSummarySetUi>,
+    val note: String? = null,
 )
 
 data class WorkoutSummarySetUi(
@@ -37,6 +39,7 @@ internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content =
     WorkoutSummaryUiState.Content(
         title = planName,
         exercises = exercises.mapNotNull { it.toSummaryExerciseUi() },
+        note = note,
     )
 
 private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
@@ -53,5 +56,6 @@ private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
                 oneRm = set.oneRm,
             )
         },
+        note = note,
     )
 }
