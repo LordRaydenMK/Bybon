@@ -9,14 +9,13 @@ data class WorkoutPlanUi(
     val isActive: Boolean,
 )
 
-fun WorkoutPlan.toUi(sessions: List<WorkoutSession>): WorkoutPlanUi =
-    WorkoutPlanUi(
-        plan = this,
-        isActive = sessions.any { session ->
-            session.planId == id &&
-                session.workoutSets.any { it.setState == SetState.InProgress }
-        },
-    )
+fun WorkoutPlan.toUi(sessions: List<WorkoutSession>): WorkoutPlanUi = WorkoutPlanUi(
+    plan = this,
+    isActive = sessions.any { session ->
+        session.planId == id &&
+            session.workoutSets.any { it.setState == SetState.InProgress }
+    },
+)
 
 sealed class WorkoutPlansAction {
     data class OnStartPlan(
