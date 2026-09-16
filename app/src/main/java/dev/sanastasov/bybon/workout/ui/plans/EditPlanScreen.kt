@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -39,8 +41,9 @@ private fun EditPlanContent(planUi: WorkoutPlanUi?, onNavigateBack: () -> Unit) 
             Column(
                 Modifier
                     .padding(contentPadding)
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 24.dp),
             ) {
                 Card(Modifier.fillMaxWidth()) {
                     WorkoutPlanInfo(
