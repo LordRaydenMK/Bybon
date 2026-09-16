@@ -14,6 +14,7 @@ import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryScreen
+import dev.sanastasov.bybon.workout.ui.library.ExerciseLibraryScreen
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewScreen
 import dev.sanastasov.bybon.workout.ui.plans.EditPlanScreen
 import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionScreen
@@ -66,6 +67,15 @@ fun MainModule.BybonApp() {
                 is Screen.EditPlan -> NavEntry(key) {
                     EditPlanScreen(
                         planId = key.planId,
+                        onNavigateBack = { backStack.removeLastOrNull() },
+                        onNavigateToExerciseLibrary = {
+                            backStack.add(Screen.ExerciseLibrary(key.planId))
+                        },
+                    )
+                }
+
+                is Screen.ExerciseLibrary -> NavEntry(key) {
+                    ExerciseLibraryScreen(
                         onNavigateBack = { backStack.removeLastOrNull() },
                     )
                 }
