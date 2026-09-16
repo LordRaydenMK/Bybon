@@ -26,12 +26,15 @@ class WorkoutPlanEditingTest {
     }
 
     @Test
-    fun `removeLastWorkSet is a no-op when only one work set remains`() {
+    fun `removeLastWorkSet throws when only one work set remains`() {
         val singleSet = fullBodyA.copy(
             sets = listOf(fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1)),
         )
 
-        assert(singleSet.removeLastWorkSet("leg-curl") == singleSet)
+        val error = assertFailsWith<IllegalStateException> {
+            singleSet.removeLastWorkSet("leg-curl")
+        }
+        assert(error.message == "Cannot remove last work set from leg-curl; only one remains")
     }
 
     @Test
@@ -44,10 +47,13 @@ class WorkoutPlanEditingTest {
     }
 
     @Test
-    fun `unknown exercise id leaves the plan unchanged`() {
-        assert(fullBodyA.addWorkSet("missing") == fullBodyA)
-        assert(fullBodyA.removeLastWorkSet("missing") == fullBodyA)
-        assert(fullBodyA.removeExercise("missing") == fullBodyA)
+    fun `unknown exercise id throws`() {
+        val error = assertFailsWith<IllegalStateException> {
+            fullBodyA.addWorkSet("missing")
+        }
+        assert(error.message == "Exercise missing is not in the plan")
+        assertFailsWith<IllegalStateException> { fullBodyA.removeLastWorkSet("missing") }
+        assertFailsWith<IllegalStateException> { fullBodyA.removeExercise("missing") }
     }
 
     @Test

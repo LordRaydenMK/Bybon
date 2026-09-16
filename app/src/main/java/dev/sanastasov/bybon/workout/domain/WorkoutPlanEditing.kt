@@ -7,17 +7,29 @@ fun WorkoutPlan.addWorkSet(exerciseId: String): WorkoutPlan =
 
 fun WorkoutPlan.removeLastWorkSet(exerciseId: String): WorkoutPlan =
     updatePlannedExercise(exerciseId) { exercise ->
-        if (exercise.sets <= 1) exercise else exercise.copy(sets = exercise.sets - 1)
+        check(exercise.sets > 1) {
+            "Cannot remove last work set from $exerciseId; only one remains"
+        }
+        exercise.copy(sets = exercise.sets - 1)
     }
 
-fun WorkoutPlan.removeExercise(exerciseId: String): WorkoutPlan =
-    copy(sets = sets.filter { it.exercise.id != exerciseId })
+fun WorkoutPlan.removeExercise(exerciseId: String): WorkoutPlan {
+    val exercise = requireExercise(exerciseId)
+    return copy(sets = sets.filter { it.exercise.id != exercise.exercise.id })
+}
 
 private fun WorkoutPlan.updatePlannedExercise(
     exerciseId: String,
     transform: (PlanedExercise) -> PlanedExercise,
-): WorkoutPlan = copy(
-    sets = sets.map { exercise ->
-        if (exercise.exercise.id == exerciseId) transform(exercise) else exercise
-    },
-)
+): WorkoutPlan {
+    requireExercise(exerciseId)
+    return copy(
+        sets = sets.map { exercise ->
+            if (exercise.exercise.id == exerciseId) transform(exercise) else exercise
+        },
+    )
+}
+
+private fun WorkoutPlan.requireExercise(exerciseId: String): PlanedExercise =
+    sets.firstOrNull { it.exercise.id == exerciseId }
+        ?: error("Exercise $exerciseId is not in the plan")
