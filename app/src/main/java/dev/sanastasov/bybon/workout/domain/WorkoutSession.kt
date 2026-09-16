@@ -9,6 +9,7 @@ data class WorkoutSession(
     val exercises: List<WorkoutExercise>,
     val startedAt: LocalDateTime,
     val state: WorkoutState = WorkoutState.NotStarted,
+    val note: String? = null,
 ) {
     val id: WorkoutSessionId
         get() = WorkoutSessionId(planId, startedAt)

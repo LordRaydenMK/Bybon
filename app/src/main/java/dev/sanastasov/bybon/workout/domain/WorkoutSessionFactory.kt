@@ -39,6 +39,7 @@ fun WorkoutPlan.toWorkoutSession(
                 },
                 restAfterWorkSet = previousExercise?.restAfterWorkSet
                     ?: planedExercise.restAfterWorkSet,
+                note = planedExercise.note,
             )
         },
         startedAt,
