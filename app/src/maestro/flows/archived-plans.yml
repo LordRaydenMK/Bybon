@@ -1,10 +1,14 @@
 appId: dev.sanastasov.bybon.debug
 ---
-- launchApp
+- launchApp:
+    clearState: true
 - assertVisible: "Bybon"
 - assertVisible: "Full Body A"
 - assertNotVisible: "Upper Body A"
 - assertNotVisible: "My Plans"
+- scrollUntilVisible:
+    element: "Show Archived Plans"
+    direction: DOWN
 - tapOn: "Show Archived Plans"
 - assertVisible: "My Plans"
 - assertNotVisible: "Show Archived Plans"
