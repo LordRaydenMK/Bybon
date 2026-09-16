@@ -12,6 +12,8 @@ interface WorkoutsRepository {
 
     suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean)
 
+    suspend fun updatePlan(planId: WorkoutPlanId, transform: (WorkoutPlan) -> WorkoutPlan)
+
     suspend fun updateWorkout(session: WorkoutSession)
 
     fun workoutSessions(): Flow<List<WorkoutSession>>

@@ -12,6 +12,28 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Chest · Barbell"
 - assertVisible: "Bench Press (barbell) warmup set"
 - assertVisible: "Bench Press (barbell) set 1, 8–10 reps, rest 2:00"
+- assertVisible: "Add set to Bench Press (barbell)"
+- assertVisible: "Remove last set from Bench Press (barbell)"
+- tapOn: "Add set to Bench Press (barbell)"
+- scrollUntilVisible:
+    element: "Bench Press (barbell) set 4, 8–10 reps, rest 2:00"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Bench Press (barbell) set 4, 8–10 reps, rest 2:00"
+- tapOn: "Remove last set from Bench Press (barbell)"
+- assertNotVisible: "Bench Press (barbell) set 4, 8–10 reps, rest 2:00"
+- tapOn: "Remove last set from Bench Press (barbell)"
+- tapOn: "Remove last set from Bench Press (barbell)"
+- assertNotVisible: "Bench Press (barbell) set 2, 8–10 reps, rest 2:00"
+- assertVisible: "Remove Bench Press (barbell) from plan"
+- tapOn: "Add set to Bench Press (barbell)"
+- tapOn: "Add set to Bench Press (barbell)"
+- assertVisible: "Remove last set from Bench Press (barbell)"
+- scrollUntilVisible:
+    element: "Bench Press (barbell) set 3, 8–10 reps, rest 2:00"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Bench Press (barbell) set 3, 8–10 reps, rest 2:00"
 - scrollUntilVisible:
     element: "Squat (barbell)"
     direction: DOWN
