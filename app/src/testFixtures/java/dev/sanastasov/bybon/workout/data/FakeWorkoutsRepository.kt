@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 
 class FakeWorkoutsRepository(
@@ -24,9 +25,10 @@ class FakeWorkoutsRepository(
 
     override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
 
-    override fun workoutPlans(): Flow<List<WorkoutPlan>> = plans
-
-    override fun archivedPlanIds(): Flow<Set<WorkoutPlanId>> = archivedPlanIds
+    override fun workoutPlans(): Flow<List<WorkoutPlan>> =
+        combine(plans, archivedPlanIds) { allPlans, archived ->
+            allPlans.filter { it.id !in archived }
+        }
 
     override suspend fun archivePlan(planId: WorkoutPlanId) {
         archivedPlanIds.update { it + planId }

@@ -20,11 +20,8 @@ class WorkoutPlansViewModel(
     val uiState = combine(
         repository.workoutPlans(),
         repository.workoutSessions(),
-        repository.archivedPlanIds(),
-    ) { plans, sessions, archivedIds ->
-        plans
-            .filter { it.id !in archivedIds }
-            .map { it.toUi(sessions) }
+    ) { plans, sessions ->
+        plans.map { it.toUi(sessions) }
     }.stateInWhileInForeground(coroutineScope, emptyList())
 
     fun onAction(action: WorkoutPlansAction) {

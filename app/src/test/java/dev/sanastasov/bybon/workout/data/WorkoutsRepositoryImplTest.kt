@@ -39,13 +39,13 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
-    fun `archivePlan records the id without removing the plan`() = runTest {
+    fun `archivePlan hides the plan from workoutPlans`() = runTest {
         val repository = WorkoutsRepositoryImpl()
-        val planId = repository.workoutPlans().first().first().id
+        val before = repository.workoutPlans().first()
+        val planId = before.first().id
 
         repository.archivePlan(planId)
 
-        assert(planId in repository.archivedPlanIds().first())
-        assert(repository.workoutPlans().first().any { it.id == planId })
+        assert(repository.workoutPlans().first() == before.drop(1))
     }
 }

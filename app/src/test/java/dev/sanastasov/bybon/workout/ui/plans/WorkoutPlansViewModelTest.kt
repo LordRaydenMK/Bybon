@@ -64,6 +64,5 @@ class WorkoutPlansViewModelTest {
         viewModel.onAction(WorkoutPlansAction.OnArchivePlan(fullBodyA))
         val plans = viewModel.uiState.first { it.size == 1 }
         assert(plans.single().plan == fullBodyB)
-        assert(fullBodyA.id in repository.archivedPlanIds().first())
     }
 }

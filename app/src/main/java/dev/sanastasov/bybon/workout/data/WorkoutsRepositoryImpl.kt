@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 
 class WorkoutsRepositoryImpl : WorkoutsRepository {
@@ -22,9 +23,10 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
 
     override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
 
-    override fun workoutPlans(): Flow<List<WorkoutPlan>> = plans
-
-    override fun archivedPlanIds(): Flow<Set<WorkoutPlanId>> = archivedPlanIds
+    override fun workoutPlans(): Flow<List<WorkoutPlan>> =
+        combine(plans, archivedPlanIds) { allPlans, archived ->
+            allPlans.filter { it.id !in archived }
+        }
 
     override suspend fun archivePlan(planId: WorkoutPlanId) {
         archivedPlanIds.update { it + planId }

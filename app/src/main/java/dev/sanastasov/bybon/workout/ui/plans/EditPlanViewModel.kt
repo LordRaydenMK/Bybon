@@ -22,7 +22,7 @@ class EditPlanViewModel(
     val effects: Flow<EditPlanEffect> = _effects.receiveAsFlow()
 
     val uiState: StateFlow<WorkoutPlan?> = repository.workoutPlans()
-        .map { plans -> plans.first { it.id == planId } }
+        .map { plans -> plans.firstOrNull { it.id == planId } }
         .stateInWhileInForeground(coroutineScope, null)
 
     fun onAction(action: EditPlanAction) {
