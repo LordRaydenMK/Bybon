@@ -1,16 +1,18 @@
-# Strong CSV + Bybon Domain → DB Schema
+# Strong CSV ↔ Bybon
 
-Analysis of Strong export format vs Bybon’s workout domain, and a proposed SQLite/Room schema that
-supports both Strong import (fidelity-preserving) and Bybon’s own plan/session model.
+Living comparison of Strong’s CSV export vs Bybon’s workout domain **as implemented today**.
+Import is live (History empty-state → file picker). Workout data is still in-memory — Room only
+persists body-weight tables.
 
-Decisions locked in:
+Reference export in repo:
+[`app/src/test/resources/strong-backup-sample.csv`](../app/src/test/resources/strong-backup-sample.csv)
+(52 sessions, Strong workout #201–252, 2053 rows, 2026-02-17 → 2026-08-20).
 
-1. **Import fidelity (1A):** preserve Strong extras (warmups, rest timers, notes,
-   RPE/distance/time).
-2. **Plan linkage:** every session has a `plan_id`. On import, match Strong workout name to an
-   existing Bybon plan; otherwise create an **archived** plan from the name and exercise list.
+Code:
 
-Schema only — no Room entities, DAOs, or importer code in this doc.
+- Parser [`StrongCsvParser.kt`](../app/src/main/java/dev/sanastasov/bybon/strong/StrongCsvParser.kt)
+- Mapper [`StrongCsvMapper.kt`](../app/src/main/java/dev/sanastasov/bybon/strong/StrongCsvMapper.kt)
+- History UI [`WorkoutHistoryViewModel.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/ui/history/WorkoutHistoryViewModel.kt)
 
 ---
 
@@ -21,206 +23,230 @@ fields are repeated on every row.
 
 | Column              | Type in CSV           | Meaning                                                                  |
 |---------------------|-----------------------|--------------------------------------------------------------------------|
-| `Workout #`         | int                   | Session identity (1…252 in `strong-backup.csv`)                          |
+| `Workout #`         | int                   | Session identity (201…252 in the sample)                                 |
 | `Date`              | `yyyy-MM-dd HH:mm:ss` | Session start                                                            |
-| `Workout Name`      | string                | Free-text session/plan name                                              |
+| `Workout Name`      | string                | Free-text session/plan name (may have trailing space, e.g. `"Upper body B "`) |
 | `Duration (sec)`    | int                   | Total session duration                                                   |
 | `Exercise Name`     | string                | Display name only (no id)                                                |
 | `Set Order`         | string enum-ish       | `W` warmup, `1`…`N` working set, `Rest Timer`, `Note`                    |
-| `Weight (kg)`       | decimal or empty      | Load                                                                     |
+| `Weight (kg)`       | decimal or empty      | Load. `0.0` is used (bodyweight warmup / unassisted pull-up)             |
 | `Reps`              | int or empty          | Reps                                                                     |
-| `RPE`               | decimal or empty      | Present in format; **0 uses in this backup**                             |
-| `Distance (meters)` | decimal or empty      | Present; **0 uses**                                                      |
+| `RPE`               | decimal or empty      | Column present; **0 uses in this sample**                                |
+| `Distance (meters)` | decimal or empty      | Column present; **0 uses**                                               |
 | `Seconds`           | decimal or empty      | Rest duration when `Set Order=Rest Timer`; also available for timed work |
 | `Notes`             | string                | Per-exercise note when `Set Order=Note`                                  |
-| `Workout Notes`     | string                | Session note (repeated per row)                                          |
+| `Workout Notes`     | string                | Session note (repeated per row; filled on all 52 sample workouts)        |
 
-**Row kinds in this backup:** working sets (~5480), warmups `W` (1410), `Rest Timer` (2600, seconds
-filled), `Note` (90). No RPE/distance/timed-work rows.
+**Row kinds in the sample:** `Rest Timer` 854, `W` 299, working `1`/`2`/`3`/`4` 854, `Note` 46.
+Every rest row has `Seconds` (`120` / `60` / `90`). No RPE, distance, or timed-work rows. Rest
+seconds are consistent per exercise within a workout (never mixed 60 and 120 on the same block).
 
-### Example: Workout #252 (abbreviated)
+### Sample names
 
-- **Session:** `#252`, `2026-08-20 17:59:34`, name `"Upper body B "`, duration `3367`s, notes
-  `"Full body B without legs"`
+| Strong `Workout Name` | Sessions |
+|-----------------------|----------|
+| `Full body A`         | 23       |
+| `Full body B`         | 23       |
+| `Upper body A`        | 3        |
+| `Upper body B `       | 3        |
+
+18 unique Strong exercise names (see [Catalog mapping](#catalog-mapping-sample)).
+
+### Example: Workout #252
+
+- **Session:** `#252`, `2026-08-20 17:59:34`, name `"Upper body B "` (trailing space), duration
+  `3367`s, notes `"Full body B without legs"`
 - **Exercises (order):** Incline Bench Press (Dumbbell) → Incline Row (Dumbbell) → Incline Curl
   (Dumbbell) → Lateral Raise (Machine) → Crunch (Machine)
 - **Per exercise pattern (bench):** optional `Note` → `W` warmups → working `1..N` interleaved with
-  `Rest Timer` (e.g. 120s) carrying weight/reps on set rows only
+  `Rest Timer` (e.g. 120s). Weight/reps live on set rows only.
 
 ---
 
-## Bybon domain model
+## Bybon domain (current)
 
 From
 [`WorkoutPlan.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/WorkoutPlan.kt),
 [`WorkoutSession.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/WorkoutSession.kt),
-[
-`ExerciseDefinition.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseDefinition.kt):
+[`WorkoutExercise.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/WorkoutExercise.kt),
+[`ExerciseSet.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseSet.kt),
+[`ExerciseDefinition.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseDefinition.kt):
 
-- **`ExerciseDefinition`**: stable `id`, `name`, `primaryMuscleGroup`, `equipment` (catalog today is
-  in-memory).
-- **`WorkoutPlan`**: `WorkoutPlanId`, `name`, `description?`, ordered `PlanedExercise` list
-  (`exercise`, prescribed `sets: Int`, `repRange: IntRange`).
-- **`WorkoutSession`**: always tied to `planId` + denormalized `planName`/`planDescription`; ordered
-  `WorkoutExercise`s; `WorkoutState` = NotStarted | InProgress(startedAt) | Completed(startedAt,
-  duration).
-- **`WorkoutExercise`**: exercise def + target `repRange` + list of `ExerciseSet`.
-- **`ExerciseSet`**: weight (stored as tenths of kg), reps, `SetState` (NotStarted / InProgress /
-  Completed). At most one InProgress set per session.
-- No first-class warmup, rest timer, RPE, distance, timed sets, or per-set/per-exercise notes in the
-  domain today.
+- **`ExerciseDefinition`**: stable `id`, `name`, `primaryMuscleGroup`, `equipment`. Catalog is
+  in-memory ([`CatalogExercises.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/CatalogExercises.kt),
+  31 exercises). Import can append unknown exercises to the repository list.
+- **`WorkoutPlan`**: `WorkoutPlanId`, `name`, `description?`, ordered `PlanedExercise`s,
+  `isArchived`. Built-ins: Full Body A/B (active), Upper Body A (archived).
+- **`PlanedExercise`**: exercise + `warmupSets: Int` + prescribed `sets` + `repRange` +
+  `restAfterWorkSet: Duration` (defaults to compound 2:00 / isolation 1:00 / else 0:90).
+- **`WorkoutSession`**: always tied to `planId` + denormalized `planName` / `planDescription`.
+  Identity is `WorkoutSessionId(planId, startedAt)` — no separate UUID, no Strong workout number.
+  `WorkoutState` = `NotStarted` | `InProgress` | `Completed(duration)`.
+- **`WorkoutExercise`**: definition + target `repRange` + optional `warmupSets` list (null or
+  non-empty) + working `sets` + `restAfterWorkSet`.
+- **`ExerciseSet`**: `Weight` (positive hundredths of a kg; `32.5` kg → `3250`), `reps > 0`,
+  `SetState` (`NotStated` / `InProgress` / `Completed`), optional `previous` performance. **Weight
+  cannot be 0.**
+- Rest is a per-exercise duration shown between work sets (display-only; not a logged rest event).
+- No RPE/RIR, distance, timed sets, per-exercise notes, or first-class session notes. Strong workout
+  notes are currently stuffed into `planDescription`.
 
----
-
-## Differences / incompatibilities
-
-| Concern           | Strong                                                                                                       | Bybon                                        | Schema impact                                                                                          |
-|-------------------|--------------------------------------------------------------------------------------------------------------|----------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| Identity          | Numeric workout #, name-only exercises                                                                       | String plan/exercise ids                     | Stable local UUIDs + Strong external keys / name aliases                                               |
-| Plan vs session   | Name only; no plan entity                                                                                    | Session always has `planId`                  | Import matches plan by name, else creates **archived** plan from name + exercise list                  |
-| Prescription      | None in CSV                                                                                                  | Plan has sets + rep range                    | Plan tables hold prescription; imported archived plans can store observed set counts / null rep ranges |
-| Set kinds         | `W`, working, Rest Timer, Note                                                                               | Working sets + lifecycle state only          | Discriminated set/event rows; Bybon UI reads working sets                                              |
-| Rest              | Separate timer rows with seconds                                                                             | Not modeled                                  | Store as rest events                                                                                   |
-| Metrics           | weight, reps, RPE, distance, seconds                                                                         | weight + reps                                | Nullable columns for Strong extras                                                                     |
-| Notes             | Workout notes + exercise Note rows                                                                           | Plan description only                        | Session notes + exercise notes                                                                         |
-| Units / precision | kg decimals (`32.5`)                                                                                         | `Weight` as tenths of kg                     | Store weight as INTEGER tenths (325 = 32.5 kg)                                                         |
-| Live state        | History only (completed)                                                                                     | NotStarted/InProgress/Completed + set states | Session/set state columns for live Bybon use; Strong imports → Completed                               |
-| Catalog gap       | 42 Strong names; several missing/mismatched vs Bybon list (e.g. Crunch, Band fly, Hip Thrust, naming/casing) | Fixed catalog                                | `exercise` table + `exercise_alias` for Strong name → id                                               |
-
-**Import rule:** every session gets a `plan_id`. Match Strong `Workout Name` (trimmed,
-case-insensitive) to existing plan names; if no match, create an **archived** plan named after
-Strong, with plan exercises derived from the session’s exercise order (set count from working sets;
-rep range nullable or min..max observed).
+Persistence: [`BybonDatabase`](../app/src/main/java/dev/sanastasov/bybon/data/BybonDatabase.kt) is
+Room v2 with `WeightEntryEntity` + `DietPhaseEntity` only.
+[`WorkoutsRepositoryImpl`](../app/src/main/java/dev/sanastasov/bybon/workout/data/WorkoutsRepositoryImpl.kt)
+holds exercises, plans, and sessions in `MutableStateFlow`s.
 
 ---
 
-## Proposed SQLite / Room schema
+## Implemented import
 
-Aligned with existing Room DB
-([`BybonDatabase`](../app/src/main/java/dev/sanastasov/bybon/data/BybonDatabase.kt)).
+History empty screen picks a CSV → parse → `toStrongImport(existingPlans, existingExercises)` →
+`repository.importHistory(...)`. Existing plans are loaded with `WorkoutPlansFilter.AllPlans`
+(archived plans participate in matching).
 
-```mermaid
-erDiagram
-    exercise ||--o{ exercise_alias : aliases
-    exercise ||--o{ workout_plan_exercise : prescribed
-    workout_plan ||--o{ workout_plan_exercise : contains
-    workout_plan ||--o{ workout_session : instantiated
-    workout_session ||--o{ workout_session_exercise : contains
-    exercise ||--o{ workout_session_exercise : performed
-    workout_session_exercise ||--o{ workout_set : events
-```
+### 1. Exercises
 
-### `exercise`
+Resolve each Strong `Exercise Name`:
 
-- `id` TEXT PK (e.g. `incline-bench-press-db`)
-- `name` TEXT NOT NULL
-- `primary_muscle_group` TEXT NOT NULL
-- `equipment` TEXT NOT NULL
-- `archived` INTEGER NOT NULL DEFAULT 0  
-  *(import-created exercises unknown to Bybon catalog can be archived=1)*
+1. Hardcoded aliases (normalized lowercase name → Bybon id) — see table below.
+2. Else case-insensitive name match against the catalog (`"Bench Press (Barbell)"` →
+   `"Bench Press (barbell)"`).
+3. Else create a new `ExerciseDefinition`: `id = slugify(name)`, Strong display name, equipment
+   inferred from the name (`barbell` / `dumbbell` / `assisted` / `machine|cable` / else bodyweight),
+   muscle group `Core` if the name looks like crunch/plank/sit-up else `Other`.
 
-### `exercise_alias`
+Only **new** (non-catalog) exercises are returned for insert. Sample: **`Crunch (Machine)`** →
+`crunch-machine` / Core / Machine.
 
-- `alias_name` TEXT PK (exact Strong `Exercise Name` string)
-- `exercise_id` TEXT NOT NULL FK → `exercise(id)`
+### 2. Plans
 
-### `workout_plan`
+Group Strong sessions by trimmed `Workout Name`. Score each existing Bybon plan:
 
-- `id` TEXT PK
-- `name` TEXT NOT NULL
-- `description` TEXT NULL
-- `archived` INTEGER NOT NULL DEFAULT 0  
-  *(Strong-only / unmatched names → archived=1)*
-- `source` TEXT NOT NULL DEFAULT `'bybon'` (`bybon` | `strong_import`)
-- UNIQUE(`name`) optional later; for import matching use normalized name lookup in app code
+`0.55 * nameSimilarity + 0.45 * exerciseSimilarity`, threshold **0.70**.
 
-### `workout_plan_exercise`
+- Name: lowercase, strip punctuation, drop fillers (`workout`, `session`, `training`, `routine`,
+  `day`), then Levenshtein. `"Full body A"` matches `"Full Body A"`.
+- Exercises: 80% Jaccard on ids + 20% longest common subsequence (order-tolerant, substitution-
+  tolerant). `"Full body A"` still matches if one exercise is swapped for Crunch; `"Full body A"`
+  does **not** match `"Full Body B"`.
 
-- `plan_id` TEXT NOT NULL FK → `workout_plan(id)`
-- `position` INTEGER NOT NULL
-- `exercise_id` TEXT NOT NULL FK → `exercise(id)`
-- `prescribed_sets` INTEGER NULL  
-  *(required for live Bybon plans; for archived import plans = count of working sets from template
-  session or first occurrence)*
-- `rep_min` INTEGER NULL
-- `rep_max` INTEGER NULL
-- PRIMARY KEY (`plan_id`, `position`)
+If no plan clears the threshold, create a **new, unarchived** plan:
 
-### `workout_session`
+- `id = slugify(trimmed Strong name)` (e.g. `upper-body-a`)
+- `name` = trimmed Strong name (keeps Strong casing: `"Upper body A"`)
+- `description = null`, `isArchived = false`
+- Exercises / warmup count / work-set count / rest / observed `repRange` taken from the
+  **representative** session = most common exercise-id sequence for that name (ties: first seen)
 
-- `id` TEXT PK
-- `plan_id` TEXT NOT NULL FK → `workout_plan(id)`  
-  *(always set; never null)*
-- `plan_name` TEXT NOT NULL  
-  *(denormalized snapshot at start/import)*
-- `plan_description` TEXT NULL
-- `started_at` TEXT NOT NULL  
-  *(ISO-8601 / Strong Date)*
-- `duration_sec` INTEGER NULL  
-  *(set when completed; Strong Duration)*
-- `state` TEXT NOT NULL  
-  *(`not_started` | `in_progress` | `completed`)*
-- `notes` TEXT NULL  
-  *(Strong Workout Notes)*
-- `strong_workout_number` INTEGER NULL UNIQUE  
-  *(idempotent Strong re-import)*
-- `source` TEXT NOT NULL DEFAULT `'bybon'`
+Sample with only Full Body A/B already in the repo: creates **Upper body A** and **Upper body B**.
+Sessions keep the Strong exercise list even when matched to a Bybon plan (history is not rewritten
+to the plan template).
 
-### `workout_session_exercise`
+### 3. Sessions
 
-- `id` TEXT PK
-- `session_id` TEXT NOT NULL FK → `workout_session(id)` ON DELETE CASCADE
-- `position` INTEGER NOT NULL
-- `exercise_id` TEXT NOT NULL FK → `exercise(id)`
-- `rep_min` INTEGER NULL  
-  *(snapshot from plan; null for pure Strong history)*
-- `rep_max` INTEGER NULL
-- `notes` TEXT NULL  
-  *(merged Strong `Set Order=Note` text for that exercise)*
-- UNIQUE (`session_id`, `position`)
+| Strong                         | Bybon session                                      |
+|--------------------------------|----------------------------------------------------|
+| `Date`                         | `startedAt`                                        |
+| `Duration (sec)`               | `WorkoutState.Completed(duration)`                 |
+| Matched/created plan           | `planId` + `planName` (Bybon name if matched)      |
+| `Workout Notes`                | `planDescription` (else the plan’s description)    |
+| `Workout #`                    | Used only to group rows; **not stored**            |
 
-### `workout_set` (working sets, warmups, and rest events)
+Re-import appends again (not idempotent).
 
-- `id` TEXT PK
-- `session_exercise_id` TEXT NOT NULL FK → `workout_session_exercise(id)` ON DELETE CASCADE
-- `position` INTEGER NOT NULL  
-  *(CSV row order within the exercise)*
-- `kind` TEXT NOT NULL  
-  *(`warmup` | `working` | `rest`)*  
-  *(Note rows are not sets — stored on `workout_session_exercise.notes`)*
-- `set_number` INTEGER NULL  
-  *(Strong working index 1..N; null for warmup/rest)*
-- `weight_tenths_kg` INTEGER NULL  
-  *(325 = 32.5 kg; null for rest)*
-- `reps` INTEGER NULL
-- `rpe_tenths` INTEGER NULL  
-  *(optional Strong RPE)*
-- `distance_meters` REAL NULL
-- `duration_sec` REAL NULL  
-  *(rest target or timed-set duration)*
-- `state` TEXT NOT NULL DEFAULT `'completed'`  
-  *(`not_started` | `in_progress` | `completed`) — Strong import always `completed`; warmups/rest
-  can use `completed` or ignore in UI*
-- `notes` TEXT NULL  
-  *(per-set notes if ever needed)*
-- UNIQUE (`session_exercise_id`, `position`)
+### 4. Sets / rest / notes
 
-**Constraint (app-enforced, same as domain):** at most one `workout_set` with `state='in_progress'`
-per session.
+| Strong row                         | Bybon                                                                 |
+|------------------------------------|-----------------------------------------------------------------------|
+| `W` with weight > 0 and reps > 0   | `warmupSets` (`SetState.Completed`)                                   |
+| Digit `1..N` with weight > 0, reps > 0 | Working `sets`                                                    |
+| `W` or working with `Weight = 0.0` | **Dropped** (`Weight` must be positive)                               |
+| `Rest Timer`                       | First `Seconds` value → `restAfterWorkSet`; rest rows themselves discarded |
+| No rest rows                       | `exercise.defaultRest`                                                |
+| `Note`                             | **Dropped** (including `"Rep range 11-15"`)                           |
+| `RPE` / `Distance` / timed `Seconds` on sets | Parsed on the DTO, unused                                    |
+
+On the sample this drops **29** unassisted pull-up working sets (`0.0` kg) and **15** bodyweight
+Bulgarian Split Squat warmups. CSV working sets 854 → imported **825**. One Full Body A session
+(#220) loses every pull-up working set.
 
 ---
 
-## How the two models map
+## Catalog mapping (sample)
 
-**Bybon live session:** plan → session (`plan_id` required) → session exercises with rep range
-snapshot → `kind='working'` sets with `state` lifecycle. Warmup/rest unused unless product adds them
-later.
+| Strong `Exercise Name`            | Bybon id                 | How                          |
+|-----------------------------------|--------------------------|------------------------------|
+| Bench Press (Barbell)             | `bench-press-bb`         | Normalized name              |
+| Squat (Barbell)                   | `squat-bb`               | Normalized name              |
+| Squat (Machine)                   | `squat-machine`          | Normalized name              |
+| Pull Up (Assisted)                | `pullup-assisted`        | Normalized name              |
+| Incline Bench Press (Dumbbell)    | `incline-bench-press-db` | Normalized name              |
+| Incline Row (Dumbbell)            | `incline-row-db`         | Normalized name              |
+| Incline Curl (Dumbbell)           | `incline-curl-db`        | Normalized name              |
+| Lateral Raise (Dumbbell)          | `lateral-raise-db`       | Normalized name              |
+| Lateral Raise (Machine)           | `lateral-raise-machine`  | Normalized name              |
+| Skullcrusher (Dumbbell)           | `skullcrusher-db`        | Normalized name              |
+| Upright Row (Dumbbell)            | `upright-row-db`         | Normalized name              |
+| Leg Extension (Machine)           | `leg-extension`          | Normalized name              |
+| Romanian Deadlift (Barbell)       | `rdl-bb`                 | Alias (Bybon name includes `(RDL)`) |
+| Bulgarian Split Squat             | `split-squat-db`         | Alias (Bybon adds `(dumbbell)`) |
+| Bicep Curl (Machine)              | `biceps-curl-machine`    | Alias (`Curl (machine)`)     |
+| Seated Leg Curl (Machine)         | `leg-curl`               | Alias (`Leg Curl (machine)`) |
+| Triceps Press                     | `triceps-press-machine`  | Alias                        |
+| Crunch (Machine)                  | `crunch-machine`         | **Created on import**        |
 
-**Strong import:**
+Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt` (not a DB table).
 
-1. Upsert exercises (match alias / normalized name; else create archived exercise).
-2. Resolve `plan_id`: match plan by trimmed name; else insert archived `workout_plan` +
-   `workout_plan_exercise` from that workout’s exercise order.
-3. Insert `workout_session` (`state=completed`, Strong date/duration/notes/`strong_workout_number`).
-4. For each exercise block: session exercise + ordered `workout_set` rows (`W`→warmup,
-   digits→working, `Rest Timer`→rest); concatenate `Note` rows into exercise `notes`.
+Bybon catalog exercises **not** in this sample include overhead press, lat pull-down, chest fly
+variants, dips, calf raise, face pull, etc.
+
+---
+
+## Differences / gaps vs Strong
+
+Use this list to mark **won't do** / **todo** / **maybe later**.
+
+| # | Gap | Strong | Bybon now | Sample impact |
+|---|-----|--------|-----------|---------------|
+| 1 | Zero-load sets | `0.0` kg is valid (unassisted pull-up, BW split-squat warmup) | `Weight` / `ExerciseSet` require positive load; importer drops the row | 29 pull-up work sets + 15 BSS warmups lost; session #220 has no pull-up work sets |
+| 2 | Exercise notes | `Set Order=Note` (rep-range hints, “Right knee slight pain”) | No field; rows discarded | 46 notes unused |
+| 3 | Session notes | `Workout Notes` on every session | No session-notes field; copied into `planDescription` | Overwrites plan blurb with e.g. `"Monday full body workout"` |
+| 4 | Rest model | One rest-timer **event** after each work set | One `Duration` per exercise, display-only between work sets | Fine for this sample (rest is uniform per exercise); cannot represent mixed rests or “rest happened” |
+| 5 | RPE | Column in export | Not in domain (spec wants RIR, not RPE) | 0 uses in sample |
+| 6 | Distance / timed sets | Columns in export | Not in domain | 0 uses in sample |
+| 7 | Strong workout # / idempotency | Stable `Workout #` | Identity = `planId + startedAt`; re-import **duplicates** | Re-picking the CSV appends 52 more sessions |
+| 8 | Unmatched plans archived | (n/a) | New plans are **unarchived** and show in the plans list | Upper body A/B appear as live plans |
+| 9 | Plan id collision | `"Upper body A"` slugs to `upper-body-a` | Bybon already has archived `upper-body-a` with a **different** exercise list; fuzzy score ~0.65 < 0.70 so import **creates a second plan with the same id** | UI import uses `AllPlans`, so this is the real path; unit tests omit the archived plan |
+| 10 | Plan template vs history | Name-only; each session is its own exercise list | Matched sessions keep Strong’s exercises; **created** plans freeze the most common sequence | Upper body B’s 3 sessions differ (raise DB vs machine, curl order); plan is session #246 |
+| 11 | Observed vs prescribed rep range | Notes like `"Rep range 11-15"` | Session/plan `repRange` = min..max **logged** work reps, not the note | Incline bench plan range becomes e.g. 8..13 instead of 11–15 |
+| 12 | Unknown-exercise metadata | Name only | New exercises: muscle `Other` (except crunch→Core), equipment guessed, not archived | Only Crunch in sample; guess happens to be right |
+| 13 | Catalog aliases | 18 names in sample | 5 hardcoded aliases; rest rely on case-insensitive equality | Sample fully covered except Crunch (created) |
+| 14 | Warmups / work sets in summary UI | Full set log including `W` | History = top **work** set; summary screen lists work sets only | Warmups imported but hidden in those screens |
+| 15 | Workout persistence | Strong is the system of record | In-memory; process death loses import | Blocks treating import as real history |
+| 16 | `lateral-raise-machine` equipment | Machine | Catalog marks it `Equipment.Dumbbell` | Import matches the row; increment/warmup defaults follow dumbbell |
+
+Earlier locked decisions that **do not** match the implementation:
+
+1. **Import fidelity (1A)** — extras were to be preserved. Warmups and rest *duration* are kept;
+   notes, RPE/distance/time, rest *events*, and 0 kg sets are not.
+2. **Unmatched names → archived plans** — importer creates active plans.
+3. **Room event-row schema** (`workout_set.kind = warmup\|working\|rest`, `exercise_alias`,
+   `strong_workout_number`, weight tenths) — **not built**. Domain moved to warmup lists + rest
+   `Duration` + weight hundredths. If/when Room is added, persist that domain rather than Strong
+   event rows.
+
+---
+
+## Mapping summary
+
+**Bybon live session:** plan (warmup count, work-set count, rep range, rest) → session →
+`WorkoutExercise` with warmup list + work sets + `restAfterWorkSet`. Set lifecycle
+`NotStated` / `InProgress` / `Completed`.
+
+**Strong import (today):**
+
+1. Parse `;` CSV into `StrongCsvRow`.
+2. Resolve exercises (alias / name / create).
+3. Fuzzy-match plan or insert a new unarchived plan from the most common exercise sequence.
+4. Build `WorkoutSession(Completed)` with Strong date/duration, notes in `planDescription`, warmups
+   + work sets with positive weight/reps, rest duration from the first rest-timer row.
