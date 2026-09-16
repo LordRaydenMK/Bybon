@@ -8,6 +8,10 @@ Reference export in repo:
 [`app/src/test/resources/strong-backup-sample.csv`](../app/src/test/resources/strong-backup-sample.csv)
 (52 sessions, Strong workout #201–252, 2053 rows, 2026-02-17 → 2026-08-20).
 
+A full Strong backup (workout #1–252, 8170 rows, 2024-04-17 → 2026-08-20, **42** exercise names,
+**13** workout names) was also checked. It is the same format as the sample; the sample is the last
+52 sessions. Extra findings are in [Full backup](#full-backup-252-sessions).
+
 Code:
 
 - Parser [`StrongCsvParser.kt`](../app/src/main/java/dev/sanastasov/bybon/strong/StrongCsvParser.kt)
@@ -196,13 +200,13 @@ Bulgarian Split Squat warmups. CSV working sets 854 → imported **825**. One Fu
 | Triceps Press                     | `triceps-press-machine`  | Alias                        |
 | Crunch (Machine)                  | `crunch-machine`         | **Created on import**        |
 
-Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt`. They exist only because five
-Strong strings are not a case-insensitive match for the Bybon catalog name (extra `(RDL)`, missing
-`(dumbbell)` / `(machine)`, “Bicep Curl” vs “Curl”, “Seated Leg Curl” vs “Leg Curl”). The sample
-fully resolves; Crunch is created rather than aliased.
+Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt` (five names whose Strong string
+is not a case-insensitive match for the catalog). **Won't do** to grow this into a user-editable
+table; extra Strong names from the full backup are created as new exercises (see below).
 
-Bybon catalog exercises **not** in this sample include overhead press, lat pull-down, chest fly
-variants, dips, calf raise, face pull, etc.
+Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pull-down,
+chest fly variants, dips, calf raise, face pull, etc. Several of those **do** appear in the full
+backup — but `Lat Pulldown (Cable)` still fails to match `Lat Pull-down (cable)` (hyphen).
 
 ---
 
@@ -217,19 +221,20 @@ persistence itself.
 |-------|----------------|
 | Session notes in `planDescription` | No separate session-notes field needed; stuffing Strong `Workout Notes` into the denormalized plan blurb is OK |
 | Rest as one `Duration` per exercise | By design. Not rest *events*, not mixed per-set rests |
-| RPE / distance / timed sets | Unused in this export; out of domain (spec wants RIR later, not Strong RPE) |
+| RPE / distance / timed sets | Unused in both the sample and the full 252-session export; out of domain (spec wants RIR later, not Strong RPE) |
 | Plan template vs session exercises | A plan is a plan. Sessions may drop/swap exercises (busy machine, sore knee, ran out of time) |
 | Import `repRange` = min..max logged reps | Fine for import; don't parse Strong “Rep range …” notes into prescription |
 | Unknown-exercise metadata | Creating Crunch as Core/Machine (guessed) is OK |
+| Hardcoded Strong name aliases | Keep the 5-entry map in `StrongCsvMapper`. Start from the current catalog; unmatched Strong names become new exercises. No alias table. |
 
 ### TODO (before Room)
 
 | Topic | Current behavior | Intended |
 |-------|------------------|----------|
-| Zero-load sets | `Weight` must be `> 0`; importer drops `0.0` kg rows | Keep unassisted pull-ups / BW warmups (29 pull-up work sets + 15 BSS warmups lost in the sample; #220 loses every pull-up work set) |
-| Exercise notes | `Set Order=Note` rows discarded (46 in sample) | Store per-exercise notes (rep-range hints, “Right knee slight pain”) |
+| Zero-load sets | `Weight` must be `> 0`; importer drops `0.0` kg rows | Keep unassisted pull-ups / BW warmups. Sample: 29 pull-up work + 15 BSS warmups. Full backup: **109** rows (BSS W 62, pull-up work 34, Back Extension work 9, BSS work 4); some sessions lose every work set for that exercise |
+| Exercise notes | `Set Order=Note` rows discarded (46 sample / 90 full) | Store per-exercise notes (rep-range hints, “Right knee slight pain”, …) |
 | Idempotent import | Re-picking the CSV appends duplicate sessions | Skip sessions whose `WorkoutSessionId(planId, startedAt)` already exists. Keep Bybon identity; do **not** key off Strong `Workout #` |
-| Archive unmatched plans | New plans are `isArchived = false` and show in the list | Unmatched Strong names (Upper body A/B) should be created **archived** |
+| Archive unmatched plans | New plans are `isArchived = false` and show in the list | Unmatched Strong names should be created **archived**. Full backup adds ~11 extra names (`Chest, back side delts`, JE variants, Upper/Lower Body 1–2, …) on top of Upper body A/B |
 | Remove/rename built-in Upper Body A | Seed plan `upper-body-a` is archived but still occupies the id Strong will slug | Temporary plan — remove or rename it so import can own `upper-body-a` |
 | History / summary hide warmups | Warmups import; history is top **work** set, summary lists work sets only | Show warmups on those screens |
 | `lateral-raise-machine` equipment | Catalog uses `Equipment.Dumbbell` | Bug: should be `Machine` (increments / default warmup follow the wrong equipment) |
@@ -239,18 +244,6 @@ persistence itself.
 | Topic | Current behavior | Intended |
 |-------|------------------|----------|
 | Workout persistence | In-memory `MutableStateFlow`; process death loses import | Room (or equivalent) for plans, sessions, exercises. Persist the **domain** (warmup lists, rest `Duration`, weight hundredths), not Strong event rows |
-
-### Open — hardcoded aliases
-
-Not a sample bug: all 18 Strong names resolve (13 by case-insensitive catalog name, 5 via the map,
-Crunch created). The map is only needed when the Strong string ≠ Bybon catalog string ignoring case.
-
-This is only a product question if we want either:
-
-- Users to map a Strong name onto an existing catalog exercise without a code change, or
-- A larger Strong export whose names aren't in the map / catalog
-
-Otherwise leave the map in `StrongCsvMapper`. No `exercise_alias` table required.
 
 ---
 
@@ -262,6 +255,80 @@ still TODO.
 
 The proposed Room event-row schema (`workout_set.kind`, `exercise_alias`, `strong_workout_number`,
 weight tenths) is **not** the persistence target. When Room happens, persist the current domain.
+
+---
+
+## Full backup (252 sessions)
+
+Same CSV schema as the sample. 8170 rows, workout #1–252, 42 unique `Exercise Name`s, 13 workout
+names. Still **no** RPE, distance, or timed-work rows. Identity timestamps are unique (252 dates for
+252 sessions).
+
+| Strong `Workout Name`   | Sessions | Import vs current Bybon plans |
+|-------------------------|----------|-------------------------------|
+| `Full body A`           | 80       | Matches Full Body A (all 80) |
+| `Full body B`           | 77       | Matches Full Body B (all 77) |
+| `Chest, back side delts`| 43       | New plan `chest-back-side-delts` |
+| `Lower Body 1`          | 9        | New |
+| `Upper Body 1`          | 9        | New (`upper-body-1`; does **not** match seed Upper Body A, score 0.64) |
+| `Full body B by JE`     | 8        | New (score 0.60 vs Full Body B) |
+| `Lower Body 2`          | 6        | New |
+| `Upper Body 2`          | 6        | New |
+| `Full body A by JE cut` | 4        | New |
+| `Full body A by JE`     | 3        | New |
+| `Upper body A`          | 3        | New — **id collision** with seed `upper-body-a` until that plan is removed/renamed |
+| `Upper body B `         | 3        | New `upper-body-b` |
+| `Afternoon Workout`     | 1        | New |
+
+Zero-load rows grow from 44 in the sample to **109**: BSS warmups 62, pull-up work 34, Back
+Extension work 9, BSS work 4. Sessions that lose **every** work set for an exercise: Back Extension
+#15/#17/#21, BSS #114/#118, pull-up #189/#220.
+
+Rest is still one duration per exercise. Unlike the sample, **20** workout+exercise blocks mix rest
+lengths (typically 120s then 60s on laterals). First `Rest Timer` wins; in 16 of those the first
+value is the minority. Accepted as by-design.
+
+### Exercise resolution (full)
+
+20 match catalog by case-insensitive name, 5 use the existing alias map, **17 are created**.
+
+High-volume created names (not in the catalog / map):
+
+| Strong name | Workouts | Work sets | Created id | Inferred |
+|-------------|----------|-----------|------------|----------|
+| Lat Pulldown (Cable) | 55 | 160 | `lat-pulldown-cable` | Other / Machine |
+| Standing Calf Raise (Barbell) | 15 | 45 | `standing-calf-raise-barbell` | Other / Barbell |
+| Chest Fly | 15 | 42 | `chest-fly` | Other / Bodyweight |
+| Chest Fly (Band) | 11 | 30 | `chest-fly-band` | Other / Bodyweight |
+| Cable Pushdown (rope) | 10 | 30 | `cable-pushdown-rope` | Other / Machine |
+| Lying Leg Curl (Machine) | 10 | 30 | `lying-leg-curl-machine` | Other / Machine |
+| Back Extension | 10 | 21 | `back-extension` | Other / Bodyweight |
+| Triceps Extension (Cable) | 7 | 21 | `triceps-extension-cable` | Other / Machine |
+| Hip Thrust (Barbell) | 6 | 18 | `hip-thrust-barbell` | Other / Barbell |
+| Reverse Lunges | 6 | 18 | `reverse-lunges` | Other / Bodyweight |
+| Crunch (Machine) | 6 | 12 | `crunch-machine` | Core / Machine |
+| + 6 more with ≤4 workouts | | | | |
+
+Catalog rows that **never appear** in this export: `bench-press-db`, `chest-dip`,
+`chest-fly-peck-deck`, `incline-bench-press-bb`. `lat-pull-down` and `leg-press` **are** in the
+export but fail to match (below).
+
+### Additional gaps (untriaged)
+
+These showed up only (or much more clearly) on the full backup. Discussed separately from the
+already-decided list.
+
+| Topic | What happens | Why it might matter |
+|-------|----------------|---------------------|
+| `Lat Pulldown (Cable)` vs catalog `Lat Pull-down (cable)` | Hyphen: normalized strings differ (`lat pulldown` vs `lat pull-down`). Creates **`lat-pulldown-cable`** (Other) instead of attaching 55 sessions / 160 work sets to `lat-pull-down` | Progression / previous on the catalog lat pulldown stay empty; imported history lives on a twin exercise |
+| `Leg Press` vs catalog `Leg Press (machine)` | No match. Slug is **`leg-press`**, which **already exists**. Session rows use a shadow definition (name `"Leg Press"`, Other, Bodyweight); catalog row is not updated or duplicated | Same id, two personalities (machine/Legs vs inferred bodyweight). 4 sessions |
+| Other near-miss wording | `Chest Fly` (no equipment) ≠ cable/machine fly; `Lying Leg Curl (Machine)` ≠ seated→`leg-curl`; `"Dumbbell lateral raises "` ≠ `Lateral Raise (dumbbell)` | Extra catalog rows after import. Lying vs seated and band vs cable are arguably different movements; the one-off “Dumbbell lateral raises” looks like a rename of the DB raise |
+| Trailing spaces on Strong names | `"Reverse Lunges "`, `"Dumbbell lateral raises "`, `"Incline Dumbbell Overhead Extension "` kept on created `name` (id slug strips them) | Cosmetic display names |
+| Equipment guess on created rows | No `Band` type → Chest Fly (Band) is Bodyweight; bare `Leg Press` / `Chest Fly` / `Reverse Lunges` / `Back Extension` also Bodyweight | Already accepted unknown-exercise metadata; listed because the full file has more of it |
+
+Genuine new movements (Hip Thrust, Reverse Lunges, Cable Pushdown, Iso-Lateral Chest Press,
+Skullcrusher (Barbell), Standing Calf Raise (Barbell), …) creating new exercises is **won't do** to
+force onto the current catalog.
 
 ---
 
