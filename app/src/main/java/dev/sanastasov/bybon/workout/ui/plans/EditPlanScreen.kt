@@ -1,12 +1,13 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -16,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,31 +53,45 @@ private fun EditPlanContent(
         Modifier.fillMaxSize(),
         topBar = { BybonTopAppBar("Edit plan", onNavigateBack) },
     ) { contentPadding ->
-        plan?.let {
-            Column(
+        plan?.let { currentPlan ->
+            LazyColumn(
                 Modifier
                     .padding(contentPadding)
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Card(Modifier.fillMaxWidth()) {
-                    WorkoutPlanInfo(
-                        it,
-                        Modifier
-                            .padding(8.dp)
-                            .fillMaxWidth(),
-                    )
+                item(key = "header") {
+                    EditPlanHeader(currentPlan)
                 }
-                TextButton(
-                    { onAction(EditPlanAction.OnArchivePlan) },
-                    Modifier.align(Alignment.CenterHorizontally),
-                ) {
-                    Text("Archive Plan")
+                itemsIndexed(
+                    currentPlan.sets,
+                    key = { index, exercise -> "${exercise.exercise.id}-$index" },
+                ) { _, exercise ->
+                    Card(Modifier.fillMaxWidth()) {
+                        PlannedExerciseCard(exercise)
+                    }
+                }
+                item(key = "archive") {
+                    Box(
+                        Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TextButton({ onAction(EditPlanAction.OnArchivePlan) }) {
+                            Text("Archive Plan")
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EditPlanHeader(plan: WorkoutPlan) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(plan.name, fontWeight = FontWeight.Bold)
+        plan.description?.let { Text(it) }
     }
 }
 

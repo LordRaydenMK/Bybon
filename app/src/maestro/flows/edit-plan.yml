@@ -8,9 +8,25 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Edit plan"
 - assertVisible: "Full Body A"
 - assertVisible: "Full body workout routine variant A"
-- assertVisible: "3 x Bench Press (barbell) - 8 to 10 reps"
-- assertVisible: "3 x Squat (barbell) - 8 to 10 reps"
-- assertVisible: "Archive Plan"
+- assertVisible: "Bench Press (barbell)"
+- assertVisible: "Chest · Barbell"
+- assertVisible: "Bench Press (barbell) warmup set"
+- assertVisible: "Bench Press (barbell) set 1, 8–10 reps, rest 2:00"
+- scrollUntilVisible:
+    element: "Squat (barbell)"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Squat (barbell)"
+- scrollUntilVisible:
+    element: "Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Leg Curl (machine)"
+- assertVisible: "Legs · Machine"
+- assertVisible: "Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
+- scrollUntilVisible:
+    element: "Archive Plan"
+    direction: DOWN
 - tapOn: "Back"
 - assertVisible: "Bybon"
 - assertVisible: "Start Workout"
