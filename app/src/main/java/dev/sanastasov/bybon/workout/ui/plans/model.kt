@@ -8,7 +8,15 @@ data class WorkoutPlansUiState(
     val activePlans: List<WorkoutPlanUi> = emptyList(),
     val archivedPlans: List<WorkoutPlanUi> = emptyList(),
     val showArchived: Boolean = false,
-)
+) {
+    val showMyPlansHeading: Boolean get() = showArchived
+
+    val showArchivedPlansHeading: Boolean get() = showArchived && archivedPlans.isNotEmpty()
+
+    val showArchivedPlansButton: Boolean get() = !showArchived && archivedPlans.isNotEmpty()
+
+    val hideArchivedPlansButton: Boolean get() = showArchived
+}
 
 data class WorkoutPlanUi(
     val plan: WorkoutPlan,

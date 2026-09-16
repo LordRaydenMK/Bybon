@@ -49,7 +49,7 @@ fun WorkoutsTab(
         modifier.padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (state.showArchived) {
+        if (state.showMyPlansHeading) {
             item(key = "heading-my-plans") {
                 SectionHeading("My Plans")
             }
@@ -60,7 +60,7 @@ fun WorkoutsTab(
                 onAction = onAction,
             )
         }
-        if (state.showArchived && state.archivedPlans.isNotEmpty()) {
+        if (state.showArchivedPlansHeading) {
             item(key = "heading-archived-plans") {
                 SectionHeading("Archived Plans")
             }
@@ -71,14 +71,14 @@ fun WorkoutsTab(
                 )
             }
         }
-        if (state.archivedPlans.isNotEmpty() && !state.showArchived) {
+        if (state.showArchivedPlansButton) {
             item(key = "show-archived") {
                 ArchiveFilterButton("Show Archived Plans") {
                     onAction(WorkoutPlansAction.OnShowArchivedPlans)
                 }
             }
         }
-        if (state.showArchived) {
+        if (state.hideArchivedPlansButton) {
             item(key = "hide-archived") {
                 ArchiveFilterButton("Hide Archived Plans") {
                     onAction(WorkoutPlansAction.OnHideArchivedPlans)

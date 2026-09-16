@@ -55,6 +55,10 @@ class WorkoutPlansViewModelTest {
         assert(state.activePlans.map { it.plan } == listOf(fullBodyA, fullBodyB))
         assert(state.archivedPlans.map { it.plan } == listOf(upperBodyA))
         assert(!state.showArchived)
+        assert(state.showArchivedPlansButton)
+        assert(!state.hideArchivedPlansButton)
+        assert(!state.showMyPlansHeading)
+        assert(!state.showArchivedPlansHeading)
     }
 
     @Test
@@ -82,6 +86,10 @@ class WorkoutPlansViewModelTest {
         val state = viewModel.uiState.first { it.showArchived }
         assert(state.activePlans.map { it.plan } == listOf(fullBodyA, fullBodyB))
         assert(state.archivedPlans.map { it.plan } == listOf(upperBodyA))
+        assert(state.showMyPlansHeading)
+        assert(state.showArchivedPlansHeading)
+        assert(state.hideArchivedPlansButton)
+        assert(!state.showArchivedPlansButton)
     }
 
     @Test
@@ -112,6 +120,9 @@ class WorkoutPlansViewModelTest {
         viewModel.onAction(WorkoutPlansAction.OnUnarchivePlan(upperBodyA))
         val state = viewModel.uiState.first { it.archivedPlans.isEmpty() }
         assert(state.showArchived)
+        assert(state.hideArchivedPlansButton)
+        assert(!state.showArchivedPlansHeading)
+        assert(!state.showArchivedPlansButton)
         assert(
             state.activePlans.map { it.plan } ==
                 listOf(fullBodyA, upperBodyA.copy(isArchived = false)),
