@@ -383,7 +383,9 @@ class StrongCsvRowTest {
                 "Rep range 11-15",
         )
 
-        val lastUpperBodyB = result.sessionHistory.last { it.planId == WorkoutPlanId("upper-body-b") }
+        val lastUpperBodyB = result.sessionHistory.last {
+            it.planId == WorkoutPlanId("upper-body-b")
+        }
         assert(lastUpperBodyB.note == "Full body B without legs")
         assert(
             lastUpperBodyB.exercises.first { it.id == "incline-bench-press-db" }.note ==
