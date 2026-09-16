@@ -46,6 +46,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlanEffect
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlanUi
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansAction
+import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansUiState
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansViewModel
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutsTab
 import java.time.LocalDate
@@ -108,7 +109,7 @@ private fun MainScreenContent(
     onOneRmAction: (OneRmCalcAction) -> Unit,
     weightState: WeightDashboardUiState,
     onLogWeightClicked: () -> Unit,
-    plans: List<WorkoutPlanUi>,
+    plans: WorkoutPlansUiState,
     onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
     onHistoryClicked: () -> Unit,
 ) {
@@ -191,9 +192,11 @@ private fun MainScreenContentWorkoutsPreview() {
         {},
         WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
         {},
-        listOf(
-            WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false),
+        WorkoutPlansUiState(
+            listOf(
+                WorkoutPlanUi(fullBodyA, isActive = false),
+                WorkoutPlanUi(fullBodyB, isActive = false),
+            ),
         ),
         {},
         {},
@@ -215,9 +218,11 @@ private fun MainScreenContentOneRmCalcPreview() {
         {},
         WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
         {},
-        listOf(
-            WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false),
+        WorkoutPlansUiState(
+            listOf(
+                WorkoutPlanUi(fullBodyA, isActive = false),
+                WorkoutPlanUi(fullBodyB, isActive = false),
+            ),
         ),
         {},
         {},
@@ -250,9 +255,11 @@ private fun MainScreenContentWeightTrackPreview() {
             ),
         ),
         {},
-        listOf(
-            WorkoutPlanUi(fullBodyA, isActive = false),
-            WorkoutPlanUi(fullBodyB, isActive = false),
+        WorkoutPlansUiState(
+            listOf(
+                WorkoutPlanUi(fullBodyA, isActive = false),
+                WorkoutPlanUi(fullBodyB, isActive = false),
+            ),
         ),
         {},
         {},

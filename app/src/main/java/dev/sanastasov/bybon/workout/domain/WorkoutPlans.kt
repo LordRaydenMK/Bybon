@@ -42,3 +42,19 @@ val fullBodyB = WorkoutPlan(
         planned("incline-curl-db", 2, 10..16),
     ),
 )
+
+val upperBodyA = WorkoutPlan(
+    WorkoutPlanId("upper-body-a"),
+    "Upper Body A",
+    "Upper body workout routine variant A",
+    listOf(
+        planned("bench-press-bb", 3, 8..10, warmupSets = 3),
+        planned("incline-row-db", 3, 10..16, warmupSets = 2),
+        planned("overhead-press-bb", 3, 8..10, warmupSets = 2),
+        planned("lat-pull-down", 3, 8..12),
+        planned("lateral-raise-db", 3, 10..15),
+        planned("incline-curl-db", 2, 10..16),
+        planned("skullcrusher-db", 3, 10..16),
+    ),
+    isArchived = true,
+)

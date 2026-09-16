@@ -49,7 +49,9 @@ class WorkoutSessionViewModel(
                     session.workoutSets.any { it.setState == SetState.InProgress }
             }
             if (inProgress == null) {
-                val plan = repository.workoutPlans().first().first { it.id == planId }
+                val plan = repository.workoutPlans()
+                    .first()
+                    .first { it.id == planId }
                 val previousSession = sessions
                     .filter { it.planId == planId && it.state is WorkoutState.Completed }
                     .maxByOrNull { it.startedAt }

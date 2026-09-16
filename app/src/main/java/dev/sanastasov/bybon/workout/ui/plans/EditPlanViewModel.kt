@@ -28,7 +28,7 @@ class EditPlanViewModel(
     fun onAction(action: EditPlanAction) {
         when (action) {
             EditPlanAction.OnArchivePlan -> coroutineScope.launch {
-                repository.archivePlan(planId)
+                repository.archivePlan(planId, archived = true)
                 _effects.trySend(EditPlanEffect.NavigateBack)
             }
         }
