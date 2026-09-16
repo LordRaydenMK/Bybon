@@ -47,6 +47,7 @@ class WorkoutSessionTest {
         assert(actual.exercises.first().sets.all { it.setState == SetState.Completed })
         assert(checkNotNull(squat.warmupSets).first().setState == SetState.InProgress)
         assert(squat.sets.all { it.setState == SetState.NotStated })
+        assert(actual.inProgressExerciseIndex() == 1)
     }
 
     @Test

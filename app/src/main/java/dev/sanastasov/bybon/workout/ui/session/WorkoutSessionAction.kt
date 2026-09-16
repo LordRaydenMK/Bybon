@@ -57,3 +57,9 @@ sealed class WorkoutSessionAction {
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
 }
+
+sealed class WorkoutSessionEffect {
+    data class ShowExercise(
+        val index: Int,
+    ) : WorkoutSessionEffect()
+}
