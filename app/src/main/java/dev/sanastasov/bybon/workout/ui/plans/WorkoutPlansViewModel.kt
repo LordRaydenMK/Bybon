@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 class WorkoutPlansViewModel(
     private val repository: WorkoutsRepository,
@@ -19,8 +20,11 @@ class WorkoutPlansViewModel(
     val uiState = combine(
         repository.workoutPlans(),
         repository.workoutSessions(),
-    ) { plans, sessions ->
-        plans.map { it.toUi(sessions) }
+        repository.archivedPlanIds(),
+    ) { plans, sessions, archivedIds ->
+        plans
+            .filter { it.id !in archivedIds }
+            .map { it.toUi(sessions) }
     }.stateInWhileInForeground(coroutineScope, emptyList())
 
     fun onAction(action: WorkoutPlansAction) {
@@ -37,6 +41,10 @@ class WorkoutPlansViewModel(
 
             is WorkoutPlansAction.OnEditPlan -> {
                 _effects.trySend(WorkoutPlanEffect.OpenEditPlan(action.plan))
+            }
+
+            is WorkoutPlansAction.OnArchivePlan -> coroutineScope.launch {
+                repository.archivePlan(action.plan.id)
             }
         }
     }

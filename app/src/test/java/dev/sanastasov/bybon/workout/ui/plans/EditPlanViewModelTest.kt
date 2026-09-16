@@ -17,4 +17,17 @@ class EditPlanViewModelTest {
         val state = viewModel.uiState.first { it != null }
         assert(state == fullBodyA)
     }
+
+    @Test
+    fun `archiving the plan stores its id and navigates back`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnArchivePlan)
+
+        assert(viewModel.effects.first() == EditPlanEffect.NavigateBack)
+        assert(fullBodyA.id in repository.archivedPlanIds().first())
+        assert(repository.workoutPlans().first() == listOf(fullBodyA, fullBodyB))
+    }
 }

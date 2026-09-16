@@ -37,4 +37,15 @@ class WorkoutsRepositoryImplTest {
         assert(stored.containsAll(catalogExercises))
         assert(stored.last() == crunch)
     }
+
+    @Test
+    fun `archivePlan records the id without removing the plan`() = runTest {
+        val repository = WorkoutsRepositoryImpl()
+        val planId = repository.workoutPlans().first().first().id
+
+        repository.archivePlan(planId)
+
+        assert(planId in repository.archivedPlanIds().first())
+        assert(repository.workoutPlans().first().any { it.id == planId })
+    }
 }

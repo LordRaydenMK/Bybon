@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.data
 
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
@@ -16,11 +17,18 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
 
     private val exercises = MutableStateFlow(catalogExercises)
     private val plans = MutableStateFlow(listOf(fullBodyA, fullBodyB))
+    private val archivedPlanIds = MutableStateFlow<Set<WorkoutPlanId>>(emptySet())
     private val sessions = MutableStateFlow<List<WorkoutSession>>(emptyList())
 
     override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
 
     override fun workoutPlans(): Flow<List<WorkoutPlan>> = plans
+
+    override fun archivedPlanIds(): Flow<Set<WorkoutPlanId>> = archivedPlanIds
+
+    override suspend fun archivePlan(planId: WorkoutPlanId) {
+        archivedPlanIds.update { it + planId }
+    }
 
     override suspend fun updateWorkout(session: WorkoutSession) {
         sessions.update { list ->

@@ -25,6 +25,10 @@ sealed class WorkoutPlansAction {
     data class OnEditPlan(
         val plan: WorkoutPlan,
     ) : WorkoutPlansAction()
+
+    data class OnArchivePlan(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
 }
 
 sealed class WorkoutPlanEffect {
@@ -37,4 +41,12 @@ sealed class WorkoutPlanEffect {
     data class OpenEditPlan(
         val plan: WorkoutPlan,
     ) : WorkoutPlanEffect()
+}
+
+sealed class EditPlanAction {
+    data object OnArchivePlan : EditPlanAction()
+}
+
+sealed class EditPlanEffect {
+    data object NavigateBack : EditPlanEffect()
 }

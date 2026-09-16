@@ -8,6 +8,10 @@ interface WorkoutsRepository {
 
     fun workoutPlans(): Flow<List<WorkoutPlan>>
 
+    fun archivedPlanIds(): Flow<Set<WorkoutPlanId>>
+
+    suspend fun archivePlan(planId: WorkoutPlanId)
+
     suspend fun updateWorkout(session: WorkoutSession)
 
     fun workoutSessions(): Flow<List<WorkoutSession>>
