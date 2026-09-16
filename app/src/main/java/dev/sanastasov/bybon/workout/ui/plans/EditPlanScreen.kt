@@ -18,9 +18,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.fullBodyA
-import dev.sanastasov.bybon.workout.domain.fullBodyB
 
 @Composable
 fun WorkoutModule.EditPlanScreen(planId: WorkoutPlanId, onNavigateBack: () -> Unit) {
@@ -32,12 +32,12 @@ fun WorkoutModule.EditPlanScreen(planId: WorkoutPlanId, onNavigateBack: () -> Un
 }
 
 @Composable
-private fun EditPlanContent(planUi: WorkoutPlanUi?, onNavigateBack: () -> Unit) {
+private fun EditPlanContent(plan: WorkoutPlan?, onNavigateBack: () -> Unit) {
     Scaffold(
         Modifier.fillMaxSize(),
         topBar = { BybonTopAppBar("Edit plan", onNavigateBack) },
     ) { contentPadding ->
-        planUi?.let {
+        plan?.let {
             Column(
                 Modifier
                     .padding(contentPadding)
@@ -60,16 +60,8 @@ private fun EditPlanContent(planUi: WorkoutPlanUi?, onNavigateBack: () -> Unit) 
 
 @Preview
 @Composable
-private fun EditPlanContentActivePreview() {
+private fun EditPlanContentPreview() {
     Surface {
-        EditPlanContent(WorkoutPlanUi(fullBodyA, isActive = true), {})
-    }
-}
-
-@Preview
-@Composable
-private fun EditPlanContentInactivePreview() {
-    Surface {
-        EditPlanContent(WorkoutPlanUi(fullBodyB, isActive = false), {})
+        EditPlanContent(fullBodyA, {})
     }
 }

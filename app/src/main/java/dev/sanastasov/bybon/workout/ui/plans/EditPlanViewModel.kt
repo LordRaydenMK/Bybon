@@ -4,7 +4,7 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 class EditPlanViewModel(
     private val planId: WorkoutPlanId,
@@ -12,10 +12,7 @@ class EditPlanViewModel(
     coroutineScope: CoroutineScope,
 ) {
 
-    val uiState = combine(
-        repository.workoutPlans(),
-        repository.workoutSessions(),
-    ) { plans, sessions ->
-        plans.firstOrNull { it.id == planId }?.toUi(sessions)
-    }.stateInWhileInForeground(coroutineScope, null)
+    val uiState = repository.workoutPlans()
+        .map { plans -> plans.firstOrNull { it.id == planId } }
+        .stateInWhileInForeground(coroutineScope, null)
 }

@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -14,6 +15,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +24,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -66,15 +73,9 @@ private fun WorkoutPlanCard(
             Arrangement.spacedBy(4.dp),
         ) {
             WorkoutPlanInfo(
-                planUi = planUi,
-                headerTrailing = {
-                    IconButton({ onEditClicked(plan) }) {
-                        Icon(
-                            Icons.Filled.MoreVert,
-                            contentDescription = "Edit ${plan.name}",
-                        )
-                    }
-                },
+                plan = plan,
+                isActive = planUi.isActive,
+                headerTrailing = { PlanOverflowMenu(plan, onEditClicked) },
             )
             TextButton(
                 { onStartWorkoutClicked(plan) },
@@ -87,12 +88,37 @@ private fun WorkoutPlanCard(
 }
 
 @Composable
+private fun PlanOverflowMenu(plan: WorkoutPlan, onEditClicked: (WorkoutPlan) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton({ expanded = true }) {
+            Icon(
+                Icons.Filled.MoreVert,
+                contentDescription = "More options for ${plan.name}",
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("Edit Plan") },
+                onClick = {
+                    expanded = false
+                    onEditClicked(plan)
+                },
+            )
+        }
+    }
+}
+
+@Composable
 internal fun WorkoutPlanInfo(
-    planUi: WorkoutPlanUi,
+    plan: WorkoutPlan,
     modifier: Modifier = Modifier,
+    isActive: Boolean = false,
     headerTrailing: @Composable RowScope.() -> Unit = {},
 ) {
-    val plan = planUi.plan
     Column(modifier, Arrangement.spacedBy(4.dp)) {
         Row(
             Modifier.fillMaxWidth(),
@@ -103,7 +129,7 @@ internal fun WorkoutPlanInfo(
                 Modifier.weight(1f),
                 fontWeight = FontWeight.Bold,
             )
-            if (planUi.isActive) {
+            if (isActive) {
                 ActivePlanBadge()
             }
             headerTrailing()
