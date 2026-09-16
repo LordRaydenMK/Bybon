@@ -41,69 +41,66 @@ fun MainModule.BybonApp() {
         ),
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
-        entryProvider = { key ->
-            when (key) {
-                Screen.MainScreen -> NavEntry(key) {
-                    MainScreen(
-                        onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
-                        onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
-                        onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
-                        onNavigateToEditPlan = { backStack.add(Screen.EditPlan(it.id)) },
-                        onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) },
-                    )
-                }
-
-                is Screen.WorkoutOverview -> NavEntry(key) {
-                    WorkoutOverviewScreen(
-                        planId = key.planId,
-                        onBack = { backStack.removeLastOrNull() },
-                        onStartSession = {
-                            backStack.removeLastOrNull()
-                            backStack.add(Screen.WorkoutSession(key.planId))
-                        },
-                    )
-                }
-
-                is Screen.EditPlan -> NavEntry(key) {
-                    EditPlanScreen(
-                        planId = key.planId,
-                        onNavigateBack = { backStack.removeLastOrNull() },
-                        onNavigateToExerciseLibrary = {
-                            backStack.add(Screen.ExerciseLibrary(key.planId))
-                        },
-                    )
-                }
-
-                is Screen.ExerciseLibrary -> NavEntry(key) {
-                    ExerciseLibraryScreen(
-                        onNavigateBack = { backStack.removeLastOrNull() },
-                    )
-                }
-
-                is Screen.WorkoutSession -> NavEntry(key) {
-                    WorkoutSessionScreen(key.planId)
-                }
-
-                Screen.WeightEntryScreen -> NavEntry(key) {
-                    WeightInputScreen { backStack.removeLastOrNull() }
-                }
-
-                Screen.WorkoutHistory -> NavEntry(key) {
-                    WorkoutHistoryScreen(
-                        onNavigateBack = { backStack.removeLastOrNull() },
-                        onNavigateToSummary = { sessionId ->
-                            backStack.add(Screen.WorkoutSummary(sessionId))
-                        },
-                    )
-                }
-
-                is Screen.WorkoutSummary -> NavEntry(key) {
-                    WorkoutSummaryScreen(
-                        sessionId = key.sessionId,
-                        onNavigateBack = { backStack.removeLastOrNull() },
-                    )
-                }
-            }
-        },
+        entryProvider = { key -> screenEntry(key, backStack) },
     )
 }
+
+private fun MainModule.screenEntry(key: Screen, backStack: BackStack): NavEntry<Screen> =
+    when (key) {
+        Screen.MainScreen -> NavEntry(key) {
+            MainScreen(
+                onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
+                onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
+                onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
+                onNavigateToEditPlan = { backStack.add(Screen.EditPlan(it.id)) },
+                onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) },
+            )
+        }
+
+        is Screen.WorkoutOverview -> NavEntry(key) {
+            WorkoutOverviewScreen(
+                planId = key.planId,
+                onBack = { backStack.removeLastOrNull() },
+                onStartSession = {
+                    backStack.removeLastOrNull()
+                    backStack.add(Screen.WorkoutSession(key.planId))
+                },
+            )
+        }
+
+        is Screen.EditPlan -> NavEntry(key) {
+            EditPlanScreen(
+                planId = key.planId,
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToExerciseLibrary = { backStack.add(Screen.ExerciseLibrary(key.planId)) },
+            )
+        }
+
+        is Screen.ExerciseLibrary -> NavEntry(key) {
+            ExerciseLibraryScreen { backStack.removeLastOrNull() }
+        }
+
+        is Screen.WorkoutSession -> NavEntry(key) {
+            WorkoutSessionScreen(key.planId)
+        }
+
+        Screen.WeightEntryScreen -> NavEntry(key) {
+            WeightInputScreen { backStack.removeLastOrNull() }
+        }
+
+        Screen.WorkoutHistory -> NavEntry(key) {
+            WorkoutHistoryScreen(
+                onNavigateBack = { backStack.removeLastOrNull() },
+                onNavigateToSummary = { sessionId ->
+                    backStack.add(Screen.WorkoutSummary(sessionId))
+                },
+            )
+        }
+
+        is Screen.WorkoutSummary -> NavEntry(key) {
+            WorkoutSummaryScreen(
+                sessionId = key.sessionId,
+                onNavigateBack = { backStack.removeLastOrNull() },
+            )
+        }
+    }

@@ -35,10 +35,7 @@ fun WorkoutModule.ExerciseLibraryScreen(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun ExerciseLibraryContent(
-    state: ExerciseLibraryUiState,
-    onNavigateBack: () -> Unit,
-) {
+private fun ExerciseLibraryContent(state: ExerciseLibraryUiState, onNavigateBack: () -> Unit) {
     Scaffold(
         Modifier.fillMaxSize(),
         topBar = { BybonTopAppBar("Exercise Library", onNavigateBack) },

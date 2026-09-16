@@ -49,7 +49,8 @@ class ExerciseLibraryUiTest {
             Equipment.AssistedBodyWeight,
         )
 
-        assert(listOf(pullUp).groupedByBodyPart().single().exercises.single().equipmentLabel == "Assisted")
+        val item = listOf(pullUp).groupedByBodyPart().single().exercises.single()
+        assert(item.equipmentLabel == "Assisted")
     }
 
     @Test
@@ -61,6 +62,7 @@ class ExerciseLibraryUiTest {
             Equipment.Barbell,
         )
 
-        assert(listOf(bench).groupedByBodyPart().single().exercises.single().equipmentLabel == "Barbell")
+        val item = listOf(bench).groupedByBodyPart().single().exercises.single()
+        assert(item.equipmentLabel == "Barbell")
     }
 }
