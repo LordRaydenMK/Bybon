@@ -28,6 +28,15 @@ jobs:
       - name: Build
         run: ./gradlew buildDebug
 
+      - name: Archive debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          archive: false
+          retention-days: ${{ github.ref == 'refs/heads/main' && 7 || 3 }}
+          if-no-files-found: error
+
   e2e-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
