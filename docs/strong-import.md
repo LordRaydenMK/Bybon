@@ -130,11 +130,12 @@ Group Strong sessions by trimmed `Workout Name`. Score each existing Bybon plan:
   tolerant). `"Full body A"` still matches if one exercise is swapped for Crunch; `"Full body A"`
   does **not** match `"Full Body B"`.
 
-If no plan clears the threshold, create a **new, unarchived** plan:
+If no plan clears the threshold, create a **new plan** (today `isArchived = false`; **TODO:** archive
+unmatched imports):
 
 - `id = slugify(trimmed Strong name)` (e.g. `upper-body-a`)
 - `name` = trimmed Strong name (keeps Strong casing: `"Upper body A"`)
-- `description = null`, `isArchived = false`
+- `description = null`
 - Exercises / warmup count / work-set count / rest / observed `repRange` taken from the
   **representative** session = most common exercise-id sequence for that name (ties: first seen)
 
@@ -150,9 +151,9 @@ to the plan template).
 | `Duration (sec)`               | `WorkoutState.Completed(duration)`                 |
 | Matched/created plan           | `planId` + `planName` (Bybon name if matched)      |
 | `Workout Notes`                | `planDescription` (else the plan’s description)    |
-| `Workout #`                    | Used only to group rows; **not stored**            |
+| `Workout #`                    | Used only to group rows; **not stored** (Bybon identity is `planId + startedAt`) |
 
-Re-import appends again (not idempotent).
+Re-import appends again (**TODO:** idempotent on `WorkoutSessionId`, not Strong `Workout #`).
 
 ### 4. Sets / rest / notes
 
@@ -195,45 +196,72 @@ Bulgarian Split Squat warmups. CSV working sets 854 → imported **825**. One Fu
 | Triceps Press                     | `triceps-press-machine`  | Alias                        |
 | Crunch (Machine)                  | `crunch-machine`         | **Created on import**        |
 
-Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt` (not a DB table).
+Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt`. They exist only because five
+Strong strings are not a case-insensitive match for the Bybon catalog name (extra `(RDL)`, missing
+`(dumbbell)` / `(machine)`, “Bicep Curl” vs “Curl”, “Seated Leg Curl” vs “Leg Curl”). The sample
+fully resolves; Crunch is created rather than aliased.
 
 Bybon catalog exercises **not** in this sample include overhead press, lat pull-down, chest fly
 variants, dips, calf raise, face pull, etc.
 
 ---
 
-## Differences / gaps vs Strong
+## Decisions vs Strong
 
-Use this list to mark **won't do** / **todo** / **maybe later**.
+Statuses from triage. **TODO** items are for work **before** Room workout persistence, except
+persistence itself.
 
-| # | Gap | Strong | Bybon now | Sample impact |
-|---|-----|--------|-----------|---------------|
-| 1 | Zero-load sets | `0.0` kg is valid (unassisted pull-up, BW split-squat warmup) | `Weight` / `ExerciseSet` require positive load; importer drops the row | 29 pull-up work sets + 15 BSS warmups lost; session #220 has no pull-up work sets |
-| 2 | Exercise notes | `Set Order=Note` (rep-range hints, “Right knee slight pain”) | No field; rows discarded | 46 notes unused |
-| 3 | Session notes | `Workout Notes` on every session | No session-notes field; copied into `planDescription` | Overwrites plan blurb with e.g. `"Monday full body workout"` |
-| 4 | Rest model | One rest-timer **event** after each work set | One `Duration` per exercise, display-only between work sets | Fine for this sample (rest is uniform per exercise); cannot represent mixed rests or “rest happened” |
-| 5 | RPE | Column in export | Not in domain (spec wants RIR, not RPE) | 0 uses in sample |
-| 6 | Distance / timed sets | Columns in export | Not in domain | 0 uses in sample |
-| 7 | Strong workout # / idempotency | Stable `Workout #` | Identity = `planId + startedAt`; re-import **duplicates** | Re-picking the CSV appends 52 more sessions |
-| 8 | Unmatched plans archived | (n/a) | New plans are **unarchived** and show in the plans list | Upper body A/B appear as live plans |
-| 9 | Plan id collision | `"Upper body A"` slugs to `upper-body-a` | Bybon already has archived `upper-body-a` with a **different** exercise list; fuzzy score ~0.65 < 0.70 so import **creates a second plan with the same id** | UI import uses `AllPlans`, so this is the real path; unit tests omit the archived plan |
-| 10 | Plan template vs history | Name-only; each session is its own exercise list | Matched sessions keep Strong’s exercises; **created** plans freeze the most common sequence | Upper body B’s 3 sessions differ (raise DB vs machine, curl order); plan is session #246 |
-| 11 | Observed vs prescribed rep range | Notes like `"Rep range 11-15"` | Session/plan `repRange` = min..max **logged** work reps, not the note | Incline bench plan range becomes e.g. 8..13 instead of 11–15 |
-| 12 | Unknown-exercise metadata | Name only | New exercises: muscle `Other` (except crunch→Core), equipment guessed, not archived | Only Crunch in sample; guess happens to be right |
-| 13 | Catalog aliases | 18 names in sample | 5 hardcoded aliases; rest rely on case-insensitive equality | Sample fully covered except Crunch (created) |
-| 14 | Warmups / work sets in summary UI | Full set log including `W` | History = top **work** set; summary screen lists work sets only | Warmups imported but hidden in those screens |
-| 15 | Workout persistence | Strong is the system of record | In-memory; process death loses import | Blocks treating import as real history |
-| 16 | `lateral-raise-machine` equipment | Machine | Catalog marks it `Equipment.Dumbbell` | Import matches the row; increment/warmup defaults follow dumbbell |
+### Won't do
 
-Earlier locked decisions that **do not** match the implementation:
+| Topic | Why it's fine |
+|-------|----------------|
+| Session notes in `planDescription` | No separate session-notes field needed; stuffing Strong `Workout Notes` into the denormalized plan blurb is OK |
+| Rest as one `Duration` per exercise | By design. Not rest *events*, not mixed per-set rests |
+| RPE / distance / timed sets | Unused in this export; out of domain (spec wants RIR later, not Strong RPE) |
+| Plan template vs session exercises | A plan is a plan. Sessions may drop/swap exercises (busy machine, sore knee, ran out of time) |
+| Import `repRange` = min..max logged reps | Fine for import; don't parse Strong “Rep range …” notes into prescription |
+| Unknown-exercise metadata | Creating Crunch as Core/Machine (guessed) is OK |
 
-1. **Import fidelity (1A)** — extras were to be preserved. Warmups and rest *duration* are kept;
-   notes, RPE/distance/time, rest *events*, and 0 kg sets are not.
-2. **Unmatched names → archived plans** — importer creates active plans.
-3. **Room event-row schema** (`workout_set.kind = warmup\|working\|rest`, `exercise_alias`,
-   `strong_workout_number`, weight tenths) — **not built**. Domain moved to warmup lists + rest
-   `Duration` + weight hundredths. If/when Room is added, persist that domain rather than Strong
-   event rows.
+### TODO (before Room)
+
+| Topic | Current behavior | Intended |
+|-------|------------------|----------|
+| Zero-load sets | `Weight` must be `> 0`; importer drops `0.0` kg rows | Keep unassisted pull-ups / BW warmups (29 pull-up work sets + 15 BSS warmups lost in the sample; #220 loses every pull-up work set) |
+| Exercise notes | `Set Order=Note` rows discarded (46 in sample) | Store per-exercise notes (rep-range hints, “Right knee slight pain”) |
+| Idempotent import | Re-picking the CSV appends duplicate sessions | Skip sessions whose `WorkoutSessionId(planId, startedAt)` already exists. Keep Bybon identity; do **not** key off Strong `Workout #` |
+| Archive unmatched plans | New plans are `isArchived = false` and show in the list | Unmatched Strong names (Upper body A/B) should be created **archived** |
+| Remove/rename built-in Upper Body A | Seed plan `upper-body-a` is archived but still occupies the id Strong will slug | Temporary plan — remove or rename it so import can own `upper-body-a` |
+| History / summary hide warmups | Warmups import; history is top **work** set, summary lists work sets only | Show warmups on those screens |
+| `lateral-raise-machine` equipment | Catalog uses `Equipment.Dumbbell` | Bug: should be `Machine` (increments / default warmup follow the wrong equipment) |
+
+### TODO (after the above)
+
+| Topic | Current behavior | Intended |
+|-------|------------------|----------|
+| Workout persistence | In-memory `MutableStateFlow`; process death loses import | Room (or equivalent) for plans, sessions, exercises. Persist the **domain** (warmup lists, rest `Duration`, weight hundredths), not Strong event rows |
+
+### Open — hardcoded aliases
+
+Not a sample bug: all 18 Strong names resolve (13 by case-insensitive catalog name, 5 via the map,
+Crunch created). The map is only needed when the Strong string ≠ Bybon catalog string ignoring case.
+
+This is only a product question if we want either:
+
+- Users to map a Strong name onto an existing catalog exercise without a code change, or
+- A larger Strong export whose names aren't in the map / catalog
+
+Otherwise leave the map in `StrongCsvMapper`. No `exercise_alias` table required.
+
+---
+
+## Superseded schema notes
+
+The original doc locked **import fidelity (1A)** (keep notes, RPE, rest events, 0 kg) and **unmatched
+names → archived plans**. Implementation only kept warmups + rest *duration*; archive-on-create is
+still TODO.
+
+The proposed Room event-row schema (`workout_set.kind`, `exercise_alias`, `strong_workout_number`,
+weight tenths) is **not** the persistence target. When Room happens, persist the current domain.
 
 ---
 
@@ -247,6 +275,7 @@ Earlier locked decisions that **do not** match the implementation:
 
 1. Parse `;` CSV into `StrongCsvRow`.
 2. Resolve exercises (alias / name / create).
-3. Fuzzy-match plan or insert a new unarchived plan from the most common exercise sequence.
+3. Fuzzy-match plan or insert a new plan from the most common exercise sequence (unarchived today;
+   **TODO:** archive unmatched names).
 4. Build `WorkoutSession(Completed)` with Strong date/duration, notes in `planDescription`, warmups
    + work sets with positive weight/reps, rest duration from the first rest-timer row.
