@@ -17,6 +17,11 @@ sealed interface Screen : NavKey {
     ) : Screen
 
     @Serializable
+    data class EditPlan(
+        val planId: WorkoutPlanId,
+    ) : Screen
+
+    @Serializable
     data class WorkoutSession(
         val planId: WorkoutPlanId,
     ) : Screen

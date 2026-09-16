@@ -1,7 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
-import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -21,15 +20,7 @@ class WorkoutPlansViewModel(
         repository.workoutPlans(),
         repository.workoutSessions(),
     ) { plans, sessions ->
-        plans.map { plan ->
-            WorkoutPlanUi(
-                plan = plan,
-                isActive = sessions.any { session ->
-                    session.planId == plan.id &&
-                        session.workoutSets.any { it.setState == SetState.InProgress }
-                },
-            )
-        }
+        plans.map { it.toUi(sessions) }
     }.stateInWhileInForeground(coroutineScope, emptyList())
 
     fun onAction(action: WorkoutPlansAction) {
@@ -42,6 +33,10 @@ class WorkoutPlansViewModel(
                     WorkoutPlanEffect.OpenOverview(action.plan)
                 }
                 _effects.trySend(effect)
+            }
+
+            is WorkoutPlansAction.OnEditPlan -> {
+                _effects.trySend(WorkoutPlanEffect.OpenEditPlan(action.plan))
             }
         }
     }
