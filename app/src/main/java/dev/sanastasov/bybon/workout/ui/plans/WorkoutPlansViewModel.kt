@@ -24,11 +24,6 @@ class WorkoutPlansViewModel(
 
     private val showArchived = MutableStateFlow(false)
 
-    private val hasArchivedPlans = combine(
-        repository.workoutPlans(),
-        repository.workoutPlans(WorkoutPlansFilter.AllPlans),
-    ) { activePlans, allPlans -> allPlans.size > activePlans.size }
-
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState = showArchived
         .map { includeArchived ->
@@ -41,13 +36,13 @@ class WorkoutPlansViewModel(
         .flatMapLatest { filter ->
             combine(
                 repository.workoutPlans(filter),
+                repository.workoutPlans(WorkoutPlansFilter.AllPlans),
                 repository.workoutSessions(),
-                hasArchivedPlans,
-            ) { allPlans, sessions, hasArchived ->
+            ) { allPlans, everyPlan, sessions ->
                 WorkoutPlansUiState(
                     plans = allPlans.map { it.toUi(sessions) },
                     showArchived = filter == WorkoutPlansFilter.AllPlans,
-                    hasArchivedPlans = hasArchived,
+                    hasArchivedPlans = everyPlan.any { it.isArchived },
                 )
             }
         }
