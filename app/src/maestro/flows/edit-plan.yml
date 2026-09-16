@@ -12,16 +12,21 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Chest · Barbell"
 - assertVisible: "Bench Press (barbell) warmup set"
 - assertVisible: "Bench Press (barbell) set 1, 8–10 reps, rest 2:00"
-- assertVisible: "Archive Plan"
 - scrollUntilVisible:
     element: "Squat (barbell)"
     direction: DOWN
+    centerElement: true
 - assertVisible: "Squat (barbell)"
 - scrollUntilVisible:
-    element: "Leg Curl (machine)"
+    element: "Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
     direction: DOWN
+    centerElement: true
 - assertVisible: "Leg Curl (machine)"
+- assertVisible: "Legs · Machine"
 - assertVisible: "Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
+- scrollUntilVisible:
+    element: "Archive Plan"
+    direction: DOWN
 - tapOn: "Back"
 - assertVisible: "Bybon"
 - assertVisible: "Start Workout"

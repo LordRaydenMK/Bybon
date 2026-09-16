@@ -1,11 +1,10 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -54,34 +53,34 @@ private fun EditPlanContent(
         Modifier.fillMaxSize(),
         topBar = { BybonTopAppBar("Edit plan", onNavigateBack) },
     ) { contentPadding ->
-        plan?.let {
-            Column(
+        plan?.let { currentPlan ->
+            LazyColumn(
                 Modifier
                     .padding(contentPadding)
                     .padding(horizontal = 16.dp, vertical = 24.dp)
                     .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                EditPlanHeader(it)
-                Spacer(Modifier.height(16.dp))
-                LazyColumn(
-                    Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    itemsIndexed(
-                        it.sets,
-                        key = { index, exercise -> "${exercise.exercise.id}-$index" },
-                    ) { _, exercise ->
-                        Card(Modifier.fillMaxWidth()) {
-                            PlannedExerciseCard(exercise)
-                        }
+                item(key = "header") {
+                    EditPlanHeader(currentPlan)
+                }
+                itemsIndexed(
+                    currentPlan.sets,
+                    key = { index, exercise -> "${exercise.exercise.id}-$index" },
+                ) { _, exercise ->
+                    Card(Modifier.fillMaxWidth()) {
+                        PlannedExerciseCard(exercise)
                     }
                 }
-                Spacer(Modifier.height(16.dp))
-                TextButton(
-                    { onAction(EditPlanAction.OnArchivePlan) },
-                    Modifier.align(Alignment.CenterHorizontally),
-                ) {
-                    Text("Archive Plan")
+                item(key = "archive") {
+                    Box(
+                        Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TextButton({ onAction(EditPlanAction.OnArchivePlan) }) {
+                            Text("Archive Plan")
+                        }
+                    }
                 }
             }
         }
