@@ -3,8 +3,14 @@ package dev.sanastasov.bybon.bodyweight.dashboard
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.DietPhase
+import dev.sanastasov.bybon.bodyweight.domain.EffectiveDietPhase
 import dev.sanastasov.bybon.bodyweight.domain.WeeklyTrendPoint
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
+import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
+import dev.sanastasov.bybon.bodyweight.domain.kind
+import dev.sanastasov.bybon.bodyweight.domain.plannedRatePerWeek
+import dev.sanastasov.bybon.bodyweight.domain.weeksRemaining
 import dev.sanastasov.bybon.domain.weekOfYear
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import java.time.LocalDate
@@ -43,7 +49,22 @@ class WeightDashboardViewModel(
                 )
             },
             weeklyTrend = weeklyTrend?.toTrendUi(),
+            dietPhaseSummary = dietPhaseSummary(),
+            onTrack = onTrack == true,
         )
+
+    private fun BodyWeightDashboard.dietPhaseSummary(): DietPhaseSummaryUi? {
+        if (currentAverage == null) return null
+        return when (val phase = effectivePhase) {
+            EffectiveDietPhase.Off -> DietPhaseSummaryUi(
+                kindLabel = "None",
+                detailLines = listOf("No target"),
+                actionLabel = "Set phase",
+            )
+
+            is EffectiveDietPhase.On -> phase.phase.toSummaryUi(today)
+        }
+    }
 
     private fun List<WeeklyTrendPoint>.toTrendUi(): List<WeeklyTrendPointUi> {
         val firstWeekStart = minOf { it.weekStart }
@@ -75,10 +96,21 @@ class WeightDashboardViewModel(
     }
 
     private fun BodyWeightDashboard.previousWeekData(average: BodyWeight): PreviousWeekData? =
-        lastWeekAverage?.let { lastWeekAvg ->
+        lastKnownWeekAverage?.let { lastWeekAvg ->
             PreviousWeekData(
-                today.weekOfYear - 1,
+                previousWeeksAverages?.firstOrNull()?.weekOfYear ?: (today.weekOfYear - 1),
                 "${(average.value - lastWeekAvg.value) / 100f} kg",
             )
         }
+}
+
+private fun DietPhase.toSummaryUi(today: LocalDate): DietPhaseSummaryUi {
+    val details = buildList {
+        add("Target ${targetWeight.kilograms} kg")
+        if (this@toSummaryUi !is DietPhase.Maintain) {
+            add(plannedRatePerWeek().formatRate(startWeight))
+            add("${weeksRemaining(today)} of $durationWeeksOrNull weeks left")
+        }
+    }
+    return DietPhaseSummaryUi(kind.name, details, "Edit")
 }

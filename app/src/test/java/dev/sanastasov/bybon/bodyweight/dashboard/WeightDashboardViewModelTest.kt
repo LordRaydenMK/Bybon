@@ -3,6 +3,10 @@ package dev.sanastasov.bybon.bodyweight.dashboard
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.DietPhase
+import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
+import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
+import dev.sanastasov.bybon.bodyweight.domain.requireValid
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
@@ -105,6 +109,36 @@ class WeightDashboardViewModelTest {
                 WeeklyTrendPointUi("37", 2, 66.0f),
             ),
         )
+    }
+
+    @Test
+    fun `shows diet phase summary and on-track check when maintaining`() = runTest {
+        val weekStart = today.with(DayOfWeek.MONDAY)
+        val startWeight = BodyWeight.parseFromString("66.0")
+        val repository = FakeBodyWeightRepository(
+            officialWeek(weekStart, "66.0") +
+                officialWeek(weekStart.minusWeeks(1), "66.0"),
+            DietPhaseRecord(
+                1,
+                DietPhase.create(
+                    DietPhaseKind.Maintain,
+                    weekStart,
+                    startWeight,
+                    startWeight,
+                ).requireValid(),
+            ),
+        )
+        val viewModel = WeightDashboardViewModel(
+            repository,
+            backgroundScope,
+            today,
+        )
+
+        val state = viewModel.uiState.first { it.dietPhaseSummary != null }
+
+        assert(state.dietPhaseSummary?.kindLabel == "Maintain")
+        assert(state.dietPhaseSummary?.actionLabel == "Edit")
+        assert(state.onTrack)
     }
 
     private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =
