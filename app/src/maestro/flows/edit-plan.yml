@@ -1,0 +1,15 @@
+appId: dev.sanastasov.bybon.debug
+---
+- launchApp
+- assertVisible: "Bybon"
+- assertVisible: "Full Body A"
+- tapOn: "More options for Full Body A"
+- tapOn: "Edit Plan"
+- assertVisible: "Edit plan"
+- assertVisible: "Full Body A"
+- assertVisible: "Full body workout routine variant A"
+- assertVisible: "3 x Bench Press (barbell) - 8 to 10 reps"
+- assertVisible: "3 x Squat (barbell) - 8 to 10 reps"
+- tapOn: "Back"
+- assertVisible: "Bybon"
+- assertVisible: "Start Workout"

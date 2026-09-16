@@ -15,6 +15,7 @@ import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryScreen
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewScreen
+import dev.sanastasov.bybon.workout.ui.plans.EditPlanScreen
 import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionScreen
 import dev.sanastasov.bybon.workout.ui.summary.WorkoutSummaryScreen
 
@@ -46,6 +47,7 @@ fun MainModule.BybonApp() {
                         onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
                         onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
                         onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
+                        onNavigateToEditPlan = { backStack.add(Screen.EditPlan(it.id)) },
                         onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) },
                     )
                 }
@@ -58,6 +60,13 @@ fun MainModule.BybonApp() {
                             backStack.removeLastOrNull()
                             backStack.add(Screen.WorkoutSession(key.planId))
                         },
+                    )
+                }
+
+                is Screen.EditPlan -> NavEntry(key) {
+                    EditPlanScreen(
+                        planId = key.planId,
+                        onNavigateBack = { backStack.removeLastOrNull() },
                     )
                 }
 

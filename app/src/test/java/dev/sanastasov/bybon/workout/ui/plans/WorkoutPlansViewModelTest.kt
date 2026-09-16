@@ -31,4 +31,14 @@ class WorkoutPlansViewModelTest {
         viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
         assert(viewModel.effects.first() == WorkoutPlanEffect.OpenSession(fullBodyA))
     }
+
+    @Test
+    fun `editing a plan opens the edit screen`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.isNotEmpty() }
+        viewModel.onAction(WorkoutPlansAction.OnEditPlan(fullBodyA))
+        assert(viewModel.effects.first() == WorkoutPlanEffect.OpenEditPlan(fullBodyA))
+    }
 }

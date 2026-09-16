@@ -1,8 +1,10 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -10,12 +12,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -37,15 +49,21 @@ fun WorkoutsTab(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(plans, key = { it.plan.id.id }) { planUi ->
-            WorkoutPlanCard(planUi) {
-                onAction(WorkoutPlansAction.OnStartPlan(it))
-            }
+            WorkoutPlanCard(
+                planUi = planUi,
+                onStartWorkoutClicked = { onAction(WorkoutPlansAction.OnStartPlan(it)) },
+                onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
+            )
         }
     }
 }
 
 @Composable
-private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (WorkoutPlan) -> Unit) {
+private fun WorkoutPlanCard(
+    planUi: WorkoutPlanUi,
+    onStartWorkoutClicked: (WorkoutPlan) -> Unit,
+    onEditClicked: (WorkoutPlan) -> Unit,
+) {
     val plan = planUi.plan
     Card(Modifier.fillMaxWidth()) {
         Column(
@@ -54,43 +72,11 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (Worko
                 .fillMaxWidth(),
             Arrangement.spacedBy(4.dp),
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    plan.name,
-                    Modifier.weight(1f),
-                    fontWeight = FontWeight.Bold,
-                )
-                if (planUi.isActive) {
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                    ) {
-                        Text(
-                            "Active",
-                            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = MaterialTheme.colorScheme.onTertiaryContainer,
-                            style = MaterialTheme.typography.labelMedium,
-                        )
-                    }
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-
-            plan.description?.let {
-                Text(it, fontSize = 14.sp)
-            }
-
-            plan.sets.forEach { planedSet ->
-                val summary =
-                    "${planedSet.sets} x ${planedSet.exercise.name} - " +
-                        "${planedSet.repRange.first} to ${planedSet.repRange.last} reps"
-                Text(summary)
-            }
-
+            WorkoutPlanInfo(
+                plan = plan,
+                isActive = planUi.isActive,
+                headerTrailing = { PlanOverflowMenu(plan, onEditClicked) },
+            )
             TextButton(
                 { onStartWorkoutClicked(plan) },
                 Modifier.align(Alignment.CenterHorizontally),
@@ -98,6 +84,83 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onStartWorkoutClicked: (Worko
                 Text(if (planUi.isActive) "Open Workout" else "Start Workout")
             }
         }
+    }
+}
+
+@Composable
+private fun PlanOverflowMenu(plan: WorkoutPlan, onEditClicked: (WorkoutPlan) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton({ expanded = true }) {
+            Icon(
+                Icons.Filled.MoreVert,
+                contentDescription = "More options for ${plan.name}",
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("Edit Plan") },
+                onClick = {
+                    expanded = false
+                    onEditClicked(plan)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+internal fun WorkoutPlanInfo(
+    plan: WorkoutPlan,
+    modifier: Modifier = Modifier,
+    isActive: Boolean = false,
+    headerTrailing: @Composable RowScope.() -> Unit = {},
+) {
+    Column(modifier, Arrangement.spacedBy(4.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                plan.name,
+                Modifier.weight(1f),
+                fontWeight = FontWeight.Bold,
+            )
+            if (isActive) {
+                ActivePlanBadge()
+            }
+            headerTrailing()
+        }
+        Spacer(Modifier.height(4.dp))
+
+        plan.description?.let {
+            Text(it, fontSize = 14.sp)
+        }
+
+        plan.sets.forEach { planedSet ->
+            val summary =
+                "${planedSet.sets} x ${planedSet.exercise.name} - " +
+                    "${planedSet.repRange.first} to ${planedSet.repRange.last} reps"
+            Text(summary)
+        }
+    }
+}
+
+@Composable
+private fun ActivePlanBadge() {
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.tertiaryContainer,
+    ) {
+        Text(
+            "Active",
+            Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            style = MaterialTheme.typography.labelMedium,
+        )
     }
 }
 
