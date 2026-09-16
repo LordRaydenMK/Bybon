@@ -7,15 +7,16 @@ appId: dev.sanastasov.bybon.debug
 - assertNotVisible: "My Plans"
 - tapOn: "Show Archived Plans"
 - assertVisible: "My Plans"
-- assertVisible: "Hide Archived Plans"
 - assertNotVisible: "Show Archived Plans"
 - scrollUntilVisible:
-    element: "Archived Plans"
+    element: "Unarchive"
     direction: DOWN
+- assertVisible: "Archived Plans"
 - assertVisible: "Upper Body A"
 - assertVisible:
     text: "Archived"
     below: "Upper Body A"
+- assertVisible: "Hide Archived Plans"
 - tapOn: "Unarchive"
 - assertVisible: "Hide Archived Plans"
 - assertNotVisible: "Archived Plans"
@@ -23,4 +24,3 @@ appId: dev.sanastasov.bybon.debug
     element: "Upper Body A"
     direction: UP
 - assertVisible: "Upper Body A"
-- assertVisible: "Start Workout"
