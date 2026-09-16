@@ -7,7 +7,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
-import dev.sanastasov.bybon.workout.domain.filterBy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -26,7 +25,12 @@ class FakeWorkoutsRepository(
     override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
 
     override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> =
-        plans.map { allPlans -> allPlans.filterBy(filter) }
+        plans.map { allPlans ->
+            when (filter) {
+                WorkoutPlansFilter.ActivePlans -> allPlans.filter { !it.isArchived }
+                WorkoutPlansFilter.AllPlans -> allPlans
+            }
+        }
 
     override suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean) {
         plans.update { list ->

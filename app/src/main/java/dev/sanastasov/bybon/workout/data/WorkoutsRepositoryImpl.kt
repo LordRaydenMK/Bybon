@@ -8,7 +8,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercises
-import dev.sanastasov.bybon.workout.domain.filterBy
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.upperBodyA
@@ -26,7 +25,12 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
     override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
 
     override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> =
-        plans.map { allPlans -> allPlans.filterBy(filter) }
+        plans.map { allPlans ->
+            when (filter) {
+                WorkoutPlansFilter.ActivePlans -> allPlans.filter { !it.isArchived }
+                WorkoutPlansFilter.AllPlans -> allPlans
+            }
+        }
 
     override suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean) {
         plans.update { list ->
