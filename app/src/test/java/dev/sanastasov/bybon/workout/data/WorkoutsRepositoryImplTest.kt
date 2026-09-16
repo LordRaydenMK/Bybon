@@ -44,7 +44,7 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
-    fun `active workoutPlans omit the default archived plan`() = runTest {
+    fun `default workoutPlans omit the archived plan`() = runTest {
         val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
 
         assert(
@@ -58,7 +58,7 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
-    fun `archivePlan hides the plan from active workoutPlans`() = runTest {
+    fun `archivePlan hides the plan from default workoutPlans`() = runTest {
         val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
         val before = repository.workoutPlans().first()
         val planId = before.first().id

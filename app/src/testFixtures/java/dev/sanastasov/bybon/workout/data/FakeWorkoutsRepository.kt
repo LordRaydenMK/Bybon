@@ -27,7 +27,7 @@ class FakeWorkoutsRepository(
     override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> =
         plans.map { allPlans ->
             when (filter) {
-                WorkoutPlansFilter.ActivePlans -> allPlans.filter { !it.isArchived }
+                WorkoutPlansFilter.UnarchivedPlans -> allPlans.filter { !it.isArchived }
                 WorkoutPlansFilter.AllPlans -> allPlans
             }
         }

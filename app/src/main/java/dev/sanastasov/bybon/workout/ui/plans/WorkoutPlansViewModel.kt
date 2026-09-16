@@ -4,13 +4,10 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -24,34 +21,21 @@ class WorkoutPlansViewModel(
 
     private val showArchived = MutableStateFlow(false)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val uiState = showArchived
-        .map { includeArchived ->
-            if (includeArchived) {
-                WorkoutPlansFilter.AllPlans
-            } else {
-                WorkoutPlansFilter.ActivePlans
-            }
-        }
-        .flatMapLatest { filter ->
-            combine(
-                repository.workoutPlans(filter),
-                repository.workoutPlans(WorkoutPlansFilter.AllPlans),
-                repository.workoutSessions(),
-            ) { allPlans, everyPlan, sessions ->
-                WorkoutPlansUiState(
-                    plans = allPlans.map { it.toUi(sessions) },
-                    showArchived = filter == WorkoutPlansFilter.AllPlans,
-                    hasArchivedPlans = everyPlan.any { it.isArchived },
-                )
-            }
-        }
-        .stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
+    val uiState = combine(
+        repository.workoutPlans(WorkoutPlansFilter.AllPlans),
+        repository.workoutSessions(),
+        showArchived,
+    ) { plans, sessions, includeArchived ->
+        WorkoutPlansUiState(
+            plans = plans.map { it.toUi(sessions) },
+            showArchived = includeArchived,
+        )
+    }.stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {
             is WorkoutPlansAction.OnStartPlan -> {
-                val isResume = uiState.value.activePlans.any {
+                val isResume = uiState.value.unarchivedPlans.any {
                     it.plan.id == action.plan.id && it.isActive
                 }
                 val effect = if (isResume) {

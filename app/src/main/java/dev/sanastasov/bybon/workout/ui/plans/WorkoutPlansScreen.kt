@@ -54,7 +54,7 @@ fun WorkoutsTab(
                 SectionHeading("My Plans")
             }
         }
-        items(state.activePlans, key = { it.plan.id.id }) { planUi ->
+        items(state.unarchivedPlans, key = { it.plan.id.id }) { planUi ->
             WorkoutPlanCard(
                 planUi = planUi,
                 onAction = onAction,
@@ -268,7 +268,6 @@ private fun WorkoutPlansWithArchivedPreview() {
                     WorkoutPlanUi(upperBodyA, isActive = false),
                 ),
                 showArchived = true,
-                hasArchivedPlans = true,
             ),
             {},
         )
