@@ -1,0 +1,26 @@
+appId: dev.sanastasov.bybon.debug
+---
+- launchApp
+- assertVisible: "Bybon"
+- assertVisible: "Full Body A"
+- assertNotVisible: "Upper Body A"
+- assertNotVisible: "My Plans"
+- tapOn: "Show Archived Plans"
+- assertVisible: "My Plans"
+- assertVisible: "Hide Archived Plans"
+- assertNotVisible: "Show Archived Plans"
+- scrollUntilVisible:
+    element: "Archived Plans"
+    direction: DOWN
+- assertVisible: "Upper Body A"
+- assertVisible:
+    text: "Archived"
+    below: "Upper Body A"
+- tapOn: "Unarchive"
+- assertVisible: "Hide Archived Plans"
+- assertNotVisible: "Archived Plans"
+- scrollUntilVisible:
+    element: "Upper Body A"
+    direction: UP
+- assertVisible: "Upper Body A"
+- assertVisible: "Start Workout"

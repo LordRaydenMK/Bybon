@@ -26,4 +26,5 @@ data class WorkoutPlan(
     val name: String,
     val description: String?,
     val sets: List<PlanedExercise>,
+    val isArchived: Boolean = false,
 )

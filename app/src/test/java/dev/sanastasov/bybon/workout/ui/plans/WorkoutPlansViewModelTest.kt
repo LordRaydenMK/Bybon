@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.domain.upperBodyA
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -15,7 +16,7 @@ class WorkoutPlansViewModelTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
 
-        viewModel.uiState.first { it.isNotEmpty() }
+        viewModel.uiState.first { it.activePlans.isNotEmpty() }
         viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
         assert(viewModel.effects.first() == WorkoutPlanEffect.OpenOverview(fullBodyA))
     }
@@ -28,7 +29,7 @@ class WorkoutPlansViewModelTest {
         )
         val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
 
-        viewModel.uiState.first { plans -> plans.any { it.isActive } }
+        viewModel.uiState.first { state -> state.activePlans.any { it.isActive } }
         viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
         assert(viewModel.effects.first() == WorkoutPlanEffect.OpenSession(fullBodyA))
     }
@@ -38,31 +39,82 @@ class WorkoutPlansViewModelTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
 
-        viewModel.uiState.first { it.isNotEmpty() }
+        viewModel.uiState.first { it.activePlans.isNotEmpty() }
         viewModel.onAction(WorkoutPlansAction.OnEditPlan(fullBodyA))
         assert(viewModel.effects.first() == WorkoutPlanEffect.OpenEditPlan(fullBodyA))
     }
 
     @Test
-    fun `archived plans are omitted from the list`() = runTest {
+    fun `archived plans are omitted from the active list`() = runTest {
         val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA, fullBodyB),
-            initialArchivedPlanIds = setOf(fullBodyA.id),
+            initialPlans = listOf(fullBodyA, fullBodyB, upperBodyA),
         )
         val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
 
-        val plans = viewModel.uiState.first { it.isNotEmpty() }
-        assert(plans.map { it.plan } == listOf(fullBodyB))
+        val state = viewModel.uiState.first { it.activePlans.isNotEmpty() }
+        assert(state.activePlans.map { it.plan } == listOf(fullBodyA, fullBodyB))
+        assert(state.archivedPlans.map { it.plan } == listOf(upperBodyA))
+        assert(!state.showArchived)
     }
 
     @Test
-    fun `archiving a plan removes it from the list`() = runTest {
+    fun `archiving a plan moves it to archived`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
         val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
 
-        viewModel.uiState.first { it.size == 2 }
+        viewModel.uiState.first { it.activePlans.size == 2 }
         viewModel.onAction(WorkoutPlansAction.OnArchivePlan(fullBodyA))
-        val plans = viewModel.uiState.first { it.size == 1 }
-        assert(plans.single().plan == fullBodyB)
+        val state = viewModel.uiState.first { it.activePlans.size == 1 }
+        assert(state.activePlans.single().plan == fullBodyB)
+        assert(state.archivedPlans.single().plan == fullBodyA.copy(isArchived = true))
+        assert(!state.showArchived)
+    }
+
+    @Test
+    fun `showing archived plans keeps active and archived in state`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB, upperBodyA),
+        )
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.archivedPlans.isNotEmpty() }
+        viewModel.onAction(WorkoutPlansAction.OnShowArchivedPlans)
+        val state = viewModel.uiState.first { it.showArchived }
+        assert(state.activePlans.map { it.plan } == listOf(fullBodyA, fullBodyB))
+        assert(state.archivedPlans.map { it.plan } == listOf(upperBodyA))
+    }
+
+    @Test
+    fun `hiding archived plans turns the filter off`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, upperBodyA),
+        )
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.archivedPlans.isNotEmpty() }
+        viewModel.onAction(WorkoutPlansAction.OnShowArchivedPlans)
+        viewModel.uiState.first { it.showArchived }
+        viewModel.onAction(WorkoutPlansAction.OnHideArchivedPlans)
+        val state = viewModel.uiState.first { !it.showArchived }
+        assert(state.archivedPlans.map { it.plan } == listOf(upperBodyA))
+    }
+
+    @Test
+    fun `unarchiving a plan keeps the archived filter`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, upperBodyA),
+        )
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.archivedPlans.isNotEmpty() }
+        viewModel.onAction(WorkoutPlansAction.OnShowArchivedPlans)
+        viewModel.uiState.first { it.showArchived }
+        viewModel.onAction(WorkoutPlansAction.OnUnarchivePlan(upperBodyA))
+        val state = viewModel.uiState.first { it.archivedPlans.isEmpty() }
+        assert(state.showArchived)
+        assert(
+            state.activePlans.map { it.plan } ==
+                listOf(fullBodyA, upperBodyA.copy(isArchived = false)),
+        )
     }
 }

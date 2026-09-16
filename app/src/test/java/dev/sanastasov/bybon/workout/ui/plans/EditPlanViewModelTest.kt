@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlinx.coroutines.flow.first
@@ -27,6 +28,6 @@ class EditPlanViewModelTest {
         viewModel.onAction(EditPlanAction.OnArchivePlan)
 
         assert(viewModel.effects.first() == EditPlanEffect.NavigateBack)
-        assert(repository.workoutPlans().first() == listOf(fullBodyB))
+        assert(repository.workoutPlans(WorkoutPlansFilter.ActivePlans).first() == listOf(fullBodyB))
     }
 }

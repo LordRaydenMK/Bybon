@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.overview
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
@@ -43,7 +44,7 @@ class WorkoutOverviewViewModel(
 
     val uiState: StateFlow<WorkoutSession?> =
         combine(
-            repository.workoutPlans(),
+            repository.workoutPlans(WorkoutPlansFilter.ActivePlans),
             repository.workoutSessions(),
         ) { plans, sessions ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null

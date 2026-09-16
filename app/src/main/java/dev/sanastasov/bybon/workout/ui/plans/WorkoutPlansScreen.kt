@@ -37,10 +37,11 @@ import androidx.compose.ui.unit.sp
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.upperBodyA
 
 @Composable
 fun WorkoutsTab(
-    plans: List<WorkoutPlanUi>,
+    state: WorkoutPlansUiState,
     onAction: (WorkoutPlansAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -48,24 +49,68 @@ fun WorkoutsTab(
         modifier.padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        items(plans, key = { it.plan.id.id }) { planUi ->
+        if (state.showArchived) {
+            item(key = "heading-my-plans") {
+                SectionHeading("My Plans")
+            }
+        }
+        items(state.activePlans, key = { it.plan.id.id }) { planUi ->
             WorkoutPlanCard(
                 planUi = planUi,
-                onStartWorkoutClicked = { onAction(WorkoutPlansAction.OnStartPlan(it)) },
-                onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
-                onArchiveClicked = { onAction(WorkoutPlansAction.OnArchivePlan(it)) },
+                onAction = onAction,
             )
+        }
+        if (state.showArchived && state.archivedPlans.isNotEmpty()) {
+            item(key = "heading-archived-plans") {
+                SectionHeading("Archived Plans")
+            }
+            items(state.archivedPlans, key = { it.plan.id.id }) { planUi ->
+                WorkoutPlanCard(
+                    planUi = planUi,
+                    onAction = onAction,
+                )
+            }
+        }
+        if (state.archivedPlans.isNotEmpty() && !state.showArchived) {
+            item(key = "show-archived") {
+                ArchiveFilterButton("Show Archived Plans") {
+                    onAction(WorkoutPlansAction.OnShowArchivedPlans)
+                }
+            }
+        }
+        if (state.showArchived) {
+            item(key = "hide-archived") {
+                ArchiveFilterButton("Hide Archived Plans") {
+                    onAction(WorkoutPlansAction.OnHideArchivedPlans)
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun WorkoutPlanCard(
-    planUi: WorkoutPlanUi,
-    onStartWorkoutClicked: (WorkoutPlan) -> Unit,
-    onEditClicked: (WorkoutPlan) -> Unit,
-    onArchiveClicked: (WorkoutPlan) -> Unit,
-) {
+private fun SectionHeading(title: String) {
+    Text(
+        title,
+        fontWeight = FontWeight.Bold,
+        style = MaterialTheme.typography.titleMedium,
+    )
+}
+
+@Composable
+private fun ArchiveFilterButton(label: String, onClick: () -> Unit) {
+    Box(
+        Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        TextButton(onClick) {
+            Text(label)
+        }
+    }
+}
+
+@Composable
+private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction) -> Unit) {
     val plan = planUi.plan
     Card(Modifier.fillMaxWidth()) {
         Column(
@@ -77,13 +122,30 @@ private fun WorkoutPlanCard(
             WorkoutPlanInfo(
                 plan = plan,
                 isActive = planUi.isActive,
-                headerTrailing = { PlanOverflowMenu(plan, onEditClicked, onArchiveClicked) },
+                headerTrailing = {
+                    if (!plan.isArchived) {
+                        PlanOverflowMenu(
+                            plan,
+                            onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
+                            onArchiveClicked = { onAction(WorkoutPlansAction.OnArchivePlan(it)) },
+                        )
+                    }
+                },
             )
-            TextButton(
-                { onStartWorkoutClicked(plan) },
-                Modifier.align(Alignment.CenterHorizontally),
-            ) {
-                Text(if (planUi.isActive) "Open Workout" else "Start Workout")
+            if (plan.isArchived) {
+                TextButton(
+                    { onAction(WorkoutPlansAction.OnUnarchivePlan(plan)) },
+                    Modifier.align(Alignment.CenterHorizontally),
+                ) {
+                    Text("Unarchive")
+                }
+            } else {
+                TextButton(
+                    { onAction(WorkoutPlansAction.OnStartPlan(plan)) },
+                    Modifier.align(Alignment.CenterHorizontally),
+                ) {
+                    Text(if (planUi.isActive) "Open Workout" else "Start Workout")
+                }
             }
         }
     }
@@ -142,8 +204,9 @@ internal fun WorkoutPlanInfo(
                 Modifier.weight(1f),
                 fontWeight = FontWeight.Bold,
             )
-            if (isActive) {
-                ActivePlanBadge()
+            when {
+                plan.isArchived -> PlanBadge("Archived")
+                isActive -> PlanBadge("Active")
             }
             headerTrailing()
         }
@@ -163,13 +226,13 @@ internal fun WorkoutPlanInfo(
 }
 
 @Composable
-private fun ActivePlanBadge() {
+private fun PlanBadge(label: String) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
         Text(
-            "Active",
+            label,
             Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             color = MaterialTheme.colorScheme.onTertiaryContainer,
             style = MaterialTheme.typography.labelMedium,
@@ -182,9 +245,29 @@ private fun ActivePlanBadge() {
 private fun WorkoutPlansContentPreview() {
     Surface {
         WorkoutsTab(
-            listOf(
-                WorkoutPlanUi(fullBodyA, isActive = true),
-                WorkoutPlanUi(fullBodyB, isActive = false),
+            WorkoutPlansUiState(
+                activePlans = listOf(
+                    WorkoutPlanUi(fullBodyA, isActive = true),
+                    WorkoutPlanUi(fullBodyB, isActive = false),
+                ),
+            ),
+            {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun WorkoutPlansWithArchivedPreview() {
+    Surface {
+        WorkoutsTab(
+            WorkoutPlansUiState(
+                activePlans = listOf(
+                    WorkoutPlanUi(fullBodyA, isActive = false),
+                    WorkoutPlanUi(fullBodyB, isActive = false),
+                ),
+                archivedPlans = listOf(WorkoutPlanUi(upperBodyA, isActive = false)),
+                showArchived = true,
             ),
             {},
         )

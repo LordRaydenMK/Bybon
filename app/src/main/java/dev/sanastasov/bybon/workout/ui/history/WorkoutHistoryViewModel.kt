@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.strong.StrongCsvParser
 import dev.sanastasov.bybon.strong.StrongImportResult
 import dev.sanastasov.bybon.strong.toStrongImport
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
@@ -55,7 +56,7 @@ class WorkoutHistoryViewModel(
         coroutineScope.launch {
             try {
                 val csv = withContext(ioDispatcher) { contentResolverReader.read(uri) }
-                val existingPlans = repository.workoutPlans().first()
+                val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
                 val existingExercises = repository.exercises().first()
                 val result = withContext(defaultDispatcher) {
                     StrongCsvParser.parse(csv).toStrongImport(

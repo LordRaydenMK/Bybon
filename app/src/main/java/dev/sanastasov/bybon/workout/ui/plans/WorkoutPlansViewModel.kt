@@ -1,10 +1,12 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -17,17 +19,27 @@ class WorkoutPlansViewModel(
     private val _effects = Channel<WorkoutPlanEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutPlanEffect> = _effects.receiveAsFlow()
 
+    private val showArchived = MutableStateFlow(false)
+
     val uiState = combine(
-        repository.workoutPlans(),
+        repository.workoutPlans(WorkoutPlansFilter.AllPlans),
         repository.workoutSessions(),
-    ) { plans, sessions ->
-        plans.map { it.toUi(sessions) }
-    }.stateInWhileInForeground(coroutineScope, emptyList())
+        showArchived,
+    ) { plans, sessions, includeArchived ->
+        val planUis = plans.map { it.toUi(sessions) }
+        WorkoutPlansUiState(
+            activePlans = planUis.filter { !it.plan.isArchived },
+            archivedPlans = planUis.filter { it.plan.isArchived },
+            showArchived = includeArchived,
+        )
+    }.stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {
             is WorkoutPlansAction.OnStartPlan -> {
-                val isResume = uiState.value.any { it.plan.id == action.plan.id && it.isActive }
+                val isResume = uiState.value.activePlans.any {
+                    it.plan.id == action.plan.id && it.isActive
+                }
                 val effect = if (isResume) {
                     WorkoutPlanEffect.OpenSession(action.plan)
                 } else {
@@ -41,7 +53,19 @@ class WorkoutPlansViewModel(
             }
 
             is WorkoutPlansAction.OnArchivePlan -> coroutineScope.launch {
-                repository.archivePlan(action.plan.id)
+                repository.archivePlan(action.plan.id, archived = true)
+            }
+
+            is WorkoutPlansAction.OnUnarchivePlan -> coroutineScope.launch {
+                repository.archivePlan(action.plan.id, archived = false)
+            }
+
+            WorkoutPlansAction.OnShowArchivedPlans -> {
+                showArchived.value = true
+            }
+
+            WorkoutPlansAction.OnHideArchivedPlans -> {
+                showArchived.value = false
             }
         }
     }

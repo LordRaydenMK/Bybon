@@ -4,6 +4,12 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 
+data class WorkoutPlansUiState(
+    val activePlans: List<WorkoutPlanUi> = emptyList(),
+    val archivedPlans: List<WorkoutPlanUi> = emptyList(),
+    val showArchived: Boolean = false,
+)
+
 data class WorkoutPlanUi(
     val plan: WorkoutPlan,
     val isActive: Boolean,
@@ -11,10 +17,11 @@ data class WorkoutPlanUi(
 
 fun WorkoutPlan.toUi(sessions: List<WorkoutSession>): WorkoutPlanUi = WorkoutPlanUi(
     plan = this,
-    isActive = sessions.any { session ->
-        session.planId == id &&
-            session.workoutSets.any { it.setState == SetState.InProgress }
-    },
+    isActive = !isArchived &&
+        sessions.any { session ->
+            session.planId == id &&
+                session.workoutSets.any { it.setState == SetState.InProgress }
+        },
 )
 
 sealed class WorkoutPlansAction {
@@ -29,6 +36,14 @@ sealed class WorkoutPlansAction {
     data class OnArchivePlan(
         val plan: WorkoutPlan,
     ) : WorkoutPlansAction()
+
+    data class OnUnarchivePlan(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
+
+    data object OnShowArchivedPlans : WorkoutPlansAction()
+
+    data object OnHideArchivedPlans : WorkoutPlansAction()
 }
 
 sealed class WorkoutPlanEffect {

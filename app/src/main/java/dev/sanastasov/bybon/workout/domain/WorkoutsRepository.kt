@@ -6,9 +6,9 @@ interface WorkoutsRepository {
 
     fun exercises(): Flow<List<ExerciseDefinition>>
 
-    fun workoutPlans(): Flow<List<WorkoutPlan>>
+    fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>>
 
-    suspend fun archivePlan(planId: WorkoutPlanId)
+    suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean)
 
     suspend fun updateWorkout(session: WorkoutSession)
 
