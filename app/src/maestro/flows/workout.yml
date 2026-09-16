@@ -41,7 +41,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn:
       text: "50"
       index: 0
-      point: "90%, 50%" # Select-all on focus; eraseText still clears the value
+      point: "90%, 50%" # Cursor at end so backspace clears both digits
 - eraseText: 8
 - inputText: "60"
 - tapOn:
@@ -75,14 +75,11 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "4 x Bench Press (barbell) in 8 - 10"
 - tapOn: "Remove last set"
 - assertVisible: "3 x Bench Press (barbell) in 8 - 10"
-- tapOn:
-    text: "Set 3 in progress, 50 kg by 8, @ 62.07 kg 1RM. Double tap to mark complete."
-    point: "90%, 50%"
-- extendedWaitUntil:
-    visible: "Exercise 2 / 6"
-    timeout: 5000
+- swipe:
+      start: 80%, 20%
+      end: 20%, 20%
 - assertVisible: "3 x Squat (barbell) in 8 - 10"
-- assertVisible: "Warmup set in progress, 20 kg by 8. Double tap to mark complete."
+- assertVisible: "Exercise 2 / 6"
 - assertVisible: "Set 1, 50 kg by 8, @ 62.07 kg 1RM"
 - back
 - assertVisible: "Active"

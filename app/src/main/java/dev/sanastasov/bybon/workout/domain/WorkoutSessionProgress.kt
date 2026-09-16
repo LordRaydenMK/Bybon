@@ -112,7 +112,3 @@ fun WorkoutSession.firstNotStartedSet(): SetRef? = exercises.firstNotNullOfOrNul
         }
     }
 }
-
-fun WorkoutSession.inProgressExerciseIndex(): Int = exercises.indexOfFirst { exercise ->
-    exercise.orderedSets.any { it.setState == SetState.InProgress }
-}

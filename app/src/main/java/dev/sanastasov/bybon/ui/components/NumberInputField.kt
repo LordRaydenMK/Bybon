@@ -19,12 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -59,13 +57,6 @@ fun NumberInputField(
             state.setTextAndPlaceCursorAtEnd(initialText)
         }
     }
-    LaunchedEffect(focused, key) {
-        if (!focused) return@LaunchedEffect
-        state.selectAllText()
-        // Pointer input places the caret after focus; re-select on the next frame.
-        withFrameNanos { }
-        if (focused) state.selectAllText()
-    }
     LaunchedEffect(state, key) {
         snapshotFlow { state.text.toString() }
             .drop(1)
@@ -91,12 +82,6 @@ fun NumberInputField(
         ),
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
     )
-}
-
-private fun TextFieldState.selectAllText() {
-    val length = text.length
-    if (length == 0) return
-    edit { selection = TextRange(0, length) }
 }
 
 private val NumberInputHeight = 40.dp

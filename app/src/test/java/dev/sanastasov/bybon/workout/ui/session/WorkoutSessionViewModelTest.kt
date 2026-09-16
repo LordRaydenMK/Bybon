@@ -9,7 +9,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import kotlin.time.Duration.Companion.minutes
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -118,7 +117,6 @@ class WorkoutSessionViewModelTest {
             assert(session.exercises.first().sets.all { it.setState == SetState.Completed })
             assert(session.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
         }
-        assert(viewModel.effects.first() == WorkoutSessionEffect.ShowExercise(1))
     }
 
     @Test

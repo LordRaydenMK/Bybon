@@ -19,7 +19,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
-import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -37,8 +36,6 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import java.time.LocalDateTime
 import kotlin.time.Duration
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -50,29 +47,12 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
         SessionScreenContent(
             it,
             viewModel::onAction,
-            viewModel.effects,
         )
     }
 }
 
 @Composable
-private fun SessionScreenContent(
-    state: WorkoutSession,
-    onAction: (WorkoutSessionAction) -> Unit,
-    effects: Flow<WorkoutSessionEffect> = emptyFlow(),
-) {
-    val pagerState = rememberPagerState(0) {
-        state.exercises.size
-    }
-    effects.collectEffectWithLifecycle { effect ->
-        when (effect) {
-            is WorkoutSessionEffect.ShowExercise -> {
-                if (effect.index in 0 until pagerState.pageCount) {
-                    pagerState.animateScrollToPage(effect.index)
-                }
-            }
-        }
-    }
+private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
     Scaffold(
         topBar = { BybonTopAppBar(state.planName, {}) },
     ) { contentPadding ->
@@ -85,6 +65,9 @@ private fun SessionScreenContent(
             state.planDescription?.let {
                 Text(it)
                 Spacer(Modifier.height(8.dp))
+            }
+            val pagerState = rememberPagerState(0) {
+                state.exercises.size
             }
             HorizontalPager(
                 pagerState,
