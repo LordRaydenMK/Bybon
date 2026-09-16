@@ -26,7 +26,7 @@ jobs:
         run: ./gradlew detekt
 
       - name: Build
-        run: ./gradlew buildDebug
+        run: ./gradlew buildDebug assembleDebug
 
       - name: Archive debug APK
         uses: actions/upload-artifact@v7
