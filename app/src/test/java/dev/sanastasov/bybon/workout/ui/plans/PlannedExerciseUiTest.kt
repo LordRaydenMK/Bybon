@@ -17,7 +17,10 @@ class PlannedExerciseUiTest {
         assert(rows.drop(3).map { it.workSetNumber } == listOf(1, 2, 3))
         assert(rows.drop(3).all { it.repsLabel == "8–10" && it.rest == 2.minutes })
         assert(bench.subtitle() == "Chest · Barbell")
-        assert(rows.first().contentDescription(bench.exercise.name) == "Bench Press (barbell) warmup set")
+        assert(
+            rows.first().contentDescription(bench.exercise.name) ==
+                "Bench Press (barbell) warmup set",
+        )
         assert(
             rows[3].contentDescription(bench.exercise.name) ==
                 "Bench Press (barbell) set 1, 8–10 reps, rest 2:00",
