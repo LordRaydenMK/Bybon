@@ -4,10 +4,13 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -21,19 +24,34 @@ class WorkoutPlansViewModel(
 
     private val showArchived = MutableStateFlow(false)
 
-    val uiState = combine(
+    private val hasArchivedPlans = combine(
         repository.workoutPlans(),
         repository.workoutPlans(WorkoutPlansFilter.AllPlans),
-        repository.workoutSessions(),
-        showArchived,
-    ) { activePlans, allPlans, sessions, includeArchived ->
-        val activeIds = activePlans.map { it.id }.toSet()
-        WorkoutPlansUiState(
-            activePlans = activePlans.map { it.toUi(sessions) },
-            archivedPlans = allPlans.filter { it.id !in activeIds }.map { it.toUi(sessions) },
-            showArchived = includeArchived,
-        )
-    }.stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
+    ) { activePlans, allPlans -> allPlans.size > activePlans.size }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val uiState = showArchived
+        .map { includeArchived ->
+            if (includeArchived) {
+                WorkoutPlansFilter.AllPlans
+            } else {
+                WorkoutPlansFilter.ActivePlans
+            }
+        }
+        .flatMapLatest { filter ->
+            combine(
+                repository.workoutPlans(filter),
+                repository.workoutSessions(),
+                hasArchivedPlans,
+            ) { allPlans, sessions, hasArchived ->
+                WorkoutPlansUiState(
+                    plans = allPlans.map { it.toUi(sessions) },
+                    showArchived = filter == WorkoutPlansFilter.AllPlans,
+                    hasArchivedPlans = hasArchived,
+                )
+            }
+        }
+        .stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {

@@ -5,15 +5,19 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 
 data class WorkoutPlansUiState(
-    val activePlans: List<WorkoutPlanUi> = emptyList(),
-    val archivedPlans: List<WorkoutPlanUi> = emptyList(),
+    val plans: List<WorkoutPlanUi> = emptyList(),
     val showArchived: Boolean = false,
+    val hasArchivedPlans: Boolean = false,
 ) {
+    val activePlans: List<WorkoutPlanUi> get() = plans.filter { !it.plan.isArchived }
+
+    val archivedPlans: List<WorkoutPlanUi> get() = plans.filter { it.plan.isArchived }
+
     val showMyPlansHeading: Boolean get() = showArchived
 
     val showArchivedPlansHeading: Boolean get() = showArchived && archivedPlans.isNotEmpty()
 
-    val showArchivedPlansButton: Boolean get() = !showArchived && archivedPlans.isNotEmpty()
+    val showArchivedPlansButton: Boolean get() = !showArchived && hasArchivedPlans
 
     val hideArchivedPlansButton: Boolean get() = showArchived
 }

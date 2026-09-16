@@ -246,7 +246,7 @@ private fun WorkoutPlansContentPreview() {
     Surface {
         WorkoutsTab(
             WorkoutPlansUiState(
-                activePlans = listOf(
+                plans = listOf(
                     WorkoutPlanUi(fullBodyA, isActive = true),
                     WorkoutPlanUi(fullBodyB, isActive = false),
                 ),
@@ -262,12 +262,13 @@ private fun WorkoutPlansWithArchivedPreview() {
     Surface {
         WorkoutsTab(
             WorkoutPlansUiState(
-                activePlans = listOf(
+                plans = listOf(
                     WorkoutPlanUi(fullBodyA, isActive = false),
                     WorkoutPlanUi(fullBodyB, isActive = false),
+                    WorkoutPlanUi(upperBodyA, isActive = false),
                 ),
-                archivedPlans = listOf(WorkoutPlanUi(upperBodyA, isActive = false)),
                 showArchived = true,
+                hasArchivedPlans = true,
             ),
             {},
         )
