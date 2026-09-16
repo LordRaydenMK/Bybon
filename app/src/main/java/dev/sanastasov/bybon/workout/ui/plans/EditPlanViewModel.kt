@@ -1,9 +1,11 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 
 class EditPlanViewModel(
@@ -12,7 +14,7 @@ class EditPlanViewModel(
     coroutineScope: CoroutineScope,
 ) {
 
-    val uiState = repository.workoutPlans()
-        .map { plans -> plans.firstOrNull { it.id == planId } }
+    val uiState: StateFlow<WorkoutPlan?> = repository.workoutPlans()
+        .map { plans -> plans.first { it.id == planId } }
         .stateInWhileInForeground(coroutineScope, null)
 }
