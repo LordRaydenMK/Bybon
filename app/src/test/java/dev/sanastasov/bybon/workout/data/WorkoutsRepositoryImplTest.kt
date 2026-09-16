@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
@@ -82,6 +83,20 @@ class WorkoutsRepositoryImplTest {
         assert(
             repository.workoutPlans().first() ==
                 listOf(fullBodyA, fullBodyB, upperBodyA.copy(isArchived = false)),
+        )
+    }
+
+    @Test
+    fun `updatePlan transforms only the matching plan`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+
+        repository.updatePlan(fullBodyA.id) { it.addWorkSet("bench-press-bb") }
+
+        val updated = repository.workoutPlans().first().first()
+        assert(updated.sets.first().sets == 4)
+        assert(repository.workoutPlans().first()[1] == fullBodyB)
+        assert(
+            repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().last() == upperBodyA,
         )
     }
 }

@@ -40,6 +40,17 @@ class FakeWorkoutsRepository(
         }
     }
 
+    override suspend fun updatePlan(
+        planId: WorkoutPlanId,
+        transform: (WorkoutPlan) -> WorkoutPlan,
+    ) {
+        plans.update { list ->
+            list.map { plan ->
+                if (plan.id == planId) transform(plan) else plan
+            }
+        }
+    }
+
     override suspend fun updateWorkout(session: WorkoutSession) {
         sessions.update { list ->
             val index = list.indexOfFirst {

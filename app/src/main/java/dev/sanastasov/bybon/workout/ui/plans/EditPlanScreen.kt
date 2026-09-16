@@ -69,7 +69,16 @@ private fun EditPlanContent(
                     key = { index, exercise -> "${exercise.exercise.id}-$index" },
                 ) { _, exercise ->
                     Card(Modifier.fillMaxWidth()) {
-                        PlannedExerciseCard(exercise)
+                        PlannedExerciseCard(
+                            exercise,
+                            onAddSet = { onAction(EditPlanAction.OnAddSet(exercise.exercise.id)) },
+                            onRemoveLastSet = {
+                                onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
+                            },
+                            onRemoveExercise = {
+                                onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
+                            },
+                        )
                     }
                 }
                 item(key = "archive") {

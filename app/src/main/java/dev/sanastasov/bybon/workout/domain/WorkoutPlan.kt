@@ -18,6 +18,7 @@ data class PlanedExercise(
 ) {
     init {
         require(warmupSets >= 0) { "warmupSets must be >= 0" }
+        require(sets >= 1) { "sets must be >= 1" }
     }
 }
 

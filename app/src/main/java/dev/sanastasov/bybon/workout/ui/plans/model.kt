@@ -77,6 +77,15 @@ sealed class WorkoutPlanEffect {
 
 sealed class EditPlanAction {
     data object OnArchivePlan : EditPlanAction()
+    data class OnAddSet(
+        val exerciseId: String,
+    ) : EditPlanAction()
+    data class OnRemoveLastSet(
+        val exerciseId: String,
+    ) : EditPlanAction()
+    data class OnRemoveExercise(
+        val exerciseId: String,
+    ) : EditPlanAction()
 }
 
 sealed class EditPlanEffect {

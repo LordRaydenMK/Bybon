@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +30,13 @@ import dev.sanastasov.bybon.workout.ui.RestOrSpacer
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 
 @Composable
-fun PlannedExerciseCard(exercise: PlanedExercise, modifier: Modifier = Modifier) {
+fun PlannedExerciseCard(
+    exercise: PlanedExercise,
+    onAddSet: () -> Unit,
+    onRemoveLastSet: () -> Unit,
+    onRemoveExercise: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier
             .fillMaxWidth()
@@ -42,6 +50,7 @@ fun PlannedExerciseCard(exercise: PlanedExercise, modifier: Modifier = Modifier)
                 PlannedSetRow(exercise.exercise.name, plannedSet)
             }
         }
+        PlannedExerciseActions(exercise, onAddSet, onRemoveLastSet, onRemoveExercise)
     }
 }
 
@@ -129,11 +138,50 @@ private fun PlannedSetRow(exerciseName: String, plannedSet: PlannedSetUi) {
     }
 }
 
+@Composable
+private fun PlannedExerciseActions(
+    exercise: PlanedExercise,
+    onAddSet: () -> Unit,
+    onRemoveLastSet: () -> Unit,
+    onRemoveExercise: () -> Unit,
+) {
+    val exerciseName = exercise.exercise.name
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(
+            onAddSet,
+            Modifier.clearAndSetSemantics {
+                contentDescription = "Add set to $exerciseName"
+            },
+        ) {
+            Text("Add Set")
+        }
+        if (exercise.sets == 1) {
+            TextButton(
+                onRemoveExercise,
+                Modifier.clearAndSetSemantics {
+                    contentDescription = "Remove $exerciseName from plan"
+                },
+            ) {
+                Text("Remove Exercise")
+            }
+        } else {
+            TextButton(
+                onRemoveLastSet,
+                Modifier.clearAndSetSemantics {
+                    contentDescription = "Remove last set from $exerciseName"
+                },
+            ) {
+                Text("Remove Last Set")
+            }
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun PlannedExerciseCardWithWarmupsPreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first())
+        PlannedExerciseCard(fullBodyA.sets.first(), {}, {}, {})
     }
 }
 
@@ -141,6 +189,24 @@ private fun PlannedExerciseCardWithWarmupsPreview() {
 @Composable
 private fun PlannedExerciseCardWithoutWarmupsPreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first { it.exercise.id == "leg-curl" })
+        PlannedExerciseCard(
+            fullBodyA.sets.first { it.exercise.id == "leg-curl" },
+            {},
+            {},
+            {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun PlannedExerciseCardSingleSetPreview() {
+    Surface {
+        PlannedExerciseCard(
+            fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1),
+            {},
+            {},
+            {},
+        )
     }
 }
