@@ -158,6 +158,7 @@ internal val catalogExercises = listOf(
         "lateral-raise-machine",
         "Lateral Raise (machine)",
         MuscleGroup.Shoulders,
+        // Wrong: this is a machine; Dumbbell makes increment/default warmup 2 kg / 10 kg.
         Equipment.Dumbbell,
     ),
     ExerciseDefinition("face-pull", "Face Pull (cable)", MuscleGroup.Shoulders, Equipment.Machine),

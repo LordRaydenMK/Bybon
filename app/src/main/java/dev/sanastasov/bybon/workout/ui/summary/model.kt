@@ -40,6 +40,7 @@ internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content =
 
 private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null
+    // Warmups are imported but omitted from summary; include them when this screen is fixed.
     return WorkoutSummaryExerciseUi(
         id = id,
         name = exerciseDefinition.name,

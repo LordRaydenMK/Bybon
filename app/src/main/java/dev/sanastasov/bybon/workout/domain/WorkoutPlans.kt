@@ -43,6 +43,8 @@ val fullBodyB = WorkoutPlan(
     ),
 )
 
+// Temporary seed plan. Remove or rename before Strong import owns this id
+// (slug of Strong "Upper body A" is also upper-body-a).
 val upperBodyA = WorkoutPlan(
     WorkoutPlanId("upper-body-a"),
     "Upper Body A",
