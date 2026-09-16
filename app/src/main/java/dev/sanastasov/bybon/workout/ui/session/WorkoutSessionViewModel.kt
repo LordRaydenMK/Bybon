@@ -4,7 +4,6 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
-import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
@@ -50,7 +49,7 @@ class WorkoutSessionViewModel(
                     session.workoutSets.any { it.setState == SetState.InProgress }
             }
             if (inProgress == null) {
-                val plan = repository.workoutPlans(WorkoutPlansFilter.ActivePlans)
+                val plan = repository.workoutPlans()
                     .first()
                     .first { it.id == planId }
                 val previousSession = sessions

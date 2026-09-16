@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
+import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
@@ -16,14 +17,14 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `exposes the built-in exercise catalog`() = runTest {
-        val repository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
 
         assert(repository.exercises().first() == catalogExercises)
     }
 
     @Test
     fun `importHistory appends new exercises to the catalog`() = runTest {
-        val repository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
         val crunch = ExerciseDefinition(
             "crunch-machine",
             "Crunch (Machine)",
@@ -44,10 +45,10 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `active workoutPlans omit the default archived plan`() = runTest {
-        val repository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
 
         assert(
-            repository.workoutPlans(WorkoutPlansFilter.ActivePlans).first() ==
+            repository.workoutPlans().first() ==
                 listOf(fullBodyA, fullBodyB),
         )
         assert(
@@ -58,14 +59,14 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `archivePlan hides the plan from active workoutPlans`() = runTest {
-        val repository = WorkoutsRepositoryImpl()
-        val before = repository.workoutPlans(WorkoutPlansFilter.ActivePlans).first()
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val before = repository.workoutPlans().first()
         val planId = before.first().id
 
         repository.archivePlan(planId, archived = true)
 
         assert(
-            repository.workoutPlans(WorkoutPlansFilter.ActivePlans).first() == before.drop(1),
+            repository.workoutPlans().first() == before.drop(1),
         )
         assert(
             repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().first().isArchived,
@@ -74,12 +75,12 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `archivePlan false unarchives a plan`() = runTest {
-        val repository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
 
         repository.archivePlan(upperBodyA.id, archived = false)
 
         assert(
-            repository.workoutPlans(WorkoutPlansFilter.ActivePlans).first() ==
+            repository.workoutPlans().first() ==
                 listOf(fullBodyA, fullBodyB, upperBodyA.copy(isArchived = false)),
         )
     }

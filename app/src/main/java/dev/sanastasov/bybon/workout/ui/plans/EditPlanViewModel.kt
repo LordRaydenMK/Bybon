@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.workout.ui.plans
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
-import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -22,7 +21,7 @@ class EditPlanViewModel(
     private val _effects = Channel<EditPlanEffect>(Channel.BUFFERED)
     val effects: Flow<EditPlanEffect> = _effects.receiveAsFlow()
 
-    val uiState: StateFlow<WorkoutPlan?> = repository.workoutPlans(WorkoutPlansFilter.ActivePlans)
+    val uiState: StateFlow<WorkoutPlan?> = repository.workoutPlans()
         .map { plans -> plans.firstOrNull { it.id == planId } }
         .stateInWhileInForeground(coroutineScope, null)
 

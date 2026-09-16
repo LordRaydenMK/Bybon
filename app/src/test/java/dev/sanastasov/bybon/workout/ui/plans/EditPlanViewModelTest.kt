@@ -1,7 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
-import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
+import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlinx.coroutines.flow.first
@@ -21,13 +21,14 @@ class EditPlanViewModelTest {
 
     @Test
     fun `archiving the plan hides it and navigates back`() = runTest {
-        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val repository: WorkoutsRepository =
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.first { it != null }
         viewModel.onAction(EditPlanAction.OnArchivePlan)
 
         assert(viewModel.effects.first() == EditPlanEffect.NavigateBack)
-        assert(repository.workoutPlans(WorkoutPlansFilter.ActivePlans).first() == listOf(fullBodyB))
+        assert(repository.workoutPlans().first() == listOf(fullBodyB))
     }
 }
