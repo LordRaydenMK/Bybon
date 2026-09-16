@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,13 +10,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
@@ -28,11 +33,20 @@ fun WorkoutModule.EditPlanScreen(planId: WorkoutPlanId, onNavigateBack: () -> Un
         EditPlanViewModel(planId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    EditPlanContent(uiState, onNavigateBack)
+    viewModel.effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            EditPlanEffect.NavigateBack -> onNavigateBack()
+        }
+    }
+    EditPlanContent(uiState, viewModel::onAction, onNavigateBack)
 }
 
 @Composable
-private fun EditPlanContent(plan: WorkoutPlan?, onNavigateBack: () -> Unit) {
+private fun EditPlanContent(
+    plan: WorkoutPlan?,
+    onAction: (EditPlanAction) -> Unit,
+    onNavigateBack: () -> Unit,
+) {
     Scaffold(
         Modifier.fillMaxSize(),
         topBar = { BybonTopAppBar("Edit plan", onNavigateBack) },
@@ -44,6 +58,7 @@ private fun EditPlanContent(plan: WorkoutPlan?, onNavigateBack: () -> Unit) {
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Card(Modifier.fillMaxWidth()) {
                     WorkoutPlanInfo(
@@ -52,6 +67,12 @@ private fun EditPlanContent(plan: WorkoutPlan?, onNavigateBack: () -> Unit) {
                             .padding(8.dp)
                             .fillMaxWidth(),
                     )
+                }
+                TextButton(
+                    { onAction(EditPlanAction.OnArchivePlan) },
+                    Modifier.align(Alignment.CenterHorizontally),
+                ) {
+                    Text("Archive Plan")
                 }
             }
         }
@@ -62,6 +83,6 @@ private fun EditPlanContent(plan: WorkoutPlan?, onNavigateBack: () -> Unit) {
 @Composable
 private fun EditPlanContentPreview() {
     Surface {
-        EditPlanContent(fullBodyA, {})
+        EditPlanContent(fullBodyA, {}, {})
     }
 }

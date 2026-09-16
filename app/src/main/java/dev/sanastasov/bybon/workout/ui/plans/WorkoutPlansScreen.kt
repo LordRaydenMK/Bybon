@@ -53,6 +53,7 @@ fun WorkoutsTab(
                 planUi = planUi,
                 onStartWorkoutClicked = { onAction(WorkoutPlansAction.OnStartPlan(it)) },
                 onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
+                onArchiveClicked = { onAction(WorkoutPlansAction.OnArchivePlan(it)) },
             )
         }
     }
@@ -63,6 +64,7 @@ private fun WorkoutPlanCard(
     planUi: WorkoutPlanUi,
     onStartWorkoutClicked: (WorkoutPlan) -> Unit,
     onEditClicked: (WorkoutPlan) -> Unit,
+    onArchiveClicked: (WorkoutPlan) -> Unit,
 ) {
     val plan = planUi.plan
     Card(Modifier.fillMaxWidth()) {
@@ -75,7 +77,7 @@ private fun WorkoutPlanCard(
             WorkoutPlanInfo(
                 plan = plan,
                 isActive = planUi.isActive,
-                headerTrailing = { PlanOverflowMenu(plan, onEditClicked) },
+                headerTrailing = { PlanOverflowMenu(plan, onEditClicked, onArchiveClicked) },
             )
             TextButton(
                 { onStartWorkoutClicked(plan) },
@@ -88,7 +90,11 @@ private fun WorkoutPlanCard(
 }
 
 @Composable
-private fun PlanOverflowMenu(plan: WorkoutPlan, onEditClicked: (WorkoutPlan) -> Unit) {
+private fun PlanOverflowMenu(
+    plan: WorkoutPlan,
+    onEditClicked: (WorkoutPlan) -> Unit,
+    onArchiveClicked: (WorkoutPlan) -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton({ expanded = true }) {
@@ -106,6 +112,13 @@ private fun PlanOverflowMenu(plan: WorkoutPlan, onEditClicked: (WorkoutPlan) -> 
                 onClick = {
                     expanded = false
                     onEditClicked(plan)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Archive Plan") },
+                onClick = {
+                    expanded = false
+                    onArchiveClicked(plan)
                 },
             )
         }

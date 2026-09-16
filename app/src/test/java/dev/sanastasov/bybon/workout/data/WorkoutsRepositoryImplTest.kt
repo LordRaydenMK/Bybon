@@ -37,4 +37,15 @@ class WorkoutsRepositoryImplTest {
         assert(stored.containsAll(catalogExercises))
         assert(stored.last() == crunch)
     }
+
+    @Test
+    fun `archivePlan hides the plan from workoutPlans`() = runTest {
+        val repository = WorkoutsRepositoryImpl()
+        val before = repository.workoutPlans().first()
+        val planId = before.first().id
+
+        repository.archivePlan(planId)
+
+        assert(repository.workoutPlans().first() == before.drop(1))
+    }
 }

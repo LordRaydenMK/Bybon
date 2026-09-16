@@ -7,6 +7,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 class WorkoutPlansViewModel(
     private val repository: WorkoutsRepository,
@@ -37,6 +38,10 @@ class WorkoutPlansViewModel(
 
             is WorkoutPlansAction.OnEditPlan -> {
                 _effects.trySend(WorkoutPlanEffect.OpenEditPlan(action.plan))
+            }
+
+            is WorkoutPlansAction.OnArchivePlan -> coroutineScope.launch {
+                repository.archivePlan(action.plan.id)
             }
         }
     }
