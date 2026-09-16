@@ -55,9 +55,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Arms"
 - assertVisible: "Incline Curl (dumbbell)"
 - assertVisible: "Dumbbell"
-- tapOn:
-    text: "Back"
-    leftOf: "Exercise Library"
+- back
 - assertVisible: "Edit plan"
 - scrollUntilVisible:
     element: "Archive Plan"
