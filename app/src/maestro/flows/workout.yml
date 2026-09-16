@@ -41,7 +41,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn:
       text: "50"
       index: 0
-      point: "90%, 50%" # Cursor at end so backspace clears both digits
+      point: "90%, 50%" # Select-all on focus; eraseText still clears the value
 - eraseText: 8
 - inputText: "60"
 - tapOn:
