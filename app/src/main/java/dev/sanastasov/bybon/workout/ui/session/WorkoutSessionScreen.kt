@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
@@ -36,8 +37,6 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import java.time.LocalDateTime
 import kotlin.time.Duration
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
@@ -45,33 +44,21 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
         WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    uiState?.let {
-        SessionScreenContent(
-            it,
-            viewModel::onAction,
-            viewModel.effects,
-        )
+    val pagerState = rememberPagerState { uiState?.exercises?.size ?: 0 }
+    viewModel.effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            is WorkoutSessionEffect.ShowExercise -> pagerState.animateScrollToPage(effect.index)
+        }
     }
+    uiState?.let { SessionScreenContent(it, viewModel::onAction, pagerState) }
 }
 
 @Composable
 private fun SessionScreenContent(
     state: WorkoutSession,
     onAction: (WorkoutSessionAction) -> Unit,
-    effects: Flow<WorkoutSessionEffect> = emptyFlow(),
+    pagerState: PagerState,
 ) {
-    val pagerState = rememberPagerState(0) {
-        state.exercises.size
-    }
-    effects.collectEffectWithLifecycle { effect ->
-        when (effect) {
-            is WorkoutSessionEffect.ShowExercise -> {
-                if (effect.index in 0 until pagerState.pageCount) {
-                    pagerState.animateScrollToPage(effect.index)
-                }
-            }
-        }
-    }
     Scaffold(
         topBar = { BybonTopAppBar(state.planName, {}) },
     ) { contentPadding ->
@@ -135,20 +122,28 @@ private fun ExerciseCardEvent.toSessionAction(exercise: WorkoutExercise): Workou
             WorkoutSessionAction.OnCompleteSet(exercise, index, isWarmup)
     }
 
+@Composable
+private fun PreviewSessionScreenContent(session: WorkoutSession) {
+    SessionScreenContent(
+        session,
+        {},
+        rememberPagerState { session.exercises.size },
+    )
+}
+
 @Preview
 @Composable
 private fun SessionScreenContentPage1CompletedExercisePreview() {
     val session = fullBodyA.toWorkoutSession()
-    SessionScreenContent(
+    PreviewSessionScreenContent(
         session.completeSet(session.exercises.first(), 0, isWarmup = true),
-        {},
     )
 }
 
 @Preview
 @Composable
 private fun SessionScreenContentInitialPreview() {
-    SessionScreenContent(fullBodyA.toWorkoutSession(), {})
+    PreviewSessionScreenContent(fullBodyA.toWorkoutSession())
 }
 
 @Preview
@@ -178,5 +173,5 @@ private fun SessionScreenContentWithPreviousPreview() {
             state = WorkoutState.Completed(Duration.ZERO),
         )
     }
-    SessionScreenContent(fullBodyA.toWorkoutSession(previous), {})
+    PreviewSessionScreenContent(fullBodyA.toWorkoutSession(previous))
 }
