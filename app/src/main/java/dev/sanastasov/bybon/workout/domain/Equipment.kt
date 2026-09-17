@@ -26,3 +26,9 @@ val Equipment.defaultWarmupWeight: Weight
         Equipment.Bodyweight,
         -> Weight.kilograms(20)
     }
+
+val Equipment.label: String
+    get() = when (this) {
+        Equipment.AssistedBodyWeight -> "Assisted"
+        else -> name
+    }

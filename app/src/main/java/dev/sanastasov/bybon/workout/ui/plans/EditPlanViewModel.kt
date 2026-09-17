@@ -44,6 +44,9 @@ class EditPlanViewModel(
 
                 is EditPlanAction.OnRemoveExercise ->
                     repository.updatePlan(planId) { it.removeExercise(action.exerciseId) }
+
+                EditPlanAction.OnAddExercise ->
+                    _effects.trySend(EditPlanEffect.OpenExerciseLibrary)
             }
         }
     }

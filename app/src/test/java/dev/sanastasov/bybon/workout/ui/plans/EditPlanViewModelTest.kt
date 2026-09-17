@@ -75,4 +75,17 @@ class EditPlanViewModelTest {
         assert(updated.sets.none { it.exercise.id == "leg-curl" })
         assert(updated.sets.size == fullBodyA.sets.size - 1)
     }
+
+    @Test
+    fun `add exercise opens the exercise library`() = runTest {
+        val viewModel = EditPlanViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
+            backgroundScope,
+        )
+
+        viewModel.onAction(EditPlanAction.OnAddExercise)
+
+        assert(viewModel.effects.first() == EditPlanEffect.OpenExerciseLibrary)
+    }
 }

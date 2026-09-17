@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -30,7 +31,11 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 
 @Composable
-fun WorkoutModule.EditPlanScreen(planId: WorkoutPlanId, onNavigateBack: () -> Unit) {
+fun WorkoutModule.EditPlanScreen(
+    planId: WorkoutPlanId,
+    onNavigateBack: () -> Unit,
+    onNavigateToExerciseLibrary: () -> Unit,
+) {
     val viewModel = retain {
         EditPlanViewModel(planId, workoutsRepository, it.coroutineScope)
     }
@@ -38,6 +43,7 @@ fun WorkoutModule.EditPlanScreen(planId: WorkoutPlanId, onNavigateBack: () -> Un
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
             EditPlanEffect.NavigateBack -> onNavigateBack()
+            EditPlanEffect.OpenExerciseLibrary -> onNavigateToExerciseLibrary()
         }
     }
     EditPlanContent(uiState, viewModel::onAction, onNavigateBack)
@@ -79,6 +85,16 @@ private fun EditPlanContent(
                                 onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
                             },
                         )
+                    }
+                }
+                item(key = "add-exercise") {
+                    Box(
+                        Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Button({ onAction(EditPlanAction.OnAddExercise) }) {
+                            Text("Add Exercise")
+                        }
                     }
                 }
                 item(key = "archive") {

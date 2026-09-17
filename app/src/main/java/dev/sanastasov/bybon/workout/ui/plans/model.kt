@@ -1,11 +1,11 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
-import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.formatRestClock
+import dev.sanastasov.bybon.workout.domain.label
 import kotlin.time.Duration
 
 data class WorkoutPlansUiState(
@@ -77,6 +77,7 @@ sealed class WorkoutPlanEffect {
 
 sealed class EditPlanAction {
     data object OnArchivePlan : EditPlanAction()
+    data object OnAddExercise : EditPlanAction()
     data class OnAddSet(
         val exerciseId: String,
     ) : EditPlanAction()
@@ -90,6 +91,7 @@ sealed class EditPlanAction {
 
 sealed class EditPlanEffect {
     data object NavigateBack : EditPlanEffect()
+    data object OpenExerciseLibrary : EditPlanEffect()
 }
 
 data class PlannedSetUi(
@@ -128,9 +130,3 @@ fun PlannedSetUi.contentDescription(exerciseName: String): String = if (isWarmup
     val restLabel = rest?.let { ", rest ${it.formatRestClock()}" }.orEmpty()
     "$exerciseName set $workSetNumber, $repsLabel reps$restLabel"
 }
-
-private val Equipment.label: String
-    get() = when (this) {
-        Equipment.AssistedBodyWeight -> "Assisted"
-        else -> name
-    }

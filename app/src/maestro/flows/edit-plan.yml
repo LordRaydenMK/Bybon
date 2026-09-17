@@ -47,6 +47,17 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Legs · Machine"
 - assertVisible: "Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
 - scrollUntilVisible:
+    element: "Add Exercise"
+    direction: DOWN
+- assertVisible: "Add Exercise"
+- tapOn: "Add Exercise"
+- assertVisible: "Exercise Library"
+- assertVisible: "Arms"
+- assertVisible: "Incline Curl (dumbbell)"
+- assertVisible: "Dumbbell"
+- back
+- assertVisible: "Edit plan"
+- scrollUntilVisible:
     element: "Archive Plan"
     direction: DOWN
 - tapOn: "Back"
