@@ -58,7 +58,7 @@ private fun ExerciseLibraryContent(
         topBar = { BybonTopAppBar("Exercise Library", onNavigateBack) },
         bottomBar = {
             AddExerciseBar(state.addEnabled) {
-                onAction(ExerciseLibraryAction.OnAddExercise)
+                state.selectedExerciseId?.let { onAction(ExerciseLibraryAction.OnAddExercise(it)) }
             }
         },
     ) { contentPadding ->

@@ -40,10 +40,9 @@ class ExerciseLibraryViewModel(
                     if (current == action.exerciseId) null else action.exerciseId
                 }
 
-            ExerciseLibraryAction.OnAddExercise -> coroutineScope.launch {
-                val exerciseId = selectedExerciseId.value ?: return@launch
+            is ExerciseLibraryAction.OnAddExercise -> coroutineScope.launch {
                 val exercise = repository.exercises().first()
-                    .firstOrNull { it.id == exerciseId }
+                    .firstOrNull { it.id == action.exerciseId }
                     ?: return@launch
                 repository.updatePlan(planId) { it.addExercise(exercise) }
                 _effects.trySend(ExerciseLibraryEffect.NavigateBack)

@@ -7,7 +7,10 @@ import dev.sanastasov.bybon.workout.domain.label
 data class ExerciseLibraryUiState(
     val groups: List<ExerciseLibraryGroup> = emptyList(),
 ) {
-    val addEnabled: Boolean get() = groups.any { group -> group.exercises.any { it.selected } }
+    val selectedExerciseId: String?
+        get() = groups.asSequence().flatMap { it.exercises }.firstOrNull { it.selected }?.id
+
+    val addEnabled: Boolean get() = selectedExerciseId != null
 }
 
 data class ExerciseLibraryGroup(
@@ -27,7 +30,9 @@ sealed class ExerciseLibraryAction {
         val exerciseId: String,
     ) : ExerciseLibraryAction()
 
-    data object OnAddExercise : ExerciseLibraryAction()
+    data class OnAddExercise(
+        val exerciseId: String,
+    ) : ExerciseLibraryAction()
 }
 
 sealed class ExerciseLibraryEffect {

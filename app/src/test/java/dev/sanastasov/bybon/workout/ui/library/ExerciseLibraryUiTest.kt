@@ -82,6 +82,7 @@ class ExerciseLibraryUiTest {
         val state = ExerciseLibraryUiState(listOf(curl).groupedByBodyPart("curl"))
 
         assert(state.addEnabled)
+        assert(state.selectedExerciseId == "curl")
     }
 
     @Test
@@ -90,6 +91,7 @@ class ExerciseLibraryUiTest {
         val state = ExerciseLibraryUiState(listOf(curl).groupedByBodyPart())
 
         assert(!state.addEnabled)
+        assert(state.selectedExerciseId == null)
         assert(!state.groups.single().exercises.single().selected)
     }
 }

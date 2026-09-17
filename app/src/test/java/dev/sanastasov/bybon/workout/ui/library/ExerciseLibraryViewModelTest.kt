@@ -46,6 +46,7 @@ class ExerciseLibraryViewModelTest {
 
         val state = viewModel.uiState.first { it.addEnabled }
         assert(state.exercise("incline-curl-db").selected)
+        assert(state.selectedExerciseId == "incline-curl-db")
         assert(state.groups.flatMap { it.exercises }.single { it.selected }.id == "incline-curl-db")
     }
 
@@ -87,7 +88,7 @@ class ExerciseLibraryViewModelTest {
         viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("incline-curl-db"))
         viewModel.uiState.first { it.addEnabled }
 
-        viewModel.onAction(ExerciseLibraryAction.OnAddExercise)
+        viewModel.onAction(ExerciseLibraryAction.OnAddExercise("incline-curl-db"))
 
         assert(viewModel.effects.first() == ExerciseLibraryEffect.NavigateBack)
         val added = repository.workoutPlans().first().single().sets.last()
@@ -101,7 +102,7 @@ class ExerciseLibraryViewModelTest {
 
     @Test
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun `adding with no selection does not change the plan`() = runTest {
+    fun `adding an unknown exercise does not change the plan`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
@@ -110,7 +111,7 @@ class ExerciseLibraryViewModelTest {
         viewModel.uiState.first { it.groups.isNotEmpty() }
 
         viewModel.effects.test {
-            viewModel.onAction(ExerciseLibraryAction.OnAddExercise)
+            viewModel.onAction(ExerciseLibraryAction.OnAddExercise("missing"))
             advanceUntilIdle()
             expectNoEvents()
         }
@@ -128,7 +129,7 @@ class ExerciseLibraryViewModelTest {
         viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("bench-press-bb"))
         viewModel.uiState.first { it.addEnabled }
 
-        viewModel.onAction(ExerciseLibraryAction.OnAddExercise)
+        viewModel.onAction(ExerciseLibraryAction.OnAddExercise("bench-press-bb"))
 
         assert(viewModel.effects.first() == ExerciseLibraryEffect.NavigateBack)
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
