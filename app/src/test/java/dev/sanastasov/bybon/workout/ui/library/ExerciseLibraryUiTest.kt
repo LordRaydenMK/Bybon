@@ -65,4 +65,33 @@ class ExerciseLibraryUiTest {
         val item = listOf(bench).groupedByBodyPart().single().exercises.single()
         assert(item.equipmentLabel == "Barbell")
     }
+
+    @Test
+    fun `marks only the selected exercise`() {
+        val chest = ExerciseDefinition("bench", "Bench", MuscleGroup.Chest, Equipment.Barbell)
+        val arms = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+        val groups = listOf(chest, arms).groupedByBodyPart("curl")
+
+        assert(groups[0].exercises.single().selected)
+        assert(!groups[1].exercises.single().selected)
+    }
+
+    @Test
+    fun `addEnabled is true when an exercise is selected`() {
+        val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+        val state = ExerciseLibraryUiState(listOf(curl).groupedByBodyPart("curl"))
+
+        assert(state.addEnabled)
+        assert(state.selectedExerciseId == "curl")
+    }
+
+    @Test
+    fun `addEnabled is false when nothing is selected`() {
+        val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+        val state = ExerciseLibraryUiState(listOf(curl).groupedByBodyPart())
+
+        assert(!state.addEnabled)
+        assert(state.selectedExerciseId == null)
+        assert(!state.groups.single().exercises.single().selected)
+    }
 }

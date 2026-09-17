@@ -1,5 +1,8 @@
 package dev.sanastasov.bybon.workout.domain
 
+private const val DEFAULT_ADDED_WORK_SETS = 3
+private val DEFAULT_ADDED_REP_RANGE = 8..12
+
 fun WorkoutPlan.addWorkSet(exerciseId: String): WorkoutPlan =
     updatePlannedExercise(exerciseId) { exercise ->
         exercise.copy(sets = exercise.sets + 1)
@@ -16,6 +19,17 @@ fun WorkoutPlan.removeLastWorkSet(exerciseId: String): WorkoutPlan =
 fun WorkoutPlan.removeExercise(exerciseId: String): WorkoutPlan {
     val exercise = requireExercise(exerciseId)
     return copy(sets = sets.filter { it.exercise.id != exercise.exercise.id })
+}
+
+fun WorkoutPlan.addExercise(exercise: ExerciseDefinition): WorkoutPlan {
+    if (sets.any { it.exercise.id == exercise.id }) return this
+    return copy(
+        sets = sets + PlanedExercise(
+            exercise = exercise,
+            sets = DEFAULT_ADDED_WORK_SETS,
+            repRange = DEFAULT_ADDED_REP_RANGE,
+        ),
+    )
 }
 
 private fun WorkoutPlan.updatePlannedExercise(
