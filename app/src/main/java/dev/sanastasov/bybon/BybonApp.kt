@@ -77,6 +77,7 @@ fun MainModule.BybonApp() {
 
                 is Screen.ExerciseLibrary -> NavEntry(key) {
                     ExerciseLibraryScreen(
+                        planId = key.planId,
                         onNavigateBack = { backStack.removeLastOrNull() },
                     )
                 }

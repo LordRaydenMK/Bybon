@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.domain
 
 import kotlin.test.assertFailsWith
+import kotlin.time.Duration.Companion.minutes
 import org.junit.Test
 
 class WorkoutPlanEditingTest {
@@ -44,6 +45,28 @@ class WorkoutPlanEditingTest {
         assert(actual.sets.none { it.exercise.id == "leg-curl" })
         assert(actual.sets.size == fullBodyA.sets.size - 1)
         assert(actual.sets.first() == fullBodyA.sets.first())
+    }
+
+    @Test
+    fun `addExercise appends a planned exercise with defaults`() {
+        val curl = catalogExercise("incline-curl-db")
+        val actual = fullBodyA.addExercise(curl)
+        val added = actual.sets.last()
+
+        assert(added.exercise == curl)
+        assert(added.sets == 3)
+        assert(added.warmupSets == 0)
+        assert(added.repRange == 8..12)
+        assert(added.restAfterWorkSet == 1.minutes)
+        assert(actual.sets.dropLast(1) == fullBodyA.sets)
+    }
+
+    @Test
+    fun `addExercise is a no-op when the exercise is already on the plan`() {
+        val bench = catalogExercise("bench-press-bb")
+        val actual = fullBodyA.addExercise(bench)
+
+        assert(actual == fullBodyA)
     }
 
     @Test

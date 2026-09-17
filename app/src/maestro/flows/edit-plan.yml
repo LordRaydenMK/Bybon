@@ -55,8 +55,17 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Arms"
 - assertVisible: "Incline Curl (dumbbell)"
 - assertVisible: "Dumbbell"
-- back
+- assertVisible: "Add exercise"
+- tapOn: "Select Incline Curl (dumbbell)"
+- tapOn: "Add exercise"
 - assertVisible: "Edit plan"
+- scrollUntilVisible:
+    element: "Incline Curl (dumbbell)"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "Incline Curl (dumbbell)"
+- assertVisible: "Arms · Dumbbell"
+- assertVisible: "Incline Curl (dumbbell) set 1, 8–12 reps, rest 1:00"
 - scrollUntilVisible:
     element: "Archive Plan"
     direction: DOWN
