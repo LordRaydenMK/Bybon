@@ -7,7 +7,9 @@ import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -98,6 +100,7 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun `adding with no selection does not change the plan`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
@@ -131,7 +134,7 @@ class ExerciseLibraryViewModelTest {
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 
-    private fun viewModel(
+    private fun TestScope.viewModel(
         repository: FakeWorkoutsRepository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,

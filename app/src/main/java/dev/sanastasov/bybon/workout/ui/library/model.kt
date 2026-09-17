@@ -48,11 +48,10 @@ fun List<ExerciseDefinition>.groupedByBodyPart(
     }
 }
 
-private fun ExerciseDefinition.toLibraryItem(
-    selectedExerciseId: String?,
-): ExerciseLibraryItemUi = ExerciseLibraryItemUi(
-    id = id,
-    name = name,
-    equipmentLabel = equipment.label,
-    selected = id == selectedExerciseId,
-)
+private fun ExerciseDefinition.toLibraryItem(selectedExerciseId: String?): ExerciseLibraryItemUi =
+    ExerciseLibraryItemUi(
+        id = id,
+        name = name,
+        equipmentLabel = equipment.label,
+        selected = id == selectedExerciseId,
+    )

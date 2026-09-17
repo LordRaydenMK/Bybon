@@ -34,10 +34,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 
 @Composable
-fun WorkoutModule.ExerciseLibraryScreen(
-    planId: WorkoutPlanId,
-    onNavigateBack: () -> Unit,
-) {
+fun WorkoutModule.ExerciseLibraryScreen(planId: WorkoutPlanId, onNavigateBack: () -> Unit) {
     val viewModel = retain {
         ExerciseLibraryViewModel(planId, workoutsRepository, it.coroutineScope)
     }
@@ -59,7 +56,11 @@ private fun ExerciseLibraryContent(
     Scaffold(
         Modifier.fillMaxSize(),
         topBar = { BybonTopAppBar("Exercise Library", onNavigateBack) },
-        bottomBar = { AddExerciseBar(state.addEnabled) { onAction(ExerciseLibraryAction.OnAddExercise) } },
+        bottomBar = {
+            AddExerciseBar(state.addEnabled) {
+                onAction(ExerciseLibraryAction.OnAddExercise)
+            }
+        },
     ) { contentPadding ->
         LazyColumn(
             Modifier
