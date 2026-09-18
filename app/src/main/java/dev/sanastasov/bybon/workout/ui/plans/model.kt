@@ -87,6 +87,12 @@ sealed class EditPlanAction {
     data class OnRemoveExercise(
         val exerciseId: String,
     ) : EditPlanAction()
+    data class OnMoveExerciseUp(
+        val exerciseId: String,
+    ) : EditPlanAction()
+    data class OnMoveExerciseDown(
+        val exerciseId: String,
+    ) : EditPlanAction()
 }
 
 sealed class EditPlanEffect {

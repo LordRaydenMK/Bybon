@@ -72,12 +72,16 @@ private fun EditPlanContent(
                 }
                 itemsIndexed(
                     currentPlan.sets,
-                    key = { index, exercise -> "${exercise.exercise.id}-$index" },
-                ) { _, exercise ->
-                    Card(Modifier.fillMaxWidth()) {
+                    key = { _, exercise -> exercise.exercise.id },
+                ) { index, exercise ->
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
+                    ) {
                         PlannedExerciseCard(
                             exercise,
-                            canRemoveExercise = currentPlan.sets.size > 1,
+                            overflow = currentPlan.exerciseOverflow(index, onAction),
                             onAddSet = { onAction(EditPlanAction.OnAddSet(exercise.exercise.id)) },
                             onRemoveLastSet = {
                                 onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
@@ -119,6 +123,20 @@ private fun EditPlanHeader(plan: WorkoutPlan) {
         Text(plan.name, fontWeight = FontWeight.Bold)
         plan.description?.let { Text(it) }
     }
+}
+
+private fun WorkoutPlan.exerciseOverflow(
+    index: Int,
+    onAction: (EditPlanAction) -> Unit,
+): PlannedExerciseOverflow? {
+    if (sets.size <= 1) return null
+    val exerciseId = sets[index].exercise.id
+    return PlannedExerciseOverflow(
+        canMoveUp = index > 0,
+        canMoveDown = index < sets.lastIndex,
+        onMoveUp = { onAction(EditPlanAction.OnMoveExerciseUp(exerciseId)) },
+        onMoveDown = { onAction(EditPlanAction.OnMoveExerciseDown(exerciseId)) },
+    )
 }
 
 @Preview

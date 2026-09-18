@@ -39,10 +39,17 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCardSetColWidth
 import dev.sanastasov.bybon.workout.ui.RestOrSpacer
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 
+class PlannedExerciseOverflow(
+    val canMoveUp: Boolean,
+    val canMoveDown: Boolean,
+    val onMoveUp: () -> Unit,
+    val onMoveDown: () -> Unit,
+)
+
 @Composable
 fun PlannedExerciseCard(
     exercise: PlanedExercise,
-    canRemoveExercise: Boolean,
+    overflow: PlannedExerciseOverflow?,
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
     onRemoveExercise: () -> Unit,
@@ -54,7 +61,7 @@ fun PlannedExerciseCard(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        PlannedExerciseHeader(exercise, canRemoveExercise, onRemoveExercise)
+        PlannedExerciseHeader(exercise, overflow, onRemoveExercise)
         PlannedSetColumnsHeader()
         exercise.toPlannedSets().forEachIndexed { index, plannedSet ->
             key(index) {
@@ -68,7 +75,7 @@ fun PlannedExerciseCard(
 @Composable
 private fun PlannedExerciseHeader(
     exercise: PlanedExercise,
-    canRemoveExercise: Boolean,
+    overflow: PlannedExerciseOverflow?,
     onRemoveExercise: () -> Unit,
 ) {
     Row(
@@ -89,14 +96,18 @@ private fun PlannedExerciseHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (canRemoveExercise) {
-            ExerciseOverflowMenu(exercise.exercise.name, onRemoveExercise)
+        overflow?.let {
+            ExerciseOverflowMenu(exercise.exercise.name, it, onRemoveExercise)
         }
     }
 }
 
 @Composable
-private fun ExerciseOverflowMenu(exerciseName: String, onRemoveExercise: () -> Unit) {
+private fun ExerciseOverflowMenu(
+    exerciseName: String,
+    overflow: PlannedExerciseOverflow,
+    onRemoveExercise: () -> Unit,
+) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton({ expanded = true }) {
@@ -109,6 +120,28 @@ private fun ExerciseOverflowMenu(exerciseName: String, onRemoveExercise: () -> U
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
+            DropdownMenuItem(
+                text = { Text("Move up") },
+                onClick = {
+                    expanded = false
+                    overflow.onMoveUp()
+                },
+                enabled = overflow.canMoveUp,
+                modifier = Modifier.clearAndSetSemantics {
+                    contentDescription = "Move $exerciseName up"
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Move down") },
+                onClick = {
+                    expanded = false
+                    overflow.onMoveDown()
+                },
+                enabled = overflow.canMoveDown,
+                modifier = Modifier.clearAndSetSemantics {
+                    contentDescription = "Move $exerciseName down"
+                },
+            )
             DropdownMenuItem(
                 text = { Text("Remove Exercise") },
                 onClick = {
@@ -228,11 +261,16 @@ private fun PlannedExerciseActions(
     }
 }
 
+private fun previewOverflow(
+    canMoveUp: Boolean = false,
+    canMoveDown: Boolean = true,
+) = PlannedExerciseOverflow(canMoveUp, canMoveDown, {}, {})
+
 @Preview
 @Composable
 private fun PlannedExerciseCardWithWarmupsPreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first(), true, {}, {}, {})
+        PlannedExerciseCard(fullBodyA.sets.first(), previewOverflow(), {}, {}, {})
     }
 }
 
@@ -242,7 +280,7 @@ private fun PlannedExerciseCardWithoutWarmupsPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" },
-            true,
+            previewOverflow(canMoveUp = true, canMoveDown = true),
             {},
             {},
             {},
@@ -256,7 +294,7 @@ private fun PlannedExerciseCardSingleSetPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1),
-            true,
+            previewOverflow(canMoveUp = true, canMoveDown = false),
             {},
             {},
             {},
@@ -268,6 +306,6 @@ private fun PlannedExerciseCardSingleSetPreview() {
 @Composable
 private fun PlannedExerciseCardLastExercisePreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first(), false, {}, {}, {})
+        PlannedExerciseCard(fullBodyA.sets.first(), null, {}, {}, {})
     }
 }

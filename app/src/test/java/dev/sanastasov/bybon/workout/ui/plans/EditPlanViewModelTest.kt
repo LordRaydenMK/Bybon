@@ -77,6 +77,36 @@ class EditPlanViewModelTest {
     }
 
     @Test
+    fun `moving an exercise down persists the new order`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnMoveExerciseDown("bench-press-bb"))
+
+        val updated = viewModel.uiState.first { plan ->
+            plan?.sets?.map { it.exercise.id }?.take(2) == listOf("squat-bb", "bench-press-bb")
+        }!!
+        assert(updated.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(updated.sets.drop(2) == fullBodyA.sets.drop(2))
+        assert(repository.workoutPlans().first()[1] == fullBodyB)
+    }
+
+    @Test
+    fun `moving an exercise up persists the new order`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnMoveExerciseUp("squat-bb"))
+
+        val updated = viewModel.uiState.first { plan ->
+            plan?.sets?.first()?.exercise?.id == "squat-bb"
+        }!!
+        assert(updated.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+    }
+
+    @Test
     fun `add exercise opens the exercise library`() = runTest {
         val viewModel = EditPlanViewModel(
             fullBodyA.id,
