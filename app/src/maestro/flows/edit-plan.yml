@@ -14,6 +14,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Bench Press (barbell) set 1, 8–10 reps, rest 2:00"
 - assertVisible: "Add set to Bench Press (barbell)"
 - assertVisible: "Remove last set from Bench Press (barbell)"
+- assertVisible: "More options for Bench Press (barbell)"
 - tapOn: "Add set to Bench Press (barbell)"
 - scrollUntilVisible:
     element: "Bench Press (barbell) set 4, 8–10 reps, rest 2:00"
@@ -66,6 +67,10 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Incline Curl (dumbbell)"
 - assertVisible: "Arms · Dumbbell"
 - assertVisible: "Incline Curl (dumbbell) set 1, 8–12 reps, rest 1:00"
+- assertVisible: "More options for Incline Curl (dumbbell)"
+- tapOn: "More options for Incline Curl (dumbbell)"
+- tapOn: "Remove Exercise"
+- assertNotVisible: "Incline Curl (dumbbell)"
 - scrollUntilVisible:
     element: "Archive Plan"
     direction: DOWN

@@ -7,12 +7,22 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -32,6 +42,7 @@ import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 @Composable
 fun PlannedExerciseCard(
     exercise: PlanedExercise,
+    canRemoveExercise: Boolean,
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
     onRemoveExercise: () -> Unit,
@@ -43,7 +54,7 @@ fun PlannedExerciseCard(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        PlannedExerciseHeader(exercise)
+        PlannedExerciseHeader(exercise, canRemoveExercise, onRemoveExercise)
         PlannedSetColumnsHeader()
         exercise.toPlannedSets().forEachIndexed { index, plannedSet ->
             key(index) {
@@ -55,17 +66,57 @@ fun PlannedExerciseCard(
 }
 
 @Composable
-private fun PlannedExerciseHeader(exercise: PlanedExercise) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            exercise.exercise.name,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            exercise.subtitle(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+private fun PlannedExerciseHeader(
+    exercise: PlanedExercise,
+    canRemoveExercise: Boolean,
+    onRemoveExercise: () -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                exercise.exercise.name,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                exercise.subtitle(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (canRemoveExercise) {
+            ExerciseOverflowMenu(exercise.exercise.name, onRemoveExercise)
+        }
+    }
+}
+
+@Composable
+private fun ExerciseOverflowMenu(exerciseName: String, onRemoveExercise: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton({ expanded = true }) {
+            Icon(
+                Icons.Filled.MoreVert,
+                contentDescription = "More options for $exerciseName",
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("Remove Exercise") },
+                onClick = {
+                    expanded = false
+                    onRemoveExercise()
+                },
+            )
+        }
     }
 }
 
@@ -181,7 +232,7 @@ private fun PlannedExerciseActions(
 @Composable
 private fun PlannedExerciseCardWithWarmupsPreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first(), {}, {}, {})
+        PlannedExerciseCard(fullBodyA.sets.first(), true, {}, {}, {})
     }
 }
 
@@ -191,6 +242,7 @@ private fun PlannedExerciseCardWithoutWarmupsPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" },
+            true,
             {},
             {},
             {},
@@ -204,9 +256,18 @@ private fun PlannedExerciseCardSingleSetPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1),
+            true,
             {},
             {},
             {},
         )
+    }
+}
+
+@Preview
+@Composable
+private fun PlannedExerciseCardLastExercisePreview() {
+    Surface {
+        PlannedExerciseCard(fullBodyA.sets.first(), false, {}, {}, {})
     }
 }
