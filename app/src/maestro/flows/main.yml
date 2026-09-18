@@ -1,7 +1,7 @@
 appId: dev.sanastasov.bybon.debug
 ---
 - launchApp
-- assertVisible: "Bybon"
+- runFlow: ../shared/await-home.yml
 - assertVisible: "Full Body A"
 - tapOn: "1 RM Calc"
 - assertVisible: "Estimated 1RM"
