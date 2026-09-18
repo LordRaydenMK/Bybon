@@ -78,6 +78,49 @@ class WorkoutPlanEditingTest {
         assert(error.message == "Exercise missing is not in the plan")
         assertFailsWith<IllegalStateException> { fullBodyA.removeLastWorkSet("missing") }
         assertFailsWith<IllegalStateException> { fullBodyA.removeExercise("missing") }
+        assertFailsWith<IllegalStateException> { fullBodyA.moveExerciseUp("missing") }
+        assertFailsWith<IllegalStateException> { fullBodyA.moveExerciseDown("missing") }
+    }
+
+    @Test
+    fun `moveExerciseDown swaps with the next exercise`() {
+        val actual = fullBodyA.moveExerciseDown("bench-press-bb")
+
+        assert(actual.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(actual.sets.drop(2) == fullBodyA.sets.drop(2))
+    }
+
+    @Test
+    fun `moveExerciseUp swaps with the previous exercise`() {
+        val actual = fullBodyA.moveExerciseUp("squat-bb")
+
+        assert(actual.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(actual.sets.drop(2) == fullBodyA.sets.drop(2))
+    }
+
+    @Test
+    fun `moveExerciseUp throws for the first exercise`() {
+        val error = assertFailsWith<IllegalStateException> {
+            fullBodyA.moveExerciseUp("bench-press-bb")
+        }
+        assert(error.message == "Cannot move bench-press-bb up")
+    }
+
+    @Test
+    fun `moveExerciseDown throws for the last exercise`() {
+        val lastId = fullBodyA.sets.last().exercise.id
+        val error = assertFailsWith<IllegalStateException> {
+            fullBodyA.moveExerciseDown(lastId)
+        }
+        assert(error.message == "Cannot move $lastId down")
+    }
+
+    @Test
+    fun `moved exercise is used when creating a session`() {
+        val plan = fullBodyA.moveExerciseDown("bench-press-bb")
+        val session = plan.toWorkoutSession()
+
+        assert(session.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
     }
 
     @Test

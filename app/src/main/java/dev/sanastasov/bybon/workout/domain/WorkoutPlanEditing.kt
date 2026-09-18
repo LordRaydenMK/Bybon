@@ -34,6 +34,27 @@ fun WorkoutPlan.addExercise(exercise: ExerciseDefinition): WorkoutPlan {
     )
 }
 
+fun WorkoutPlan.moveExerciseUp(exerciseId: String): WorkoutPlan =
+    moveExercise(exerciseId, offset = -1)
+
+fun WorkoutPlan.moveExerciseDown(exerciseId: String): WorkoutPlan =
+    moveExercise(exerciseId, offset = 1)
+
+private fun WorkoutPlan.moveExercise(exerciseId: String, offset: Int): WorkoutPlan {
+    requireExercise(exerciseId)
+    val fromIndex = sets.indexOfFirst { it.exercise.id == exerciseId }
+    val toIndex = fromIndex + offset
+    check(toIndex in sets.indices) {
+        val direction = if (offset < 0) "up" else "down"
+        "Cannot move $exerciseId $direction"
+    }
+    return copy(
+        sets = sets.toMutableList().apply {
+            add(toIndex, removeAt(fromIndex))
+        },
+    )
+}
+
 private fun WorkoutPlan.updatePlannedExercise(
     exerciseId: String,
     transform: (PlanedExercise) -> PlanedExercise,

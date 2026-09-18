@@ -87,6 +87,12 @@ sealed class EditPlanAction {
     data class OnRemoveExercise(
         val exerciseId: String,
     ) : EditPlanAction()
+    data class OnMoveExerciseUp(
+        val exerciseId: String,
+    ) : EditPlanAction()
+    data class OnMoveExerciseDown(
+        val exerciseId: String,
+    ) : EditPlanAction()
 }
 
 sealed class EditPlanEffect {
@@ -122,6 +128,27 @@ fun PlanedExercise.toPlannedSets(): List<PlannedSetUi> {
         )
     }
     return warmup + work
+}
+
+class PlannedExerciseOverflow(
+    val canMoveUp: Boolean,
+    val canMoveDown: Boolean,
+    val onMoveUp: () -> Unit,
+    val onMoveDown: () -> Unit,
+)
+
+fun WorkoutPlan.exerciseOverflow(
+    index: Int,
+    onAction: (EditPlanAction) -> Unit,
+): PlannedExerciseOverflow? {
+    if (sets.size <= 1) return null
+    val exerciseId = sets[index].exercise.id
+    return PlannedExerciseOverflow(
+        canMoveUp = index > 0,
+        canMoveDown = index < sets.lastIndex,
+        onMoveUp = { onAction(EditPlanAction.OnMoveExerciseUp(exerciseId)) },
+        onMoveDown = { onAction(EditPlanAction.OnMoveExerciseDown(exerciseId)) },
+    )
 }
 
 fun PlannedSetUi.contentDescription(exerciseName: String): String = if (isWarmup) {
