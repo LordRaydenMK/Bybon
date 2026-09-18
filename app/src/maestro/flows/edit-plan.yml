@@ -55,11 +55,17 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "In plan Full Body A"
 - assertVisible: "Bench Press (barbell)"
 - assertVisible: "Arms"
-- assertVisible: "Incline Curl (dumbbell)"
 - assertVisible: "Dumbbell"
 - assertVisible: "Add exercise"
+- scrollUntilVisible:
+    element: "Select Incline Curl (dumbbell)"
+    direction: DOWN
+    centerElement: true
 - tapOn: "Select Incline Curl (dumbbell)"
-- assertVisible: "Deselect Incline Curl (dumbbell)"
+- scrollUntilVisible:
+    element: "Deselect Incline Curl (dumbbell)"
+    direction: UP
+    centerElement: true
 - tapOn: "Add exercise"
 - assertVisible: "Edit plan"
 - scrollUntilVisible:
