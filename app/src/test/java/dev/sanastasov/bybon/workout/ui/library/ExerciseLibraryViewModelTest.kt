@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.catalogExercises
@@ -32,6 +33,7 @@ class ExerciseLibraryViewModelTest {
             ),
         )
         assert(state.groups.first().exercises.first().name == "Incline Curl (dumbbell)")
+        assert(state.groups.first().exercises.first().equipment == Equipment.Dumbbell)
         assert(state.groups.first().exercises.first().equipmentLabel == "Dumbbell")
         assert(!state.addEnabled)
         assert(state.groups.flatMap { it.exercises }.none { it.selected })
