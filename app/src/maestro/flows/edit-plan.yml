@@ -58,15 +58,19 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Arms"
 - assertVisible: "Dumbbell"
 - assertVisible: "Add exercise"
+- tapOn:
+    text: "Arms"
+    index: 0
+- tapOn:
+    text: "Dumbbell"
+    index: 0
 - scrollUntilVisible:
     element: "Select Incline Curl (dumbbell)"
     direction: DOWN
-    centerElement: true
 - tapOn: "Select Incline Curl (dumbbell)"
 - scrollUntilVisible:
     element: "Deselect Incline Curl (dumbbell)"
     direction: UP
-    centerElement: true
 - tapOn: "Add exercise"
 - assertVisible: "Edit plan"
 - scrollUntilVisible:
