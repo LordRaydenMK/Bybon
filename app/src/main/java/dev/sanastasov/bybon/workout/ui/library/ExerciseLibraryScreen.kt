@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -12,11 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -46,6 +47,7 @@ import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.catalogExercises
+import dev.sanastasov.bybon.workout.domain.fullBodyA
 
 @Composable
 fun WorkoutModule.ExerciseLibraryScreen(planId: WorkoutPlanId, onNavigateBack: () -> Unit) {
@@ -88,26 +90,13 @@ private fun ExerciseLibraryContent(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             )
-            if (state.showEmptyState) {
-                EmptyFilterState(Modifier.fillMaxSize())
-            } else {
-                LazyColumn(
-                    Modifier
-                        .padding(horizontal = 16.dp, vertical = 16.dp)
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    state.groups.forEach { group ->
-                        item(key = "header-${group.bodyPart}") {
-                            BodyPartHeader(group.bodyPart)
-                        }
-                        items(group.exercises, key = { it.id }) { exercise ->
-                            Card(Modifier.fillMaxWidth()) {
-                                ExerciseLibraryCard(exercise, onAction)
-                            }
-                        }
-                    }
-                }
+            LazyColumn(
+                Modifier
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                exerciseLibraryItems(state, onAction)
             }
         }
     }
@@ -154,21 +143,6 @@ private fun FilterChipItem(
 }
 
 @Composable
-private fun EmptyFilterState(modifier: Modifier = Modifier) {
-    Box(
-        modifier.padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            "No matching exercises",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
 private fun AddExerciseBar(enabled: Boolean, onClick: () -> Unit) {
     Surface(tonalElevation = 3.dp) {
         Button(
@@ -179,6 +153,60 @@ private fun AddExerciseBar(enabled: Boolean, onClick: () -> Unit) {
             enabled = enabled,
         ) {
             Text("Add exercise")
+        }
+    }
+}
+
+private fun LazyListScope.exerciseLibraryItems(
+    state: ExerciseLibraryUiState,
+    onAction: (ExerciseLibraryAction) -> Unit,
+) {
+    state.inPlanHeader?.let { header ->
+        item(key = "header-in-plan") {
+            Text(
+                header,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+        items(state.inPlanExercises, key = { "in-plan-${it.id}" }) { exercise ->
+            val colors = if (exercise.selectable) {
+                CardDefaults.cardColors()
+            } else {
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                )
+            }
+            Card(
+                Modifier.fillMaxWidth(),
+                colors = colors,
+            ) {
+                ExerciseLibraryCard(exercise, onAction)
+            }
+        }
+    }
+    if (state.showEmptyState) {
+        item(key = "empty-filter") {
+            Text(
+                "No matching exercises",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 32.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+        }
+    } else {
+        state.groups.forEach { group ->
+            item(key = "header-${group.bodyPart}") {
+                BodyPartHeader(group.bodyPart)
+            }
+            items(group.exercises, key = { it.id }) { exercise ->
+                Card(Modifier.fillMaxWidth()) {
+                    ExerciseLibraryCard(exercise, onAction)
+                }
+            }
         }
     }
 }
@@ -219,17 +247,19 @@ private fun ExerciseLibraryCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        Checkbox(
-            exercise.selected,
-            { onAction(ExerciseLibraryAction.OnToggleExercise(exercise.id)) },
-            Modifier.clearAndSetSemantics {
-                contentDescription = if (exercise.selected) {
-                    "Deselect ${exercise.name}"
-                } else {
-                    "Select ${exercise.name}"
-                }
-            },
-        )
+        if (exercise.selectable) {
+            Checkbox(
+                exercise.selected,
+                { onAction(ExerciseLibraryAction.OnToggleExercise(exercise.id)) },
+                Modifier.clearAndSetSemantics {
+                    contentDescription = if (exercise.selected) {
+                        "Deselect ${exercise.name}"
+                    } else {
+                        "Select ${exercise.name}"
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -254,7 +284,11 @@ private fun EquipmentIcon(equipment: Equipment) {
 private fun ExerciseLibraryContentPreview() {
     Surface {
         ExerciseLibraryContent(
-            catalogExercises.toLibraryUiState(catalogExercises.first().id),
+            catalogExercises.toLibraryUiState(
+                selectedExerciseId = "incline-curl-db",
+                planName = fullBodyA.name,
+                planExercises = fullBodyA.sets.map { it.exercise },
+            ),
             {},
             {},
         )

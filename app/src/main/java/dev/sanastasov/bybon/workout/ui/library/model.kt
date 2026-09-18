@@ -6,13 +6,20 @@ import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.label
 
 data class ExerciseLibraryUiState(
+    val planName: String? = null,
+    val inPlanExercises: List<ExerciseLibraryItemUi> = emptyList(),
     val groups: List<ExerciseLibraryGroup> = emptyList(),
     val filterChips: List<ExerciseLibraryFilterChipUi> = emptyList(),
     val selectedExerciseId: String? = null,
 ) {
     val addEnabled: Boolean get() = selectedExerciseId != null
 
-    val showEmptyState: Boolean get() = groups.isEmpty() && filterChips.isNotEmpty()
+    val showEmptyState: Boolean get() = groups.isEmpty() && filterChips.any { it.selected }
+
+    val inPlanHeader: String? get() = planName?.let { "In plan $it" }
+
+    fun isAlreadyOnPlan(exerciseId: String): Boolean =
+        inPlanExercises.any { it.id == exerciseId && !it.selectable }
 }
 
 data class ExerciseLibraryGroup(
@@ -25,6 +32,7 @@ data class ExerciseLibraryItemUi(
     val name: String,
     val equipment: Equipment,
     val selected: Boolean = false,
+    val selectable: Boolean = true,
 ) {
     val equipmentLabel: String get() = equipment.label
 }
@@ -87,11 +95,32 @@ sealed class ExerciseLibraryEffect {
 fun List<ExerciseDefinition>.toLibraryUiState(
     selectedExerciseId: String? = null,
     filters: ExerciseLibraryFilters = ExerciseLibraryFilters(),
-): ExerciseLibraryUiState = ExerciseLibraryUiState(
-    groups = matching(filters).groupedByBodyPart(selectedExerciseId),
-    filterChips = filters.toChips(),
-    selectedExerciseId = selectedExerciseId,
-)
+    planName: String? = null,
+    planExercises: List<ExerciseDefinition> = emptyList(),
+): ExerciseLibraryUiState {
+    val planExerciseIds = planExercises.map { it.id }.toSet()
+    val pendingId = selectedExerciseId.takeUnless { it in planExerciseIds }
+    return ExerciseLibraryUiState(
+        planName = planName,
+        inPlanExercises = planExercises.toInPlanItems(this, pendingId),
+        groups = matching(filters)
+            .filter { it.id !in planExerciseIds && it.id != pendingId }
+            .groupedByBodyPart(pendingId),
+        filterChips = filters.toChips(),
+        selectedExerciseId = pendingId,
+    )
+}
+
+private fun List<ExerciseDefinition>.toInPlanItems(
+    catalog: List<ExerciseDefinition>,
+    pendingId: String?,
+): List<ExerciseLibraryItemUi> {
+    val items = map { it.toLibraryItem(selectedExerciseId = null, selectable = false) }
+    val pending = pendingId?.let { id ->
+        catalog.firstOrNull { it.id == id }?.toLibraryItem(id)
+    }
+    return if (pending != null) items + pending else items
+}
 
 fun List<ExerciseDefinition>.matching(filters: ExerciseLibraryFilters): List<ExerciseDefinition> =
     filter { exercise ->
@@ -146,12 +175,15 @@ fun ExerciseLibraryFilters.toChips(): List<ExerciseLibraryFilterChipUi> = buildL
     }
 }
 
-private fun ExerciseDefinition.toLibraryItem(selectedExerciseId: String?): ExerciseLibraryItemUi =
-    ExerciseLibraryItemUi(
-        id = id,
-        name = name,
-        equipment = equipment,
-        selected = id == selectedExerciseId,
-    )
+private fun ExerciseDefinition.toLibraryItem(
+    selectedExerciseId: String?,
+    selectable: Boolean = true,
+): ExerciseLibraryItemUi = ExerciseLibraryItemUi(
+    id = id,
+    name = name,
+    equipment = equipment,
+    selected = selectable && id == selectedExerciseId,
+    selectable = selectable,
+)
 
 private fun <T> Set<T>.toggle(item: T): Set<T> = if (item in this) this - item else this + item

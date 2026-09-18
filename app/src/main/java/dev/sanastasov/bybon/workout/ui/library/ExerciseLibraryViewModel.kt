@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addExercise
 import kotlinx.coroutines.CoroutineScope
@@ -29,18 +30,27 @@ class ExerciseLibraryViewModel(
 
     val uiState: StateFlow<ExerciseLibraryUiState> = combine(
         repository.exercises(),
+        repository.workoutPlans(WorkoutPlansFilter.AllPlans),
         selectedExerciseId,
         filters,
-    ) { exercises, selectedId, currentFilters ->
-        exercises.toLibraryUiState(selectedId, currentFilters)
+    ) { exercises, plans, selectedId, currentFilters ->
+        val plan = plans.firstOrNull { it.id == planId }
+        exercises.toLibraryUiState(
+            selectedExerciseId = selectedId,
+            filters = currentFilters,
+            planName = plan?.name,
+            planExercises = plan?.sets?.map { it.exercise }.orEmpty(),
+        )
     }.stateInWhileInForeground(coroutineScope, ExerciseLibraryUiState())
 
     fun onAction(action: ExerciseLibraryAction) {
         when (action) {
-            is ExerciseLibraryAction.OnToggleExercise ->
+            is ExerciseLibraryAction.OnToggleExercise -> {
+                if (uiState.value.isAlreadyOnPlan(action.exerciseId)) return
                 selectedExerciseId.update { current ->
                     if (current == action.exerciseId) null else action.exerciseId
                 }
+            }
 
             is ExerciseLibraryAction.OnAddExercise -> coroutineScope.launch {
                 val exercise = repository.exercises().first()
