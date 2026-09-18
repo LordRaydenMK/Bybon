@@ -4,8 +4,10 @@ import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -34,6 +36,7 @@ class WorkoutSessionViewModelTest {
             assert(bench.sets.size == 3)
             assert(warmupSets.first().setState == SetState.InProgress)
             assert(bench.sets.all { it.setState == SetState.NotStated })
+            assert(session.state == WorkoutState.InProgress)
         }
     }
 
@@ -139,6 +142,45 @@ class WorkoutSessionViewModelTest {
                 }.restAfterWorkSet.formatRestClock() ==
                     "1:00",
             )
+        }
+    }
+
+    @Test
+    fun `resumes an incomplete session instead of replacing it`() = runTest {
+        val started = fullBodyA.toWorkoutSession()
+        val paused = started.copy(
+            state = WorkoutState.InProgress,
+            exercises = started.exercises.mapIndexed { exerciseIndex, exercise ->
+                if (exerciseIndex != 0) {
+                    exercise
+                } else {
+                    exercise.copy(
+                        warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
+                            set.copy(
+                                setState = if (index == 0) {
+                                    SetState.Completed
+                                } else {
+                                    SetState.NotStated
+                                },
+                            )
+                        },
+                    )
+                }
+            },
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(paused),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            assert(session.startedAt == paused.startedAt)
+            assert(session.exercises.first().warmupSets!![0].setState == SetState.Completed)
+            assert(session.exercises.first().warmupSets!![1].setState == SetState.InProgress)
+            assert(session.state == WorkoutState.InProgress)
         }
     }
 }

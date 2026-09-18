@@ -15,6 +15,10 @@ data class WorkoutSession(
 
     val workoutSets: List<ExerciseSet> = exercises.flatMap { it.orderedSets }
 
+    val isResumable: Boolean
+        get() = state is WorkoutState.InProgress ||
+            workoutSets.any { it.setState == SetState.InProgress }
+
     init {
         require(workoutSets.map { it.setState }.filter { it == SetState.InProgress }.size <= 1) {
             "At most 1 set can be in progress. Found ${workoutSets.filter {

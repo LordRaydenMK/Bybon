@@ -230,6 +230,52 @@ class WorkoutSessionTest {
         assert(warmupSets.drop(1).all { it.setState == SetState.NotStated })
         assert(bench.sets.all { it.setState == SetState.NotStated })
         assert(actual.workoutSets.drop(1).all { it.setState == SetState.NotStated })
+        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.isResumable)
+    }
+
+    @Test
+    fun `startWorkout is idempotent when a set is already in progress`() {
+        val started = fullBodyA.toOverviewSession().startWorkout()
+
+        val actual = started.startWorkout()
+
+        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
+        assert(actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+    }
+
+    @Test
+    fun `startWorkout restores an in-progress set when none is active`() {
+        val started = fullBodyA.toWorkoutSession()
+        val paused = started.copy(
+            state = WorkoutState.InProgress,
+            exercises = started.exercises.mapIndexed { exerciseIndex, exercise ->
+                if (exerciseIndex != 0) {
+                    exercise
+                } else {
+                    exercise.copy(
+                        warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
+                            set.copy(
+                                setState = if (index == 0) {
+                                    SetState.Completed
+                                } else {
+                                    SetState.NotStated
+                                },
+                            )
+                        },
+                    )
+                }
+            },
+        )
+        assert(paused.workoutSets.none { it.setState == SetState.InProgress })
+
+        val actual = paused.startWorkout()
+
+        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.exercises.first().warmupSets!![0].setState == SetState.Completed)
+        assert(actual.exercises.first().warmupSets!![1].setState == SetState.InProgress)
+        assert(actual.isResumable)
     }
 
     @Test

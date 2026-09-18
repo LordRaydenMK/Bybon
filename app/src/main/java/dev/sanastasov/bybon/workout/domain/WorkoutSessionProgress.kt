@@ -9,13 +9,10 @@ fun WorkoutSession.completeSet(
     val updated = updateExerciseSet(exercise, setIndex, isWarmup) {
         it.copy(setState = SetState.Completed)
     }
-    return if (next != null) {
-        val nextExercise = updated.exercises.first { it.id == next.exerciseId }
-        updated.updateExerciseSet(nextExercise, next.index, next.isWarmup) {
-            it.copy(setState = SetState.InProgress)
-        }
-    } else {
-        updated
+    val target = next ?: updated.firstNotStartedSet() ?: return updated
+    val nextExercise = updated.exercises.first { it.id == target.exerciseId }
+    return updated.updateExerciseSet(nextExercise, target.index, target.isWarmup) {
+        it.copy(setState = SetState.InProgress)
     }
 }
 

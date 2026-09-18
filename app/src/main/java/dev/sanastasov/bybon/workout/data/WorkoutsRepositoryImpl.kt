@@ -57,7 +57,14 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
                 it.planId == session.planId && it.state !is WorkoutState.Completed
             }
             if (index >= 0) {
-                list.toMutableList().apply { set(index, session) }
+                val existing = list[index]
+                if (session.state is WorkoutState.NotStarted &&
+                    existing.state is WorkoutState.InProgress
+                ) {
+                    list
+                } else {
+                    list.toMutableList().apply { set(index, session) }
+                }
             } else {
                 list + session
             }
