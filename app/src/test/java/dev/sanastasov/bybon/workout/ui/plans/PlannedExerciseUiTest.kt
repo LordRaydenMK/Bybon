@@ -47,4 +47,27 @@ class PlannedExerciseUiTest {
         val pullUp = fullBodyA.sets.first { it.exercise.id == "pullup-assisted" }
         assert(pullUp.subtitle() == "Back · Assisted")
     }
+
+    @Test
+    fun `exerciseOverflow disables move up on the first card`() {
+        val overflow = fullBodyA.exerciseOverflow(0) {}!!
+
+        assert(!overflow.canMoveUp)
+        assert(overflow.canMoveDown)
+    }
+
+    @Test
+    fun `exerciseOverflow disables move down on the last card`() {
+        val overflow = fullBodyA.exerciseOverflow(fullBodyA.sets.lastIndex) {}!!
+
+        assert(overflow.canMoveUp)
+        assert(!overflow.canMoveDown)
+    }
+
+    @Test
+    fun `exerciseOverflow is hidden for a single exercise plan`() {
+        val plan = fullBodyA.copy(sets = listOf(fullBodyA.sets.first()))
+
+        assert(plan.exerciseOverflow(0) {} == null)
+    }
 }

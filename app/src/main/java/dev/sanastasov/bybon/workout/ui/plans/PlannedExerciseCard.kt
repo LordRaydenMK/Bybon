@@ -39,13 +39,6 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCardSetColWidth
 import dev.sanastasov.bybon.workout.ui.RestOrSpacer
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 
-class PlannedExerciseOverflow(
-    val canMoveUp: Boolean,
-    val canMoveDown: Boolean,
-    val onMoveUp: () -> Unit,
-    val onMoveDown: () -> Unit,
-)
-
 @Composable
 fun PlannedExerciseCard(
     exercise: PlanedExercise,
@@ -261,16 +254,17 @@ private fun PlannedExerciseActions(
     }
 }
 
-private fun previewOverflow(
-    canMoveUp: Boolean = false,
-    canMoveDown: Boolean = true,
-) = PlannedExerciseOverflow(canMoveUp, canMoveDown, {}, {})
-
 @Preview
 @Composable
 private fun PlannedExerciseCardWithWarmupsPreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first(), previewOverflow(), {}, {}, {})
+        PlannedExerciseCard(
+            fullBodyA.sets.first(),
+            PlannedExerciseOverflow(false, true, {}, {}),
+            {},
+            {},
+            {},
+        )
     }
 }
 
@@ -280,7 +274,7 @@ private fun PlannedExerciseCardWithoutWarmupsPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" },
-            previewOverflow(canMoveUp = true, canMoveDown = true),
+            PlannedExerciseOverflow(true, true, {}, {}),
             {},
             {},
             {},
@@ -294,7 +288,7 @@ private fun PlannedExerciseCardSingleSetPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1),
-            previewOverflow(canMoveUp = true, canMoveDown = false),
+            PlannedExerciseOverflow(true, false, {}, {}),
             {},
             {},
             {},

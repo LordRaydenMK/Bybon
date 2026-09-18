@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -26,6 +27,7 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.fullBodyA
@@ -74,23 +76,11 @@ private fun EditPlanContent(
                     currentPlan.sets,
                     key = { _, exercise -> exercise.exercise.id },
                 ) { index, exercise ->
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .animateItem(),
-                    ) {
-                        PlannedExerciseCard(
-                            exercise,
-                            overflow = currentPlan.exerciseOverflow(index, onAction),
-                            onAddSet = { onAction(EditPlanAction.OnAddSet(exercise.exercise.id)) },
-                            onRemoveLastSet = {
-                                onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
-                            },
-                            onRemoveExercise = {
-                                onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
-                            },
-                        )
-                    }
+                    EditPlanExerciseCard(
+                        exercise,
+                        currentPlan.exerciseOverflow(index, onAction),
+                        onAction,
+                    )
                 }
                 item(key = "add-exercise") {
                     Box(
@@ -118,25 +108,36 @@ private fun EditPlanContent(
 }
 
 @Composable
+private fun LazyItemScope.EditPlanExerciseCard(
+    exercise: PlanedExercise,
+    overflow: PlannedExerciseOverflow?,
+    onAction: (EditPlanAction) -> Unit,
+) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .animateItem(),
+    ) {
+        PlannedExerciseCard(
+            exercise,
+            overflow = overflow,
+            onAddSet = { onAction(EditPlanAction.OnAddSet(exercise.exercise.id)) },
+            onRemoveLastSet = {
+                onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
+            },
+            onRemoveExercise = {
+                onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
+            },
+        )
+    }
+}
+
+@Composable
 private fun EditPlanHeader(plan: WorkoutPlan) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(plan.name, fontWeight = FontWeight.Bold)
         plan.description?.let { Text(it) }
     }
-}
-
-private fun WorkoutPlan.exerciseOverflow(
-    index: Int,
-    onAction: (EditPlanAction) -> Unit,
-): PlannedExerciseOverflow? {
-    if (sets.size <= 1) return null
-    val exerciseId = sets[index].exercise.id
-    return PlannedExerciseOverflow(
-        canMoveUp = index > 0,
-        canMoveDown = index < sets.lastIndex,
-        onMoveUp = { onAction(EditPlanAction.OnMoveExerciseUp(exerciseId)) },
-        onMoveDown = { onAction(EditPlanAction.OnMoveExerciseDown(exerciseId)) },
-    )
 }
 
 @Preview
