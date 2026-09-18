@@ -81,19 +81,140 @@ class ExerciseLibraryUiTest {
     @Test
     fun `addEnabled is true when an exercise is selected`() {
         val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
-        val state = ExerciseLibraryUiState(listOf(curl).groupedByBodyPart("curl"))
+        val state = listOf(curl).toLibraryUiState("curl")
 
         assert(state.addEnabled)
         assert(state.selectedExerciseId == "curl")
+        assert(!state.showEmptyState)
     }
 
     @Test
     fun `addEnabled is false when nothing is selected`() {
         val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
-        val state = ExerciseLibraryUiState(listOf(curl).groupedByBodyPart())
+        val state = listOf(curl).toLibraryUiState()
 
         assert(!state.addEnabled)
         assert(state.selectedExerciseId == null)
         assert(!state.groups.single().exercises.single().selected)
+        assert(!state.showEmptyState)
     }
+
+    @Test
+    fun `default chips include every muscle group and equipment and omit clear all`() {
+        val chips = ExerciseLibraryFilters().toChips()
+
+        assert(chips.none { it.id == ExerciseLibraryFilterId.ClearAll })
+        assert(
+            chips.map { it.id } == MuscleGroup.entries.map {
+                ExerciseLibraryFilterId.MuscleGroupFilter(it)
+            } + Equipment.entries.map { ExerciseLibraryFilterId.EquipmentFilter(it) },
+        )
+        assert(chips.none { it.selected })
+        val assisted = chips.single {
+            it.id == ExerciseLibraryFilterId.EquipmentFilter(Equipment.AssistedBodyWeight)
+        }
+        assert(assisted.label == "Assisted")
+    }
+
+    @Test
+    fun `clear all chip appears when any filter is selected`() {
+        val chips = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Arms)).toChips()
+
+        assert(chips.first().id == ExerciseLibraryFilterId.ClearAll)
+        assert(chips.first().label == "Clear all")
+        assert(!chips.first().selected)
+        val arms = chips.single {
+            it.id == ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms)
+        }
+        assert(arms.selected)
+        assert(chips.filter { it.selected }.single().id == arms.id)
+    }
+
+    @Test
+    fun `toggling a selected chip deselects it`() {
+        val filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Arms))
+            .toggle(ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms))
+
+        assert(filters == ExerciseLibraryFilters())
+    }
+
+    @Test
+    fun `matching with no filters returns every exercise`() {
+        val exercises = listOf(curl, bench, squat)
+
+        assert(exercises.matching(ExerciseLibraryFilters()) == exercises)
+    }
+
+    @Test
+    fun `muscle group chips are OR`() {
+        val matches = listOf(curl, bench, squat).matching(
+            ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Arms, MuscleGroup.Legs)),
+        )
+
+        assert(matches == listOf(curl, squat))
+    }
+
+    @Test
+    fun `equipment chips are OR`() {
+        val matches = listOf(curl, bench, squat).matching(
+            ExerciseLibraryFilters(equipment = setOf(Equipment.Dumbbell, Equipment.Barbell)),
+        )
+
+        assert(matches == listOf(curl, bench, squat))
+    }
+
+    @Test
+    fun `muscle group and equipment chips are AND`() {
+        val matches = listOf(curl, machineCurl, bench, squat).matching(
+            ExerciseLibraryFilters(
+                muscleGroups = setOf(MuscleGroup.Arms),
+                equipment = setOf(Equipment.Dumbbell),
+            ),
+        )
+
+        assert(matches == listOf(curl))
+    }
+
+    @Test
+    fun `empty matching filters show the empty state`() {
+        val state = listOf(curl, bench).toLibraryUiState(
+            filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Core)),
+        )
+
+        assert(state.groups.isEmpty())
+        assert(state.showEmptyState)
+        assert(state.filterChips.first().id == ExerciseLibraryFilterId.ClearAll)
+    }
+
+    @Test
+    fun `selected exercise remains selected in state when filtered out`() {
+        val state = listOf(curl, bench).toLibraryUiState(
+            selectedExerciseId = "curl",
+            filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Chest)),
+        )
+
+        assert(state.selectedExerciseId == "curl")
+        assert(state.addEnabled)
+        assert(state.groups.single().exercises.none { it.selected })
+    }
+
+    @Test
+    fun `clear all resets both categories`() {
+        val filters = ExerciseLibraryFilters(
+            muscleGroups = setOf(MuscleGroup.Arms),
+            equipment = setOf(Equipment.Dumbbell),
+        ).toggle(ExerciseLibraryFilterId.ClearAll)
+
+        assert(filters == ExerciseLibraryFilters())
+    }
+
+    private val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+    private val machineCurl = ExerciseDefinition(
+        "curl-machine",
+        "Curl Machine",
+        MuscleGroup.Arms,
+        Equipment.Machine,
+    )
+    private val bench = ExerciseDefinition("bench", "Bench", MuscleGroup.Chest, Equipment.Barbell)
+    private val squat = ExerciseDefinition("squat", "Squat", MuscleGroup.Legs, Equipment.Barbell)
 }
