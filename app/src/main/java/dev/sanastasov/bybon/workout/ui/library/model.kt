@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.library
 
+import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.label
@@ -21,9 +22,11 @@ data class ExerciseLibraryGroup(
 data class ExerciseLibraryItemUi(
     val id: String,
     val name: String,
-    val equipmentLabel: String,
+    val equipment: Equipment,
     val selected: Boolean = false,
-)
+) {
+    val equipmentLabel: String get() = equipment.label
+}
 
 sealed class ExerciseLibraryAction {
     data class OnToggleExercise(
@@ -57,6 +60,6 @@ private fun ExerciseDefinition.toLibraryItem(selectedExerciseId: String?): Exerc
     ExerciseLibraryItemUi(
         id = id,
         name = name,
-        equipmentLabel = equipment.label,
+        equipment = equipment,
         selected = id == selectedExerciseId,
     )

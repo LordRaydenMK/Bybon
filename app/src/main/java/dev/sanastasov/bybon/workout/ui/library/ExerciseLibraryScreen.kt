@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -28,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.icons.icon
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
@@ -100,11 +103,21 @@ private fun AddExerciseBar(enabled: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun BodyPartHeader(bodyPart: MuscleGroup) {
-    Text(
-        bodyPart.name,
-        fontWeight = FontWeight.Bold,
-        style = MaterialTheme.typography.titleMedium,
-    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Icon(
+            bodyPart.icon,
+            contentDescription = null,
+            Modifier.size(24.dp),
+        )
+        Text(
+            bodyPart.name,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMedium,
+        )
+    }
 }
 
 @Composable
@@ -127,11 +140,22 @@ private fun ExerciseLibraryCard(
                 exercise.name,
                 fontWeight = FontWeight.Bold,
             )
-            Text(
-                exercise.equipmentLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(
+                    exercise.equipment.icon,
+                    contentDescription = null,
+                    Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    exercise.equipmentLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Checkbox(
             exercise.selected,
