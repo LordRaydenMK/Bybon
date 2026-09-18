@@ -1,15 +1,14 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
+import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class WorkoutPlansViewModel(
@@ -31,7 +30,7 @@ class WorkoutPlansViewModel(
             plans = plans.map { it.toUi(sessions) },
             showArchived = includeArchived,
         )
-    }.stateIn(coroutineScope, SharingStarted.Eagerly, WorkoutPlansUiState())
+    }.stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {
