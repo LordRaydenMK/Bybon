@@ -77,6 +77,7 @@ private fun EditPlanContent(
                     Card(Modifier.fillMaxWidth()) {
                         PlannedExerciseCard(
                             exercise,
+                            canRemoveExercise = currentPlan.sets.size > 1,
                             onAddSet = { onAction(EditPlanAction.OnAddSet(exercise.exercise.id)) },
                             onRemoveLastSet = {
                                 onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
@@ -125,5 +126,13 @@ private fun EditPlanHeader(plan: WorkoutPlan) {
 private fun EditPlanContentPreview() {
     Surface {
         EditPlanContent(fullBodyA, {}, {})
+    }
+}
+
+@Preview
+@Composable
+private fun EditPlanContentSingleExercisePreview() {
+    Surface {
+        EditPlanContent(fullBodyA.copy(sets = listOf(fullBodyA.sets.first())), {}, {})
     }
 }
