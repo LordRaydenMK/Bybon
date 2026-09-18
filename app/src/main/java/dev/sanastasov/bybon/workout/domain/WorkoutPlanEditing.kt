@@ -22,7 +22,9 @@ fun WorkoutPlan.removeExercise(exerciseId: String): WorkoutPlan {
 }
 
 fun WorkoutPlan.addExercise(exercise: ExerciseDefinition): WorkoutPlan {
-    if (sets.any { it.exercise.id == exercise.id }) return this
+    check(sets.none { it.exercise.id == exercise.id }) {
+        "Exercise ${exercise.id} is already on the plan"
+    }
     return copy(
         sets = sets + PlanedExercise(
             exercise = exercise,

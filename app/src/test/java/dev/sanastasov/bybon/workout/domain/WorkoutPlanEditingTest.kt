@@ -62,11 +62,12 @@ class WorkoutPlanEditingTest {
     }
 
     @Test
-    fun `addExercise is a no-op when the exercise is already on the plan`() {
+    fun `addExercise throws when the exercise is already on the plan`() {
         val bench = catalogExercise("bench-press-bb")
-        val actual = fullBodyA.addExercise(bench)
-
-        assert(actual == fullBodyA)
+        val error = assertFailsWith<IllegalStateException> {
+            fullBodyA.addExercise(bench)
+        }
+        assert(error.message == "Exercise bench-press-bb is already on the plan")
     }
 
     @Test
