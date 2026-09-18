@@ -5,6 +5,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addWorkSet
+import dev.sanastasov.bybon.workout.domain.moveExerciseDown
+import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastWorkSet
 import kotlinx.coroutines.CoroutineScope
@@ -44,6 +46,12 @@ class EditPlanViewModel(
 
                 is EditPlanAction.OnRemoveExercise ->
                     repository.updatePlan(planId) { it.removeExercise(action.exerciseId) }
+
+                is EditPlanAction.OnMoveExerciseUp ->
+                    repository.updatePlan(planId) { it.moveExerciseUp(action.exerciseId) }
+
+                is EditPlanAction.OnMoveExerciseDown ->
+                    repository.updatePlan(planId) { it.moveExerciseDown(action.exerciseId) }
 
                 EditPlanAction.OnAddExercise ->
                     _effects.trySend(EditPlanEffect.OpenExerciseLibrary)
