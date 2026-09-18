@@ -2,7 +2,10 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,9 +14,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -21,12 +26,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,24 +76,95 @@ private fun ExerciseLibraryContent(
             }
         },
     ) { contentPadding ->
-        LazyColumn(
+        Column(
             Modifier
                 .padding(contentPadding)
-                .padding(horizontal = 16.dp, vertical = 24.dp)
                 .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            state.groups.forEach { group ->
-                item(key = "header-${group.bodyPart}") {
-                    BodyPartHeader(group.bodyPart)
-                }
-                items(group.exercises, key = { it.id }) { exercise ->
-                    Card(Modifier.fillMaxWidth()) {
-                        ExerciseLibraryCard(exercise, onAction)
+            FilterChipBar(
+                chips = state.filterChips,
+                onAction = onAction,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+            if (state.showEmptyState) {
+                EmptyFilterState(Modifier.fillMaxSize())
+            } else {
+                LazyColumn(
+                    Modifier
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                        .fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    state.groups.forEach { group ->
+                        item(key = "header-${group.bodyPart}") {
+                            BodyPartHeader(group.bodyPart)
+                        }
+                        items(group.exercises, key = { it.id }) { exercise ->
+                            Card(Modifier.fillMaxWidth()) {
+                                ExerciseLibraryCard(exercise, onAction)
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FilterChipBar(
+    chips: List<ExerciseLibraryFilterChipUi>,
+    onAction: (ExerciseLibraryAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FlowRow(
+        modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        chips.forEach { chip ->
+            key(chip.id) {
+                FilterChipItem(chip, onAction)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilterChipItem(
+    chip: ExerciseLibraryFilterChipUi,
+    onAction: (ExerciseLibraryAction) -> Unit,
+) {
+    val onClick = { onAction(ExerciseLibraryAction.OnToggleFilter(chip.id)) }
+    if (chip.id is ExerciseLibraryFilterId.ClearAll) {
+        AssistChip(
+            onClick = onClick,
+            label = { Text(chip.label) },
+        )
+    } else {
+        FilterChip(
+            selected = chip.selected,
+            onClick = onClick,
+            label = { Text(chip.label) },
+        )
+    }
+}
+
+@Composable
+private fun EmptyFilterState(modifier: Modifier = Modifier) {
+    Box(
+        modifier.padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            "No matching exercises",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -176,8 +254,20 @@ private fun EquipmentIcon(equipment: Equipment) {
 private fun ExerciseLibraryContentPreview() {
     Surface {
         ExerciseLibraryContent(
-            ExerciseLibraryUiState(
-                catalogExercises.groupedByBodyPart(catalogExercises.first().id),
+            catalogExercises.toLibraryUiState(catalogExercises.first().id),
+            {},
+            {},
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ExerciseLibraryEmptyFilterPreview() {
+    Surface {
+        ExerciseLibraryContent(
+            catalogExercises.toLibraryUiState(
+                filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Core)),
             ),
             {},
             {},

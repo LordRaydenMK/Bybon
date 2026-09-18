@@ -25,12 +25,14 @@ class ExerciseLibraryViewModel(
     val effects: Flow<ExerciseLibraryEffect> = _effects.receiveAsFlow()
 
     private val selectedExerciseId = MutableStateFlow<String?>(null)
+    private val filters = MutableStateFlow(ExerciseLibraryFilters())
 
     val uiState: StateFlow<ExerciseLibraryUiState> = combine(
         repository.exercises(),
         selectedExerciseId,
-    ) { exercises, selectedId ->
-        ExerciseLibraryUiState(exercises.groupedByBodyPart(selectedId))
+        filters,
+    ) { exercises, selectedId, currentFilters ->
+        exercises.toLibraryUiState(selectedId, currentFilters)
     }.stateInWhileInForeground(coroutineScope, ExerciseLibraryUiState())
 
     fun onAction(action: ExerciseLibraryAction) {
@@ -47,6 +49,9 @@ class ExerciseLibraryViewModel(
                 repository.updatePlan(planId) { it.addExercise(exercise) }
                 _effects.trySend(ExerciseLibraryEffect.NavigateBack)
             }
+
+            is ExerciseLibraryAction.OnToggleFilter ->
+                filters.update { it.toggle(action.id) }
         }
     }
 }

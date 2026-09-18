@@ -37,6 +37,9 @@ class ExerciseLibraryViewModelTest {
         assert(state.groups.first().exercises.first().equipmentLabel == "Dumbbell")
         assert(!state.addEnabled)
         assert(state.groups.flatMap { it.exercises }.none { it.selected })
+        assert(state.filterChips.none { it.selected })
+        assert(state.filterChips.none { it.id == ExerciseLibraryFilterId.ClearAll })
+        assert(!state.showEmptyState)
     }
 
     @Test
@@ -135,6 +138,173 @@ class ExerciseLibraryViewModelTest {
 
         assert(viewModel.effects.first() == ExerciseLibraryEffect.NavigateBack)
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `toggling a muscle group chip keeps matching groups`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+            ),
+        )
+
+        val state = viewModel.uiState.first { it.groups.size == 1 }
+        assert(state.groups.single().bodyPart == MuscleGroup.Arms)
+        val armsChip = state.filterChips.single {
+            it.id == ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms)
+        }
+        assert(armsChip.selected)
+        assert(state.filterChips.first().id == ExerciseLibraryFilterId.ClearAll)
+        assert(!state.showEmptyState)
+    }
+
+    @Test
+    fun `muscle group chips of the same category are OR`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+            ),
+        )
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Legs),
+            ),
+        )
+
+        val expectedGroups = listOf(MuscleGroup.Arms, MuscleGroup.Legs)
+        val state = viewModel.uiState.first { state ->
+            state.groups.map { it.bodyPart } == expectedGroups
+        }
+        assert(state.groups.flatMap { it.exercises }.any { it.id == "incline-curl-db" })
+        assert(state.groups.flatMap { it.exercises }.any { it.id == "squat-bb" })
+        assert(state.groups.flatMap { it.exercises }.none { it.id == "bench-press-bb" })
+    }
+
+    @Test
+    fun `muscle group and equipment chips are AND`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+            ),
+        )
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.EquipmentFilter(Equipment.Dumbbell),
+            ),
+        )
+
+        val state = viewModel.uiState.first {
+            it.groups.singleOrNull()?.exercises?.map { exercise -> exercise.id } ==
+                listOf("incline-curl-db", "skullcrusher-db")
+        }
+        assert(state.groups.single().bodyPart == MuscleGroup.Arms)
+        assert(state.groups.single().exercises.none { it.id == "biceps-curl-machine" })
+    }
+
+    @Test
+    fun `toggling a selected chip removes that filter`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+            ),
+        )
+        viewModel.uiState.first { it.groups.size == 1 }
+
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+            ),
+        )
+
+        val state = viewModel.uiState.first { it.groups.size > 1 }
+        assert(state.filterChips.none { it.selected })
+        assert(state.filterChips.none { it.id == ExerciseLibraryFilterId.ClearAll })
+    }
+
+    @Test
+    fun `clear all removes every selected filter`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+            ),
+        )
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.EquipmentFilter(Equipment.Dumbbell),
+            ),
+        )
+        viewModel.uiState.first { state ->
+            state.filterChips.any { it.id == ExerciseLibraryFilterId.ClearAll }
+        }
+
+        viewModel.onAction(ExerciseLibraryAction.OnToggleFilter(ExerciseLibraryFilterId.ClearAll))
+
+        val state = viewModel.uiState.first { current ->
+            current.filterChips.none { it.selected }
+        }
+        assert(state.filterChips.none { it.id == ExerciseLibraryFilterId.ClearAll })
+        assert(
+            state.groups.map { it.bodyPart } == listOf(
+                MuscleGroup.Arms,
+                MuscleGroup.Back,
+                MuscleGroup.Chest,
+                MuscleGroup.Legs,
+                MuscleGroup.Shoulders,
+            ),
+        )
+    }
+
+    @Test
+    fun `filters with no matches show the empty state`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Core),
+            ),
+        )
+
+        val state = viewModel.uiState.first { it.showEmptyState }
+        assert(state.groups.isEmpty())
+        val coreChip = state.filterChips.single {
+            it.id == ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Core)
+        }
+        assert(coreChip.selected)
+    }
+
+    @Test
+    fun `selected exercise stays enabled after it is filtered out`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+        viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("incline-curl-db"))
+        viewModel.uiState.first { it.addEnabled }
+
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Chest),
+            ),
+        )
+
+        val state = viewModel.uiState.first {
+            it.groups.singleOrNull()?.bodyPart == MuscleGroup.Chest
+        }
+        assert(state.selectedExerciseId == "incline-curl-db")
+        assert(state.addEnabled)
+        assert(state.groups.flatMap { it.exercises }.none { it.selected })
     }
 
     private fun TestScope.viewModel(
