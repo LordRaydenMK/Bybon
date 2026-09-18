@@ -40,6 +40,17 @@ class ExerciseLibraryViewModelTest {
         assert(state.filterChips.none { it.selected })
         assert(state.filterChips.none { it.id == ExerciseLibraryFilterId.ClearAll })
         assert(!state.showEmptyState)
+        assert(state.planName == "Full Body A")
+        assert(state.inPlanHeader == "In plan Full Body A")
+        assert(
+            state.inPlanExercises.map { it.id } == fullBodyA.sets.map { it.exercise.id },
+        )
+        assert(state.inPlanExercises.none { it.selectable })
+        assert(
+            state.groups.flatMap { it.exercises }.none { exercise ->
+                exercise.id in fullBodyA.sets.map { it.exercise.id }
+            },
+        )
     }
 
     @Test
@@ -51,8 +62,10 @@ class ExerciseLibraryViewModelTest {
 
         val state = viewModel.uiState.first { it.addEnabled }
         assert(state.exercise("incline-curl-db").selected)
+        assert(state.exercise("incline-curl-db").selectable)
         assert(state.selectedExerciseId == "incline-curl-db")
-        assert(state.groups.flatMap { it.exercises }.single { it.selected }.id == "incline-curl-db")
+        assert(state.inPlanExercises.last().id == "incline-curl-db")
+        assert(state.groups.flatMap { it.exercises }.none { it.id == "incline-curl-db" })
     }
 
     @Test
@@ -66,6 +79,8 @@ class ExerciseLibraryViewModelTest {
 
         val state = viewModel.uiState.first { !it.addEnabled && it.groups.isNotEmpty() }
         assert(!state.exercise("incline-curl-db").selected)
+        assert(state.groups.flatMap { it.exercises }.any { it.id == "incline-curl-db" })
+        assert(state.inPlanExercises.none { it.id == "incline-curl-db" })
     }
 
     @Test
@@ -75,11 +90,14 @@ class ExerciseLibraryViewModelTest {
         viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("incline-curl-db"))
         viewModel.uiState.first { it.addEnabled }
 
-        viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("bench-press-bb"))
+        viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("incline-bench-press-db"))
 
-        val state = viewModel.uiState.first { it.exercise("bench-press-bb").selected }
+        val state = viewModel.uiState.first { it.exercise("incline-bench-press-db").selected }
         assert(state.addEnabled)
         assert(!state.exercise("incline-curl-db").selected)
+        assert(state.inPlanExercises.last().id == "incline-bench-press-db")
+        assert(state.groups.flatMap { it.exercises }.any { it.id == "incline-curl-db" })
+        assert(state.groups.flatMap { it.exercises }.none { it.id == "incline-bench-press-db" })
     }
 
     @Test
@@ -124,20 +142,18 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
-    fun `adding an exercise already on the plan navigates back without duplicating`() = runTest {
-        val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA),
-            initialExercises = catalogExercises,
-        )
-        val viewModel = ExerciseLibraryViewModel(fullBodyA.id, repository, backgroundScope)
+    fun `toggling an exercise already on the plan does not select it`() = runTest {
+        val viewModel = viewModel()
         viewModel.uiState.first { it.groups.isNotEmpty() }
+
         viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("bench-press-bb"))
-        viewModel.uiState.first { it.addEnabled }
 
-        viewModel.onAction(ExerciseLibraryAction.OnAddExercise("bench-press-bb"))
-
-        assert(viewModel.effects.first() == ExerciseLibraryEffect.NavigateBack)
-        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        val state = viewModel.uiState.first { it.inPlanExercises.isNotEmpty() }
+        assert(!state.addEnabled)
+        assert(state.selectedExerciseId == null)
+        assert(state.inPlanExercises.none { it.selected })
+        assert(state.inPlanExercises.any { it.id == "bench-press-bb" && !it.selectable })
+        assert(state.groups.flatMap { it.exercises }.none { it.id == "bench-press-bb" })
     }
 
     @Test
@@ -182,8 +198,9 @@ class ExerciseLibraryViewModelTest {
             state.groups.map { it.bodyPart } == expectedGroups
         }
         assert(state.groups.flatMap { it.exercises }.any { it.id == "incline-curl-db" })
-        assert(state.groups.flatMap { it.exercises }.any { it.id == "squat-bb" })
+        assert(state.groups.flatMap { it.exercises }.any { it.id == "leg-press" })
         assert(state.groups.flatMap { it.exercises }.none { it.id == "bench-press-bb" })
+        assert(state.groups.flatMap { it.exercises }.none { it.id == "squat-bb" })
     }
 
     @Test
@@ -204,10 +221,11 @@ class ExerciseLibraryViewModelTest {
 
         val state = viewModel.uiState.first {
             it.groups.singleOrNull()?.exercises?.map { exercise -> exercise.id } ==
-                listOf("incline-curl-db", "skullcrusher-db")
+                listOf("incline-curl-db")
         }
         assert(state.groups.single().bodyPart == MuscleGroup.Arms)
         assert(state.groups.single().exercises.none { it.id == "biceps-curl-machine" })
+        assert(state.inPlanExercises.any { it.id == "skullcrusher-db" && !it.selectable })
     }
 
     @Test
@@ -280,6 +298,8 @@ class ExerciseLibraryViewModelTest {
 
         val state = viewModel.uiState.first { it.showEmptyState }
         assert(state.groups.isEmpty())
+        assert(state.inPlanHeader == "In plan Full Body A")
+        assert(state.inPlanExercises.isNotEmpty())
         val coreChip = state.filterChips.single {
             it.id == ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Core)
         }
@@ -304,7 +324,9 @@ class ExerciseLibraryViewModelTest {
         }
         assert(state.selectedExerciseId == "incline-curl-db")
         assert(state.addEnabled)
-        assert(state.groups.flatMap { it.exercises }.none { it.selected })
+        assert(state.inPlanExercises.last().id == "incline-curl-db")
+        assert(state.inPlanExercises.last().selected)
+        assert(state.groups.flatMap { it.exercises }.none { it.id == "incline-curl-db" })
     }
 
     private fun TestScope.viewModel(
@@ -315,5 +337,5 @@ class ExerciseLibraryViewModelTest {
     ) = ExerciseLibraryViewModel(fullBodyA.id, repository, backgroundScope)
 
     private fun ExerciseLibraryUiState.exercise(id: String) =
-        groups.flatMap { it.exercises }.first { it.id == id }
+        (inPlanExercises + groups.flatMap { it.exercises }).first { it.id == id }
 }
