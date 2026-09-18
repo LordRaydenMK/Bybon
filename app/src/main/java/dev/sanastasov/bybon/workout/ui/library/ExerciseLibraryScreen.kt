@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AssistChip
@@ -96,38 +96,7 @@ private fun ExerciseLibraryContent(
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                state.inPlanHeader?.let { header ->
-                    item(key = "header-in-plan") {
-                        Text(
-                            header,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    }
-                    items(state.inPlanExercises, key = { "in-plan-${it.id}" }) { exercise ->
-                        InPlanExerciseCard(exercise, onAction)
-                    }
-                }
-                if (state.showEmptyState) {
-                    item(key = "empty-filter") {
-                        EmptyFilterState(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp),
-                        )
-                    }
-                } else {
-                    state.groups.forEach { group ->
-                        item(key = "header-${group.bodyPart}") {
-                            BodyPartHeader(group.bodyPart)
-                        }
-                        items(group.exercises, key = { it.id }) { exercise ->
-                            Card(Modifier.fillMaxWidth()) {
-                                ExerciseLibraryCard(exercise, onAction)
-                            }
-                        }
-                    }
-                }
+                exerciseLibraryItems(state, onAction)
             }
         }
     }
@@ -174,21 +143,6 @@ private fun FilterChipItem(
 }
 
 @Composable
-private fun EmptyFilterState(modifier: Modifier = Modifier) {
-    Box(
-        modifier.padding(horizontal = 16.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            "No matching exercises",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
 private fun AddExerciseBar(enabled: Boolean, onClick: () -> Unit) {
     Surface(tonalElevation = 3.dp) {
         Button(
@@ -203,23 +157,57 @@ private fun AddExerciseBar(enabled: Boolean, onClick: () -> Unit) {
     }
 }
 
-@Composable
-private fun InPlanExerciseCard(
-    exercise: ExerciseLibraryItemUi,
+private fun LazyListScope.exerciseLibraryItems(
+    state: ExerciseLibraryUiState,
     onAction: (ExerciseLibraryAction) -> Unit,
 ) {
-    val colors = if (exercise.selectable) {
-        CardDefaults.cardColors()
-    } else {
-        CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        )
+    state.inPlanHeader?.let { header ->
+        item(key = "header-in-plan") {
+            Text(
+                header,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
+            )
+        }
+        items(state.inPlanExercises, key = { "in-plan-${it.id}" }) { exercise ->
+            val colors = if (exercise.selectable) {
+                CardDefaults.cardColors()
+            } else {
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                )
+            }
+            Card(
+                Modifier.fillMaxWidth(),
+                colors = colors,
+            ) {
+                ExerciseLibraryCard(exercise, onAction)
+            }
+        }
     }
-    Card(
-        Modifier.fillMaxWidth(),
-        colors = colors,
-    ) {
-        ExerciseLibraryCard(exercise, onAction)
+    if (state.showEmptyState) {
+        item(key = "empty-filter") {
+            Text(
+                "No matching exercises",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 32.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+            )
+        }
+    } else {
+        state.groups.forEach { group ->
+            item(key = "header-${group.bodyPart}") {
+                BodyPartHeader(group.bodyPart)
+            }
+            items(group.exercises, key = { it.id }) { exercise ->
+                Card(Modifier.fillMaxWidth()) {
+                    ExerciseLibraryCard(exercise, onAction)
+                }
+            }
+        }
     }
 }
 

@@ -14,7 +14,7 @@ data class ExerciseLibraryUiState(
 ) {
     val addEnabled: Boolean get() = selectedExerciseId != null
 
-    val showEmptyState: Boolean get() = groups.isEmpty() && filterChips.isNotEmpty()
+    val showEmptyState: Boolean get() = groups.isEmpty() && filterChips.any { it.selected }
 
     val inPlanHeader: String? get() = planName?.let { "In plan $it" }
 
