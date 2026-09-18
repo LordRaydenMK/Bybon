@@ -1,15 +1,21 @@
 appId: dev.sanastasov.bybon.debug
 ---
-# System UI ANR dialogs can appear after launch on CI emulators and hide "Bybon".
-- repeat:
-    times: 20
-    while:
-      notVisible: "Bybon"
+# CI emulators can show a System UI ANR overlay that hides the home title.
+- runFlow:
+    when:
+      visible: "System UI isn't responding"
     commands:
       - tapOn:
           id: "android:id/aerr_wait"
-          optional: true
-          label: "Dismiss ANR dialog if present"
-      - waitForAnimationToEnd:
-          timeout: 1000
+          label: "Dismiss ANR dialog"
+- extendedWaitUntil:
+    visible: "Bybon"
+    timeout: 20000
+- runFlow:
+    when:
+      visible: "System UI isn't responding"
+    commands:
+      - tapOn:
+          id: "android:id/aerr_wait"
+          label: "Dismiss ANR dialog after launch"
 - assertVisible: "Bybon"
