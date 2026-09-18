@@ -1,7 +1,7 @@
 appId: dev.sanastasov.bybon.debug
 ---
 - launchApp
-- runFlow: ../shared/await-home.yml
+- assertVisible: "Bybon"
 - assertVisible: "Full Body A"
 - tapOn: "More options for Full Body A"
 - tapOn: "Edit Plan"

@@ -2,7 +2,7 @@ appId: dev.sanastasov.bybon.debug
 ---
 - launchApp:
     clearState: true
-- runFlow: ../shared/await-home.yml
+- assertVisible: "Bybon"
 - assertVisible: "History"
 - tapOn: "History"
 - assertVisible: "No completed workouts yet"
