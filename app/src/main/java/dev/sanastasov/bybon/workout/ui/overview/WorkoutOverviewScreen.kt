@@ -36,7 +36,6 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
@@ -199,7 +198,7 @@ private fun OverviewScreenContentPreview() {
                 )
             },
             startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-            state = WorkoutState.Completed(Duration.ZERO),
+            duration = Duration.ZERO,
         )
     }
     OverviewScreenContent(fullBodyA.toOverviewSession(previous), {}, {})

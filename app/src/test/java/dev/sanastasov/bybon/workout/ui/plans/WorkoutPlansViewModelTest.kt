@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -44,7 +43,6 @@ class WorkoutPlansViewModelTest {
     fun `a started session stays active without an in-progress set`() = runTest {
         val started = fullBodyA.toWorkoutSession()
         val paused = started.copy(
-            state = WorkoutState.InProgress,
             exercises = started.exercises.mapIndexed { exerciseIndex, exercise ->
                 if (exerciseIndex != 0) {
                     exercise
@@ -99,6 +97,22 @@ class WorkoutPlansViewModelTest {
         assert(state.unarchivedPlans.single().isActive)
         plans.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
         assert(plans.effects.first() == WorkoutPlanEffect.OpenSession(fullBodyA))
+    }
+
+    @Test
+    fun `canceling a workout clears the active plan`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val sessionVm = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        sessionVm.uiState.first { it != null }
+        val plans = WorkoutPlansViewModel(repository, backgroundScope)
+        plans.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
+
+        sessionVm.onAction(WorkoutSessionAction.OnCancelWorkout)
+
+        val state = plans.uiState.first { s -> s.unarchivedPlans.none { it.isActive } }
+        assert(state.unarchivedPlans.none { it.isActive })
+        plans.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
+        assert(plans.effects.first() == WorkoutPlanEffect.OpenOverview(fullBodyA))
     }
 
     @Test

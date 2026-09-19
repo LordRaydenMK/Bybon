@@ -21,10 +21,13 @@ import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeight
 import dev.sanastasov.bybon.workout.domain.updateWorkout
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class WorkoutSessionViewModel(
@@ -32,6 +35,9 @@ class WorkoutSessionViewModel(
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
 ) {
+    private val _effects = Channel<WorkoutSessionEffect>(Channel.BUFFERED)
+    val effects: Flow<WorkoutSessionEffect> = _effects.receiveAsFlow()
+
     val uiState: StateFlow<WorkoutSession?> =
         repository.workoutSessions()
             .map { sessions ->
@@ -69,8 +75,23 @@ class WorkoutSessionViewModel(
 
     fun onAction(action: WorkoutSessionAction) {
         coroutineScope.launch {
-            repository.updateWorkout(planId) { session ->
-                reduce(session, action)
+            when (action) {
+                WorkoutSessionAction.OnCancelWorkout -> {
+                    val session = uiState.value ?: return@launch
+                    repository.deleteWorkout(session.id)
+                    _effects.trySend(WorkoutSessionEffect.NavigateBack)
+                }
+
+                else -> {
+                    val updated = repository.updateWorkout(planId) { session ->
+                        reduce(session, action)
+                    }
+                    if (action is WorkoutSessionAction.OnCompleteSet &&
+                        updated.state is WorkoutState.Completed
+                    ) {
+                        _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
+                    }
+                }
             }
         }
     }

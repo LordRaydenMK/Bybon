@@ -134,7 +134,7 @@ class WorkoutSessionTest {
                         },
                     )
                 },
-                state = WorkoutState.Completed(kotlin.time.Duration.ZERO),
+                duration = kotlin.time.Duration.ZERO,
                 startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
             )
         }
@@ -199,7 +199,7 @@ class WorkoutSessionTest {
                         },
                     )
                 },
-                state = WorkoutState.Completed(kotlin.time.Duration.ZERO),
+                duration = kotlin.time.Duration.ZERO,
                 startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
             )
         }
@@ -249,7 +249,6 @@ class WorkoutSessionTest {
     fun `startWorkout restores an in-progress set when none is active`() {
         val started = fullBodyA.toWorkoutSession()
         val paused = started.copy(
-            state = WorkoutState.InProgress,
             exercises = started.exercises.mapIndexed { exerciseIndex, exercise ->
                 if (exerciseIndex != 0) {
                     exercise
@@ -364,14 +363,14 @@ class WorkoutSessionTest {
     @Test
     fun `session id is plan id plus started at for every state`() {
         val startedAt = LocalDateTime.of(2026, 8, 13, 18, 0)
-        val notStarted = fullBodyA.toWorkoutSession(startedAt = startedAt)
+        val inProgress = fullBodyA.toWorkoutSession(startedAt = startedAt)
         val expectedId = WorkoutSessionId(fullBodyA.id, startedAt)
 
-        assert(notStarted.id == expectedId)
-        assert(notStarted.copy(state = WorkoutState.InProgress).id == expectedId)
+        assert(inProgress.id == expectedId)
+        assert(inProgress.state is WorkoutState.InProgress)
 
-        val completed = notStarted.copy(
-            exercises = notStarted.exercises.map { exercise ->
+        val completed = inProgress.copy(
+            exercises = inProgress.exercises.map { exercise ->
                 exercise.copy(
                     sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
                     warmupSets = exercise.warmupSets?.map {
@@ -379,19 +378,10 @@ class WorkoutSessionTest {
                     },
                 )
             },
-            state = WorkoutState.Completed(Duration.ZERO),
+            duration = Duration.ZERO,
         )
         assert(completed.id == expectedId)
-    }
-
-    @Test
-    fun `completed session cannot have incomplete sets`() {
-        val session = fullBodyA.toWorkoutSession(startedAt = LocalDateTime.of(2026, 1, 1, 12, 0))
-
-        val error = assertFailsWith<IllegalArgumentException> {
-            session.copy(state = WorkoutState.Completed(Duration.ZERO))
-        }
-        assert(error.message!!.contains("incomplete sets"))
+        assert(completed.state == WorkoutState.Completed(Duration.ZERO))
     }
 
     @Test
@@ -546,6 +536,61 @@ class WorkoutSessionTest {
         assert(2.minutes.formatRestClock() == "2:00")
         assert(90.seconds.formatRestClock() == "1:30")
         assert(1.minutes.formatRestClock() == "1:00")
+    }
+
+    @Test
+    fun `exercise state is derived from set status`() {
+        val overview = fullBodyA.toOverviewSession()
+        assert(overview.exercises.all { it.state == ExerciseState.NotStarted })
+        assert(overview.state == WorkoutState.NotStarted)
+
+        val started = overview.startWorkout()
+        assert(started.exercises.first().state == ExerciseState.InProgress)
+        assert(started.exercises.drop(1).all { it.state == ExerciseState.NotStarted })
+        assert(started.state == WorkoutState.InProgress)
+
+        val firstCompleted = started.copy(
+            exercises = started.exercises.mapIndexed { index, exercise ->
+                if (index != 0) {
+                    exercise
+                } else {
+                    exercise.copy(
+                        warmupSets = exercise.warmupSets?.map {
+                            it.copy(setState = SetState.Completed)
+                        },
+                        sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                    )
+                }
+            },
+        )
+        assert(firstCompleted.exercises.first().state == ExerciseState.Completed)
+        assert(firstCompleted.exercises[1].state == ExerciseState.NotStarted)
+        assert(firstCompleted.state == WorkoutState.InProgress)
+    }
+
+    @Test
+    fun `completing every set completes the workout`() {
+        val startedAt = LocalDateTime.of(2026, 1, 1, 12, 0)
+        val now = startedAt.plusMinutes(47)
+        var session = fullBodyA.toWorkoutSession(startedAt = startedAt)
+        session.exercises.indices.forEach { exerciseIndex ->
+            val warmupCount = session.exercises[exerciseIndex].warmupSets?.size ?: 0
+            (0 until warmupCount).forEach { index ->
+                session = session.completeSet(
+                    session.exercises[exerciseIndex],
+                    index,
+                    isWarmup = true,
+                    now = now,
+                )
+            }
+            session.exercises[exerciseIndex].sets.indices.forEach { index ->
+                session = session.completeSet(session.exercises[exerciseIndex], index, now = now)
+            }
+        }
+
+        assert(session.exercises.all { it.state == ExerciseState.Completed })
+        assert(session.workoutSets.all { it.setState == SetState.Completed })
+        assert(session.state == WorkoutState.Completed(47.minutes))
     }
 
     @Test

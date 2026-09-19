@@ -38,4 +38,18 @@ data class WorkoutExercise(
 
     val hasPreviousPerformance: Boolean
         get() = orderedSets.any { it.previous != null }
+
+    val state: ExerciseState
+        get() {
+            val allSets = orderedSets
+            return when {
+                allSets.isEmpty() || allSets.all { it.setState == SetState.NotStated } ->
+                    ExerciseState.NotStarted
+
+                allSets.all { it.setState == SetState.Completed } ->
+                    ExerciseState.Completed
+
+                else -> ExerciseState.InProgress
+            }
+        }
 }

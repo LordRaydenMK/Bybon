@@ -13,7 +13,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.defaultRest
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -135,7 +134,7 @@ private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession = 
     planDescription = workoutNotes ?: plan.description,
     exercises = exercises,
     startedAt = startedAt,
-    state = WorkoutState.Completed(duration),
+    duration = duration,
 )
 
 private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(

@@ -5,7 +5,6 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import java.time.LocalDateTime
@@ -35,7 +34,7 @@ val sampleFullBodyBCompleted = WorkoutSession(
         ),
     ),
     startedAt = LocalDateTime.of(2026, 8, 13, 18, 25, 54),
-    state = WorkoutState.Completed(2864.seconds),
+    duration = 2864.seconds,
 )
 
 private fun completedExercise(

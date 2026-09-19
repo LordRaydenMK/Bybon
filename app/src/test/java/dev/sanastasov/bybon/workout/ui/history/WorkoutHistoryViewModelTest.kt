@@ -11,7 +11,6 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
@@ -135,9 +134,14 @@ class WorkoutHistoryViewModelTest {
             planId = WorkoutPlanId("full-body-a"),
             planName = "Full Body A",
             planDescription = null,
-            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            exercises = listOf(
+                completedExercise("bench-press-bb", 80f to 8).let { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.map { it.copy(setState = SetState.InProgress) },
+                    )
+                },
+            ),
             startedAt = LocalDateTime.of(2026, 8, 14, 18, 0),
-            state = WorkoutState.InProgress,
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(inProgress, completed))
         val viewModel = historyViewModel(repository)

@@ -1,15 +1,21 @@
 package dev.sanastasov.bybon.workout.domain
 
+import java.time.LocalDateTime
+import kotlin.time.Duration
+import kotlin.time.toKotlinDuration
+
 fun WorkoutSession.completeSet(
     exercise: WorkoutExercise,
     setIndex: Int,
     isWarmup: Boolean = false,
+    now: LocalDateTime = LocalDateTime.now(),
 ): WorkoutSession {
     val next = nextSetAfter(exercise.id, setIndex, isWarmup)
     val updated = updateExerciseSet(exercise, setIndex, isWarmup) {
         it.copy(setState = SetState.Completed)
     }
-    val target = next ?: updated.firstNotStartedSet() ?: return updated
+    val target = next ?: updated.firstNotStartedSet()
+        ?: return updated.withDurationIfCompleted(now)
     val nextExercise = updated.exercises.first { it.id == target.exerciseId }
     return updated.updateExerciseSet(nextExercise, target.index, target.isWarmup) {
         it.copy(setState = SetState.InProgress)
@@ -64,6 +70,14 @@ private fun WorkoutSession.firstSetOfNextExercise(exerciseId: String): SetRef? {
         nextExercise.sets.isNotEmpty() -> SetRef(nextExercise.id, 0, isWarmup = false)
         else -> null
     }
+}
+
+fun WorkoutSession.withDurationIfCompleted(
+    now: LocalDateTime = LocalDateTime.now(),
+): WorkoutSession {
+    if (duration != null || state !is WorkoutState.Completed) return this
+    val elapsed = java.time.Duration.between(startedAt, now).toKotlinDuration()
+    return copy(duration = elapsed.coerceAtLeast(Duration.ZERO))
 }
 
 fun WorkoutSession.firstNotStartedSet(): SetRef? = exercises.firstNotNullOfOrNull { exercise ->
