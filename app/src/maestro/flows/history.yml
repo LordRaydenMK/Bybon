@@ -28,6 +28,8 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "History"
 - assertVisible: "Upper body B"
 - tapOn: "Upper body B"
+- assertVisible: "Full body B without legs"
+- assertVisible: "Rep range 11-15"
 - assertVisible: "1. 20 kg x 14 @ 29.33 kg 1RM"
 - back
 - assertVisible: "History"

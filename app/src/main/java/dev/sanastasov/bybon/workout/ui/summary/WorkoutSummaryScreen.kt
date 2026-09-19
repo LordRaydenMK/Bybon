@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -62,7 +63,7 @@ private fun WorkoutSummaryContent(
         ) {
             when (uiState) {
                 WorkoutSummaryUiState.Loading -> LoadingIndicator()
-                is WorkoutSummaryUiState.Content -> SummaryList(uiState.exercises)
+                is WorkoutSummaryUiState.Content -> SummaryList(uiState)
             }
         }
     }
@@ -79,14 +80,23 @@ private fun LoadingIndicator() {
 }
 
 @Composable
-private fun SummaryList(exercises: List<WorkoutSummaryExerciseUi>) {
+private fun SummaryList(state: WorkoutSummaryUiState.Content) {
     LazyColumn(
         Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        items(exercises, key = { it.id }) { exercise ->
+        state.note?.let { note ->
+            item(key = "session-note") {
+                Text(
+                    note,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+            }
+        }
+        items(state.exercises, key = { it.id }) { exercise ->
             Card(Modifier.fillMaxWidth()) {
                 ExerciseSummaryCard(exercise)
             }
@@ -107,6 +117,13 @@ private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
             exercise.name,
             fontWeight = FontWeight.Bold,
         )
+        exercise.note?.let { note ->
+            Text(
+                note,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
         Spacer(Modifier.height(4.dp))
         exercise.sets.forEach { set ->
             CompletedSetRow(set)
@@ -143,6 +160,7 @@ private fun WorkoutSummaryContentPreview() {
         WorkoutSummaryContent(
             uiState = WorkoutSummaryUiState.Content(
                 title = "Full Body B",
+                note = "Friday full body workout",
                 exercises = listOf(
                     WorkoutSummaryExerciseUi(
                         id = "rdl-bb",
@@ -155,6 +173,7 @@ private fun WorkoutSummaryContentPreview() {
                     WorkoutSummaryExerciseUi(
                         id = "incline-bench-press-db",
                         name = "Incline Bench Press (dumbbell)",
+                        note = "Rep range 11-15",
                         sets = listOf(
                             WorkoutSummarySetUi(1, "20", 13, Weight.kilograms(28.67f)),
                             WorkoutSummarySetUi(2, "20", 11, Weight.kilograms(27.33f)),
