@@ -43,11 +43,11 @@ data class WorkoutExercise(
         get() {
             val allSets = orderedSets
             return when {
-                allSets.isEmpty() || allSets.all { it.setState == SetState.NotStated } ->
-                    ExerciseState.NotStarted
-
-                allSets.all { it.setState == SetState.Completed } ->
+                allSets.isEmpty() || allSets.all { it.setState == SetState.Completed } ->
                     ExerciseState.Completed
+
+                allSets.all { it.setState == SetState.NotStated } ->
+                    ExerciseState.NotStarted
 
                 else -> ExerciseState.InProgress
             }

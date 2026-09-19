@@ -566,6 +566,13 @@ class WorkoutSessionTest {
         assert(firstCompleted.exercises.first().state == ExerciseState.Completed)
         assert(firstCompleted.exercises[1].state == ExerciseState.NotStarted)
         assert(firstCompleted.state == WorkoutState.InProgress)
+
+        val emptyExercise = WorkoutExercise(
+            catalogExercise("bench-press-bb"),
+            8..10,
+            sets = emptyList(),
+        )
+        assert(emptyExercise.state == ExerciseState.Completed)
     }
 
     @Test

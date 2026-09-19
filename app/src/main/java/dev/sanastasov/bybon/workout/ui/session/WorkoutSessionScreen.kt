@@ -161,10 +161,7 @@ private fun SessionOverflowMenu(onCancelWorkout: () -> Unit) {
 }
 
 @Composable
-private fun CancelWorkoutDialog(
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
+private fun CancelWorkoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Cancel workout?") },
