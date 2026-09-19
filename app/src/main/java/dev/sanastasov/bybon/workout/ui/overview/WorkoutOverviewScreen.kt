@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
@@ -105,12 +105,20 @@ private fun OverviewScreenContent(
                 Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(state.exercises, key = { it.id }) { exercise ->
-                    Card(Modifier.fillMaxWidth()) {
+                itemsIndexed(
+                    state.exercises,
+                    key = { _, exercise -> exercise.id },
+                ) { index, exercise ->
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .animateItem(),
+                    ) {
                         ExerciseCard(
                             exercise = exercise,
                             mode = ExerciseCardMode.Overview,
                             onEvent = { event -> onAction(event.toOverviewAction(exercise)) },
+                            overflow = state.exerciseOverflow(index, onAction),
                         )
                     }
                 }

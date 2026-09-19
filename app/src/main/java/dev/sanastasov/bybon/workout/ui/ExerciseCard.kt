@@ -42,6 +42,7 @@ fun ExerciseCard(
     mode: ExerciseCardMode,
     onEvent: (ExerciseCardEvent) -> Unit,
     modifier: Modifier = Modifier,
+    overflow: ExerciseOverflow? = null,
 ) {
     val scrollable = if (mode == ExerciseCardMode.Session) {
         modifier.verticalScroll(rememberScrollState())
@@ -54,7 +55,7 @@ fun ExerciseCard(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        ExerciseCardHeader(exercise, onEvent)
+        ExerciseCardHeader(exercise, overflow, onEvent)
         SetColumnsHeader(
             canResetAll = exercise.hasPreviousPerformance,
             onResetAllSets = { onEvent(ExerciseCardEvent.OnResetAllSets) },
@@ -92,7 +93,11 @@ fun ExerciseCard(
 }
 
 @Composable
-private fun ExerciseCardHeader(exercise: WorkoutExercise, onEvent: (ExerciseCardEvent) -> Unit) {
+private fun ExerciseCardHeader(
+    exercise: WorkoutExercise,
+    overflow: ExerciseOverflow?,
+    onEvent: (ExerciseCardEvent) -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -130,6 +135,7 @@ private fun ExerciseCardHeader(exercise: WorkoutExercise, onEvent: (ExerciseCard
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
+            overflow?.let { ExerciseOverflowMenu(exercise.exerciseDefinition.name, it) }
         }
     }
 }

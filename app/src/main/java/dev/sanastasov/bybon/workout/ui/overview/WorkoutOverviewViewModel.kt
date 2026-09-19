@@ -11,6 +11,8 @@ import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
+import dev.sanastasov.bybon.workout.domain.moveExerciseDown
+import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
@@ -131,6 +133,12 @@ class WorkoutOverviewViewModel(
 
         is WorkoutOverviewAction.OnConvertToWorkSet ->
             session.convertLastWarmupToWorkSet(action.exercise)
+
+        is WorkoutOverviewAction.OnMoveExerciseUp ->
+            session.moveExerciseUp(action.exercise.id)
+
+        is WorkoutOverviewAction.OnMoveExerciseDown ->
+            session.moveExerciseDown(action.exercise.id)
 
         else -> session
     }

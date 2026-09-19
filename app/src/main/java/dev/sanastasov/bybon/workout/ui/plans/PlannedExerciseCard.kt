@@ -7,22 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -36,13 +27,15 @@ import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.ui.ExerciseCardSetColWidth
+import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
+import dev.sanastasov.bybon.workout.ui.ExerciseOverflowMenu
 import dev.sanastasov.bybon.workout.ui.RestOrSpacer
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 
 @Composable
 fun PlannedExerciseCard(
     exercise: PlanedExercise,
-    overflow: PlannedExerciseOverflow?,
+    overflow: ExerciseOverflow?,
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
     onRemoveExercise: () -> Unit,
@@ -68,7 +61,7 @@ fun PlannedExerciseCard(
 @Composable
 private fun PlannedExerciseHeader(
     exercise: PlanedExercise,
-    overflow: PlannedExerciseOverflow?,
+    overflow: ExerciseOverflow?,
     onRemoveExercise: () -> Unit,
 ) {
     Row(
@@ -90,58 +83,15 @@ private fun PlannedExerciseHeader(
             )
         }
         overflow?.let {
-            ExerciseOverflowMenu(exercise.exercise.name, it, onRemoveExercise)
-        }
-    }
-}
-
-@Composable
-private fun ExerciseOverflowMenu(
-    exerciseName: String,
-    overflow: PlannedExerciseOverflow,
-    onRemoveExercise: () -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton({ expanded = true }) {
-            Icon(
-                Icons.Filled.MoreVert,
-                contentDescription = "More options for $exerciseName",
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            DropdownMenuItem(
-                text = { Text("Move up") },
-                onClick = {
-                    expanded = false
-                    overflow.onMoveUp()
-                },
-                enabled = overflow.canMoveUp,
-                modifier = Modifier.clearAndSetSemantics {
-                    contentDescription = "Move $exerciseName up"
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Move down") },
-                onClick = {
-                    expanded = false
-                    overflow.onMoveDown()
-                },
-                enabled = overflow.canMoveDown,
-                modifier = Modifier.clearAndSetSemantics {
-                    contentDescription = "Move $exerciseName down"
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Remove Exercise") },
-                onClick = {
-                    expanded = false
-                    onRemoveExercise()
-                },
-            )
+            ExerciseOverflowMenu(exercise.exercise.name, it) { dismiss ->
+                DropdownMenuItem(
+                    text = { Text("Remove Exercise") },
+                    onClick = {
+                        dismiss()
+                        onRemoveExercise()
+                    },
+                )
+            }
         }
     }
 }
@@ -260,7 +210,7 @@ private fun PlannedExerciseCardWithWarmupsPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first(),
-            PlannedExerciseOverflow(false, true, {}, {}),
+            ExerciseOverflow(false, true, {}, {}),
             {},
             {},
             {},
@@ -274,7 +224,7 @@ private fun PlannedExerciseCardWithoutWarmupsPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" },
-            PlannedExerciseOverflow(true, true, {}, {}),
+            ExerciseOverflow(true, true, {}, {}),
             {},
             {},
             {},
@@ -288,7 +238,7 @@ private fun PlannedExerciseCardSingleSetPreview() {
     Surface {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1),
-            PlannedExerciseOverflow(true, false, {}, {}),
+            ExerciseOverflow(true, false, {}, {}),
             {},
             {},
             {},

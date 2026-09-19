@@ -223,4 +223,41 @@ class WorkoutOverviewViewModelTest {
             assert(draft.exercises.first().warmupSets != null)
         }
     }
+
+    @Test
+    fun `moving an exercise stays in memory until start persists the session`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+            assert(draft.exercises.map { it.id }.take(2) == listOf("bench-press-bb", "squat-bb"))
+
+            viewModel.onAction(WorkoutOverviewAction.OnMoveExerciseDown(draft.exercises.first()))
+            val moved = awaitItem()!!
+            assert(moved.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+            assert(moved.exercises.drop(2) == draft.exercises.drop(2))
+            assert(repository.workoutSessions().first().isEmpty())
+            assert(
+                repository.workoutPlans().first().single().sets.map { it.exercise.id }.take(2) ==
+                    listOf("bench-press-bb", "squat-bb"),
+            )
+
+            viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
+            assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
+            val saved = repository.workoutSessions().first().single()
+            assert(saved.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+            assert(saved.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+            assert(
+                saved.exercises.first { it.id == "bench-press-bb" }
+                    .warmupSets!!
+                    .all { it.setState == SetState.NotStated },
+            )
+            assert(
+                repository.workoutPlans().first().single().sets.map { it.exercise.id }.take(2) ==
+                    listOf("bench-press-bb", "squat-bb"),
+            )
+        }
+    }
 }

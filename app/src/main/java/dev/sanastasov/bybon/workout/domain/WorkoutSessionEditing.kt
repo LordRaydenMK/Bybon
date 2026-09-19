@@ -80,4 +80,29 @@ fun WorkoutSession.updateReps(
     it.copy(reps = count)
 }
 
+fun WorkoutSession.moveExerciseUp(exerciseId: String): WorkoutSession =
+    moveExercise(exerciseId, offset = -1)
+
+fun WorkoutSession.moveExerciseDown(exerciseId: String): WorkoutSession =
+    moveExercise(exerciseId, offset = 1)
+
+private fun WorkoutSession.moveExercise(exerciseId: String, offset: Int): WorkoutSession {
+    requireExercise(exerciseId)
+    val fromIndex = exercises.indexOfFirst { it.id == exerciseId }
+    val toIndex = fromIndex + offset
+    check(toIndex in exercises.indices) {
+        val direction = if (offset < 0) "up" else "down"
+        "Cannot move $exerciseId $direction"
+    }
+    return copy(
+        exercises = exercises.toMutableList().apply {
+            add(toIndex, removeAt(fromIndex))
+        },
+    )
+}
+
+private fun WorkoutSession.requireExercise(exerciseId: String): WorkoutExercise =
+    exercises.firstOrNull { it.id == exerciseId }
+        ?: error("Exercise $exerciseId is not in the session")
+
 private fun List<ExerciseSet>.nullIfEmpty(): List<ExerciseSet>? = takeIf { isNotEmpty() }
