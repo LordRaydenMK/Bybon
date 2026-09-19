@@ -83,7 +83,10 @@ fun MainModule.BybonApp() {
                 }
 
                 is Screen.WorkoutSession -> NavEntry(key) {
-                    WorkoutSessionScreen(key.planId)
+                    WorkoutSessionScreen(
+                        key.planId,
+                        onBack = { backStack.removeLastOrNull() },
+                    )
                 }
 
                 Screen.WeightEntryScreen -> NavEntry(key) {

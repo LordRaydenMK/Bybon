@@ -15,6 +15,7 @@ import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
+import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeight
@@ -44,18 +45,24 @@ class WorkoutSessionViewModel(
     init {
         coroutineScope.launch {
             val sessions = repository.workoutSessions().first()
-            val inProgress = sessions.firstOrNull { session ->
-                session.planId == planId &&
-                    session.workoutSets.any { it.setState == SetState.InProgress }
+            val existing = sessions.firstOrNull { session ->
+                session.planId == planId && session.state !is WorkoutState.Completed
             }
-            if (inProgress == null) {
-                val plan = repository.workoutPlans()
-                    .first()
-                    .first { it.id == planId }
-                val previousSession = sessions
-                    .filter { it.planId == planId && it.state is WorkoutState.Completed }
-                    .maxByOrNull { it.startedAt }
-                repository.updateWorkout(plan.toWorkoutSession(previousSession))
+            when {
+                existing == null -> {
+                    val plan = repository.workoutPlans()
+                        .first()
+                        .first { it.id == planId }
+                    val previousSession = sessions
+                        .filter { it.planId == planId && it.state is WorkoutState.Completed }
+                        .maxByOrNull { it.startedAt }
+                    repository.updateWorkout(plan.toWorkoutSession(previousSession))
+                }
+
+                existing.state !is WorkoutState.InProgress ||
+                    existing.workoutSets.none { it.setState == SetState.InProgress } -> {
+                    repository.updateWorkout(existing.startWorkout())
+                }
             }
         }
     }

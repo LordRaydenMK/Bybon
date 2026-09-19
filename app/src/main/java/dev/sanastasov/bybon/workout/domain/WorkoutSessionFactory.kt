@@ -82,9 +82,16 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
 )
 
 fun WorkoutSession.startWorkout(): WorkoutSession {
-    val first = firstNotStartedSet() ?: return this
-    val exercise = exercises.first { it.id == first.exerciseId }
-    return updateExerciseSet(exercise, first.index, first.isWarmup) {
-        it.copy(setState = SetState.InProgress)
+    val started = copy(state = WorkoutState.InProgress)
+    val first = started.takeUnless {
+        it.workoutSets.any { set -> set.setState == SetState.InProgress }
+    }?.firstNotStartedSet()
+    return if (first == null) {
+        started
+    } else {
+        val exercise = started.exercises.first { it.id == first.exerciseId }
+        started.updateExerciseSet(exercise, first.index, first.isWarmup) {
+            it.copy(setState = SetState.InProgress)
+        }
     }
 }

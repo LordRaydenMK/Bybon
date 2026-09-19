@@ -1,7 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
-import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.formatRestClock
@@ -34,11 +33,9 @@ data class WorkoutPlanUi(
 
 fun WorkoutPlan.toUi(sessions: List<WorkoutSession>): WorkoutPlanUi = WorkoutPlanUi(
     plan = this,
-    isActive = !isArchived &&
-        sessions.any { session ->
-            session.planId == id &&
-                session.workoutSets.any { it.setState == SetState.InProgress }
-        },
+    isActive = !isArchived && sessions.any { session ->
+        session.planId == id && session.isResumable
+    },
 )
 
 sealed class WorkoutPlansAction {

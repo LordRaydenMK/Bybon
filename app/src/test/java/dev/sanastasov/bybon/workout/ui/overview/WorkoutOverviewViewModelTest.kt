@@ -48,6 +48,7 @@ class WorkoutOverviewViewModelTest {
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
             assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
             val saved = repository.workoutSessions().first().single()
+            assert(saved.state == WorkoutState.InProgress)
             assert(saved.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
             assert(saved.exercises.first().sets.first().setState == SetState.NotStated)
             assert(
