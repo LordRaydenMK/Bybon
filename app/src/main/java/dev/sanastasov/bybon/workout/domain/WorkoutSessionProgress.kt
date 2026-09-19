@@ -19,6 +19,37 @@ fun WorkoutSession.completeSet(
     }
 }
 
+fun WorkoutSession.uncompleteSet(
+    exercise: WorkoutExercise,
+    setIndex: Int,
+    isWarmup: Boolean = false,
+): WorkoutSession {
+    if (!canUncompleteSet(exercise.id, setIndex, isWarmup)) return this
+    return clearInProgressSets().updateExerciseSet(exercise, setIndex, isWarmup) {
+        it.copy(setState = SetState.InProgress)
+    }
+}
+
+fun WorkoutSession.canUncompleteSet(exerciseId: String, index: Int, isWarmup: Boolean): Boolean {
+    val last = lastCompletedSet() ?: return false
+    return last == SetRef(exerciseId, index, isWarmup)
+}
+
+internal fun WorkoutSession.lastCompletedSet(): SetRef? =
+    exercises.asReversed().firstNotNullOfOrNull { exercise ->
+        val lastWork = exercise.sets.indexOfLast { it.setState == SetState.Completed }
+        when {
+            lastWork >= 0 -> SetRef(exercise.id, lastWork, isWarmup = false)
+
+            else -> {
+                val lastWarmup = exercise.warmupSets
+                    ?.indexOfLast { it.setState == SetState.Completed }
+                    ?: -1
+                lastWarmup.takeIf { it >= 0 }?.let { SetRef(exercise.id, it, isWarmup = true) }
+            }
+        }
+    }
+
 data class SetRef(
     val exerciseId: String,
     val index: Int,

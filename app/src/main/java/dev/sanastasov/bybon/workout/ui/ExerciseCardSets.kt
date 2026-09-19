@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
@@ -27,6 +28,7 @@ internal fun ExerciseSetBlock(
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
     rest: Duration? = null,
+    canUncomplete: Boolean = false,
 ) {
     when (mode) {
         ExerciseCardMode.Overview -> OverviewSetValuesRow(
@@ -43,6 +45,7 @@ internal fun ExerciseSetBlock(
             onEvent,
             onBadgeClick,
             rest,
+            canUncomplete,
         )
     }
 }
@@ -54,37 +57,48 @@ private fun SessionSetBlock(
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
     rest: Duration?,
+    canUncomplete: Boolean,
 ) {
-    if (numbered.set.setState == SetState.InProgress) {
-        Surface(
+    val description = numbered.sessionRowContentDescription(canUncomplete)
+    when {
+        numbered.set.setState == SetState.InProgress -> Surface(
             onClick = {
                 onEvent(ExerciseCardEvent.OnCompleteSet(numbered.index, numbered.isWarmup))
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
-                    contentDescription = numbered.sessionContentDescription
-                },
+                .semantics(mergeDescendants = true) { contentDescription = description },
             shape = RoundedCornerShape(8.dp),
             color = MaterialTheme.colorScheme.tertiaryContainer,
         ) {
-            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick, rest)
+            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick, rest, canUncomplete)
         }
-    } else {
-        Box(
+
+        numbered.set.setState == SetState.Completed && canUncomplete -> Box(
             Modifier
                 .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
-                    contentDescription = if (numbered.set.setState == SetState.Completed) {
-                        numbered.completedContentDescription
-                    } else {
-                        numbered.sessionContentDescription
-                    }
-                },
+                .clickable {
+                    onEvent(ExerciseCardEvent.OnUncompleteSet(numbered.index, numbered.isWarmup))
+                }
+                .semantics(mergeDescendants = true) { contentDescription = description },
         ) {
-            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick, rest)
+            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick, rest, canUncomplete)
+        }
+
+        else -> Box(
+            Modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) { contentDescription = description },
+        ) {
+            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick, rest, canUncomplete)
         }
     }
+}
+
+private fun NumberedSet.sessionRowContentDescription(canUncomplete: Boolean): String = when {
+    set.setState == SetState.Completed && canUncomplete -> uncompleteContentDescription
+    set.setState == SetState.Completed -> completedContentDescription
+    else -> sessionContentDescription
 }
 
 @Composable
@@ -122,9 +136,10 @@ private fun SessionSetValuesRow(
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
     rest: Duration?,
+    canUncomplete: Boolean,
 ) {
     when (numbered.set.setState) {
-        SetState.Completed -> CompletedSessionSetRow(numbered, onEvent, onBadgeClick)
+        SetState.Completed -> CompletedSessionSetRow(numbered, onEvent, onBadgeClick, canUncomplete)
         SetState.InProgress -> InProgressSessionSetRow(exercise, numbered, onEvent, onBadgeClick)
         SetState.NotStated -> PendingSessionSetRow(exercise, numbered, onEvent, onBadgeClick, rest)
     }
@@ -135,6 +150,7 @@ private fun CompletedSessionSetRow(
     numbered: NumberedSet,
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
+    canUncomplete: Boolean,
 ) {
     val set = numbered.set
     SetValuesRow(
@@ -148,7 +164,15 @@ private fun CompletedSessionSetRow(
         trailing = {
             Checkbox(
                 true,
-                null,
+                if (canUncomplete) {
+                    {
+                        onEvent(
+                            ExerciseCardEvent.OnUncompleteSet(numbered.index, numbered.isWarmup),
+                        )
+                    }
+                } else {
+                    null
+                },
                 Modifier
                     .width(ExerciseCardTrailingColWidth)
                     .clearAndSetSemantics { },

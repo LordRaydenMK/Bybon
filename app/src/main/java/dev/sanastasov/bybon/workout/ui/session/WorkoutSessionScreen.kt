@@ -27,6 +27,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.canUncompleteSet
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -79,6 +80,9 @@ private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessio
                         exercise = exercise,
                         mode = ExerciseCardMode.Session,
                         onEvent = { event -> onAction(event.toSessionAction(exercise)) },
+                        canUncompleteSet = { index, isWarmup ->
+                            state.canUncompleteSet(exercise.id, index, isWarmup)
+                        },
                     )
                 }
             }
@@ -116,6 +120,9 @@ private fun ExerciseCardEvent.toSessionAction(exercise: WorkoutExercise): Workou
 
         is ExerciseCardEvent.OnCompleteSet ->
             WorkoutSessionAction.OnCompleteSet(exercise, index, isWarmup)
+
+        is ExerciseCardEvent.OnUncompleteSet ->
+            WorkoutSessionAction.OnUncompleteSet(exercise, index, isWarmup)
     }
 
 @Preview
