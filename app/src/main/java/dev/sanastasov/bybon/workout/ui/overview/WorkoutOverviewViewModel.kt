@@ -78,7 +78,9 @@ class WorkoutOverviewViewModel(
     }
 
     private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
-        reduceProgression(session, action) ?: reduceEdits(session, action)
+        reduceProgression(session, action)
+            ?: reduceReorder(session, action)
+            ?: reduceEdits(session, action)
 
     private fun reduceProgression(
         session: WorkoutSession,
@@ -99,6 +101,19 @@ class WorkoutOverviewViewModel(
 
         is WorkoutOverviewAction.OnResetSet ->
             session.resetSetToPrevious(action.exercise, action.index, action.isWarmup)
+
+        else -> null
+    }
+
+    private fun reduceReorder(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+    ): WorkoutSession? = when (action) {
+        is WorkoutOverviewAction.OnMoveExerciseUp ->
+            session.moveExerciseUp(action.exercise.id)
+
+        is WorkoutOverviewAction.OnMoveExerciseDown ->
+            session.moveExerciseDown(action.exercise.id)
 
         else -> null
     }
@@ -133,12 +148,6 @@ class WorkoutOverviewViewModel(
 
         is WorkoutOverviewAction.OnConvertToWorkSet ->
             session.convertLastWarmupToWorkSet(action.exercise)
-
-        is WorkoutOverviewAction.OnMoveExerciseUp ->
-            session.moveExerciseUp(action.exercise.id)
-
-        is WorkoutOverviewAction.OnMoveExerciseDown ->
-            session.moveExerciseDown(action.exercise.id)
 
         else -> session
     }
