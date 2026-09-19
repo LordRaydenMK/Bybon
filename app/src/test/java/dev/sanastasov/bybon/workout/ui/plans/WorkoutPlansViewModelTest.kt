@@ -1,10 +1,16 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
+import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewAction
+import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewViewModel
+import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionAction
+import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -32,6 +38,67 @@ class WorkoutPlansViewModelTest {
         viewModel.uiState.first { state -> state.unarchivedPlans.any { it.isActive } }
         viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
         assert(viewModel.effects.first() == WorkoutPlanEffect.OpenSession(fullBodyA))
+    }
+
+    @Test
+    fun `a started session stays active without an in-progress set`() = runTest {
+        val started = fullBodyA.toWorkoutSession()
+        val paused = started.copy(
+            state = WorkoutState.InProgress,
+            exercises = started.exercises.mapIndexed { exerciseIndex, exercise ->
+                if (exerciseIndex != 0) {
+                    exercise
+                } else {
+                    exercise.copy(
+                        warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
+                            set.copy(
+                                setState = if (index == 0) {
+                                    SetState.Completed
+                                } else {
+                                    SetState.NotStated
+                                },
+                            )
+                        },
+                    )
+                }
+            },
+        )
+        assert(paused.workoutSets.none { it.setState == SetState.InProgress })
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(paused),
+        )
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
+        assert(state.unarchivedPlans.single().isActive)
+        viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
+        assert(viewModel.effects.first() == WorkoutPlanEffect.OpenSession(fullBodyA))
+    }
+
+    @Test
+    fun `completing sets from a started workout keeps the plan active`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val plans = WorkoutPlansViewModel(repository, backgroundScope)
+        val overview = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        overview.uiState.first { it != null }
+        overview.onAction(WorkoutOverviewAction.OnStartWorkout)
+        overview.effects.first()
+
+        val sessionVm = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val session = sessionVm.uiState.first { it != null }!!
+        val bench = session.exercises.first()
+        sessionVm.onAction(WorkoutSessionAction.OnCompleteSet(bench, 0, isWarmup = true))
+        sessionVm.onAction(WorkoutSessionAction.OnCompleteSet(bench, 1, isWarmup = true))
+        sessionVm.uiState.first { current ->
+            current?.exercises?.first()?.warmupSets?.get(1)?.setState == SetState.Completed
+        }
+
+        val state = plans.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
+        assert(state.unarchivedPlans.single().isActive)
+        plans.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
+        assert(plans.effects.first() == WorkoutPlanEffect.OpenSession(fullBodyA))
     }
 
     @Test

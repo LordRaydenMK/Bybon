@@ -37,7 +37,7 @@ import java.time.LocalDateTime
 import kotlin.time.Duration
 
 @Composable
-fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
+fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId, onBack: () -> Unit) {
     val viewModel = retain {
         WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
     }
@@ -46,14 +46,19 @@ fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId) {
         SessionScreenContent(
             it,
             viewModel::onAction,
+            onBack,
         )
     }
 }
 
 @Composable
-private fun SessionScreenContent(state: WorkoutSession, onAction: (WorkoutSessionAction) -> Unit) {
+private fun SessionScreenContent(
+    state: WorkoutSession,
+    onAction: (WorkoutSessionAction) -> Unit,
+    onBack: () -> Unit,
+) {
     Scaffold(
-        topBar = { BybonTopAppBar(state.planName, {}) },
+        topBar = { BybonTopAppBar(state.planName, onBack) },
     ) { contentPadding ->
         Column(
             Modifier
@@ -125,13 +130,14 @@ private fun SessionScreenContentPage1CompletedExercisePreview() {
     SessionScreenContent(
         session.completeSet(session.exercises.first(), 0, isWarmup = true),
         {},
+        {},
     )
 }
 
 @Preview
 @Composable
 private fun SessionScreenContentInitialPreview() {
-    SessionScreenContent(fullBodyA.toWorkoutSession(), {})
+    SessionScreenContent(fullBodyA.toWorkoutSession(), {}, {})
 }
 
 @Preview
@@ -161,5 +167,5 @@ private fun SessionScreenContentWithPreviousPreview() {
             state = WorkoutState.Completed(Duration.ZERO),
         )
     }
-    SessionScreenContent(fullBodyA.toWorkoutSession(previous), {})
+    SessionScreenContent(fullBodyA.toWorkoutSession(previous), {}, {})
 }

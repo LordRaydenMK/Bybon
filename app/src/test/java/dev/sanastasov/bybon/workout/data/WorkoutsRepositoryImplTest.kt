@@ -9,6 +9,8 @@ import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.toOverviewSession
+import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -98,5 +100,16 @@ class WorkoutsRepositoryImplTest {
         assert(
             repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().last() == upperBodyA,
         )
+    }
+
+    @Test
+    fun `updateWorkout does not replace an in-progress session with an overview draft`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val started = fullBodyA.toWorkoutSession()
+        repository.updateWorkout(started)
+
+        repository.updateWorkout(fullBodyA.toOverviewSession())
+
+        assert(repository.workoutSessions().first().single() == started)
     }
 }
