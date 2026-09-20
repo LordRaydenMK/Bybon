@@ -146,10 +146,7 @@ class WorkoutSessionAddExerciseTest {
     }
 }
 
-private fun twoExerciseSession(
-    firstState: SetState,
-    secondState: SetState,
-): WorkoutSession {
+private fun twoExerciseSession(firstState: SetState, secondState: SetState): WorkoutSession {
     val bench = catalogExercise("bench-press-bb")
     val curl = catalogExercise("incline-curl-db")
     return WorkoutSession(

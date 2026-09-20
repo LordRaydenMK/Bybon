@@ -72,7 +72,9 @@ fun WorkoutModule.WorkoutSessionScreen(
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
             WorkoutSessionEffect.NavigateBack -> onBack()
+
             is WorkoutSessionEffect.NavigateToSummary -> onWorkoutCompleted(effect.sessionId)
+
             is WorkoutSessionEffect.OpenExerciseLibrary ->
                 onNavigateToExerciseLibrary(effect.existingExerciseIds)
         }
@@ -117,32 +119,11 @@ private fun SessionScreenContent(
                 Text(it)
                 Spacer(Modifier.height(8.dp))
             }
-            val pagerState = rememberPagerState(0) {
-                state.exercises.size
-            }
-            HorizontalPager(
-                pagerState,
+            SessionExercisePager(
+                state,
+                onAction,
                 Modifier.weight(1f),
-                verticalAlignment = Alignment.Top,
-                key = { page -> state.exercises[page].id },
-            ) { page ->
-                val exercise = state.exercises[page]
-                Card(Modifier.fillMaxWidth()) {
-                    ExerciseCard(
-                        exercise = exercise,
-                        mode = ExerciseCardMode.Session,
-                        onEvent = { event -> onAction(event.toSessionAction(exercise)) },
-                        onRemoveExercise = if (state.canRemoveExercise(exercise)) {
-                            { onAction(WorkoutSessionAction.OnRemoveExercise(exercise)) }
-                        } else {
-                            null
-                        },
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(8.dp))
-            Text("Exercise ${pagerState.currentPage + 1} / ${state.exercises.size}")
+            )
         }
     }
     if (showCancelDialog) {
@@ -153,6 +134,41 @@ private fun SessionScreenContent(
                 onAction(WorkoutSessionAction.OnCancelWorkout)
             },
         )
+    }
+}
+
+@Composable
+private fun SessionExercisePager(
+    state: WorkoutSession,
+    onAction: (WorkoutSessionAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val pagerState = rememberPagerState(0) {
+        state.exercises.size
+    }
+    Column(modifier) {
+        HorizontalPager(
+            pagerState,
+            Modifier.weight(1f),
+            verticalAlignment = Alignment.Top,
+            key = { page -> state.exercises[page].id },
+        ) { page ->
+            val exercise = state.exercises[page]
+            Card(Modifier.fillMaxWidth()) {
+                ExerciseCard(
+                    exercise = exercise,
+                    mode = ExerciseCardMode.Session,
+                    onEvent = { event -> onAction(event.toSessionAction(exercise)) },
+                    onRemoveExercise = if (state.canRemoveExercise(exercise)) {
+                        { onAction(WorkoutSessionAction.OnRemoveExercise(exercise)) }
+                    } else {
+                        null
+                    },
+                )
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        Text("Exercise ${pagerState.currentPage + 1} / ${state.exercises.size}")
     }
 }
 

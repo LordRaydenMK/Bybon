@@ -29,10 +29,9 @@ fun WorkoutSession.removeExercise(exerciseId: String): WorkoutSession {
     }
 }
 
-fun WorkoutSession.canRemoveExercise(exercise: WorkoutExercise): Boolean =
-    exercises.size > 1 &&
-        exercise.state != ExerciseState.Completed &&
-        exercises.any { it.id == exercise.id }
+fun WorkoutSession.canRemoveExercise(exercise: WorkoutExercise): Boolean = exercises.size > 1 &&
+    exercise.state != ExerciseState.Completed &&
+    exercises.any { it.id == exercise.id }
 
 private fun ExerciseDefinition.toAddedWorkoutExercise(): WorkoutExercise = WorkoutExercise(
     exerciseDefinition = this,
