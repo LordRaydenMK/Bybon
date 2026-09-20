@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
@@ -69,11 +71,27 @@ class WorkoutOverviewViewModel(
                 _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
             }
 
-            else -> {
-                if (!actions.tryEmit(action)) {
-                    coroutineScope.launch { actions.emit(action) }
-                }
+            WorkoutOverviewAction.OnAddExercise -> {
+                val existingExerciseIds = uiState.value?.exercises?.map { it.id }.orEmpty()
+                _effects.trySend(WorkoutOverviewEffect.OpenExerciseLibrary(existingExerciseIds))
             }
+
+            is WorkoutOverviewAction.OnExercisePicked -> coroutineScope.launch {
+                val exercise = repository.exercises().first()
+                    .firstOrNull { it.id == action.exerciseId }
+                    ?: return@launch
+                val session = uiState.value ?: return@launch
+                if (session.exercises.any { it.id == exercise.id }) return@launch
+                emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise))
+            }
+
+            else -> emitAction(action)
+        }
+    }
+
+    private fun emitAction(action: WorkoutOverviewAction) {
+        if (!actions.tryEmit(action)) {
+            coroutineScope.launch { actions.emit(action) }
         }
     }
 
@@ -148,6 +166,13 @@ class WorkoutOverviewViewModel(
 
         is WorkoutOverviewAction.OnConvertToWorkSet ->
             session.convertLastWarmupToWorkSet(action.exercise)
+
+        is WorkoutOverviewAction.OnExerciseAdded ->
+            if (session.exercises.any { it.id == action.exercise.id }) {
+                session
+            } else {
+                session.addExercise(action.exercise)
+            }
 
         else -> session
     }

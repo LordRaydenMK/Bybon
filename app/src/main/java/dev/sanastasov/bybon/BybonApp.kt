@@ -66,6 +66,9 @@ fun MainModule.BybonApp() {
                             backStack.removeLastOrNull()
                             backStack.add(Screen.WorkoutSession(key.planId))
                         },
+                        onNavigateToExerciseLibrary = { existingExerciseIds ->
+                            backStack.add(Screen.ExerciseLibrary(existingExerciseIds))
+                        },
                     )
                 }
 

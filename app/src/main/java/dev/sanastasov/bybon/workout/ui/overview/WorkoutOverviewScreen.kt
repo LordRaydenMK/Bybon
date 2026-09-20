@@ -27,6 +27,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.result.LocalResultEventBus
+import androidx.navigation3.runtime.result.ResultEffect
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
@@ -43,6 +45,7 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCard
 import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
+import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
@@ -51,14 +54,23 @@ fun WorkoutModule.WorkoutOverviewScreen(
     planId: WorkoutPlanId,
     onBack: () -> Unit,
     onStartSession: () -> Unit,
+    onNavigateToExerciseLibrary: (List<String>) -> Unit,
 ) {
     val viewModel = retain {
         WorkoutOverviewViewModel(planId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val resultBus = LocalResultEventBus.current
+    ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked(exerciseId))
+        resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
+    }
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
             WorkoutOverviewEffect.NavigateToSession -> onStartSession()
+
+            is WorkoutOverviewEffect.OpenExerciseLibrary ->
+                onNavigateToExerciseLibrary(effect.existingExerciseIds)
         }
     }
     uiState?.let {
@@ -99,6 +111,14 @@ private fun OverviewScreenContent(
                         onAction,
                     )
                 }
+            }
+
+            Spacer(Modifier.height(16.dp))
+            Button(
+                { onAction(WorkoutOverviewAction.OnAddExercise) },
+                Modifier.fillMaxWidth(),
+            ) {
+                Text("Add Exercise")
             }
 
             Spacer(Modifier.height(16.dp))

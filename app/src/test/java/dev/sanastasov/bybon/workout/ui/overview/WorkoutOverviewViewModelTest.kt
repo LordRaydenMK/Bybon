@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -258,6 +259,92 @@ class WorkoutOverviewViewModelTest {
                 repository.workoutPlans().first().single().sets.map { it.exercise.id }.take(2) ==
                     listOf("bench-press-bb", "squat-bb"),
             )
+        }
+    }
+
+    @Test
+    fun `add exercise opens the library with session exercise ids`() = runTest {
+        val viewModel = WorkoutOverviewViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
+            backgroundScope,
+        )
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+
+            viewModel.onAction(WorkoutOverviewAction.OnAddExercise)
+
+            assert(
+                viewModel.effects.first() == WorkoutOverviewEffect.OpenExerciseLibrary(
+                    draft.exercises.map { it.id },
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `picked exercise stays in memory until start and does not change the plan`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+            val added = awaitItem()!!
+            assert(added.exercises.last().id == "incline-curl-db")
+            assert(added.exercises.last().sets.size == 3)
+            assert(added.exercises.last().warmupSets == null)
+            assert(added.exercises.last().repRange == 8..12)
+            assert(added.exercises.dropLast(1) == draft.exercises)
+            assert(repository.workoutSessions().first().isEmpty())
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+
+            viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
+            assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
+            val saved = repository.workoutSessions().first().single()
+            assert(saved.exercises.last().id == "incline-curl-db")
+            assert(saved.exercises.last().sets.all { it.setState == SetState.NotStated })
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        }
+    }
+
+    @Test
+    fun `unknown picked exercise does not change the draft`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            awaitItem()
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("missing"))
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `picked exercise already in the session is ignored`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            awaitItem()
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("bench-press-bb"))
+            expectNoEvents()
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
     }
 }
