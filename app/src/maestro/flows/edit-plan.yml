@@ -61,7 +61,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Add Exercise"
 - tapOn: "Add Exercise"
 - assertVisible: "Exercise Library"
-- assertVisible: "In plan Full Body A"
+- assertVisible: "Already added"
 - assertVisible: "Bench Press (barbell)"
 - assertVisible: "Arms"
 - assertVisible: "Dumbbell"

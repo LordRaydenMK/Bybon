@@ -195,24 +195,23 @@ class ExerciseLibraryUiTest {
 
         assert(state.selectedExerciseId == "curl")
         assert(state.addEnabled)
-        assert(state.inPlanExercises.single().id == "curl")
-        assert(state.inPlanExercises.single().selected)
+        assert(state.existingExercises.single().id == "curl")
+        assert(state.existingExercises.single().selected)
         assert(state.groups.single().exercises.none { it.selected })
         assert(state.groups.single().exercises.none { it.id == "curl" })
     }
 
     @Test
-    fun `in-plan exercises appear under the plan header and leave muscle groups`() {
+    fun `existing exercises appear under already added and leave muscle groups`() {
         val state = listOf(curl, bench, squat).toLibraryUiState(
-            planName = "Full Body A",
-            planExercises = listOf(bench),
+            existingExerciseIds = listOf("bench"),
         )
 
-        assert(state.inPlanHeader == "In plan Full Body A")
-        assert(state.inPlanExercises.single().id == "bench")
-        assert(state.inPlanExercises.single().name == "Bench")
-        assert(!state.inPlanExercises.single().selectable)
-        assert(!state.inPlanExercises.single().selected)
+        assert(state.existingHeader == "Already added")
+        assert(state.existingExercises.single().id == "bench")
+        assert(state.existingExercises.single().name == "Bench")
+        assert(!state.existingExercises.single().selectable)
+        assert(!state.existingExercises.single().selected)
         assert(
             state.groups.map { it.bodyPart } == listOf(MuscleGroup.Arms, MuscleGroup.Legs),
         )
@@ -220,50 +219,47 @@ class ExerciseLibraryUiTest {
     }
 
     @Test
-    fun `selected catalog exercise is appended to in-plan and can be unchecked`() {
+    fun `selected catalog exercise is appended to existing and can be unchecked`() {
         val state = listOf(curl, bench, squat).toLibraryUiState(
             selectedExerciseId = "curl",
-            planName = "Full Body A",
-            planExercises = listOf(bench),
+            existingExerciseIds = listOf("bench"),
         )
 
-        assert(state.inPlanExercises.map { it.id } == listOf("bench", "curl"))
-        assert(!state.inPlanExercises[0].selectable)
-        assert(!state.inPlanExercises[0].selected)
-        assert(state.inPlanExercises[1].selectable)
-        assert(state.inPlanExercises[1].selected)
+        assert(state.existingExercises.map { it.id } == listOf("bench", "curl"))
+        assert(!state.existingExercises[0].selectable)
+        assert(!state.existingExercises[0].selected)
+        assert(state.existingExercises[1].selectable)
+        assert(state.existingExercises[1].selected)
         assert(state.groups.flatMap { it.exercises }.none { it.id == "curl" })
         assert(state.addEnabled)
     }
 
     @Test
-    fun `selecting an exercise already on the plan is ignored`() {
+    fun `selecting an existing exercise is ignored`() {
         val state = listOf(curl, bench).toLibraryUiState(
             selectedExerciseId = "bench",
-            planName = "Full Body A",
-            planExercises = listOf(bench),
+            existingExerciseIds = listOf("bench"),
         )
 
         assert(state.selectedExerciseId == null)
         assert(!state.addEnabled)
-        assert(state.inPlanExercises.single().id == "bench")
-        assert(!state.inPlanExercises.single().selectable)
-        assert(!state.inPlanExercises.single().selected)
+        assert(state.existingExercises.single().id == "bench")
+        assert(!state.existingExercises.single().selectable)
+        assert(!state.existingExercises.single().selected)
         assert(state.groups.single().exercises.single().id == "curl")
     }
 
     @Test
-    fun `empty matching filters still show in-plan exercises`() {
+    fun `empty matching filters still show existing exercises`() {
         val state = listOf(curl, bench).toLibraryUiState(
             filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Core)),
-            planName = "Full Body A",
-            planExercises = listOf(bench),
+            existingExerciseIds = listOf("bench"),
         )
 
         assert(state.showEmptyState)
         assert(state.groups.isEmpty())
-        assert(state.inPlanHeader == "In plan Full Body A")
-        assert(state.inPlanExercises.single().id == "bench")
+        assert(state.existingHeader == "Already added")
+        assert(state.existingExercises.single().id == "bench")
     }
 
     @Test

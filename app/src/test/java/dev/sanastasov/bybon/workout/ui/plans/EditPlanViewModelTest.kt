@@ -2,8 +2,11 @@ package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.catalogExercise
+import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -107,7 +110,7 @@ class EditPlanViewModelTest {
     }
 
     @Test
-    fun `add exercise opens the exercise library`() = runTest {
+    fun `add exercise opens the exercise library with existing ids`() = runTest {
         val viewModel = EditPlanViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
@@ -116,6 +119,60 @@ class EditPlanViewModelTest {
 
         viewModel.onAction(EditPlanAction.OnAddExercise)
 
-        assert(viewModel.effects.first() == EditPlanEffect.OpenExerciseLibrary)
+        assert(
+            viewModel.effects.first() == EditPlanEffect.OpenExerciseLibrary(
+                fullBodyA.sets.map { it.exercise.id },
+            ),
+        )
+    }
+
+    @Test
+    fun `picked exercise is added to the plan`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+        viewModel.uiState.first { it != null }
+
+        viewModel.onAction(EditPlanAction.OnExercisePicked("incline-curl-db"))
+
+        val added = viewModel.uiState.first { plan ->
+            plan?.sets?.last()?.exercise?.id == "incline-curl-db"
+        }!!.sets.last()
+        assert(added.exercise == catalogExercise("incline-curl-db"))
+        assert(added.sets == 3)
+        assert(added.warmupSets == 0)
+        assert(added.repRange == 8..12)
+        assert(added.restAfterWorkSet == 1.minutes)
+        assert(repository.workoutPlans().first().single().sets.dropLast(1) == fullBodyA.sets)
+    }
+
+    @Test
+    fun `unknown picked exercise does not change the plan`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+        viewModel.uiState.first { it != null }
+
+        viewModel.onAction(EditPlanAction.OnExercisePicked("missing"))
+
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `picked exercise already on the plan is ignored`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+        viewModel.uiState.first { it != null }
+
+        viewModel.onAction(EditPlanAction.OnExercisePicked("bench-press-bb"))
+
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 }

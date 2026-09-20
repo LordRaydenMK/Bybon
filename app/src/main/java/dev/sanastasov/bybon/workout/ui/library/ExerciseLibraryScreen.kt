@@ -45,19 +45,22 @@ import dev.sanastasov.bybon.ui.icons.icon
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
-import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 
 @Composable
-fun WorkoutModule.ExerciseLibraryScreen(planId: WorkoutPlanId, onNavigateBack: () -> Unit) {
+fun WorkoutModule.ExerciseLibraryScreen(
+    existingExerciseIds: List<String>,
+    onExercisePicked: (String) -> Unit,
+    onNavigateBack: () -> Unit,
+) {
     val viewModel = retain {
-        ExerciseLibraryViewModel(planId, workoutsRepository, it.coroutineScope)
+        ExerciseLibraryViewModel(existingExerciseIds, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
-            ExerciseLibraryEffect.NavigateBack -> onNavigateBack()
+            is ExerciseLibraryEffect.ExercisePicked -> onExercisePicked(effect.exerciseId)
         }
     }
     ExerciseLibraryContent(uiState, viewModel::onAction, onNavigateBack)
@@ -161,15 +164,15 @@ private fun LazyListScope.exerciseLibraryItems(
     state: ExerciseLibraryUiState,
     onAction: (ExerciseLibraryAction) -> Unit,
 ) {
-    state.inPlanHeader?.let { header ->
-        item(key = "header-in-plan") {
+    state.existingHeader?.let { header ->
+        item(key = "header-existing") {
             Text(
                 header,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
             )
         }
-        items(state.inPlanExercises, key = { "in-plan-${it.id}" }) { exercise ->
+        items(state.existingExercises, key = { "existing-${it.id}" }) { exercise ->
             val colors = if (exercise.selectable) {
                 CardDefaults.cardColors()
             } else {
@@ -286,8 +289,7 @@ private fun ExerciseLibraryContentPreview() {
         ExerciseLibraryContent(
             catalogExercises.toLibraryUiState(
                 selectedExerciseId = "incline-curl-db",
-                planName = fullBodyA.name,
-                planExercises = fullBodyA.sets.map { it.exercise },
+                existingExerciseIds = fullBodyA.sets.map { it.exercise.id },
             ),
             {},
             {},

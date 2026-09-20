@@ -5,9 +5,12 @@ import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.label
 
+const val EXERCISE_LIBRARY_RESULT_KEY = "exercise_id"
+
+private const val ALREADY_ADDED_HEADER = "Already added"
+
 data class ExerciseLibraryUiState(
-    val planName: String? = null,
-    val inPlanExercises: List<ExerciseLibraryItemUi> = emptyList(),
+    val existingExercises: List<ExerciseLibraryItemUi> = emptyList(),
     val groups: List<ExerciseLibraryGroup> = emptyList(),
     val filterChips: List<ExerciseLibraryFilterChipUi> = emptyList(),
     val selectedExerciseId: String? = null,
@@ -16,10 +19,11 @@ data class ExerciseLibraryUiState(
 
     val showEmptyState: Boolean get() = groups.isEmpty() && filterChips.any { it.selected }
 
-    val inPlanHeader: String? get() = planName?.let { "In plan $it" }
+    val existingHeader: String?
+        get() = if (existingExercises.isNotEmpty()) ALREADY_ADDED_HEADER else null
 
-    fun isAlreadyOnPlan(exerciseId: String): Boolean =
-        inPlanExercises.any { it.id == exerciseId && !it.selectable }
+    fun isExisting(exerciseId: String): Boolean =
+        existingExercises.any { it.id == exerciseId && !it.selectable }
 }
 
 data class ExerciseLibraryGroup(
@@ -89,36 +93,37 @@ sealed class ExerciseLibraryAction {
 }
 
 sealed class ExerciseLibraryEffect {
-    data object NavigateBack : ExerciseLibraryEffect()
+    data class ExercisePicked(
+        val exerciseId: String,
+    ) : ExerciseLibraryEffect()
 }
 
 fun List<ExerciseDefinition>.toLibraryUiState(
     selectedExerciseId: String? = null,
     filters: ExerciseLibraryFilters = ExerciseLibraryFilters(),
-    planName: String? = null,
-    planExercises: List<ExerciseDefinition> = emptyList(),
+    existingExerciseIds: List<String> = emptyList(),
 ): ExerciseLibraryUiState {
-    val planExerciseIds = planExercises.map { it.id }.toSet()
-    val pendingId = selectedExerciseId.takeUnless { it in planExerciseIds }
+    val existingIdSet = existingExerciseIds.toSet()
+    val pendingId = selectedExerciseId.takeUnless { it in existingIdSet }
     return ExerciseLibraryUiState(
-        planName = planName,
-        inPlanExercises = planExercises.toInPlanItems(this, pendingId),
+        existingExercises = existingExerciseIds.toExistingItems(this, pendingId),
         groups = matching(filters)
-            .filter { it.id !in planExerciseIds && it.id != pendingId }
+            .filter { it.id !in existingIdSet && it.id != pendingId }
             .groupedByBodyPart(pendingId),
         filterChips = filters.toChips(),
         selectedExerciseId = pendingId,
     )
 }
 
-private fun List<ExerciseDefinition>.toInPlanItems(
+private fun List<String>.toExistingItems(
     catalog: List<ExerciseDefinition>,
     pendingId: String?,
 ): List<ExerciseLibraryItemUi> {
-    val items = map { it.toLibraryItem(selectedExerciseId = null, selectable = false) }
-    val pending = pendingId?.let { id ->
-        catalog.firstOrNull { it.id == id }?.toLibraryItem(id)
+    val byId = catalog.associateBy { it.id }
+    val items = mapNotNull { id ->
+        byId[id]?.toLibraryItem(selectedExerciseId = null, selectable = false)
     }
+    val pending = pendingId?.let { id -> byId[id]?.toLibraryItem(id) }
     return if (pending != null) items + pending else items
 }
 
