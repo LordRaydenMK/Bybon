@@ -103,4 +103,71 @@ class WorkoutSessionAddExerciseTest {
             actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress,
         )
     }
+
+    @Test
+    fun `removeExercise throws when the exercise is completed`() {
+        val session = twoExerciseSession(
+            firstState = SetState.Completed,
+            secondState = SetState.InProgress,
+        )
+
+        val error = assertFailsWith<IllegalStateException> {
+            session.removeExercise("bench-press-bb")
+        }
+        assert(error.message == "Cannot remove completed exercise bench-press-bb")
+    }
+
+    @Test
+    fun `removeExercise completes the session when remaining exercises are done`() {
+        val session = twoExerciseSession(
+            firstState = SetState.Completed,
+            secondState = SetState.InProgress,
+        )
+
+        val actual = session.removeExercise("incline-curl-db")
+
+        assert(actual.exercises.single().id == "bench-press-bb")
+        assert(actual.state is WorkoutState.Completed)
+        assert(actual.duration != null)
+    }
+
+    @Test
+    fun `canRemoveExercise is false for completed or last remaining exercises`() {
+        val session = twoExerciseSession(
+            firstState = SetState.Completed,
+            secondState = SetState.InProgress,
+        )
+        val completed = session.exercises.first()
+        val inProgress = session.exercises.last()
+
+        assert(!session.canRemoveExercise(completed))
+        assert(session.canRemoveExercise(inProgress))
+        assert(!session.removeExercise(inProgress.id).canRemoveExercise(session.exercises.first()))
+    }
+}
+
+private fun twoExerciseSession(
+    firstState: SetState,
+    secondState: SetState,
+): WorkoutSession {
+    val bench = catalogExercise("bench-press-bb")
+    val curl = catalogExercise("incline-curl-db")
+    return WorkoutSession(
+        planId = fullBodyA.id,
+        planName = fullBodyA.name,
+        planDescription = null,
+        exercises = listOf(
+            WorkoutExercise(
+                exerciseDefinition = bench,
+                repRange = 8..10,
+                sets = listOf(ExerciseSet(bench, Weight.kilograms(50), 8, firstState)),
+            ),
+            WorkoutExercise(
+                exerciseDefinition = curl,
+                repRange = 8..12,
+                sets = listOf(ExerciseSet(curl, Weight.kilograms(12), 8, secondState)),
+            ),
+        ),
+        startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
+    )
 }

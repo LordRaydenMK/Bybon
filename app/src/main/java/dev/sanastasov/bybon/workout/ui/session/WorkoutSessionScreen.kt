@@ -30,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.result.LocalResultEventBus
+import androidx.navigation3.runtime.result.ResultEffect
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
@@ -40,12 +42,14 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.canRemoveExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
 import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
+import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
@@ -54,15 +58,23 @@ fun WorkoutModule.WorkoutSessionScreen(
     planId: WorkoutPlanId,
     onBack: () -> Unit,
     onWorkoutCompleted: (WorkoutSessionId) -> Unit,
+    onNavigateToExerciseLibrary: (List<String>) -> Unit,
 ) {
     val viewModel = retain {
         WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val resultBus = LocalResultEventBus.current
+    ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
+        viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
+        resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
+    }
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
             WorkoutSessionEffect.NavigateBack -> onBack()
             is WorkoutSessionEffect.NavigateToSummary -> onWorkoutCompleted(effect.sessionId)
+            is WorkoutSessionEffect.OpenExerciseLibrary ->
+                onNavigateToExerciseLibrary(effect.existingExerciseIds)
         }
     }
     uiState?.let {
@@ -87,7 +99,10 @@ private fun SessionScreenContent(
                 state.planName,
                 onBack,
                 actions = {
-                    SessionOverflowMenu(onCancelWorkout = { showCancelDialog = true })
+                    SessionOverflowMenu(
+                        onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
+                        onCancelWorkout = { showCancelDialog = true },
+                    )
                 },
             )
         },
@@ -109,6 +124,7 @@ private fun SessionScreenContent(
                 pagerState,
                 Modifier.weight(1f),
                 verticalAlignment = Alignment.Top,
+                key = { page -> state.exercises[page].id },
             ) { page ->
                 val exercise = state.exercises[page]
                 Card(Modifier.fillMaxWidth()) {
@@ -116,6 +132,11 @@ private fun SessionScreenContent(
                         exercise = exercise,
                         mode = ExerciseCardMode.Session,
                         onEvent = { event -> onAction(event.toSessionAction(exercise)) },
+                        onRemoveExercise = if (state.canRemoveExercise(exercise)) {
+                            { onAction(WorkoutSessionAction.OnRemoveExercise(exercise)) }
+                        } else {
+                            null
+                        },
                     )
                 }
             }
@@ -136,7 +157,7 @@ private fun SessionScreenContent(
 }
 
 @Composable
-private fun SessionOverflowMenu(onCancelWorkout: () -> Unit) {
+private fun SessionOverflowMenu(onAddExercise: () -> Unit, onCancelWorkout: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton({ expanded = true }) {
@@ -149,6 +170,13 @@ private fun SessionOverflowMenu(onCancelWorkout: () -> Unit) {
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
+            DropdownMenuItem(
+                text = { Text("Add Exercise") },
+                onClick = {
+                    expanded = false
+                    onAddExercise()
+                },
+            )
             DropdownMenuItem(
                 text = { Text("Cancel workout") },
                 onClick = {

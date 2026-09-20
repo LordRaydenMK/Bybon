@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercise
+import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -237,4 +238,168 @@ class WorkoutSessionViewModelTest {
         assert(stored.state is WorkoutState.Completed)
         assert(stored.exercises.single().state == ExerciseState.Completed)
     }
+
+    @Test
+    fun `add exercise opens the library with session exercise ids`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(WorkoutSessionAction.OnAddExercise)
+            assert(
+                awaitItem() == WorkoutSessionEffect.OpenExerciseLibrary(
+                    session.exercises.map { it.id },
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `picked exercise is appended to the session`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("incline-curl-db"))
+            val added = awaitItem()!!
+            assert(added.exercises.last().id == "incline-curl-db")
+            assert(added.exercises.last().sets.size == 3)
+            assert(added.exercises.last().warmupSets == null)
+            assert(added.exercises.last().repRange == 8..12)
+            assert(added.exercises.dropLast(1) == session.exercises)
+            assert(added.exercises.last().sets.all { it.setState == SetState.NotStated })
+            assert(added.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+        }
+    }
+
+    @Test
+    fun `unknown or duplicate picked exercise does not change the session`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("missing"))
+            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("bench-press-bb"))
+            expectNoEvents()
+            assert(repository.workoutSessions().first().single().exercises == session.exercises)
+        }
+    }
+
+    @Test
+    fun `removing an incomplete exercise persists the session without it`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            val removed = session.exercises.first { it.id == "leg-curl" }
+
+            viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(removed))
+            val updated = awaitItem()!!
+            assert(updated.exercises.none { it.id == "leg-curl" })
+            assert(updated.exercises.size == session.exercises.size - 1)
+            assert(updated.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+        }
+    }
+
+    @Test
+    fun `removing the in-progress exercise starts the next one`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+
+            viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(session.exercises.first()))
+            val updated = awaitItem()!!
+            assert(updated.exercises.none { it.id == "bench-press-bb" })
+            assert(updated.exercises.first().id == "squat-bb")
+            assert(updated.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+        }
+    }
+
+    @Test
+    fun `removing a completed exercise is ignored`() = runTest {
+        val session = twoExerciseSession(
+            firstState = SetState.Completed,
+            secondState = SetState.InProgress,
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(session),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val current = awaitItem()!!
+            viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(current.exercises.first()))
+            expectNoEvents()
+            assert(
+                repository.workoutSessions().first().single().exercises.map { it.id } ==
+                    listOf("bench-press-bb", "incline-curl-db"),
+            )
+        }
+    }
+
+    @Test
+    fun `removing the last incomplete exercise completes the workout`() = runTest {
+        val session = twoExerciseSession(
+            firstState = SetState.Completed,
+            secondState = SetState.InProgress,
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(session),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val current = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(current.exercises.last()))
+            assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
+        }
+        val stored = repository.workoutSessions().first().single()
+        assert(stored.state is WorkoutState.Completed)
+        assert(stored.exercises.single().id == "bench-press-bb")
+    }
+}
+
+private fun twoExerciseSession(
+    firstState: SetState,
+    secondState: SetState,
+): WorkoutSession {
+    val bench = catalogExercise("bench-press-bb")
+    val curl = catalogExercise("incline-curl-db")
+    return WorkoutSession(
+        planId = fullBodyA.id,
+        planName = fullBodyA.name,
+        planDescription = null,
+        exercises = listOf(
+            WorkoutExercise(
+                exerciseDefinition = bench,
+                repRange = 8..10,
+                sets = listOf(ExerciseSet(bench, Weight.kilograms(50), 8, firstState)),
+            ),
+            WorkoutExercise(
+                exerciseDefinition = curl,
+                repRange = 8..12,
+                sets = listOf(ExerciseSet(curl, Weight.kilograms(12), 8, secondState)),
+            ),
+        ),
+        startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+    )
 }

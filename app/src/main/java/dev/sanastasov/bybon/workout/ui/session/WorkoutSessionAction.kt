@@ -59,11 +59,21 @@ sealed class WorkoutSessionAction {
     ) : WorkoutSessionAction()
 
     data object OnCancelWorkout : WorkoutSessionAction()
+    data object OnAddExercise : WorkoutSessionAction()
+    data class OnExercisePicked(
+        val exerciseId: String,
+    ) : WorkoutSessionAction()
+    data class OnRemoveExercise(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
 }
 
 sealed class WorkoutSessionEffect {
     data object NavigateBack : WorkoutSessionEffect()
     data class NavigateToSummary(
         val sessionId: WorkoutSessionId,
+    ) : WorkoutSessionEffect()
+    data class OpenExerciseLibrary(
+        val existingExerciseIds: List<String>,
     ) : WorkoutSessionEffect()
 }
