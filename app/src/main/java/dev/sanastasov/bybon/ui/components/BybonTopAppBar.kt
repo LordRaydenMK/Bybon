@@ -2,6 +2,7 @@
 
 package dev.sanastasov.bybon.ui.components
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,7 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun BybonTopAppBar(title: String, onBackClicked: () -> Unit, modifier: Modifier = Modifier) {
+fun BybonTopAppBar(
+    title: String,
+    onBackClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+) {
     TopAppBar(
         title = { Text(title) },
         navigationIcon = {
@@ -27,6 +33,7 @@ fun BybonTopAppBar(title: String, onBackClicked: () -> Unit, modifier: Modifier 
                 )
             }
         },
+        actions = actions,
         modifier = modifier,
     )
 }

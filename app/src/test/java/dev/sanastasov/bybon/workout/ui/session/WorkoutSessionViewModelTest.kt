@@ -2,13 +2,20 @@ package dev.sanastasov.bybon.workout.ui.session
 
 import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -149,7 +156,6 @@ class WorkoutSessionViewModelTest {
     fun `resumes an incomplete session instead of replacing it`() = runTest {
         val started = fullBodyA.toWorkoutSession()
         val paused = started.copy(
-            state = WorkoutState.InProgress,
             exercises = started.exercises.mapIndexed { exerciseIndex, exercise ->
                 if (exerciseIndex != 0) {
                     exercise
@@ -182,5 +188,53 @@ class WorkoutSessionViewModelTest {
             assert(session.exercises.first().warmupSets!![1].setState == SetState.InProgress)
             assert(session.state == WorkoutState.InProgress)
         }
+    }
+
+    @Test
+    fun `canceling a workout deletes it and navigates back`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            viewModel.uiState.first { it != null }
+            viewModel.onAction(WorkoutSessionAction.OnCancelWorkout)
+            assert(awaitItem() == WorkoutSessionEffect.NavigateBack)
+        }
+        assert(repository.workoutSessions().first().isEmpty())
+    }
+
+    @Test
+    fun `completing the last set completes the workout and opens the summary`() = runTest {
+        val bench = catalogExercise("bench-press-bb")
+        val startedAt = LocalDateTime.of(2026, 1, 1, 12, 0)
+        val session = WorkoutSession(
+            planId = fullBodyA.id,
+            planName = fullBodyA.name,
+            planDescription = null,
+            exercises = listOf(
+                WorkoutExercise(
+                    exerciseDefinition = bench,
+                    repRange = 8..10,
+                    sets = listOf(
+                        ExerciseSet(bench, Weight.kilograms(50), 8, SetState.InProgress),
+                    ),
+                ),
+            ),
+            startedAt = startedAt,
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(session),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val current = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(WorkoutSessionAction.OnCompleteSet(current.exercises.first(), 0))
+            assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
+        }
+        val stored = repository.workoutSessions().first().single()
+        assert(stored.state is WorkoutState.Completed)
+        assert(stored.exercises.single().state == ExerciseState.Completed)
     }
 }

@@ -18,6 +18,9 @@ fun WorkoutPlan.removeLastWorkSet(exerciseId: String): WorkoutPlan =
 
 fun WorkoutPlan.removeExercise(exerciseId: String): WorkoutPlan {
     val exercise = requireExercise(exerciseId)
+    check(sets.size > 1) {
+        "Cannot remove last exercise from the plan"
+    }
     return copy(sets = sets.filter { it.exercise.id != exercise.exercise.id })
 }
 

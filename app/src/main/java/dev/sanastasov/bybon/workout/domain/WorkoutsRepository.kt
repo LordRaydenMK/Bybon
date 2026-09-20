@@ -16,6 +16,8 @@ interface WorkoutsRepository {
 
     suspend fun updateWorkout(session: WorkoutSession)
 
+    suspend fun deleteWorkout(sessionId: WorkoutSessionId)
+
     fun workoutSessions(): Flow<List<WorkoutSession>>
 
     suspend fun importHistory(

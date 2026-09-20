@@ -86,6 +86,10 @@ fun MainModule.BybonApp() {
                     WorkoutSessionScreen(
                         key.planId,
                         onBack = { backStack.removeLastOrNull() },
+                        onWorkoutCompleted = { sessionId ->
+                            backStack.removeLastOrNull()
+                            backStack.add(Screen.WorkoutSummary(sessionId))
+                        },
                     )
                 }
 

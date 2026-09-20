@@ -6,7 +6,6 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
@@ -22,7 +21,7 @@ fun completedSession(
     planDescription = null,
     exercises = exercises,
     startedAt = startedAt,
-    state = WorkoutState.Completed(40.minutes),
+    duration = 40.minutes,
 )
 
 fun completedExercise(

@@ -8,7 +8,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -37,7 +36,7 @@ private fun previewSessionWithPrevious(): WorkoutSession {
                 )
             },
             startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-            state = WorkoutState.Completed(Duration.ZERO),
+            duration = Duration.ZERO,
         )
     }
     return fullBodyA.toWorkoutSession(previous)

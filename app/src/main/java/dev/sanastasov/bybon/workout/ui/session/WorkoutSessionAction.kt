@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 
 sealed class WorkoutSessionAction {
     data class OnCompleteSet(
@@ -56,4 +57,13 @@ sealed class WorkoutSessionAction {
     data class OnResetExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
+
+    data object OnCancelWorkout : WorkoutSessionAction()
+}
+
+sealed class WorkoutSessionEffect {
+    data object NavigateBack : WorkoutSessionEffect()
+    data class NavigateToSummary(
+        val sessionId: WorkoutSessionId,
+    ) : WorkoutSessionEffect()
 }

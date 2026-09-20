@@ -103,6 +103,17 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
+    fun `deleteWorkout removes the session`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val started = fullBodyA.toWorkoutSession()
+        repository.updateWorkout(started)
+
+        repository.deleteWorkout(started.id)
+
+        assert(repository.workoutSessions().first().isEmpty())
+    }
+
+    @Test
     fun `updateWorkout does not replace an in-progress session with an overview draft`() = runTest {
         val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
         val started = fullBodyA.toWorkoutSession()

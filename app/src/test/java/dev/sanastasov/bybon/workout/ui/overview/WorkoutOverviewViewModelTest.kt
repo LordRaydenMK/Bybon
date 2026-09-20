@@ -114,7 +114,7 @@ class WorkoutOverviewViewModelTest {
                     )
                 },
                 startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-                state = WorkoutState.Completed(Duration.ZERO),
+                duration = Duration.ZERO,
             )
         }
         val repository = FakeWorkoutsRepository(
@@ -172,7 +172,7 @@ class WorkoutOverviewViewModelTest {
                     )
                 },
                 startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-                state = WorkoutState.Completed(Duration.ZERO),
+                duration = Duration.ZERO,
             )
         }
         val repository = FakeWorkoutsRepository(

@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.session
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,17 +9,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -26,7 +39,7 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
@@ -37,11 +50,21 @@ import java.time.LocalDateTime
 import kotlin.time.Duration
 
 @Composable
-fun WorkoutModule.WorkoutSessionScreen(planId: WorkoutPlanId, onBack: () -> Unit) {
+fun WorkoutModule.WorkoutSessionScreen(
+    planId: WorkoutPlanId,
+    onBack: () -> Unit,
+    onWorkoutCompleted: (WorkoutSessionId) -> Unit,
+) {
     val viewModel = retain {
         WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    viewModel.effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            WorkoutSessionEffect.NavigateBack -> onBack()
+            is WorkoutSessionEffect.NavigateToSummary -> onWorkoutCompleted(effect.sessionId)
+        }
+    }
     uiState?.let {
         SessionScreenContent(
             it,
@@ -57,8 +80,17 @@ private fun SessionScreenContent(
     onAction: (WorkoutSessionAction) -> Unit,
     onBack: () -> Unit,
 ) {
+    var showCancelDialog by remember { mutableStateOf(false) }
     Scaffold(
-        topBar = { BybonTopAppBar(state.planName, onBack) },
+        topBar = {
+            BybonTopAppBar(
+                state.planName,
+                onBack,
+                actions = {
+                    SessionOverflowMenu(onCancelWorkout = { showCancelDialog = true })
+                },
+            )
+        },
     ) { contentPadding ->
         Column(
             Modifier
@@ -92,6 +124,55 @@ private fun SessionScreenContent(
             Text("Exercise ${pagerState.currentPage + 1} / ${state.exercises.size}")
         }
     }
+    if (showCancelDialog) {
+        CancelWorkoutDialog(
+            onDismiss = { showCancelDialog = false },
+            onConfirm = {
+                showCancelDialog = false
+                onAction(WorkoutSessionAction.OnCancelWorkout)
+            },
+        )
+    }
+}
+
+@Composable
+private fun SessionOverflowMenu(onCancelWorkout: () -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton({ expanded = true }) {
+            Icon(
+                Icons.Filled.MoreVert,
+                contentDescription = "More options for workout",
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("Cancel workout") },
+                onClick = {
+                    expanded = false
+                    onCancelWorkout()
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CancelWorkoutDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Cancel workout?") },
+        text = { Text("This discards the workout and all logged sets.") },
+        confirmButton = {
+            TextButton(onConfirm) { Text("Discard") }
+        },
+        dismissButton = {
+            TextButton(onDismiss) { Text("Keep workout") }
+        },
+    )
 }
 
 private fun ExerciseCardEvent.toSessionAction(exercise: WorkoutExercise): WorkoutSessionAction =
@@ -164,7 +245,7 @@ private fun SessionScreenContentWithPreviousPreview() {
                 )
             },
             startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-            state = WorkoutState.Completed(Duration.ZERO),
+            duration = Duration.ZERO,
         )
     }
     SessionScreenContent(fullBodyA.toWorkoutSession(previous), {}, {})

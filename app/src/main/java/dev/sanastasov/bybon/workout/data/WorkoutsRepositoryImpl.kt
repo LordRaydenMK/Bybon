@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercises
@@ -69,6 +70,10 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
                 list + session
             }
         }
+    }
+
+    override suspend fun deleteWorkout(sessionId: WorkoutSessionId) {
+        sessions.update { list -> list.filterNot { it.id == sessionId } }
     }
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = sessions

@@ -40,6 +40,7 @@ fun PlannedExerciseCard(
     onRemoveLastSet: () -> Unit,
     onRemoveExercise: () -> Unit,
     modifier: Modifier = Modifier,
+    canRemoveExercise: Boolean = true,
 ) {
     Column(
         modifier
@@ -54,7 +55,13 @@ fun PlannedExerciseCard(
                 PlannedSetRow(exercise.exercise.name, plannedSet)
             }
         }
-        PlannedExerciseActions(exercise, onAddSet, onRemoveLastSet, onRemoveExercise)
+        PlannedExerciseActions(
+            exercise,
+            onAddSet,
+            onRemoveLastSet,
+            onRemoveExercise,
+            canRemoveExercise,
+        )
     }
 }
 
@@ -171,6 +178,7 @@ private fun PlannedExerciseActions(
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
     onRemoveExercise: () -> Unit,
+    canRemoveExercise: Boolean,
 ) {
     val exerciseName = exercise.exercise.name
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -183,13 +191,15 @@ private fun PlannedExerciseActions(
             Text("Add Set")
         }
         if (exercise.sets == 1) {
-            TextButton(
-                onRemoveExercise,
-                Modifier.clearAndSetSemantics {
-                    contentDescription = "Remove $exerciseName from plan"
-                },
-            ) {
-                Text("Remove Exercise")
+            if (canRemoveExercise) {
+                TextButton(
+                    onRemoveExercise,
+                    Modifier.clearAndSetSemantics {
+                        contentDescription = "Remove $exerciseName from plan"
+                    },
+                ) {
+                    Text("Remove Exercise")
+                }
             }
         } else {
             TextButton(
