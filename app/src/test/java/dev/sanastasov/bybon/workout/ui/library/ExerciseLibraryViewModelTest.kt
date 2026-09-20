@@ -1,15 +1,13 @@
 package dev.sanastasov.bybon.workout.ui.library
 
-import app.cash.turbine.test
+import dev.sanastasov.bybon.test.BackgroundFailures
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -122,25 +120,37 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun `adding an unknown exercise does not emit a result`() = runTest {
-        val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA),
-            initialExercises = catalogExercises,
-        )
+    fun `adding an unknown exercise is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
         val viewModel = ExerciseLibraryViewModel(
             fullBodyA.sets.map { it.exercise.id },
-            repository,
-            backgroundScope,
+            FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialExercises = catalogExercises,
+            ),
+            failures.scope,
         )
         viewModel.uiState.first { it.groups.isNotEmpty() }
-
-        viewModel.effects.test {
+        failures.expectFailure("Exercise missing is not in the repository") {
             viewModel.onAction(ExerciseLibraryAction.OnAddExercise("missing"))
-            advanceUntilIdle()
-            expectNoEvents()
         }
-        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `adding an already added exercise is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = ExerciseLibraryViewModel(
+            fullBodyA.sets.map { it.exercise.id },
+            FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialExercises = catalogExercises,
+            ),
+            failures.scope,
+        )
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+        failures.expectFailure("Exercise bench-press-bb is already added") {
+            viewModel.onAction(ExerciseLibraryAction.OnAddExercise("bench-press-bb"))
+        }
     }
 
     @Test

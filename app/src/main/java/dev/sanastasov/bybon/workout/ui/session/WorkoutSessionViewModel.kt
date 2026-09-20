@@ -1,7 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
-import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
@@ -16,6 +15,7 @@ import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
+import dev.sanastasov.bybon.workout.domain.requireExercise
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.startWorkout
@@ -86,7 +86,7 @@ class WorkoutSessionViewModel(
                 }
 
                 WorkoutSessionAction.OnAddExercise -> {
-                    val session = uiState.value ?: return@launch
+                    val session = checkNotNull(uiState.value) { "No active session" }
                     _effects.trySend(
                         WorkoutSessionEffect.OpenExerciseLibrary(session.exercises.map { it.id }),
                     )
@@ -111,26 +111,12 @@ class WorkoutSessionViewModel(
     }
 
     private suspend fun addPickedExercise(exerciseId: String) {
-        val exercise = repository.exercises().first()
-            .firstOrNull { it.id == exerciseId }
-            ?: return
-        repository.updateWorkout(planId) { session ->
-            if (session.exercises.any { it.id == exercise.id }) {
-                session
-            } else {
-                session.addExercise(exercise)
-            }
-        }
+        val exercise = repository.requireExercise(exerciseId)
+        repository.updateWorkout(planId) { it.addExercise(exercise) }
     }
 
     private suspend fun removeSessionExercise(action: WorkoutSessionAction.OnRemoveExercise) {
-        val session = uiState.value ?: return
-        if (session.exercises.size <= 1 ||
-            action.exercise.state == ExerciseState.Completed ||
-            session.exercises.none { it.id == action.exercise.id }
-        ) {
-            return
-        }
+        checkNotNull(uiState.value) { "No active session" }
         val updated = repository.updateWorkout(planId) {
             it.removeExercise(action.exercise.id)
         }
