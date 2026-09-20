@@ -316,6 +316,27 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
+    fun `picked exercise is applied even if received before the draft loads`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            var session = awaitItem()!!
+            if (session.exercises.none { it.id == "incline-curl-db" }) {
+                session = awaitItem()!!
+            }
+            assert(session.exercises.last().id == "incline-curl-db")
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        }
+    }
+
+    @Test
     fun `unknown picked exercise does not change the draft`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),

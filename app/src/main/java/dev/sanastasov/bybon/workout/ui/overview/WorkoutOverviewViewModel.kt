@@ -80,7 +80,7 @@ class WorkoutOverviewViewModel(
                 val exercise = repository.exercises().first()
                     .firstOrNull { it.id == action.exerciseId }
                     ?: return@launch
-                val session = uiState.value ?: return@launch
+                val session = uiState.filterNotNull().first()
                 if (session.exercises.any { it.id == exercise.id }) return@launch
                 emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise))
             }
