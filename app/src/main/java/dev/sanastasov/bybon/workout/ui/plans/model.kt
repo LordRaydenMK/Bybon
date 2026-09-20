@@ -76,6 +76,9 @@ sealed class WorkoutPlanEffect {
 sealed class EditPlanAction {
     data object OnArchivePlan : EditPlanAction()
     data object OnAddExercise : EditPlanAction()
+    data class OnExercisePicked(
+        val exerciseId: String,
+    ) : EditPlanAction()
     data class OnAddSet(
         val exerciseId: String,
     ) : EditPlanAction()
@@ -95,7 +98,9 @@ sealed class EditPlanAction {
 
 sealed class EditPlanEffect {
     data object NavigateBack : EditPlanEffect()
-    data object OpenExerciseLibrary : EditPlanEffect()
+    data class OpenExerciseLibrary(
+        val existingExerciseIds: List<String>,
+    ) : EditPlanEffect()
 }
 
 data class PlannedSetUi(

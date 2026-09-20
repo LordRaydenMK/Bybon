@@ -23,7 +23,7 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data class ExerciseLibrary(
-        val planId: WorkoutPlanId,
+        val existingExerciseIds: List<String>,
     ) : Screen
 
     @Serializable

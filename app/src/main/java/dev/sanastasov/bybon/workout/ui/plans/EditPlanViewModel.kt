@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
@@ -13,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -53,8 +55,27 @@ class EditPlanViewModel(
                 is EditPlanAction.OnMoveExerciseDown ->
                     repository.updatePlan(planId) { it.moveExerciseDown(action.exerciseId) }
 
-                EditPlanAction.OnAddExercise ->
-                    _effects.trySend(EditPlanEffect.OpenExerciseLibrary)
+                EditPlanAction.OnAddExercise -> {
+                    val existingExerciseIds = repository.workoutPlans().first()
+                        .firstOrNull { it.id == planId }
+                        ?.sets
+                        ?.map { it.exercise.id }
+                        .orEmpty()
+                    _effects.trySend(EditPlanEffect.OpenExerciseLibrary(existingExerciseIds))
+                }
+
+                is EditPlanAction.OnExercisePicked -> {
+                    val exercise = repository.exercises().first()
+                        .firstOrNull { it.id == action.exerciseId }
+                        ?: return@launch
+                    repository.updatePlan(planId) { plan ->
+                        if (plan.sets.any { it.exercise.id == exercise.id }) {
+                            plan
+                        } else {
+                            plan.addExercise(exercise)
+                        }
+                    }
+                }
             }
         }
     }

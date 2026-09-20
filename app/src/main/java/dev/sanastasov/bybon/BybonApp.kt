@@ -7,6 +7,8 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.runtime.result.LocalResultEventBus
+import androidx.navigation3.runtime.result.rememberResultEventBusNavEntryDecorator
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.navigation3.runtime.serialization.NavKeySerializer
 import androidx.navigation3.ui.NavDisplay
@@ -14,6 +16,7 @@ import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryScreen
+import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import dev.sanastasov.bybon.workout.ui.library.ExerciseLibraryScreen
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewScreen
 import dev.sanastasov.bybon.workout.ui.plans.EditPlanScreen
@@ -39,6 +42,7 @@ fun MainModule.BybonApp() {
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberViewModelStoreNavEntryDecorator(),
+            rememberResultEventBusNavEntryDecorator(),
         ),
         backStack = backStack,
         onBack = { backStack.removeLastOrNull() },
@@ -69,15 +73,23 @@ fun MainModule.BybonApp() {
                     EditPlanScreen(
                         planId = key.planId,
                         onNavigateBack = { backStack.removeLastOrNull() },
-                        onNavigateToExerciseLibrary = {
-                            backStack.add(Screen.ExerciseLibrary(key.planId))
+                        onNavigateToExerciseLibrary = { existingExerciseIds ->
+                            backStack.add(Screen.ExerciseLibrary(existingExerciseIds))
                         },
                     )
                 }
 
                 is Screen.ExerciseLibrary -> NavEntry(key) {
+                    val resultBus = LocalResultEventBus.current
                     ExerciseLibraryScreen(
-                        planId = key.planId,
+                        existingExerciseIds = key.existingExerciseIds,
+                        onExercisePicked = { exerciseId ->
+                            resultBus.sendResult(
+                                resultKey = EXERCISE_LIBRARY_RESULT_KEY,
+                                result = exerciseId,
+                            )
+                            backStack.removeLastOrNull()
+                        },
                         onNavigateBack = { backStack.removeLastOrNull() },
                     )
                 }
