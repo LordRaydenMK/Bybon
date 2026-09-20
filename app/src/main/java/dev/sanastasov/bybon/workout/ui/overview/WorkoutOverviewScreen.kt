@@ -170,6 +170,11 @@ private fun LazyItemScope.OverviewExerciseCard(
             mode = ExerciseCardMode.Overview,
             onEvent = { event -> onAction(event.toOverviewAction(exercise)) },
             overflow = overflow,
+            onRemoveExercise = if (overflow == null) {
+                null
+            } else {
+                { onAction(WorkoutOverviewAction.OnRemoveExercise(exercise)) }
+            },
         )
     }
 }

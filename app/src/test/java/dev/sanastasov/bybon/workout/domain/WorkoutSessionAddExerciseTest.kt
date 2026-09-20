@@ -48,4 +48,59 @@ class WorkoutSessionAddExerciseTest {
             actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress,
         )
     }
+
+    @Test
+    fun `removeExercise drops the matching exercise`() {
+        val session = fullBodyA.toOverviewSession()
+
+        val actual = session.removeExercise("leg-curl")
+
+        assert(actual.exercises.none { it.id == "leg-curl" })
+        assert(actual.exercises.size == session.exercises.size - 1)
+        assert(actual.exercises.first() == session.exercises.first())
+    }
+
+    @Test
+    fun `removeExercise throws when the exercise is not in the session`() {
+        val session = fullBodyA.toOverviewSession()
+        val error = assertFailsWith<IllegalStateException> {
+            session.removeExercise("missing")
+        }
+        assert(error.message == "Exercise missing is not in the session")
+    }
+
+    @Test
+    fun `removeExercise throws when only one exercise remains`() {
+        val session = fullBodyA.toOverviewSession().let { draft ->
+            draft.copy(exercises = listOf(draft.exercises.first()))
+        }
+        val error = assertFailsWith<IllegalStateException> {
+            session.removeExercise("bench-press-bb")
+        }
+        assert(error.message == "Cannot remove last exercise from the session")
+    }
+
+    @Test
+    fun `removeExercise keeps in-progress on another exercise`() {
+        val session = fullBodyA.toWorkoutSession()
+        val actual = session.removeExercise("leg-curl")
+
+        assert(actual.exercises.none { it.id == "leg-curl" })
+        assert(
+            actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress,
+        )
+    }
+
+    @Test
+    fun `removeExercise starts the next exercise when the in-progress one is removed`() {
+        val session = fullBodyA.toWorkoutSession()
+
+        val actual = session.removeExercise("bench-press-bb")
+
+        assert(actual.exercises.none { it.id == "bench-press-bb" })
+        assert(actual.exercises.first().id == "squat-bb")
+        assert(
+            actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress,
+        )
+    }
 }

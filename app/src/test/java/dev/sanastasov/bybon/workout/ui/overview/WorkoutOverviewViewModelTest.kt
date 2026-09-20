@@ -337,6 +337,52 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
+    fun `removed exercise stays in memory until start and does not change the plan`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+            val removed = draft.exercises.first { it.id == "leg-curl" }
+
+            viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(removed))
+            val updated = awaitItem()!!
+            assert(updated.exercises.none { it.id == "leg-curl" })
+            assert(updated.exercises.size == draft.exercises.size - 1)
+            assert(repository.workoutSessions().first().isEmpty())
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+
+            viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
+            assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
+            val saved = repository.workoutSessions().first().single()
+            assert(saved.exercises.none { it.id == "leg-curl" })
+            assert(saved.exercises.size == draft.exercises.size - 1)
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        }
+    }
+
+    @Test
+    fun `removing the last remaining exercise is ignored`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            var session = awaitItem()!!
+            session.exercises.drop(1).forEach { exercise ->
+                viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(exercise))
+                session = awaitItem()!!
+            }
+            assert(session.exercises.size == 1)
+
+            viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(session.exercises.single()))
+            expectNoEvents()
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        }
+    }
+
+    @Test
     fun `unknown picked exercise does not change the draft`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),

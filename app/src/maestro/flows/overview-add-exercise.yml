@@ -35,5 +35,8 @@ appId: dev.sanastasov.bybon.debug
     direction: DOWN
     centerElement: true
 - assertVisible: "3 x Incline Curl (dumbbell) in 8 - 12"
+- tapOn: "More options for Incline Curl (dumbbell)"
+- tapOn: "Remove Exercise"
+- assertNotVisible: "3 x Incline Curl (dumbbell) in 8 - 12"
 - tapOn: "Start Workout"
-- assertVisible: "Exercise 1 / 7"
+- assertVisible: "Exercise 1 / 6"

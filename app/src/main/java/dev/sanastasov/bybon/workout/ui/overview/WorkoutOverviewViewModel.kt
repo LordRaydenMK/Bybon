@@ -14,6 +14,7 @@ import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
+import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
@@ -85,6 +86,16 @@ class WorkoutOverviewViewModel(
                 emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise))
             }
 
+            is WorkoutOverviewAction.OnRemoveExercise -> {
+                val session = uiState.value
+                if (session != null &&
+                    session.exercises.size > 1 &&
+                    session.exercises.any { it.id == action.exercise.id }
+                ) {
+                    emitAction(action)
+                }
+            }
+
             else -> emitAction(action)
         }
     }
@@ -98,10 +109,10 @@ class WorkoutOverviewViewModel(
     private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
         reduceProgression(session, action)
             ?: reduceReorder(session, action)
-            ?: reduceAddExercise(session, action)
+            ?: reduceExerciseList(session, action)
             ?: reduceEdits(session, action)
 
-    private fun reduceAddExercise(
+    private fun reduceExerciseList(
         session: WorkoutSession,
         action: WorkoutOverviewAction,
     ): WorkoutSession? = when (action) {
@@ -110,6 +121,15 @@ class WorkoutOverviewViewModel(
                 session
             } else {
                 session.addExercise(action.exercise)
+            }
+
+        is WorkoutOverviewAction.OnRemoveExercise ->
+            if (session.exercises.size <= 1 ||
+                session.exercises.none { it.id == action.exercise.id }
+            ) {
+                session
+            } else {
+                session.removeExercise(action.exercise.id)
             }
 
         else -> null

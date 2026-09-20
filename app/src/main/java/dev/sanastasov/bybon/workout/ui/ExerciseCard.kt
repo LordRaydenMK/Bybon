@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,6 +44,7 @@ fun ExerciseCard(
     onEvent: (ExerciseCardEvent) -> Unit,
     modifier: Modifier = Modifier,
     overflow: ExerciseOverflow? = null,
+    onRemoveExercise: (() -> Unit)? = null,
 ) {
     val scrollable = if (mode == ExerciseCardMode.Session) {
         modifier.verticalScroll(rememberScrollState())
@@ -55,7 +57,7 @@ fun ExerciseCard(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        ExerciseCardHeader(exercise, overflow, onEvent)
+        ExerciseCardHeader(exercise, overflow, onRemoveExercise, onEvent)
         SetColumnsHeader(
             canResetAll = exercise.hasPreviousPerformance,
             onResetAllSets = { onEvent(ExerciseCardEvent.OnResetAllSets) },
@@ -96,6 +98,7 @@ fun ExerciseCard(
 private fun ExerciseCardHeader(
     exercise: WorkoutExercise,
     overflow: ExerciseOverflow?,
+    onRemoveExercise: (() -> Unit)?,
     onEvent: (ExerciseCardEvent) -> Unit,
 ) {
     Row(
@@ -135,7 +138,19 @@ private fun ExerciseCardHeader(
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
-            overflow?.let { ExerciseOverflowMenu(exercise.exerciseDefinition.name, it) }
+            overflow?.let { current ->
+                ExerciseOverflowMenu(exercise.exerciseDefinition.name, current) { dismiss ->
+                    if (onRemoveExercise != null) {
+                        DropdownMenuItem(
+                            text = { Text("Remove Exercise") },
+                            onClick = {
+                                dismiss()
+                                onRemoveExercise()
+                            },
+                        )
+                    }
+                }
+            }
         }
     }
 }

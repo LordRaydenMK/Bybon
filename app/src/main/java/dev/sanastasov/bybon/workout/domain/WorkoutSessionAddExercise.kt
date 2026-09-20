@@ -7,6 +7,25 @@ fun WorkoutSession.addExercise(exercise: ExerciseDefinition): WorkoutSession {
     return copy(exercises = exercises + exercise.toAddedWorkoutExercise())
 }
 
+@Suppress("ReturnCount")
+fun WorkoutSession.removeExercise(exerciseId: String): WorkoutSession {
+    exercises.firstOrNull { it.id == exerciseId }
+        ?: error("Exercise $exerciseId is not in the session")
+    check(exercises.size > 1) {
+        "Cannot remove last exercise from the session"
+    }
+    val hadInProgress = workoutSets.any { it.setState == SetState.InProgress }
+    val updated = copy(exercises = exercises.filter { it.id != exerciseId })
+    if (!hadInProgress || updated.workoutSets.any { it.setState == SetState.InProgress }) {
+        return updated
+    }
+    val next = updated.firstNotStartedSet() ?: return updated
+    val nextExercise = updated.exercises.first { it.id == next.exerciseId }
+    return updated.updateExerciseSet(nextExercise, next.index, next.isWarmup) {
+        it.copy(setState = SetState.InProgress)
+    }
+}
+
 private fun ExerciseDefinition.toAddedWorkoutExercise(): WorkoutExercise = WorkoutExercise(
     exerciseDefinition = this,
     repRange = DEFAULT_ADDED_REP_RANGE,

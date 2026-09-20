@@ -62,6 +62,9 @@ sealed class WorkoutOverviewAction {
     data class OnMoveExerciseDown(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
+    data class OnRemoveExercise(
+        val exercise: WorkoutExercise,
+    ) : WorkoutOverviewAction()
 }
 
 fun WorkoutSession.exerciseOverflow(
