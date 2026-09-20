@@ -132,6 +132,33 @@ class WorkoutSessionAddExerciseTest {
     }
 
     @Test
+    fun `toWorkoutSession follows the plan even if the previous session added or removed exercises`() {
+        val previous = fullBodyA.toWorkoutSession()
+            .removeExercise("leg-curl")
+            .addExercise(catalogExercise("incline-curl-db"))
+            .let { session ->
+                session.copy(
+                    exercises = session.exercises.map { exercise ->
+                        exercise.copy(
+                            warmupSets = exercise.warmupSets?.map {
+                                it.copy(setState = SetState.Completed)
+                            },
+                            sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                        )
+                    },
+                    duration = kotlin.time.Duration.ZERO,
+                    startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
+                )
+            }
+
+        val actual = fullBodyA.toWorkoutSession(previous)
+
+        assert(actual.exercises.map { it.id } == fullBodyA.sets.map { it.exercise.id })
+        assert(actual.exercises.none { it.id == "incline-curl-db" })
+        assert(actual.exercises.any { it.id == "leg-curl" })
+    }
+
+    @Test
     fun `canRemoveExercise is false for completed or last remaining exercises`() {
         val session = twoExerciseSession(
             firstState = SetState.Completed,

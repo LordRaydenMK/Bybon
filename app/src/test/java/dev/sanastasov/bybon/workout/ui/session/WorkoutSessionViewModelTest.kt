@@ -275,6 +275,7 @@ class WorkoutSessionViewModelTest {
             assert(added.exercises.dropLast(1) == session.exercises)
             assert(added.exercises.last().sets.all { it.setState == SetState.NotStated })
             assert(added.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
     }
 
@@ -311,6 +312,7 @@ class WorkoutSessionViewModelTest {
             assert(updated.exercises.none { it.id == "leg-curl" })
             assert(updated.exercises.size == session.exercises.size - 1)
             assert(updated.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
     }
 
@@ -375,6 +377,52 @@ class WorkoutSessionViewModelTest {
         val stored = repository.workoutSessions().first().single()
         assert(stored.state is WorkoutState.Completed)
         assert(stored.exercises.single().id == "bench-press-bb")
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `the next session uses the original plan after session add and remove`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val first = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        first.uiState.first { it != null }
+        first.onAction(WorkoutSessionAction.OnExercisePicked("incline-curl-db"))
+        val added = first.uiState.first { session ->
+            session?.exercises?.last()?.id == "incline-curl-db"
+        }!!
+        val removed = added.exercises.first { it.id == "leg-curl" }
+        first.onAction(WorkoutSessionAction.OnRemoveExercise(removed))
+        first.uiState.first { session ->
+            session?.exercises?.none { it.id == "leg-curl" } == true
+        }
+        val edited = repository.workoutSessions().first().single()
+        repository.emitSessions(
+            listOf(
+                edited.copy(
+                    exercises = edited.exercises.map { exercise ->
+                        exercise.copy(
+                            warmupSets = exercise.warmupSets?.map {
+                                it.copy(setState = SetState.Completed)
+                            },
+                            sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                        )
+                    },
+                    duration = kotlin.time.Duration.ZERO,
+                ),
+            ),
+        )
+
+        val next = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val created = next.uiState.first { session ->
+            session != null && session.id != edited.id
+        }!!
+
+        assert(created.exercises.map { it.id } == fullBodyA.sets.map { it.exercise.id })
+        assert(created.exercises.none { it.id == "incline-curl-db" })
+        assert(created.exercises.any { it.id == "leg-curl" })
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 }
 
