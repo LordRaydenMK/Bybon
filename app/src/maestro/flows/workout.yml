@@ -20,8 +20,16 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Move Bench Press (barbell) up"
 - assertVisible: "Move Bench Press (barbell) down"
 - tapOn: "Move Bench Press (barbell) down"
+- scrollUntilVisible:
+    element: "More options for Squat (barbell)"
+    direction: UP
+    centerElement: true
 - tapOn: "More options for Squat (barbell)"
 - tapOn: "Move Squat (barbell) down"
+- scrollUntilVisible:
+    element: "Increase weight and reps for Bench Press (barbell)"
+    direction: UP
+    centerElement: true
 - assertNotVisible: "Reset all exercises to previous session"
 - assertNotVisible: "Reset all sets to previous session"
 - assertNotVisible: "Reset set to previous session"
