@@ -98,7 +98,22 @@ class WorkoutOverviewViewModel(
     private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
         reduceProgression(session, action)
             ?: reduceReorder(session, action)
+            ?: reduceAddExercise(session, action)
             ?: reduceEdits(session, action)
+
+    private fun reduceAddExercise(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+    ): WorkoutSession? = when (action) {
+        is WorkoutOverviewAction.OnExerciseAdded ->
+            if (session.exercises.any { it.id == action.exercise.id }) {
+                session
+            } else {
+                session.addExercise(action.exercise)
+            }
+
+        else -> null
+    }
 
     private fun reduceProgression(
         session: WorkoutSession,
@@ -166,13 +181,6 @@ class WorkoutOverviewViewModel(
 
         is WorkoutOverviewAction.OnConvertToWorkSet ->
             session.convertLastWarmupToWorkSet(action.exercise)
-
-        is WorkoutOverviewAction.OnExerciseAdded ->
-            if (session.exercises.any { it.id == action.exercise.id }) {
-                session
-            } else {
-                session.addExercise(action.exercise)
-            }
 
         else -> session
     }
