@@ -36,6 +36,14 @@ class WorkoutSessionAddExerciseTest {
     }
 
     @Test
+    fun `addExerciseIfAbsent keeps the session when the exercise is already present`() {
+        val session = fullBodyA.toOverviewSession()
+        val bench = catalogExercise("bench-press-bb")
+
+        assert(session.addExerciseIfAbsent(bench) == session)
+    }
+
+    @Test
     fun `addExercise does not start the new exercise`() {
         val session = fullBodyA.toWorkoutSession()
         val curl = catalogExercise("incline-curl-db")

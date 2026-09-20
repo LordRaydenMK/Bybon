@@ -7,7 +7,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
-import dev.sanastasov.bybon.workout.domain.addExercise
+import dev.sanastasov.bybon.workout.domain.addExerciseIfAbsent
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
@@ -112,7 +112,7 @@ class WorkoutSessionViewModel(
 
     private suspend fun addPickedExercise(exerciseId: String) {
         val exercise = repository.requireExercise(exerciseId)
-        repository.updateWorkout(planId) { it.addExercise(exercise) }
+        repository.updateWorkout(planId) { it.addExerciseIfAbsent(exercise) }
     }
 
     private suspend fun removeSessionExercise(action: WorkoutSessionAction.OnRemoveExercise) {

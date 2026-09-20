@@ -17,7 +17,9 @@ import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -305,20 +307,21 @@ class WorkoutSessionViewModelTest {
     }
 
     @Test
-    fun `duplicate picked exercise is rejected`() = runTest {
-        val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
-            fullBodyA.id,
-            FakeWorkoutsRepository(
-                initialPlans = listOf(fullBodyA),
-                initialExercises = catalogExercises,
-            ),
-            failures.scope,
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun `duplicate picked exercise is ignored`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
         )
-        viewModel.uiState.first { it != null }
-        failures.expectFailure("Exercise bench-press-bb is already in the session") {
-            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("bench-press-bb"))
-        }
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val session = viewModel.uiState.first { it != null }!!
+
+        viewModel.onAction(WorkoutSessionAction.OnExercisePicked("bench-press-bb"))
+        advanceUntilIdle()
+
+        assert(viewModel.uiState.value == session)
+        assert(session.exercises.count { it.id == "bench-press-bb" } == 1)
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 
     @Test

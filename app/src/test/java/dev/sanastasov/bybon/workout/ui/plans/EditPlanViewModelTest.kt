@@ -8,7 +8,9 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -167,20 +169,20 @@ class EditPlanViewModelTest {
     }
 
     @Test
-    fun `picked exercise already on the plan is rejected`() = runTest {
-        val failures = BackgroundFailures(this)
-        val viewModel = EditPlanViewModel(
-            fullBodyA.id,
-            FakeWorkoutsRepository(
-                initialPlans = listOf(fullBodyA),
-                initialExercises = catalogExercises,
-            ),
-            failures.scope,
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun `picked exercise already on the plan is ignored`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
         )
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
-        failures.expectFailure("Exercise bench-press-bb is already on the plan") {
-            viewModel.onAction(EditPlanAction.OnExercisePicked("bench-press-bb"))
-        }
+
+        viewModel.onAction(EditPlanAction.OnExercisePicked("bench-press-bb"))
+        advanceUntilIdle()
+
+        assert(viewModel.uiState.value == fullBodyA)
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 
     @Test

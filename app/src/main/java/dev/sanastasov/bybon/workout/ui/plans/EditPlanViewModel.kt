@@ -4,7 +4,7 @@ import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
-import dev.sanastasov.bybon.workout.domain.addExercise
+import dev.sanastasov.bybon.workout.domain.addExerciseIfAbsent
 import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
@@ -67,7 +67,7 @@ class EditPlanViewModel(
 
                 is EditPlanAction.OnExercisePicked -> {
                     val exercise = repository.requireExercise(action.exerciseId)
-                    repository.updatePlan(planId) { it.addExercise(exercise) }
+                    repository.updatePlan(planId) { it.addExerciseIfAbsent(exercise) }
                 }
             }
         }

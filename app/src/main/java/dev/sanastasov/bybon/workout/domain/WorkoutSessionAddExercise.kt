@@ -7,6 +7,9 @@ fun WorkoutSession.addExercise(exercise: ExerciseDefinition): WorkoutSession {
     return copy(exercises = exercises + exercise.toAddedWorkoutExercise())
 }
 
+fun WorkoutSession.addExerciseIfAbsent(exercise: ExerciseDefinition): WorkoutSession =
+    if (exercises.any { it.id == exercise.id }) this else addExercise(exercise)
+
 @Suppress("ReturnCount")
 fun WorkoutSession.removeExercise(exerciseId: String): WorkoutSession {
     val exercise = exercises.firstOrNull { it.id == exerciseId }
