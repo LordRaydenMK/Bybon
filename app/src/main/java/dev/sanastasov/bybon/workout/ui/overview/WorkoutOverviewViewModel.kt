@@ -25,7 +25,6 @@ import dev.sanastasov.bybon.workout.domain.updateWeight
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -42,7 +41,7 @@ class WorkoutOverviewViewModel(
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
 ) {
-    private val actions = MutableSharedFlow<WorkoutOverviewAction>(extraBufferCapacity = 32)
+    private val actions = Channel<WorkoutOverviewAction>(Channel.UNLIMITED)
     private val _effects = Channel<WorkoutOverviewEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutOverviewEffect> = _effects.receiveAsFlow()
 
@@ -60,7 +59,7 @@ class WorkoutOverviewViewModel(
             .distinctUntilChanged()
             .filterNotNull()
             .flatMapLatest { seed ->
-                actions.scan(seed) { session, action -> reduce(session, action) }
+                actions.receiveAsFlow().scan(seed) { session, action -> reduce(session, action) }
             }
             .stateInWhileInForeground(coroutineScope, null)
 
@@ -101,9 +100,7 @@ class WorkoutOverviewViewModel(
     }
 
     private fun emitAction(action: WorkoutOverviewAction) {
-        if (!actions.tryEmit(action)) {
-            coroutineScope.launch { actions.emit(action) }
-        }
+        actions.trySend(action)
     }
 
     private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =

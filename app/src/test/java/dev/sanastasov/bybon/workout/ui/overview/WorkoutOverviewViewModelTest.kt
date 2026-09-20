@@ -13,6 +13,7 @@ import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -329,6 +330,33 @@ class WorkoutOverviewViewModelTest {
             assert(awaitItem() == null)
             var session = awaitItem()!!
             if (session.exercises.none { it.id == "incline-curl-db" }) {
+                session = awaitItem()!!
+            }
+            assert(session.exercises.last().id == "incline-curl-db")
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        }
+    }
+
+    @Test
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    fun `picked exercise is applied after overview collectors unsubscribe`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            awaitItem()
+        }
+        advanceTimeBy(6_000)
+
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+
+        viewModel.uiState.test {
+            var session = awaitItem()!!
+            while (session.exercises.none { it.id == "incline-curl-db" }) {
                 session = awaitItem()!!
             }
             assert(session.exercises.last().id == "incline-curl-db")
