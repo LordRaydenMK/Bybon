@@ -79,7 +79,7 @@ fun ExerciseCard(
                 numbered = numbered,
                 mode = mode,
                 onEvent = onEvent,
-                onBadgeClick = if (numbered.index == 0) {
+                onBadgeClick = if (numbered.index == 0 && exercise.sets.size > 1) {
                     { onEvent(ExerciseCardEvent.OnConvertToWarmup) }
                 } else {
                     null

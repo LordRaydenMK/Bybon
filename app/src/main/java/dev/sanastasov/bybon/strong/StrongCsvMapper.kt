@@ -56,6 +56,7 @@ fun List<StrongCsvRow>.toStrongImport(
         .map { (_, workoutRows) ->
             workoutRows.toParsedWorkout(catalogByNormalizedName, catalogById)
         }
+        .filter { it.exercises.isNotEmpty() }
 
     val catalogIds = catalogById.keys
     val exercisesToImport = parsedWorkouts
@@ -122,7 +123,7 @@ private fun List<StrongCsvRow>.toParsedWorkout(
         startedAt = LocalDateTime.parse(first.date, strongDateTime),
         duration = first.durationSec.seconds,
         workoutNotes = first.workoutNotes,
-        exercises = groupByExerciseOrder().map { exerciseRows ->
+        exercises = groupByExerciseOrder().mapNotNull { exerciseRows ->
             exerciseRows.toWorkoutExercise(exercisesByNormalizedName, exercisesById)
         },
     )
@@ -208,13 +209,15 @@ private fun List<StrongCsvRow>.groupByExerciseOrder(): List<List<StrongCsvRow>> 
 private fun List<StrongCsvRow>.toWorkoutExercise(
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,
     exercisesById: Map<String, ExerciseDefinition>,
-): WorkoutExercise {
+): WorkoutExercise? {
     val strongName = first().exerciseName
     val definition = resolveExercise(strongName, exercisesByNormalizedName, exercisesById)
     val warmupRows = filter { it.setOrder.equals("W", ignoreCase = true) }
     val workingRows = filter { it.setOrder.toIntOrNull() != null }
-    val reps = workingRows.mapNotNull { it.reps }
-    val repRange = if (reps.isEmpty()) 0..0 else reps.min()..reps.max()
+    val workSets = workingRows.mapNotNull { it.toCompletedSet(definition) }
+    if (workSets.isEmpty()) return null
+    val reps = workSets.map { it.reps }
+    val repRange = reps.min()..reps.max()
 
     val restAfterWorkSet = filter { it.setOrder.equals("Rest Timer", ignoreCase = true) }
         .mapNotNull { it.seconds }
@@ -229,7 +232,7 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
         warmupSets = warmupRows
             .mapNotNull { it.toCompletedSet(definition) }
             .takeIf { it.isNotEmpty() },
-        sets = workingRows.mapNotNull { it.toCompletedSet(definition) },
+        sets = workSets,
         restAfterWorkSet = restAfterWorkSet,
     )
 }

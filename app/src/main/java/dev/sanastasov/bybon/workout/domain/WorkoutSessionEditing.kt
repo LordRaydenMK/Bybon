@@ -21,11 +21,15 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
 fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
     val hadInProgress = workoutSets.any { it.setState == SetState.InProgress }
     val updated = updateExercise(exercise.id) { current ->
+        val lastWork = current.sets.last()
+        val lastWarmup = current.warmupSets?.lastOrNull()
         when {
-            current.sets.lastOrNull()?.let { it.setState != SetState.Completed } == true ->
+            current.sets.size > 1 && lastWork.setState != SetState.Completed ->
                 current.copy(sets = current.sets.dropLast(1))
 
-            current.warmupSets?.lastOrNull()?.let { it.setState != SetState.Completed } == true ->
+            lastWork.setState == SetState.Completed &&
+                lastWarmup != null &&
+                lastWarmup.setState != SetState.Completed ->
                 current.copy(
                     warmupSets = current.warmupSets.orEmpty().dropLast(1).nullIfEmpty(),
                 )
@@ -45,7 +49,8 @@ fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
 
 fun WorkoutSession.convertFirstWorkSetToWarmup(exercise: WorkoutExercise): WorkoutSession =
     updateExercise(exercise.id) { current ->
-        val firstWorkSet = current.sets.firstOrNull() ?: return@updateExercise current
+        if (current.sets.size <= 1) return@updateExercise current
+        val firstWorkSet = current.sets.first()
         current.copy(
             warmupSets = current.warmupSets.orEmpty() + firstWorkSet,
             sets = current.sets.drop(1),

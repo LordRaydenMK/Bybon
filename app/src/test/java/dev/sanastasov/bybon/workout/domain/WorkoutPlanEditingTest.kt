@@ -145,4 +145,26 @@ class WorkoutPlanEditingTest {
         }
         assert(error.message == "sets must be >= 1")
     }
+
+    @Test
+    fun `plan requires at least one exercise`() {
+        val error = assertFailsWith<IllegalArgumentException> {
+            WorkoutPlan(
+                id = WorkoutPlanId("empty"),
+                name = "Empty",
+                description = null,
+                sets = emptyList(),
+            )
+        }
+        assert(error.message == "Plan must contain at least one exercise")
+    }
+
+    @Test
+    fun `removeExercise throws when only one exercise remains`() {
+        val single = fullBodyA.copy(sets = listOf(fullBodyA.sets.first()))
+        val error = assertFailsWith<IllegalStateException> {
+            single.removeExercise("bench-press-bb")
+        }
+        assert(error.message == "Cannot remove last exercise from the plan")
+    }
 }

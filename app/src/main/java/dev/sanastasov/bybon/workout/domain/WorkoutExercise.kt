@@ -13,6 +13,7 @@ data class WorkoutExercise(
         require(warmupSets == null || warmupSets.isNotEmpty()) {
             "warmupSets must be null or contain at least one set"
         }
+        require(sets.isNotEmpty()) { "sets must contain at least one set" }
     }
 
     val id: String = exerciseDefinition.id
@@ -32,8 +33,10 @@ data class WorkoutExercise(
 
     val canRemoveSet: Boolean
         get() {
-            val last = orderedSets.lastOrNull() ?: return false
-            return last.setState != SetState.Completed
+            val lastWork = sets.last()
+            if (sets.size > 1 && lastWork.setState != SetState.Completed) return true
+            if (lastWork.setState != SetState.Completed) return false
+            return warmupSets?.lastOrNull()?.setState?.let { it != SetState.Completed } == true
         }
 
     val hasPreviousPerformance: Boolean
@@ -43,7 +46,7 @@ data class WorkoutExercise(
         get() {
             val allSets = orderedSets
             return when {
-                allSets.isEmpty() || allSets.all { it.setState == SetState.Completed } ->
+                allSets.all { it.setState == SetState.Completed } ->
                     ExerciseState.Completed
 
                 allSets.all { it.setState == SetState.NotStated } ->

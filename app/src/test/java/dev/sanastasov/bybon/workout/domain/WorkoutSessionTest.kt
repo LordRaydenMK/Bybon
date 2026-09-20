@@ -99,6 +99,34 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `remove last remaining work set is a no-op`() {
+        val session = fullBodyA.toOverviewSession().let { draft ->
+            draft.updateExercise(draft.exercises.first().id) { exercise ->
+                exercise.copy(sets = listOf(exercise.sets.first()))
+            }
+        }
+
+        val actual = session.removeLastSet(session.exercises.first())
+
+        assert(actual.exercises.first().sets.size == 1)
+        assert(actual.exercises.first().warmupSets?.size == 3)
+    }
+
+    @Test
+    fun `converting the last remaining work set to warmup is a no-op`() {
+        val session = fullBodyA.toOverviewSession().let { draft ->
+            draft.updateExercise(draft.exercises.first().id) { exercise ->
+                exercise.copy(sets = listOf(exercise.sets.first()))
+            }
+        }
+
+        val actual = session.convertFirstWorkSetToWarmup(session.exercises.first())
+
+        assert(actual.exercises.first().sets.size == 1)
+        assert(actual.exercises.first().warmupSets?.size == 3)
+    }
+
+    @Test
     fun `remove last not completed work set promotes the next exercise warmup`() {
         val session = fullBodyA.toWorkoutSession()
             .completeWarmups(0)
@@ -566,13 +594,33 @@ class WorkoutSessionTest {
         assert(firstCompleted.exercises.first().state == ExerciseState.Completed)
         assert(firstCompleted.exercises[1].state == ExerciseState.NotStarted)
         assert(firstCompleted.state == WorkoutState.InProgress)
+    }
 
-        val emptyExercise = WorkoutExercise(
-            catalogExercise("bench-press-bb"),
-            8..10,
-            sets = emptyList(),
-        )
-        assert(emptyExercise.state == ExerciseState.Completed)
+    @Test
+    fun `empty session is illegal`() {
+        val error = assertFailsWith<IllegalArgumentException> {
+            WorkoutSession(
+                planId = WorkoutPlanId("empty"),
+                planName = "Empty",
+                planDescription = null,
+                exercises = emptyList(),
+                startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+            )
+        }
+        assert(error.message == "Session must contain at least one exercise")
+    }
+
+    @Test
+    fun `exercise without work sets is illegal`() {
+        val bench = catalogExercise("bench-press-bb")
+        val error = assertFailsWith<IllegalArgumentException> {
+            WorkoutExercise(
+                bench,
+                8..10,
+                sets = emptyList(),
+            )
+        }
+        assert(error.message == "sets must contain at least one set")
     }
 
     @Test

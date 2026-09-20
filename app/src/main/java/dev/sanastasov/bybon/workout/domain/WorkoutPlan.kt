@@ -28,4 +28,8 @@ data class WorkoutPlan(
     val description: String?,
     val sets: List<PlanedExercise>,
     val isArchived: Boolean = false,
-)
+) {
+    init {
+        require(sets.isNotEmpty()) { "Plan must contain at least one exercise" }
+    }
+}

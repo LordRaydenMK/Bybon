@@ -18,7 +18,7 @@ data class WorkoutSession(
 
     val state: WorkoutState
         get() = when {
-            exercises.isEmpty() || exercises.all { it.state == ExerciseState.NotStarted } ->
+            exercises.all { it.state == ExerciseState.NotStarted } ->
                 WorkoutState.NotStarted
 
             exercises.all { it.state == ExerciseState.Completed } ->
@@ -31,6 +31,7 @@ data class WorkoutSession(
         get() = state is WorkoutState.InProgress
 
     init {
+        require(exercises.isNotEmpty()) { "Session must contain at least one exercise" }
         require(workoutSets.map { it.setState }.filter { it == SetState.InProgress }.size <= 1) {
             "At most 1 set can be in progress. Found ${workoutSets.filter {
                 it.setState == SetState.InProgress
