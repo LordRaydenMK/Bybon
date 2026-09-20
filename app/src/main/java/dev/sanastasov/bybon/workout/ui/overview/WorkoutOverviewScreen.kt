@@ -9,7 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
@@ -42,6 +43,7 @@ import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
 import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
+import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
@@ -80,24 +82,7 @@ private fun OverviewScreenContent(
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .fillMaxSize(),
         ) {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(state.planName, fontWeight = FontWeight.Bold)
-                    state.planDescription?.let {
-                        Spacer(Modifier.height(4.dp))
-                        Text(it)
-                    }
-                }
-                AdjustButtons(
-                    onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseWorkout) },
-                    onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseWorkout) },
-                    decreaseContentDescription = "Decrease weight and reps for all exercises",
-                    increaseContentDescription = "Increase weight and reps for all exercises",
-                )
-            }
+            OverviewHeader(state, onAction)
 
             Spacer(Modifier.height(16.dp))
 
@@ -105,14 +90,15 @@ private fun OverviewScreenContent(
                 Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(state.exercises, key = { it.id }) { exercise ->
-                    Card(Modifier.fillMaxWidth()) {
-                        ExerciseCard(
-                            exercise = exercise,
-                            mode = ExerciseCardMode.Overview,
-                            onEvent = { event -> onAction(event.toOverviewAction(exercise)) },
-                        )
-                    }
+                itemsIndexed(
+                    state.exercises,
+                    key = { _, exercise -> exercise.id },
+                ) { index, exercise ->
+                    OverviewExerciseCard(
+                        exercise,
+                        state.exerciseOverflow(index, onAction),
+                        onAction,
+                    )
                 }
             }
 
@@ -124,6 +110,48 @@ private fun OverviewScreenContent(
                 Text("Start Workout")
             }
         }
+    }
+}
+
+@Composable
+private fun OverviewHeader(state: WorkoutSession, onAction: (WorkoutOverviewAction) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(state.planName, fontWeight = FontWeight.Bold)
+            state.planDescription?.let {
+                Spacer(Modifier.height(4.dp))
+                Text(it)
+            }
+        }
+        AdjustButtons(
+            onDecrease = { onAction(WorkoutOverviewAction.OnDecreaseWorkout) },
+            onIncrease = { onAction(WorkoutOverviewAction.OnIncreaseWorkout) },
+            decreaseContentDescription = "Decrease weight and reps for all exercises",
+            increaseContentDescription = "Increase weight and reps for all exercises",
+        )
+    }
+}
+
+@Composable
+private fun LazyItemScope.OverviewExerciseCard(
+    exercise: WorkoutExercise,
+    overflow: ExerciseOverflow?,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .animateItem(),
+    ) {
+        ExerciseCard(
+            exercise = exercise,
+            mode = ExerciseCardMode.Overview,
+            onEvent = { event -> onAction(event.toOverviewAction(exercise)) },
+            overflow = overflow,
+        )
     }
 }
 

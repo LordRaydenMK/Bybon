@@ -31,6 +31,7 @@ import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 
 @Composable
 fun WorkoutModule.EditPlanScreen(
@@ -110,7 +111,7 @@ private fun EditPlanContent(
 @Composable
 private fun LazyItemScope.EditPlanExerciseCard(
     exercise: PlanedExercise,
-    overflow: PlannedExerciseOverflow?,
+    overflow: ExerciseOverflow?,
     onAction: (EditPlanAction) -> Unit,
 ) {
     Card(

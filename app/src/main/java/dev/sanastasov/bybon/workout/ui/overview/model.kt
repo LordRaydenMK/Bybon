@@ -1,6 +1,8 @@
 package dev.sanastasov.bybon.workout.ui.overview
 
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 
 sealed class WorkoutOverviewAction {
     data object OnIncreaseWorkout : WorkoutOverviewAction()
@@ -46,6 +48,26 @@ sealed class WorkoutOverviewAction {
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
     data object OnStartWorkout : WorkoutOverviewAction()
+    data class OnMoveExerciseUp(
+        val exercise: WorkoutExercise,
+    ) : WorkoutOverviewAction()
+    data class OnMoveExerciseDown(
+        val exercise: WorkoutExercise,
+    ) : WorkoutOverviewAction()
+}
+
+fun WorkoutSession.exerciseOverflow(
+    index: Int,
+    onAction: (WorkoutOverviewAction) -> Unit,
+): ExerciseOverflow? {
+    if (exercises.size <= 1) return null
+    val exercise = exercises[index]
+    return ExerciseOverflow(
+        canMoveUp = index > 0,
+        canMoveDown = index < exercises.lastIndex,
+        onMoveUp = { onAction(WorkoutOverviewAction.OnMoveExerciseUp(exercise)) },
+        onMoveDown = { onAction(WorkoutOverviewAction.OnMoveExerciseDown(exercise)) },
+    )
 }
 
 sealed class WorkoutOverviewEffect {

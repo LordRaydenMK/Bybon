@@ -51,6 +51,7 @@ private fun OverviewExerciseCardPreview() {
             previewSessionWithPrevious().exercises.first(),
             ExerciseCardMode.Overview,
             {},
+            overflow = ExerciseOverflow(false, true, {}, {}),
         )
     }
 }

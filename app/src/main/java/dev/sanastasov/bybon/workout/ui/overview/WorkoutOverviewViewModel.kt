@@ -11,6 +11,8 @@ import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
+import dev.sanastasov.bybon.workout.domain.moveExerciseDown
+import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
@@ -76,7 +78,9 @@ class WorkoutOverviewViewModel(
     }
 
     private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
-        reduceProgression(session, action) ?: reduceEdits(session, action)
+        reduceProgression(session, action)
+            ?: reduceReorder(session, action)
+            ?: reduceEdits(session, action)
 
     private fun reduceProgression(
         session: WorkoutSession,
@@ -97,6 +101,19 @@ class WorkoutOverviewViewModel(
 
         is WorkoutOverviewAction.OnResetSet ->
             session.resetSetToPrevious(action.exercise, action.index, action.isWarmup)
+
+        else -> null
+    }
+
+    private fun reduceReorder(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+    ): WorkoutSession? = when (action) {
+        is WorkoutOverviewAction.OnMoveExerciseUp ->
+            session.moveExerciseUp(action.exercise.id)
+
+        is WorkoutOverviewAction.OnMoveExerciseDown ->
+            session.moveExerciseDown(action.exercise.id)
 
         else -> null
     }

@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.label
+import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 import kotlin.time.Duration
 
 data class WorkoutPlansUiState(
@@ -127,20 +128,13 @@ fun PlanedExercise.toPlannedSets(): List<PlannedSetUi> {
     return warmup + work
 }
 
-class PlannedExerciseOverflow(
-    val canMoveUp: Boolean,
-    val canMoveDown: Boolean,
-    val onMoveUp: () -> Unit,
-    val onMoveDown: () -> Unit,
-)
-
 fun WorkoutPlan.exerciseOverflow(
     index: Int,
     onAction: (EditPlanAction) -> Unit,
-): PlannedExerciseOverflow? {
+): ExerciseOverflow? {
     if (sets.size <= 1) return null
     val exerciseId = sets[index].exercise.id
-    return PlannedExerciseOverflow(
+    return ExerciseOverflow(
         canMoveUp = index > 0,
         canMoveDown = index < sets.lastIndex,
         onMoveUp = { onAction(EditPlanAction.OnMoveExerciseUp(exerciseId)) },
