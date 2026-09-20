@@ -1,7 +1,7 @@
 package dev.sanastasov.bybon.workout.domain
 
-private const val DEFAULT_ADDED_WORK_SETS = 3
-private val DEFAULT_ADDED_REP_RANGE = 8..12
+internal const val DEFAULT_ADDED_WORK_SETS = 3
+internal val DEFAULT_ADDED_REP_RANGE = 8..12
 
 fun WorkoutPlan.addWorkSet(exerciseId: String): WorkoutPlan =
     updatePlannedExercise(exerciseId) { exercise ->

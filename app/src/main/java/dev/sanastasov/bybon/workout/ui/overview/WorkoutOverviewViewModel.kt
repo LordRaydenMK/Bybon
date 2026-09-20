@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
@@ -13,6 +14,7 @@ import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
+import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
@@ -23,11 +25,11 @@ import dev.sanastasov.bybon.workout.domain.updateWeight
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
@@ -39,7 +41,7 @@ class WorkoutOverviewViewModel(
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
 ) {
-    private val actions = MutableSharedFlow<WorkoutOverviewAction>(extraBufferCapacity = 32)
+    private val actions = Channel<WorkoutOverviewAction>(Channel.UNLIMITED)
     private val _effects = Channel<WorkoutOverviewEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutOverviewEffect> = _effects.receiveAsFlow()
 
@@ -57,7 +59,7 @@ class WorkoutOverviewViewModel(
             .distinctUntilChanged()
             .filterNotNull()
             .flatMapLatest { seed ->
-                actions.scan(seed) { session, action -> reduce(session, action) }
+                actions.receiveAsFlow().scan(seed) { session, action -> reduce(session, action) }
             }
             .stateInWhileInForeground(coroutineScope, null)
 
@@ -69,18 +71,66 @@ class WorkoutOverviewViewModel(
                 _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
             }
 
-            else -> {
-                if (!actions.tryEmit(action)) {
-                    coroutineScope.launch { actions.emit(action) }
+            WorkoutOverviewAction.OnAddExercise -> {
+                val existingExerciseIds = uiState.value?.exercises?.map { it.id }.orEmpty()
+                _effects.trySend(WorkoutOverviewEffect.OpenExerciseLibrary(existingExerciseIds))
+            }
+
+            is WorkoutOverviewAction.OnExercisePicked -> coroutineScope.launch {
+                val exercise = repository.exercises().first()
+                    .firstOrNull { it.id == action.exerciseId }
+                    ?: return@launch
+                val session = uiState.filterNotNull().first()
+                if (session.exercises.any { it.id == exercise.id }) return@launch
+                emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise))
+            }
+
+            is WorkoutOverviewAction.OnRemoveExercise -> {
+                val session = uiState.value
+                if (session != null &&
+                    session.exercises.size > 1 &&
+                    session.exercises.any { it.id == action.exercise.id }
+                ) {
+                    emitAction(action)
                 }
             }
+
+            else -> emitAction(action)
         }
+    }
+
+    private fun emitAction(action: WorkoutOverviewAction) {
+        actions.trySend(action)
     }
 
     private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
         reduceProgression(session, action)
             ?: reduceReorder(session, action)
+            ?: reduceExerciseList(session, action)
             ?: reduceEdits(session, action)
+
+    private fun reduceExerciseList(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+    ): WorkoutSession? = when (action) {
+        is WorkoutOverviewAction.OnExerciseAdded ->
+            if (session.exercises.any { it.id == action.exercise.id }) {
+                session
+            } else {
+                session.addExercise(action.exercise)
+            }
+
+        is WorkoutOverviewAction.OnRemoveExercise ->
+            if (session.exercises.size <= 1 ||
+                session.exercises.none { it.id == action.exercise.id }
+            ) {
+                session
+            } else {
+                session.removeExercise(action.exercise.id)
+            }
+
+        else -> null
+    }
 
     private fun reduceProgression(
         session: WorkoutSession,

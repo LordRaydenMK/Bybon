@@ -1,0 +1,42 @@
+appId: dev.sanastasov.bybon.debug
+---
+- launchApp
+- assertVisible: "Bybon"
+- assertVisible: "Full Body A"
+- tapOn: "Start Workout"
+- assertVisible: "Full body workout routine variant A"
+- assertVisible: "Add Exercise"
+- assertVisible: "Start Workout"
+- tapOn: "Add Exercise"
+- assertVisible: "Exercise Library"
+- assertVisible: "Already added"
+- assertVisible: "Bench Press (barbell)"
+- assertVisible: "Arms"
+- assertVisible: "Dumbbell"
+- tapOn:
+    text: "Arms"
+    index: 0
+- tapOn:
+    text: "Dumbbell"
+    index: 0
+- scrollUntilVisible:
+    element: "Select Incline Curl (dumbbell)"
+    direction: DOWN
+- tapOn: "Select Incline Curl (dumbbell)"
+- scrollUntilVisible:
+    element: "Deselect Incline Curl (dumbbell)"
+    direction: UP
+- tapOn: "Add exercise"
+- assertVisible: "Full body workout routine variant A"
+- assertVisible: "Add Exercise"
+- assertVisible: "Start Workout"
+- scrollUntilVisible:
+    element: "3 x Incline Curl (dumbbell) in 8 - 12"
+    direction: DOWN
+    centerElement: true
+- assertVisible: "3 x Incline Curl (dumbbell) in 8 - 12"
+- tapOn: "More options for Incline Curl (dumbbell)"
+- tapOn: "Remove Exercise"
+- assertNotVisible: "3 x Incline Curl (dumbbell) in 8 - 12"
+- tapOn: "Start Workout"
+- assertVisible: "Exercise 1 / 6"
