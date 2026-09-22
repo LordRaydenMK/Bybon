@@ -37,8 +37,21 @@ android {
     }
 
     val keystorePropertiesFile = rootProject.file("keystore.properties")
+    // GitHub Actions sets CI=true. Local debug builds keep the default Android debug keystore.
+    val useCiDebugSigning = providers.environmentVariable("CI")
+        .orNull
+        .equals("true", ignoreCase = true)
 
     signingConfigs {
+        getByName("debug") {
+            if (useCiDebugSigning) {
+                storeFile = rootProject.file("keystore/debug.keystore")
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            }
+        }
+
         if (keystorePropertiesFile.exists()) {
             create("release") {
                 val keystoreProperties = Properties().apply {
@@ -56,6 +69,7 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
+            signingConfig = signingConfigs.getByName("debug")
         }
         release {
             if (keystorePropertiesFile.exists()) {
