@@ -27,5 +27,6 @@ local.properties
 /.idea/markdown.xml
 /.idea/deviceManager.xml
 .kotlin/*
+# Release signing is supplied by CI secrets. Debug CI signing uses keystore/debug.keystore.
 /keystore.jks
 keystore.properties
