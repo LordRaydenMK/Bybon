@@ -74,6 +74,7 @@ internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
 }
 
 private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi? {
+    // Warmups are imported but omitted from history; include them when this screen is fixed.
     val topSet = sets.maxWithOrNull(
         compareBy(
             { it.weight },
