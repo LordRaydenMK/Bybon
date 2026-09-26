@@ -6,7 +6,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
-import dev.sanastasov.bybon.workout.domain.addExercise
+import dev.sanastasov.bybon.workout.domain.addExerciseIfAbsent
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
@@ -16,6 +16,7 @@ import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
+import dev.sanastasov.bybon.workout.domain.requireExercise
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.startWorkout
@@ -72,27 +73,22 @@ class WorkoutOverviewViewModel(
             }
 
             WorkoutOverviewAction.OnAddExercise -> {
-                val existingExerciseIds = uiState.value?.exercises?.map { it.id }.orEmpty()
-                _effects.trySend(WorkoutOverviewEffect.OpenExerciseLibrary(existingExerciseIds))
+                val session = checkNotNull(uiState.value) { "No overview session" }
+                _effects.trySend(
+                    WorkoutOverviewEffect.OpenExerciseLibrary(session.exercises.map { it.id }),
+                )
             }
 
             is WorkoutOverviewAction.OnExercisePicked -> coroutineScope.launch {
-                val exercise = repository.exercises().first()
-                    .firstOrNull { it.id == action.exerciseId }
-                    ?: return@launch
-                val session = uiState.filterNotNull().first()
-                if (session.exercises.any { it.id == exercise.id }) return@launch
+                val exercise = repository.requireExercise(action.exerciseId)
+                uiState.filterNotNull().first()
                 emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise))
             }
 
             is WorkoutOverviewAction.OnRemoveExercise -> {
-                val session = uiState.value
-                if (session != null &&
-                    session.exercises.size > 1 &&
-                    session.exercises.any { it.id == action.exercise.id }
-                ) {
-                    emitAction(action)
-                }
+                val session = checkNotNull(uiState.value) { "No overview session" }
+                session.removeExercise(action.exercise.id)
+                emitAction(action)
             }
 
             else -> emitAction(action)
@@ -113,22 +109,8 @@ class WorkoutOverviewViewModel(
         session: WorkoutSession,
         action: WorkoutOverviewAction,
     ): WorkoutSession? = when (action) {
-        is WorkoutOverviewAction.OnExerciseAdded ->
-            if (session.exercises.any { it.id == action.exercise.id }) {
-                session
-            } else {
-                session.addExercise(action.exercise)
-            }
-
-        is WorkoutOverviewAction.OnRemoveExercise ->
-            if (session.exercises.size <= 1 ||
-                session.exercises.none { it.id == action.exercise.id }
-            ) {
-                session
-            } else {
-                session.removeExercise(action.exercise.id)
-            }
-
+        is WorkoutOverviewAction.OnExerciseAdded -> session.addExerciseIfAbsent(action.exercise)
+        is WorkoutOverviewAction.OnRemoveExercise -> session.removeExercise(action.exercise.id)
         else -> null
     }
 

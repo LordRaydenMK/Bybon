@@ -1,19 +1,24 @@
 package dev.sanastasov.bybon.workout.ui.overview
 
 import app.cash.turbine.test
+import dev.sanastasov.bybon.test.BackgroundFailures
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -391,7 +396,7 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
-    fun `removing the last remaining exercise is ignored`() = runTest {
+    fun `removing the last remaining exercise is rejected`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
 
@@ -404,42 +409,83 @@ class WorkoutOverviewViewModelTest {
             }
             assert(session.exercises.size == 1)
 
-            viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(session.exercises.single()))
-            expectNoEvents()
+            val last = session.exercises.single()
+            val error = assertFailsWith<IllegalStateException> {
+                viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(last))
+            }
+            assert(error.message == "Cannot remove last exercise from the session")
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
     }
 
     @Test
-    fun `unknown picked exercise does not change the draft`() = runTest {
+    fun `unknown picked exercise is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = WorkoutOverviewViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialExercises = catalogExercises,
+            ),
+            failures.scope,
+        )
+        viewModel.uiState.first { it != null }
+        failures.expectFailure("Exercise missing is not in the repository") {
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("missing"))
+        }
+    }
+
+    @Test
+    fun `picking the same exercise twice adds it once`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
         )
         val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        viewModel.uiState.first { it != null }
 
-        viewModel.uiState.test {
-            assert(awaitItem() == null)
-            awaitItem()
-            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("missing"))
-            expectNoEvents()
-        }
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+
+        val added = viewModel.uiState.first { session ->
+            session?.exercises?.any { it.id == "incline-curl-db" } == true
+        }!!
+        assert(added.exercises.count { it.id == "incline-curl-db" } == 1)
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 
     @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun `picked exercise already in the session is ignored`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
         )
         val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val draft = viewModel.uiState.first { it != null }!!
 
-        viewModel.uiState.test {
-            assert(awaitItem() == null)
-            awaitItem()
-            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("bench-press-bb"))
-            expectNoEvents()
-            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("bench-press-bb"))
+        advanceUntilIdle()
+
+        assert(viewModel.uiState.value == draft)
+        assert(draft.exercises.count { it.id == "bench-press-bb" } == 1)
+        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `removing an unknown exercise is rejected`() = runTest {
+        val viewModel = WorkoutOverviewViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
+            backgroundScope,
+        )
+        val draft = viewModel.uiState.first { it != null }!!
+        val missing = draft.exercises.first().copy(
+            exerciseDefinition = catalogExercise("incline-curl-db"),
+        )
+        val error = assertFailsWith<IllegalStateException> {
+            viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(missing))
         }
+        assert(error.message == "Exercise incline-curl-db is not in the session")
     }
 }

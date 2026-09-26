@@ -7,12 +7,15 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.addExerciseIfAbsent
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
+import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
+import dev.sanastasov.bybon.workout.domain.requireExercise
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.startWorkout
@@ -82,6 +85,17 @@ class WorkoutSessionViewModel(
                     _effects.trySend(WorkoutSessionEffect.NavigateBack)
                 }
 
+                WorkoutSessionAction.OnAddExercise -> {
+                    val session = checkNotNull(uiState.value) { "No active session" }
+                    _effects.trySend(
+                        WorkoutSessionEffect.OpenExerciseLibrary(session.exercises.map { it.id }),
+                    )
+                }
+
+                is WorkoutSessionAction.OnExercisePicked -> addPickedExercise(action.exerciseId)
+
+                is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
+
                 else -> {
                     val updated = repository.updateWorkout(planId) { session ->
                         reduce(session, action)
@@ -93,6 +107,21 @@ class WorkoutSessionViewModel(
                     }
                 }
             }
+        }
+    }
+
+    private suspend fun addPickedExercise(exerciseId: String) {
+        val exercise = repository.requireExercise(exerciseId)
+        repository.updateWorkout(planId) { it.addExerciseIfAbsent(exercise) }
+    }
+
+    private suspend fun removeSessionExercise(action: WorkoutSessionAction.OnRemoveExercise) {
+        checkNotNull(uiState.value) { "No active session" }
+        val updated = repository.updateWorkout(planId) {
+            it.removeExercise(action.exercise.id)
+        }
+        if (updated.state is WorkoutState.Completed) {
+            _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
         }
     }
 

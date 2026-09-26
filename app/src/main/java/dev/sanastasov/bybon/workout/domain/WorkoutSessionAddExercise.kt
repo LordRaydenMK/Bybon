@@ -7,24 +7,34 @@ fun WorkoutSession.addExercise(exercise: ExerciseDefinition): WorkoutSession {
     return copy(exercises = exercises + exercise.toAddedWorkoutExercise())
 }
 
+fun WorkoutSession.addExerciseIfAbsent(exercise: ExerciseDefinition): WorkoutSession =
+    if (exercises.any { it.id == exercise.id }) this else addExercise(exercise)
+
 @Suppress("ReturnCount")
 fun WorkoutSession.removeExercise(exerciseId: String): WorkoutSession {
-    exercises.firstOrNull { it.id == exerciseId }
+    val exercise = exercises.firstOrNull { it.id == exerciseId }
         ?: error("Exercise $exerciseId is not in the session")
     check(exercises.size > 1) {
         "Cannot remove last exercise from the session"
     }
+    check(exercise.state != ExerciseState.Completed) {
+        "Cannot remove completed exercise $exerciseId"
+    }
     val hadInProgress = workoutSets.any { it.setState == SetState.InProgress }
     val updated = copy(exercises = exercises.filter { it.id != exerciseId })
     if (!hadInProgress || updated.workoutSets.any { it.setState == SetState.InProgress }) {
-        return updated
+        return updated.withDurationIfCompleted()
     }
-    val next = updated.firstNotStartedSet() ?: return updated
+    val next = updated.firstNotStartedSet() ?: return updated.withDurationIfCompleted()
     val nextExercise = updated.exercises.first { it.id == next.exerciseId }
     return updated.updateExerciseSet(nextExercise, next.index, next.isWarmup) {
         it.copy(setState = SetState.InProgress)
     }
 }
+
+fun WorkoutSession.canRemoveExercise(exercise: WorkoutExercise): Boolean = exercises.size > 1 &&
+    exercise.state != ExerciseState.Completed &&
+    exercises.any { it.id == exercise.id }
 
 private fun ExerciseDefinition.toAddedWorkoutExercise(): WorkoutExercise = WorkoutExercise(
     exerciseDefinition = this,

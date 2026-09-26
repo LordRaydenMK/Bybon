@@ -37,6 +37,9 @@ fun WorkoutPlan.addExercise(exercise: ExerciseDefinition): WorkoutPlan {
     )
 }
 
+fun WorkoutPlan.addExerciseIfAbsent(exercise: ExerciseDefinition): WorkoutPlan =
+    if (sets.any { it.exercise.id == exercise.id }) this else addExercise(exercise)
+
 fun WorkoutPlan.moveExerciseUp(exerciseId: String): WorkoutPlan =
     moveExercise(exerciseId, offset = -1)
 

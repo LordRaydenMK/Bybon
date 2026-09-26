@@ -71,6 +71,13 @@ class WorkoutPlanEditingTest {
     }
 
     @Test
+    fun `addExerciseIfAbsent keeps the plan when the exercise is already present`() {
+        val bench = catalogExercise("bench-press-bb")
+
+        assert(fullBodyA.addExerciseIfAbsent(bench) == fullBodyA)
+    }
+
+    @Test
     fun `unknown exercise id throws`() {
         val error = assertFailsWith<IllegalStateException> {
             fullBodyA.addWorkSet("missing")

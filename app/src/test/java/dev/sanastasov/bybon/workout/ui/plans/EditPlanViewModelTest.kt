@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
+import dev.sanastasov.bybon.test.BackgroundFailures
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercise
@@ -7,7 +8,9 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -149,20 +152,24 @@ class EditPlanViewModelTest {
     }
 
     @Test
-    fun `unknown picked exercise does not change the plan`() = runTest {
-        val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA),
-            initialExercises = catalogExercises,
+    fun `unknown picked exercise is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = EditPlanViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialExercises = catalogExercises,
+            ),
+            failures.scope,
         )
-        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
-
-        viewModel.onAction(EditPlanAction.OnExercisePicked("missing"))
-
-        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        failures.expectFailure("Exercise missing is not in the repository") {
+            viewModel.onAction(EditPlanAction.OnExercisePicked("missing"))
+        }
     }
 
     @Test
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun `picked exercise already on the plan is ignored`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
@@ -172,7 +179,38 @@ class EditPlanViewModelTest {
         viewModel.uiState.first { it != null }
 
         viewModel.onAction(EditPlanAction.OnExercisePicked("bench-press-bb"))
+        advanceUntilIdle()
 
+        assert(viewModel.uiState.value == fullBodyA)
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `removing an unknown exercise is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = EditPlanViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
+            failures.scope,
+        )
+        viewModel.uiState.first { it != null }
+        failures.expectFailure("Exercise missing is not in the plan") {
+            viewModel.onAction(EditPlanAction.OnRemoveExercise("missing"))
+        }
+    }
+
+    @Test
+    fun `removing the last remaining exercise is rejected`() = runTest {
+        val single = fullBodyA.copy(sets = listOf(fullBodyA.sets.first()))
+        val failures = BackgroundFailures(this)
+        val viewModel = EditPlanViewModel(
+            single.id,
+            FakeWorkoutsRepository(initialPlans = listOf(single)),
+            failures.scope,
+        )
+        viewModel.uiState.first { it != null }
+        failures.expectFailure("Cannot remove last exercise from the plan") {
+            viewModel.onAction(EditPlanAction.OnRemoveExercise("bench-press-bb"))
+        }
     }
 }
