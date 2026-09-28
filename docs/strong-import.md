@@ -170,17 +170,17 @@ Re-import appends again (**TODO:** idempotent on `WorkoutSessionId`, not Strong 
 
 | Strong row                         | Bybon                                                                 |
 |------------------------------------|-----------------------------------------------------------------------|
-| `W` with weight > 0 and reps > 0   | `warmupSets` (`SetState.Completed`)                                   |
-| Digit `1..N` with weight > 0, reps > 0 | Working `sets`                                                    |
-| `W` or working with `Weight = 0.0` | **Dropped** (`Weight` must be positive)                               |
+| `W` with reps > 0                  | `warmupSets` (`SetState.Completed`); `0.0` kg → `weight = null`       |
+| Digit `1..N` with reps > 0         | Working `sets`; `0.0` kg → `weight = null`                            |
+| `W` or working with `reps` missing/`0` | **Dropped**                                                       |
 | `Rest Timer`                       | First `Seconds` value → `restAfterWorkSet`; rest rows themselves discarded |
 | No rest rows                       | `exercise.defaultRest`                                                |
 | `Note`                             | **Dropped** (including `"Rep range 11-15"`)                           |
 | `RPE` / `Distance` / timed `Seconds` on sets | Parsed on the DTO, unused                                    |
 
-On the sample this drops **29** unassisted pull-up working sets (`0.0` kg) and **15** bodyweight
-Bulgarian Split Squat warmups. CSV working sets 854 → imported **825**. One Full Body A session
-(#220) loses every pull-up working set.
+Sample zero-load rows are kept: **29** unassisted pull-up working sets and **15** bodyweight
+Bulgarian Split Squat warmups. CSV working sets 854 → imported **854**. Workout #220 still has
+pull-ups.
 
 ---
 
