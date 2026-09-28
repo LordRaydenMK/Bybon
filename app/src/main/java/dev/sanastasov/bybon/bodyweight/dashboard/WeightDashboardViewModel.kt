@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.bodyweight.domain.BodyWeightDashboard
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.WeeklyTrendPoint
 import dev.sanastasov.bybon.bodyweight.domain.bodyWeightDashboard
+import dev.sanastasov.bybon.bodyweight.minusToDelta
 import dev.sanastasov.bybon.domain.weekOfYear
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import java.time.LocalDate
@@ -39,7 +40,7 @@ class WeightDashboardViewModel(
                 WeeklyAverageEntryUi(
                     "CW $weekOfYear",
                     "${entry.kilograms} kg",
-                    delta?.kilograms?.let { "$it kg" },
+                    delta?.signedKilograms()?.let { "$it kg" },
                 )
             },
             weeklyTrend = weeklyTrend?.toTrendUi(),
@@ -78,7 +79,7 @@ class WeightDashboardViewModel(
         lastWeekAverage?.let { lastWeekAvg ->
             PreviousWeekData(
                 today.weekOfYear - 1,
-                "${(average.value - lastWeekAvg.value) / 100f} kg",
+                "${average.minusToDelta(lastWeekAvg).signedKilograms()} kg",
             )
         }
 }

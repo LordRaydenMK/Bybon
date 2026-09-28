@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.bodyweight.domain
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.WeightDelta
 import dev.sanastasov.bybon.domain.isoWeekStart
 import dev.sanastasov.bybon.domain.weekOfYear
 import java.time.LocalDate
@@ -197,6 +198,32 @@ class BodyWeightUseCaseTest {
                 entry.weekOfYear == previousYearWeekStart.weekOfYear
             } == true,
         )
+    }
+
+    @Test
+    fun `previous week average delta can be negative or zero`() = runTest {
+        val weekStart = today.isoWeekStart()
+        val repository = FakeBodyWeightRepository(
+            officialWeek(weekStart.minusWeeks(1), "80.00") +
+                officialWeek(weekStart.minusWeeks(2), "80.35") +
+                officialWeek(weekStart.minusWeeks(3), "80.35"),
+        )
+
+        val dashboard = repository.bodyWeightDashboard(today).first()
+
+        val weekOneAgo = dashboard.previousWeeksAverages?.single { entry ->
+            entry.weekOfYear == weekStart.minusWeeks(1).weekOfYear
+        }
+        val weekTwoAgo = dashboard.previousWeeksAverages?.single { entry ->
+            entry.weekOfYear == weekStart.minusWeeks(2).weekOfYear
+        }
+        val weekThreeAgo = dashboard.previousWeeksAverages?.single { entry ->
+            entry.weekOfYear == weekStart.minusWeeks(3).weekOfYear
+        }
+
+        assert(weekOneAgo?.delta == WeightDelta(-35))
+        assert(weekTwoAgo?.delta == WeightDelta.Zero)
+        assert(weekThreeAgo?.delta == null)
     }
 
     private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =
