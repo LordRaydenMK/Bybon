@@ -23,7 +23,7 @@ val fullBodyA = WorkoutPlan(
         planned("bench-press-bb", 3, 8..10, warmupSets = 3),
         planned("squat-bb", 3, 8..10, warmupSets = 3),
         planned("pullup-assisted", 3, 6..10, warmupSets = 2),
-        planned("leg-curl", 3, 12..14),
+        planned("seated-leg-curl", 3, 12..14),
         planned("upright-row-db", 3, 10..14),
         planned("skullcrusher-db", 3, 10..16),
     ),
@@ -43,11 +43,9 @@ val fullBodyB = WorkoutPlan(
     ),
 )
 
-// Temporary seed plan. Remove or rename before Strong import owns this id
-// (slug of Strong "Upper body A" is also upper-body-a).
 val upperBodyA = WorkoutPlan(
-    WorkoutPlanId("upper-body-a"),
-    "Upper Body A",
+    WorkoutPlanId("upper-body-legacy"),
+    "Upper Body (legacy)",
     "Upper body workout routine variant A",
     listOf(
         planned("bench-press-bb", 3, 8..10, warmupSets = 3),

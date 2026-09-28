@@ -233,7 +233,7 @@ private fun PlannedExerciseCardWithWarmupsPreview() {
 private fun PlannedExerciseCardWithoutWarmupsPreview() {
     Surface {
         PlannedExerciseCard(
-            fullBodyA.sets.first { it.exercise.id == "leg-curl" },
+            fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" },
             ExerciseOverflow(true, true, {}, {}),
             {},
             {},
@@ -247,7 +247,7 @@ private fun PlannedExerciseCardWithoutWarmupsPreview() {
 private fun PlannedExerciseCardSingleSetPreview() {
     Surface {
         PlannedExerciseCard(
-            fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1),
+            fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }.copy(sets = 1),
             ExerciseOverflow(true, false, {}, {}),
             {},
             {},

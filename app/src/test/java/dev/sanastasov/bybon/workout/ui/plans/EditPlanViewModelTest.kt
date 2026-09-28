@@ -56,12 +56,12 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.first { it != null }
-        viewModel.onAction(EditPlanAction.OnRemoveLastSet("leg-curl"))
+        viewModel.onAction(EditPlanAction.OnRemoveLastSet("seated-leg-curl"))
 
         val updated = viewModel.uiState.first { plan ->
-            plan?.sets?.first { it.exercise.id == "leg-curl" }?.sets == 2
+            plan?.sets?.first { it.exercise.id == "seated-leg-curl" }?.sets == 2
         }!!
-        assert(updated.sets.first { it.exercise.id == "leg-curl" }.sets == 2)
+        assert(updated.sets.first { it.exercise.id == "seated-leg-curl" }.sets == 2)
         assert(updated.sets.first().sets == 3)
     }
 
@@ -71,12 +71,12 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.first { it != null }
-        viewModel.onAction(EditPlanAction.OnRemoveExercise("leg-curl"))
+        viewModel.onAction(EditPlanAction.OnRemoveExercise("seated-leg-curl"))
 
         val updated = viewModel.uiState.first { plan ->
-            plan?.sets?.none { it.exercise.id == "leg-curl" } == true
+            plan?.sets?.none { it.exercise.id == "seated-leg-curl" } == true
         }!!
-        assert(updated.sets.none { it.exercise.id == "leg-curl" })
+        assert(updated.sets.none { it.exercise.id == "seated-leg-curl" })
         assert(updated.sets.size == fullBodyA.sets.size - 1)
     }
 

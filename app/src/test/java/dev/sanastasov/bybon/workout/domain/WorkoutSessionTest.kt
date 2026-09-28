@@ -411,13 +411,13 @@ class WorkoutSessionTest {
         assert(warmupSets.map { it.reps } == listOf(8, 4, 3))
         assert(warmupSets.first().setState == SetState.InProgress)
         assert(bench.sets.all { it.setState == SetState.NotStated })
-        assert(session.exercises.first { it.id == "leg-curl" }.warmupSets == null)
+        assert(session.exercises.first { it.id == "seated-leg-curl" }.warmupSets == null)
     }
 
     @Test
     fun `numbered sets expose warmup and work indexes`() {
         val bench = fullBodyA.toWorkoutSession().exercises.first()
-        val legCurl = fullBodyA.toWorkoutSession().exercises.first { it.id == "leg-curl" }
+        val legCurl = fullBodyA.toWorkoutSession().exercises.first { it.id == "seated-leg-curl" }
 
         assert(
             checkNotNull(bench.numberedWarmupSets).map { it.isWarmup to it.index } ==
@@ -435,7 +435,7 @@ class WorkoutSessionTest {
         assert(catalogExercise("rdl-bb").defaultRest == 2.minutes)
         assert(catalogExercise("skullcrusher-db").defaultRest == 1.minutes)
         assert(catalogExercise("incline-curl-db").defaultRest == 1.minutes)
-        assert(catalogExercise("leg-curl").defaultRest == 90.seconds)
+        assert(catalogExercise("seated-leg-curl").defaultRest == 90.seconds)
         assert(catalogExercise("leg-extension").defaultRest == 90.seconds)
         assert(2.minutes.formatRestClock() == "2:00")
         assert(90.seconds.formatRestClock() == "1:30")
@@ -451,7 +451,7 @@ class WorkoutSessionTest {
                 "bench-press-bb" to 2.minutes,
                 "squat-bb" to 2.minutes,
                 "pullup-assisted" to 2.minutes,
-                "leg-curl" to 90.seconds,
+                "seated-leg-curl" to 90.seconds,
                 "upright-row-db" to 1.minutes,
                 "skullcrusher-db" to 1.minutes,
             ),

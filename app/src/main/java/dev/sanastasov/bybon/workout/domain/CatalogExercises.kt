@@ -41,7 +41,7 @@ internal val catalogExercises = listOf(
     ),
     ExerciseDefinition(
         "lat-pull-down",
-        "Lat Pull-down (cable)",
+        "Lat Pulldown (cable)",
         MuscleGroup.Back,
         Equipment.Machine,
     ),
@@ -120,8 +120,24 @@ internal val catalogExercises = listOf(
         MuscleGroup.Legs,
         Equipment.Dumbbell,
     ),
-    ExerciseDefinition("leg-curl", "Leg Curl (machine)", MuscleGroup.Legs, Equipment.Machine),
-    ExerciseDefinition("leg-press", "Leg Press (machine)", MuscleGroup.Legs, Equipment.Machine),
+    ExerciseDefinition(
+        "seated-leg-curl",
+        "Seated Leg Curl (machine)",
+        MuscleGroup.Legs,
+        Equipment.Machine,
+    ),
+    ExerciseDefinition(
+        "lying-leg-curl",
+        "Lying Leg Curl (machine)",
+        MuscleGroup.Legs,
+        Equipment.Machine,
+    ),
+    ExerciseDefinition(
+        "leg-press-machine",
+        "Leg Press (machine)",
+        MuscleGroup.Legs,
+        Equipment.Machine,
+    ),
     ExerciseDefinition(
         "leg-extension",
         "Leg Extension (machine)",
@@ -158,8 +174,7 @@ internal val catalogExercises = listOf(
         "lateral-raise-machine",
         "Lateral Raise (machine)",
         MuscleGroup.Shoulders,
-        // Wrong: this is a machine; Dumbbell makes increment/default warmup 2 kg / 10 kg.
-        Equipment.Dumbbell,
+        Equipment.Machine,
     ),
     ExerciseDefinition("face-pull", "Face Pull (cable)", MuscleGroup.Shoulders, Equipment.Machine),
     ExerciseDefinition(

@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.upperBodyA
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
@@ -105,7 +106,7 @@ class StrongCsvRowTest {
                 120.seconds,
         )
         assert(
-            firstFullBodyA.exercises.first { it.id == "leg-curl" }.restAfterWorkSet == 90.seconds,
+            firstFullBodyA.exercises.first { it.id == "seated-leg-curl" }.restAfterWorkSet == 90.seconds,
         )
         assert(
             firstFullBodyA.exercises.first { it.id == "skullcrusher-db" }.restAfterWorkSet ==
@@ -291,6 +292,99 @@ class StrongCsvRowTest {
 
         assert(result.plans.map { it.name } == listOf("Full body A"))
         assert(result.sessionHistory.single().planId == WorkoutPlanId("full-body-a"))
+    }
+
+    @Test
+    fun `maps strong names onto existing catalog exercises`() {
+        val rows = workout(
+            number = 1,
+            name = "Catalog mapping",
+            exercises = listOf(
+                "Lat Pulldown (Cable)",
+                "Leg Press",
+                "Seated Leg Curl (Machine)",
+                "Lying Leg Curl (Machine)",
+                "Dumbbell lateral raises ",
+            ),
+        )
+
+        val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalogExercises)
+
+        assert(result.exercises.isEmpty())
+        assert(
+            result.sessionHistory.single().exercises.map { it.id } == listOf(
+                "lat-pull-down",
+                "leg-press-machine",
+                "seated-leg-curl",
+                "lying-leg-curl",
+                "lateral-raise-db",
+            ),
+        )
+        assert(
+            catalogExercises.first { it.id == "lateral-raise-machine" }.equipment ==
+                Equipment.Machine,
+        )
+    }
+
+    @Test
+    fun `trims exercise display names from the csv`() {
+        val header = listOf(
+            "Workout #",
+            "Date",
+            "Workout Name",
+            "Duration (sec)",
+            "Exercise Name",
+            "Set Order",
+            "Weight (kg)",
+            "Reps",
+            "RPE",
+            "Distance (meters)",
+            "Seconds",
+            "Notes",
+            "Workout Notes",
+        ).joinToString(";") { "\"$it\"" }
+        val row = listOf(
+            "1",
+            "2026-01-01 12:00:00",
+            "Solo",
+            "60",
+            "Reverse Lunges ",
+            "1",
+            "20.0",
+            "8",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ).joinToString(";") { "\"$it\"" }
+
+        val rows = StrongCsvParser.parse("$header\n$row")
+        assert(rows.single().exerciseName == "Reverse Lunges")
+
+        val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = emptyList())
+        assert(result.exercises.single().name == "Reverse Lunges")
+        assert(result.exercises.single().id == "reverse-lunges")
+    }
+
+    @Test
+    fun `does not attach Strong Upper body A to the renamed seed plan`() {
+        val result = StrongCsvParser.parse(
+            readStrongBackupSample(javaClass.classLoader),
+        ).toStrongImport(
+            plans = listOf(fullBodyA, fullBodyB, upperBodyA),
+            exerciseCatalog = catalogExercises,
+        )
+
+        assert(upperBodyA.id == WorkoutPlanId("upper-body-legacy"))
+        assert(
+            result.plans.map { it.id } == listOf(
+                WorkoutPlanId("upper-body-a"),
+                WorkoutPlanId("upper-body-b"),
+            ),
+        )
+        assert(result.sessionHistory.none { it.planId == upperBodyA.id })
+        assert(result.sessionHistory.count { it.planId == WorkoutPlanId("upper-body-a") } == 3)
     }
 
     private fun workout(

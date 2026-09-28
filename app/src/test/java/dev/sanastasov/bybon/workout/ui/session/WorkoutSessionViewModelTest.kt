@@ -141,7 +141,7 @@ class WorkoutSessionViewModelTest {
             assert(session.exercises.first().restAfterWorkSet.formatRestClock() == "2:00")
             assert(
                 session.exercises.first {
-                    it.id == "leg-curl"
+                    it.id == "seated-leg-curl"
                 }.restAfterWorkSet.formatRestClock() ==
                     "1:30",
             )
@@ -329,11 +329,11 @@ class WorkoutSessionViewModelTest {
         viewModel.uiState.test {
             assert(awaitItem() == null)
             val session = awaitItem()!!
-            val removed = session.exercises.first { it.id == "leg-curl" }
+            val removed = session.exercises.first { it.id == "seated-leg-curl" }
 
             viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(removed))
             val updated = awaitItem()!!
-            assert(updated.exercises.none { it.id == "leg-curl" })
+            assert(updated.exercises.none { it.id == "seated-leg-curl" })
             assert(updated.exercises.size == session.exercises.size - 1)
             assert(updated.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
@@ -463,10 +463,10 @@ class WorkoutSessionViewModelTest {
         val added = first.uiState.first { session ->
             session?.exercises?.last()?.id == "incline-curl-db"
         }!!
-        val removed = added.exercises.first { it.id == "leg-curl" }
+        val removed = added.exercises.first { it.id == "seated-leg-curl" }
         first.onAction(WorkoutSessionAction.OnRemoveExercise(removed))
         first.uiState.first { session ->
-            session?.exercises?.none { it.id == "leg-curl" } == true
+            session?.exercises?.none { it.id == "seated-leg-curl" } == true
         }
         val edited = repository.workoutSessions().first().single()
         repository.emitSessions(
@@ -492,7 +492,7 @@ class WorkoutSessionViewModelTest {
 
         assert(created.exercises.map { it.id } == fullBodyA.sets.map { it.exercise.id })
         assert(created.exercises.none { it.id == "incline-curl-db" })
-        assert(created.exercises.any { it.id == "leg-curl" })
+        assert(created.exercises.any { it.id == "seated-leg-curl" })
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 }

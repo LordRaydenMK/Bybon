@@ -18,8 +18,8 @@ class WorkoutPlanEditingTest {
 
     @Test
     fun `removeLastWorkSet drops the last work set`() {
-        val actual = fullBodyA.removeLastWorkSet("leg-curl")
-        val curl = actual.sets.first { it.exercise.id == "leg-curl" }
+        val actual = fullBodyA.removeLastWorkSet("seated-leg-curl")
+        val curl = actual.sets.first { it.exercise.id == "seated-leg-curl" }
 
         assert(curl.sets == 2)
         assert(curl.warmupSets == 0)
@@ -29,20 +29,22 @@ class WorkoutPlanEditingTest {
     @Test
     fun `removeLastWorkSet throws when only one work set remains`() {
         val singleSet = fullBodyA.copy(
-            sets = listOf(fullBodyA.sets.first { it.exercise.id == "leg-curl" }.copy(sets = 1)),
+            sets = listOf(
+                fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }.copy(sets = 1),
+            ),
         )
 
         val error = assertFailsWith<IllegalStateException> {
-            singleSet.removeLastWorkSet("leg-curl")
+            singleSet.removeLastWorkSet("seated-leg-curl")
         }
-        assert(error.message == "Cannot remove last work set from leg-curl; only one remains")
+        assert(error.message == "Cannot remove last work set from seated-leg-curl; only one remains")
     }
 
     @Test
     fun `removeExercise drops the matching exercise`() {
-        val actual = fullBodyA.removeExercise("leg-curl")
+        val actual = fullBodyA.removeExercise("seated-leg-curl")
 
-        assert(actual.sets.none { it.exercise.id == "leg-curl" })
+        assert(actual.sets.none { it.exercise.id == "seated-leg-curl" })
         assert(actual.sets.size == fullBodyA.sets.size - 1)
         assert(actual.sets.first() == fullBodyA.sets.first())
     }

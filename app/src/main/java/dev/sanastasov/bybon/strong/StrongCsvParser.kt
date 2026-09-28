@@ -34,7 +34,7 @@ object StrongCsvParser {
                     date = record.getValue("Date"),
                     workoutName = record.getValue("Workout Name"),
                     durationSec = record.getValue("Duration (sec)").toInt(),
-                    exerciseName = record.getValue("Exercise Name"),
+                    exerciseName = record.getValue("Exercise Name").trim(),
                     setOrder = record.getValue("Set Order"),
                     weightKg = record["Weight (kg)"].blankToNull()?.toDouble(),
                     reps = record["Reps"].blankToNull()?.toInt(),

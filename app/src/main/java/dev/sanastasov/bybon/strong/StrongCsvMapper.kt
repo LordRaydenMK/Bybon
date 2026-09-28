@@ -29,8 +29,9 @@ private val strongExerciseAliases = mapOf(
     "romanian deadlift (barbell)" to "rdl-bb",
     "bulgarian split squat" to "split-squat-db",
     "bicep curl (machine)" to "biceps-curl-machine",
-    "seated leg curl (machine)" to "leg-curl",
     "triceps press" to "triceps-press-machine",
+    "leg press" to "leg-press-machine",
+    "dumbbell lateral raises" to "lateral-raise-db",
 )
 
 data class StrongImportResult(
@@ -259,11 +260,12 @@ private fun resolveExercise(
     strongExerciseAliases[normalized]?.let { id -> exercisesById[id] }?.let { return it }
     exercisesByNormalizedName[normalized]?.let { return it }
 
+    val trimmedName = strongName.trim()
     return ExerciseDefinition(
-        id = strongName.slugify(),
-        name = strongName,
-        primaryMuscleGroup = inferMuscleGroup(strongName),
-        equipment = inferEquipment(strongName),
+        id = trimmedName.slugify(),
+        name = trimmedName,
+        primaryMuscleGroup = inferMuscleGroup(trimmedName),
+        equipment = inferEquipment(trimmedName),
     )
 }
 

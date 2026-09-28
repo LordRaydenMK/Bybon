@@ -49,12 +49,12 @@ appId: dev.sanastasov.bybon.debug
     centerElement: true
 - assertVisible: "Squat (barbell)"
 - scrollUntilVisible:
-    element: "Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
+    element: "Seated Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
     direction: DOWN
     centerElement: true
-- assertVisible: "Leg Curl (machine)"
+- assertVisible: "Seated Leg Curl (machine)"
 - assertVisible: "Legs · Machine"
-- assertVisible: "Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
+- assertVisible: "Seated Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
 - scrollUntilVisible:
     element: "Add Exercise"
     direction: DOWN
