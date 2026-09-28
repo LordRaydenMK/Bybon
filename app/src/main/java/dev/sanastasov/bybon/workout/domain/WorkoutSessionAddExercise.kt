@@ -40,7 +40,7 @@ private fun ExerciseDefinition.toAddedWorkoutExercise(): WorkoutExercise = Worko
     sets = List(DEFAULT_ADDED_WORK_SETS) {
         ExerciseSet(
             exerciseDefinition = this,
-            weight = Weight.kilograms(50),
+            weight = equipment.defaultWorkWeight,
             reps = DEFAULT_ADDED_REP_RANGE.first,
             setState = SetState.NotStated,
         )

@@ -16,15 +16,29 @@ val Equipment.weightIncrement: Weight?
         Equipment.Bodyweight -> null
     }
 
-val Equipment.defaultWarmupWeight: Weight
+val Equipment.defaultWorkWeight: Weight?
+    get() = when (this) {
+        Equipment.Barbell,
+        Equipment.Dumbbell,
+        Equipment.Machine,
+        -> Weight.kilograms(50)
+
+        Equipment.Bodyweight,
+        Equipment.AssistedBodyWeight,
+        -> null
+    }
+
+val Equipment.defaultWarmupWeight: Weight?
     get() = when (this) {
         Equipment.Dumbbell -> Weight.kilograms(10)
 
         Equipment.Barbell,
         Equipment.Machine,
-        Equipment.AssistedBodyWeight,
-        Equipment.Bodyweight,
         -> Weight.kilograms(20)
+
+        Equipment.Bodyweight,
+        Equipment.AssistedBodyWeight,
+        -> null
     }
 
 val Equipment.label: String

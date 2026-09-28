@@ -184,6 +184,45 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `toWorkoutSession preserves a previous set with no load`() {
+        val previous = fullBodyA.toWorkoutSession().let { session ->
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    if (exercise.id != "pullup-assisted") {
+                        exercise
+                    } else {
+                        exercise.copy(
+                            sets = exercise.sets.map { set ->
+                                set.copy(
+                                    weight = null,
+                                    reps = 8,
+                                    setState = SetState.Completed,
+                                )
+                            },
+                            warmupSets = exercise.warmupSets?.map { set ->
+                                set.copy(
+                                    weight = null,
+                                    reps = 6,
+                                    setState = SetState.Completed,
+                                )
+                            },
+                        )
+                    }
+                },
+                duration = kotlin.time.Duration.ZERO,
+                startedAt = java.time.LocalDateTime.of(2026, 1, 1, 12, 0),
+            )
+        }
+
+        val actual = fullBodyA.toWorkoutSession(previous)
+        val pullUp = actual.exercises.first { it.id == "pullup-assisted" }
+
+        assert(pullUp.sets.all { it.weight == null && it.reps == 8 })
+        assert(pullUp.warmupSets!!.all { it.weight == null && it.reps == 6 })
+        assert(pullUp.sets.first().previous == PreviousSetPerformance(null, 8))
+    }
+
+    @Test
     fun `update weight preserves previous set reference`() {
         val previous = PreviousSetPerformance(Weight.kilograms(45), 12)
         val session = fullBodyA.toWorkoutSession().let { session ->
@@ -354,7 +393,44 @@ class WorkoutSessionTest {
             SetState.Completed,
         )
         assert(set.oneRm == Weight.kilograms(estimateOneRmKg(60f, 8)))
-        assert(set.oneRm.kilograms == "74.48")
+        assert(set.oneRm?.kilograms == "74.48")
+    }
+
+    @Test
+    fun `estimated one RM is null when the set has no load`() {
+        val set = ExerciseSet(
+            catalogExercise("pullup-assisted"),
+            null,
+            8,
+            SetState.Completed,
+        )
+        assert(set.oneRm == null)
+    }
+
+    @Test
+    fun `updateWeightFromField treats blank and zero as no load`() {
+        val session = fullBodyA.toOverviewSession()
+        val bench = session.exercises.first()
+
+        val cleared = session.updateWeightFromField(bench, 0, "")
+        assert(cleared.exercises.first().sets.first().weight == null)
+
+        val loaded = session.updateWeightFromField(bench, 0, "80")
+        assert(loaded.exercises.first().sets.first().weight == Weight.kilograms(80))
+
+        val zeroed = loaded.updateWeightFromField(loaded.exercises.first(), 0, "0")
+        assert(zeroed.exercises.first().sets.first().weight == null)
+
+        val ignored = loaded.updateWeightFromField(loaded.exercises.first(), 0, "nope")
+        assert(ignored.exercises.first().sets.first().weight == Weight.kilograms(80))
+    }
+
+    @Test
+    fun `toWorkoutSession leaves assisted loads empty`() {
+        val session = fullBodyA.toWorkoutSession()
+        val pullUp = session.exercises.first { it.id == "pullup-assisted" }
+        assert(pullUp.warmupSets!!.all { it.weight == null })
+        assert(pullUp.sets.all { it.weight == null })
     }
 
     @Test

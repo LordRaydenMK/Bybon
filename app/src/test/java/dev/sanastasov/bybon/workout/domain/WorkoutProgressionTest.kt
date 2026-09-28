@@ -20,12 +20,12 @@ class WorkoutProgressionTest {
         assert(after1.reps == 9)
         assert(after2.weight == Weight.kilograms(50))
         assert(after2.reps == 10)
-        assert(Weight.kilograms(estimateOneRmKg(52.5f, 8)) < after2.oneRm)
+        assert(Weight.kilograms(estimateOneRmKg(52.5f, 8)) < after2.requireOneRm)
         assert(after3.weight == Weight.kilograms(52.5f))
         assert(after3.reps == 9)
-        assert(after1.oneRm > start.oneRm)
-        assert(after2.oneRm > after1.oneRm)
-        assert(after3.oneRm > after2.oneRm)
+        assert(after1.requireOneRm > start.requireOneRm)
+        assert(after2.requireOneRm > after1.requireOneRm)
+        assert(after3.requireOneRm > after2.requireOneRm)
     }
 
     @Test
@@ -33,7 +33,7 @@ class WorkoutProgressionTest {
         val steps = generateSequence(benchSet(50f, 8)) { it.increase() }.take(12).toList()
 
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm > previous.oneRm)
+            assert(next.requireOneRm > previous.requireOneRm)
         }
         assert(
             steps.map { it.weight to it.reps } == listOf(
@@ -64,12 +64,12 @@ class WorkoutProgressionTest {
         assert(after1.reps == 9)
         assert(after2.weight == Weight.kilograms(50))
         assert(after2.reps == 8)
-        assert(Weight.kilograms(estimateOneRmKg(47.5f, 10)) > after2.oneRm)
+        assert(Weight.kilograms(estimateOneRmKg(47.5f, 10)) > after2.requireOneRm)
         assert(after3.weight == Weight.kilograms(47.5f))
         assert(after3.reps == 9)
-        assert(after1.oneRm < start.oneRm)
-        assert(after2.oneRm < after1.oneRm)
-        assert(after3.oneRm < after2.oneRm)
+        assert(after1.requireOneRm < start.requireOneRm)
+        assert(after2.requireOneRm < after1.requireOneRm)
+        assert(after3.requireOneRm < after2.requireOneRm)
     }
 
     @Test
@@ -77,7 +77,7 @@ class WorkoutProgressionTest {
         val steps = generateSequence(benchSet(50f, 8)) { it.decrease() }.take(8).toList()
 
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm < previous.oneRm)
+            assert(next.requireOneRm < previous.requireOneRm)
         }
     }
 
@@ -99,7 +99,7 @@ class WorkoutProgressionTest {
             ),
         )
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm > previous.oneRm)
+            assert(next.requireOneRm > previous.requireOneRm)
         }
     }
 
@@ -108,7 +108,7 @@ class WorkoutProgressionTest {
         val steps = generateSequence(lateralSet(10f, 10)) { it.increaseLateral() }.take(20).toList()
 
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm > previous.oneRm)
+            assert(next.requireOneRm > previous.requireOneRm)
         }
     }
 
@@ -119,7 +119,7 @@ class WorkoutProgressionTest {
 
         assert(decreased.weight == Weight.kilograms(10))
         assert(decreased.reps == 16)
-        assert(decreased.oneRm < start.oneRm)
+        assert(decreased.requireOneRm < start.requireOneRm)
     }
 
     @Test
@@ -138,7 +138,7 @@ class WorkoutProgressionTest {
             ),
         )
         steps.zipWithNext().forEach { (previous, next) ->
-            assert(next.oneRm < previous.oneRm)
+            assert(next.requireOneRm < previous.requireOneRm)
         }
     }
 
@@ -164,6 +164,21 @@ class WorkoutProgressionTest {
     }
 
     @Test
+    fun `null weight only changes reps even when a load increment exists`() {
+        val set = ExerciseSet(bench, null, 8, SetState.NotStated)
+
+        val increased = set.adjust(benchRange, Equipment.Barbell.weightIncrement, increase = true)
+        val atTop = set.copy(reps = 10)
+            .adjust(benchRange, Equipment.Barbell.weightIncrement, increase = true)
+
+        assert(increased.weight == null)
+        assert(increased.reps == 9)
+        assert(increased.oneRm == null)
+        assert(atTop.weight == null)
+        assert(atTop.reps == 10)
+    }
+
+    @Test
     fun `adjustExercise copies first work set weight to other sets`() {
         val session = fullBodyA.toOverviewSession().let { overview ->
             overview.updateReps(overview.exercises.first(), 0, 10)
@@ -180,8 +195,8 @@ class WorkoutProgressionTest {
         assert(sets[1].reps == 7)
         assert(sets[1].reps !in benchRange)
         assert(actual.exercises.drop(1) == session.exercises.drop(1))
-        assert(sets[0].oneRm > benchExercise.sets[0].oneRm)
-        assert(sets[1].oneRm > benchExercise.sets[1].oneRm)
+        assert(sets[0].requireOneRm > benchExercise.sets[0].requireOneRm)
+        assert(sets[1].requireOneRm > benchExercise.sets[1].requireOneRm)
         assert(actual.exercises.first().warmupSets == benchExercise.warmupSets)
     }
 
@@ -195,7 +210,7 @@ class WorkoutProgressionTest {
 
         assert(sets.all { it.weight == Weight.kilograms(50) })
         assert(sets.all { it.reps == 9 })
-        assert(sets[0].oneRm > benchExercise.sets[0].oneRm)
+        assert(sets[0].requireOneRm > benchExercise.sets[0].requireOneRm)
     }
 
     @Test
@@ -211,7 +226,7 @@ class WorkoutProgressionTest {
         assert(first.weight == Weight.kilograms(52.5f))
         assert(first.reps == 11)
         assert(first.reps !in benchRange)
-        assert(first.oneRm > start.oneRm)
+        assert(first.requireOneRm > start.requireOneRm)
         assert(actual.exercises.first().sets.all { it.weight == first.weight })
     }
 
@@ -231,8 +246,8 @@ class WorkoutProgressionTest {
         assert(sets.all { it.weight == sets[0].weight })
         assert(sets[1].reps == 12)
         assert(sets[1].reps !in benchRange)
-        assert(sets[0].oneRm < benchExercise.sets[0].oneRm)
-        assert(sets[1].oneRm < benchExercise.sets[1].oneRm)
+        assert(sets[0].requireOneRm < benchExercise.sets[0].requireOneRm)
+        assert(sets[1].requireOneRm < benchExercise.sets[1].requireOneRm)
     }
 
     @Test
@@ -286,3 +301,6 @@ class WorkoutProgressionTest {
     private fun ExerciseSet.decreaseLateral() =
         adjust(lateralRange, Equipment.Dumbbell.weightIncrement, increase = false)
 }
+
+private val ExerciseSet.requireOneRm: Weight
+    get() = checkNotNull(oneRm)

@@ -41,9 +41,11 @@ internal fun SetValuesRow(
     badgeFontWeight: FontWeight? = null,
     valueFontWeight: FontWeight? = null,
 ) {
-    val oneRm = numbered.set.oneRm
-        .takeUnless { numbered.isWarmup }
-        ?.let { formatOneRmKg(it.kilogramsValue) }
+    val oneRm = if (numbered.isWarmup) {
+        null
+    } else {
+        numbered.set.oneRm.toOneRmColumnLabel()
+    }
     Row(
         Modifier
             .fillMaxWidth()
@@ -108,7 +110,7 @@ private fun SetBadgeColumn(
 private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
     val previous = numbered.set.previous
     Text(
-        previous?.let { "${it.weight.kilograms} x ${it.reps}" }.orEmpty(),
+        previous?.let { "${it.weight.toLoadLabel()} x ${it.reps}" }.orEmpty(),
         Modifier
             .width(ExerciseCardPreviousColWidth)
             .then(
@@ -184,7 +186,7 @@ private fun WeightField(
     val slot = if (numbered.isWarmup) "w" else "s"
     NumberInputField(
         key = "${exercise.id}-$slot${numbered.index}-weight",
-        initialText = numbered.set.weight.kilograms,
+        initialText = numbered.set.weight?.kilograms.orEmpty(),
         minWidth = NumberInputWeightMinWidth,
         onTextChanged = onWeightChanged,
     )

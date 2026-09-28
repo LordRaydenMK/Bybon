@@ -26,6 +26,19 @@ class WorkoutSessionAddExerciseTest {
     }
 
     @Test
+    fun `addExercise leaves assisted loads empty`() {
+        val session = fullBodyB.toOverviewSession()
+        val pullUp = catalogExercise("pullup-assisted")
+
+        val actual = session.addExercise(pullUp)
+        val added = actual.exercises.last()
+
+        assert(added.exerciseDefinition == pullUp)
+        assert(added.sets.all { it.weight == null })
+        assert(added.sets.all { it.oneRm == null })
+    }
+
+    @Test
     fun `addExercise throws when the exercise is already in the session`() {
         val session = fullBodyA.toOverviewSession()
         val bench = catalogExercise("bench-press-bb")

@@ -4,8 +4,12 @@ import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import java.time.LocalDateTime
 import kotlinx.coroutines.test.TestScope
@@ -114,6 +118,34 @@ class WorkoutSummaryViewModelTest {
             assert(content.exercises.single().sets.single().weightKg == "50")
             assert(content.exercises.single().sets.single().reps == 10)
         }
+    }
+
+    @Test
+    fun `summary uses dash when a set has no load`() {
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(
+                WorkoutExercise(
+                    exerciseDefinition = catalogExercise("pullup-assisted"),
+                    repRange = 6..10,
+                    sets = listOf(
+                        ExerciseSet(
+                            catalogExercise("pullup-assisted"),
+                            null,
+                            8,
+                            SetState.Completed,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val content = session.toSummaryUi()
+        assert(content.exercises.single().sets.single().weightKg == "-")
+        assert(content.exercises.single().sets.single().reps == 8)
+        assert(content.exercises.single().sets.single().oneRm == null)
     }
 
     private fun oneRm(kg: Float, reps: Int): Weight = Weight.kilograms(estimateOneRmKg(kg, reps))

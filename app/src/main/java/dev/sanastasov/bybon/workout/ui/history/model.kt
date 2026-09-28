@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import java.time.LocalDate
 
 sealed class WorkoutHistoryUiState {
@@ -46,7 +47,7 @@ data class ExerciseTopSetUi(
     val name: String,
     val weightKg: String,
     val reps: Int,
-    val oneRm: Weight,
+    val oneRm: Weight?,
 )
 
 sealed class WorkoutHistoryAction {
@@ -83,7 +84,7 @@ private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi? {
     ) ?: return null
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
-        weightKg = topSet.weight.kilograms,
+        weightKg = topSet.weight?.kilograms ?: MISSING_LOAD_LABEL,
         reps = topSet.reps,
         oneRm = topSet.oneRm,
     )

@@ -40,6 +40,7 @@ import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.formatSetPerformance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -255,7 +256,7 @@ private fun plansLabel(count: Int): String = if (count == 1) "plan" else "plans"
 private fun exercisesLabel(count: Int): String = if (count == 1) "exercise" else "exercises"
 
 private fun ExerciseTopSetUi.summary(): String = buildString {
-    append("$name: $weightKg kg x $reps @ ${oneRm.kilograms} kg 1RM")
+    append("$name: ${formatSetPerformance(weightKg, reps, oneRm)}")
 }
 
 @Preview

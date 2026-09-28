@@ -70,7 +70,7 @@ fun WorkoutSession.convertLastWarmupToWorkSet(exercise: WorkoutExercise): Workou
 fun WorkoutSession.updateWeight(
     exercise: WorkoutExercise,
     setIndex: Int,
-    weight: Weight,
+    weight: Weight?,
     isWarmup: Boolean = false,
 ): WorkoutSession = updateExerciseSet(exercise, setIndex, isWarmup) {
     it.copy(weight = weight)

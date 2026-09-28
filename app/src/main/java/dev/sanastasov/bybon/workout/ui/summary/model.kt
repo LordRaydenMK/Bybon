@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 
 sealed class WorkoutSummaryUiState {
     data object Loading : WorkoutSummaryUiState()
@@ -24,7 +25,7 @@ data class WorkoutSummarySetUi(
     val number: Int,
     val weightKg: String,
     val reps: Int,
-    val oneRm: Weight,
+    val oneRm: Weight?,
 )
 
 internal fun List<WorkoutSession>.requireCompletedSummary(
@@ -47,7 +48,7 @@ private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
         sets = sets.mapIndexed { index, set ->
             WorkoutSummarySetUi(
                 number = index + 1,
-                weightKg = set.weight.kilograms,
+                weightKg = set.weight?.kilograms ?: MISSING_LOAD_LABEL,
                 reps = set.reps,
                 oneRm = set.oneRm,
             )
