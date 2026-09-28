@@ -106,7 +106,10 @@ class StrongCsvRowTest {
                 120.seconds,
         )
         assert(
-            firstFullBodyA.exercises.first { it.id == "seated-leg-curl" }.restAfterWorkSet == 90.seconds,
+            firstFullBodyA.exercises.first {
+                it.id == "seated-leg-curl"
+            }.restAfterWorkSet ==
+                90.seconds,
         )
         assert(
             firstFullBodyA.exercises.first { it.id == "skullcrusher-db" }.restAfterWorkSet ==

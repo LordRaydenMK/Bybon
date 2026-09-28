@@ -217,7 +217,9 @@ class WorkoutOverviewViewModelTest {
             assert(draft.exercises.first().restAfterWorkSet == 2.minutes)
             assert(draft.exercises.first().restAfterWorkSet.formatRestClock() == "2:00")
             assert(
-                draft.exercises.first { it.id == "seated-leg-curl" }.restAfterWorkSet.formatRestClock() ==
+                draft.exercises.first {
+                    it.id == "seated-leg-curl"
+                }.restAfterWorkSet.formatRestClock() ==
                     "1:30",
             )
             assert(

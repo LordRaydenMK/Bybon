@@ -37,7 +37,10 @@ class WorkoutPlanEditingTest {
         val error = assertFailsWith<IllegalStateException> {
             singleSet.removeLastWorkSet("seated-leg-curl")
         }
-        assert(error.message == "Cannot remove last work set from seated-leg-curl; only one remains")
+        assert(
+            error.message ==
+                "Cannot remove last work set from seated-leg-curl; only one remains",
+        )
     }
 
     @Test
