@@ -539,10 +539,12 @@ class StrongCsvRowTest {
                 "Rep range 11-15",
         )
 
-        val squatNoteSession = result.sessionHistory.first { session ->
-            session.exercises.any { it.id == "squat-bb" && it.note == "Right knee slight pain" }
+        val legCurlNoteSession = result.sessionHistory.first { session ->
+            session.exercises.any {
+                it.id == "seated-leg-curl" && it.note == "Rep range: 12-14"
+            }
         }
-        assert(squatNoteSession.planId == fullBodyA.id)
+        assert(legCurlNoteSession.planId == fullBodyA.id)
     }
 
     @Test
