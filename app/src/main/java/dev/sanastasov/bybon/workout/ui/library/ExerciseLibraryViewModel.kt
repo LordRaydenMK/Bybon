@@ -8,10 +8,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class ExerciseLibraryViewModel(
     private val existingExerciseIds: List<String>,
@@ -46,10 +44,10 @@ class ExerciseLibraryViewModel(
                 }
             }
 
-            is ExerciseLibraryAction.OnAddExercise -> coroutineScope.launch {
-                val exists = repository.exercises().first()
-                    .any { it.id == action.exerciseId }
-                if (!exists) return@launch
+            is ExerciseLibraryAction.OnAddExercise -> {
+                check(action.exerciseId !in existingExerciseIds) {
+                    "Exercise ${action.exerciseId} is already added"
+                }
                 _effects.trySend(ExerciseLibraryEffect.ExercisePicked(action.exerciseId))
             }
 

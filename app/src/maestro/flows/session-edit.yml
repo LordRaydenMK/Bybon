@@ -1,0 +1,33 @@
+appId: dev.sanastasov.bybon.debug
+---
+- launchApp
+- assertVisible: "Bybon"
+- assertVisible: "Full Body A"
+- tapOn: "Start Workout"
+- tapOn: "Start Workout"
+- assertVisible: "Warmup set in progress, 20 kg by 8. Double tap to mark complete."
+- assertVisible: "Exercise 1 / 6"
+- tapOn: "More options for workout"
+- assertVisible: "Add Exercise"
+- assertVisible: "Cancel workout"
+- tapOn: "Add Exercise"
+- assertVisible: "Exercise Library"
+- tapOn:
+    text: "Arms"
+    index: 0
+- tapOn:
+    text: "Dumbbell"
+    index: 0
+- scrollUntilVisible:
+    element: "Select Incline Curl (dumbbell)"
+    direction: DOWN
+- tapOn: "Select Incline Curl (dumbbell)"
+- tapOn: "Add exercise"
+- assertVisible: "3 x Bench Press (barbell) in 8 - 10"
+- assertVisible: "Exercise 1 / 7"
+- tapOn: "More options for Bench Press (barbell)"
+- assertVisible: "Remove Exercise"
+- tapOn: "Remove Exercise"
+- assertVisible: "3 x Squat (barbell) in 8 - 10"
+- assertVisible: "Exercise 1 / 6"
+- assertVisible: "Warmup set in progress, 20 kg by 8. Double tap to mark complete."

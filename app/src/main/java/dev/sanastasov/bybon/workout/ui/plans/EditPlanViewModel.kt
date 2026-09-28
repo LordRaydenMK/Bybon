@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastWorkSet
+import dev.sanastasov.bybon.workout.domain.requireExercise
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -56,25 +57,17 @@ class EditPlanViewModel(
                     repository.updatePlan(planId) { it.moveExerciseDown(action.exerciseId) }
 
                 EditPlanAction.OnAddExercise -> {
-                    val existingExerciseIds = repository.workoutPlans().first()
-                        .firstOrNull { it.id == planId }
-                        ?.sets
-                        ?.map { it.exercise.id }
-                        .orEmpty()
-                    _effects.trySend(EditPlanEffect.OpenExerciseLibrary(existingExerciseIds))
+                    val plan = checkNotNull(
+                        repository.workoutPlans().first().firstOrNull { it.id == planId },
+                    ) { "Plan $planId is not in the repository" }
+                    _effects.trySend(
+                        EditPlanEffect.OpenExerciseLibrary(plan.sets.map { it.exercise.id }),
+                    )
                 }
 
                 is EditPlanAction.OnExercisePicked -> {
-                    val exercise = repository.exercises().first()
-                        .firstOrNull { it.id == action.exerciseId }
-                        ?: return@launch
-                    repository.updatePlan(planId) { plan ->
-                        if (plan.sets.any { it.exercise.id == exercise.id }) {
-                            plan
-                        } else {
-                            plan.addExercise(exercise)
-                        }
-                    }
+                    val exercise = repository.requireExercise(action.exerciseId)
+                    repository.updatePlan(planId) { it.addExercise(exercise) }
                 }
             }
         }

@@ -1,15 +1,13 @@
 package dev.sanastasov.bybon.workout.ui.library
 
-import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -122,25 +120,13 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun `adding an unknown exercise does not emit a result`() = runTest {
-        val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA),
-            initialExercises = catalogExercises,
-        )
-        val viewModel = ExerciseLibraryViewModel(
-            fullBodyA.sets.map { it.exercise.id },
-            repository,
-            backgroundScope,
-        )
+    fun `adding an already added exercise is rejected`() = runTest {
+        val viewModel = viewModel()
         viewModel.uiState.first { it.groups.isNotEmpty() }
-
-        viewModel.effects.test {
-            viewModel.onAction(ExerciseLibraryAction.OnAddExercise("missing"))
-            advanceUntilIdle()
-            expectNoEvents()
+        val error = assertFailsWith<IllegalStateException> {
+            viewModel.onAction(ExerciseLibraryAction.OnAddExercise("bench-press-bb"))
         }
-        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        assert(error.message == "Exercise bench-press-bb is already added")
     }
 
     @Test

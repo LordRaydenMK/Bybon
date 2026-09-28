@@ -28,7 +28,7 @@ data class ExerciseOverflow(
 @Composable
 fun ExerciseOverflowMenu(
     exerciseName: String,
-    overflow: ExerciseOverflow,
+    overflow: ExerciseOverflow? = null,
     extraItems: @Composable ColumnScope.(dismiss: () -> Unit) -> Unit = {},
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -43,28 +43,30 @@ fun ExerciseOverflowMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            DropdownMenuItem(
-                text = { Text("Move up") },
-                onClick = {
-                    expanded = false
-                    overflow.onMoveUp()
-                },
-                enabled = overflow.canMoveUp,
-                modifier = Modifier.clearAndSetSemantics {
-                    contentDescription = "Move $exerciseName up"
-                },
-            )
-            DropdownMenuItem(
-                text = { Text("Move down") },
-                onClick = {
-                    expanded = false
-                    overflow.onMoveDown()
-                },
-                enabled = overflow.canMoveDown,
-                modifier = Modifier.clearAndSetSemantics {
-                    contentDescription = "Move $exerciseName down"
-                },
-            )
+            overflow?.let { current ->
+                DropdownMenuItem(
+                    text = { Text("Move up") },
+                    onClick = {
+                        expanded = false
+                        current.onMoveUp()
+                    },
+                    enabled = current.canMoveUp,
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = "Move $exerciseName up"
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text("Move down") },
+                    onClick = {
+                        expanded = false
+                        current.onMoveDown()
+                    },
+                    enabled = current.canMoveDown,
+                    modifier = Modifier.clearAndSetSemantics {
+                        contentDescription = "Move $exerciseName down"
+                    },
+                )
+            }
             extraItems { expanded = false }
         }
     }

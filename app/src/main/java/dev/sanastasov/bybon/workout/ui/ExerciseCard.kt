@@ -138,8 +138,8 @@ private fun ExerciseCardHeader(
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
-            overflow?.let { current ->
-                ExerciseOverflowMenu(exercise.exerciseDefinition.name, current) { dismiss ->
+            if (overflow != null || onRemoveExercise != null) {
+                ExerciseOverflowMenu(exercise.exerciseDefinition.name, overflow) { dismiss ->
                     if (onRemoveExercise != null) {
                         DropdownMenuItem(
                             text = { Text("Remove Exercise") },
