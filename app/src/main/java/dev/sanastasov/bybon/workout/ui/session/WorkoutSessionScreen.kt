@@ -66,8 +66,8 @@ fun WorkoutModule.WorkoutSessionScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resultBus = LocalResultEventBus.current
     ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
-        viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
         resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
+        viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
     }
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {

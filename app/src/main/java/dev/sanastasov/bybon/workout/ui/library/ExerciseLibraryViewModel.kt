@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
-import dev.sanastasov.bybon.workout.domain.requireExercise
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -11,7 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class ExerciseLibraryViewModel(
     private val existingExerciseIds: List<String>,
@@ -46,11 +44,10 @@ class ExerciseLibraryViewModel(
                 }
             }
 
-            is ExerciseLibraryAction.OnAddExercise -> coroutineScope.launch {
+            is ExerciseLibraryAction.OnAddExercise -> {
                 check(action.exerciseId !in existingExerciseIds) {
                     "Exercise ${action.exerciseId} is already added"
                 }
-                repository.requireExercise(action.exerciseId)
                 _effects.trySend(ExerciseLibraryEffect.ExercisePicked(action.exerciseId))
             }
 

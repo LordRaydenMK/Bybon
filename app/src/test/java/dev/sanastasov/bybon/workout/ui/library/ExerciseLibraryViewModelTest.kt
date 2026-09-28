@@ -1,11 +1,11 @@
 package dev.sanastasov.bybon.workout.ui.library
 
-import dev.sanastasov.bybon.test.BackgroundFailures
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -120,37 +120,13 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
-    fun `adding an unknown exercise is rejected`() = runTest {
-        val failures = BackgroundFailures(this)
-        val viewModel = ExerciseLibraryViewModel(
-            fullBodyA.sets.map { it.exercise.id },
-            FakeWorkoutsRepository(
-                initialPlans = listOf(fullBodyA),
-                initialExercises = catalogExercises,
-            ),
-            failures.scope,
-        )
-        viewModel.uiState.first { it.groups.isNotEmpty() }
-        failures.expectFailure("Exercise missing is not in the repository") {
-            viewModel.onAction(ExerciseLibraryAction.OnAddExercise("missing"))
-        }
-    }
-
-    @Test
     fun `adding an already added exercise is rejected`() = runTest {
-        val failures = BackgroundFailures(this)
-        val viewModel = ExerciseLibraryViewModel(
-            fullBodyA.sets.map { it.exercise.id },
-            FakeWorkoutsRepository(
-                initialPlans = listOf(fullBodyA),
-                initialExercises = catalogExercises,
-            ),
-            failures.scope,
-        )
+        val viewModel = viewModel()
         viewModel.uiState.first { it.groups.isNotEmpty() }
-        failures.expectFailure("Exercise bench-press-bb is already added") {
+        val error = assertFailsWith<IllegalStateException> {
             viewModel.onAction(ExerciseLibraryAction.OnAddExercise("bench-press-bb"))
         }
+        assert(error.message == "Exercise bench-press-bb is already added")
     }
 
     @Test

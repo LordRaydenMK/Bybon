@@ -18,7 +18,6 @@ import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -436,40 +435,20 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
-    fun `picking the same exercise twice adds it once`() = runTest {
-        val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA),
-            initialExercises = catalogExercises,
+    fun `picked exercise already in the session is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = WorkoutOverviewViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialExercises = catalogExercises,
+            ),
+            failures.scope,
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
-
-        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
-        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
-
-        val added = viewModel.uiState.first { session ->
-            session?.exercises?.any { it.id == "incline-curl-db" } == true
-        }!!
-        assert(added.exercises.count { it.id == "incline-curl-db" } == 1)
-        assert(repository.workoutPlans().first() == listOf(fullBodyA))
-    }
-
-    @Test
-    @OptIn(ExperimentalCoroutinesApi::class)
-    fun `picked exercise already in the session is ignored`() = runTest {
-        val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA),
-            initialExercises = catalogExercises,
-        )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
-        val draft = viewModel.uiState.first { it != null }!!
-
-        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("bench-press-bb"))
-        advanceUntilIdle()
-
-        assert(viewModel.uiState.value == draft)
-        assert(draft.exercises.count { it.id == "bench-press-bb" } == 1)
-        assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        failures.expectFailure("Exercise bench-press-bb is already in the session") {
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("bench-press-bb"))
+        }
     }
 
     @Test

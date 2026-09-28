@@ -8,6 +8,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 
+/**
+ * Captures invariant failures thrown from a ViewModel `coroutineScope.launch`.
+ *
+ * [assertFailsWith] does not see those exceptions: [TestScope] reports them as
+ * uncaught after the block returns, and [backgroundScope] swallows them. This
+ * scope uses the test dispatcher with a supervisor job so the thrown
+ * [IllegalStateException] can be asserted without cancelling `runTest`.
+ */
 class BackgroundFailures(
     private val testScope: TestScope,
 ) {

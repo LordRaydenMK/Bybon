@@ -6,7 +6,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
-import dev.sanastasov.bybon.workout.domain.addExerciseIfAbsent
+import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
@@ -109,7 +109,7 @@ class WorkoutOverviewViewModel(
         session: WorkoutSession,
         action: WorkoutOverviewAction,
     ): WorkoutSession? = when (action) {
-        is WorkoutOverviewAction.OnExerciseAdded -> session.addExerciseIfAbsent(action.exercise)
+        is WorkoutOverviewAction.OnExerciseAdded -> session.addExercise(action.exercise)
         is WorkoutOverviewAction.OnRemoveExercise -> session.removeExercise(action.exercise.id)
         else -> null
     }
