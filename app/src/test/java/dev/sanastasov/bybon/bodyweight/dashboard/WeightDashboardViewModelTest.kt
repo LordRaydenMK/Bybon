@@ -107,6 +107,31 @@ class WeightDashboardViewModelTest {
         )
     }
 
+    @Test
+    fun `formats signed weekly and hero weight deltas`() = runTest {
+        val weekStart = today.with(DayOfWeek.MONDAY)
+        val repository = FakeBodyWeightRepository(
+            officialWeek(weekStart, "79.65") +
+                officialWeek(weekStart.minusWeeks(1), "80.00") +
+                officialWeek(weekStart.minusWeeks(2), "80.35") +
+                officialWeek(weekStart.minusWeeks(3), "80.00") +
+                officialWeek(weekStart.minusWeeks(4), "80.00"),
+        )
+        val viewModel = WeightDashboardViewModel(repository, backgroundScope, today)
+
+        val state = viewModel.uiState.first { it.logWeightPrompt != LogWeightPrompt.Hidden }
+
+        assert(state.comparison?.previousWeek?.weightDelta == "-0.35 kg")
+        assert(
+            state.weeklyAverages == listOf(
+                WeeklyAverageEntryUi("CW 36", "80.0 kg", "-0.35 kg"),
+                WeeklyAverageEntryUi("CW 35", "80.35 kg", "+0.35 kg"),
+                WeeklyAverageEntryUi("CW 34", "80.0 kg", "0.0 kg"),
+                WeeklyAverageEntryUi("CW 33", "80.0 kg", null),
+            ),
+        )
+    }
+
     private fun officialWeek(weekStart: LocalDate, kilograms: String): List<BodyWeightEntry> =
         listOf(
             BodyWeightEntry(weekStart, BodyWeight.parseFromString(kilograms)),

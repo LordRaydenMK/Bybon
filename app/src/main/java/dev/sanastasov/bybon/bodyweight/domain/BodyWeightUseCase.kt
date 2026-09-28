@@ -2,6 +2,8 @@ package dev.sanastasov.bybon.bodyweight.domain
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.WeightDelta
+import dev.sanastasov.bybon.bodyweight.minusToDelta
 import dev.sanastasov.bybon.domain.isoWeekStart
 import dev.sanastasov.bybon.domain.weekOfYear
 import java.time.LocalDate
@@ -14,7 +16,7 @@ internal const val WEEKLY_TREND_WEEKS = 16
 data class WeeklyAverageEntry(
     val weekOfYear: Int,
     val averageWeight: BodyWeight,
-    val delta: BodyWeight?,
+    val delta: WeightDelta?,
 )
 
 data class WeeklyTrendPoint(
@@ -84,7 +86,7 @@ private fun previousWeeksAverages(
         WeeklyAverageEntry(
             weekStart.weekOfYear,
             average.weight,
-            previousAverage?.let { average.weight - it },
+            previousAverage?.let { average.weight.minusToDelta(it) },
         )
     }
 }
