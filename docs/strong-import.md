@@ -122,6 +122,13 @@ Resolve each Strong `Exercise Name`:
 Only **new** (non-catalog) exercises are returned for insert. Sample: **`Crunch (Machine)`** →
 `crunch-machine` / Core / Machine.
 
+**Strong has no equipment column.** Equipment is only words inside `Exercise Name`, usually
+`Exercise (Equipment)` (`Bench Press (Barbell)`, `Chest Fly (Cable)`). A bare name (`Chest Fly`,
+`Leg Press`, `Triceps Press`) is not a missing field — Strong stored whatever display string the
+library used. Catalog matches and aliases take Bybon’s `equipment`; guessing happens **only** when
+creating a new exercise. `Band` is not a Bybon `Equipment` value and is not in the keyword list, so
+`Chest Fly (Band)` is created as Bodyweight.
+
 ### 2. Plans
 
 Group Strong sessions by trimmed `Workout Name`. Score each existing Bybon plan:
@@ -202,11 +209,12 @@ Bulgarian Split Squat warmups. CSV working sets 854 → imported **825**. One Fu
 
 Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt` for Strong strings that are not
 a case-insensitive match for the catalog (RDL, Bulgarian split squat, bicep curl, triceps press,
-bare `Leg Press`, `"Dumbbell lateral raises"`). Extra Strong names still become new exercises.
+bare `Leg Press`, `"Dumbbell lateral raises"`, bare `Chest Fly`). Extra Strong names still become
+new exercises.
 
 Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pulldown, chest
 fly variants, dips, calf raise, face pull, lying leg curl, etc. Several of those **do** appear in
-the full backup and now match (lat pulldown, both leg curls, leg press via alias).
+the full backup and now match (lat pulldown, both leg curls, leg press and chest fly via alias).
 
 ---
 
@@ -235,6 +243,7 @@ persistence itself.
 | Leg press id collision | Catalog id is `leg-press-machine`; Strong `Leg Press` aliases onto it |
 | Seated vs lying leg curl | Catalog has `seated-leg-curl` and `lying-leg-curl`; Full Body A uses seated |
 | `"Dumbbell lateral raises"` | Aliases to `lateral-raise-db` |
+| Bare `Chest Fly` | Aliases to `chest-fly-peck-deck` (`Chest Fly (machine)`) |
 | Trim Strong exercise names | Parser and created definitions strip leading/trailing spaces |
 | Seed Upper Body A id | Renamed to `upper-body-legacy` / `Upper Body (legacy)` so import can own `upper-body-a` |
 | `lateral-raise-machine` equipment | Catalog uses `Equipment.Machine` |
@@ -300,15 +309,15 @@ value is the minority. Accepted as by-design.
 
 ### Exercise resolution (full)
 
-After catalog/alias fixes: lat pulldown, both machine leg curls, and `Leg Press` attach to catalog
-ids. `"Dumbbell lateral raises"` aliases to `lateral-raise-db`. Created names are trimmed.
+After catalog/alias fixes: lat pulldown, both machine leg curls, `Leg Press`, and bare `Chest Fly`
+attach to catalog ids. `"Dumbbell lateral raises"` aliases to `lateral-raise-db`. Created names are
+trimmed.
 
 High-volume names that still **create** new exercises:
 
 | Strong name | Workouts | Work sets | Created id | Inferred |
 |-------------|----------|-----------|------------|----------|
 | Standing Calf Raise (Barbell) | 15 | 45 | `standing-calf-raise-barbell` | Other / Barbell |
-| Chest Fly | 15 | 42 | `chest-fly` | Other / Bodyweight |
 | Chest Fly (Band) | 11 | 30 | `chest-fly-band` | Other / Bodyweight |
 | Cable Pushdown (rope) | 10 | 30 | `cable-pushdown-rope` | Other / Machine |
 | Back Extension | 10 | 21 | `back-extension` | Other / Bodyweight |
@@ -319,21 +328,22 @@ High-volume names that still **create** new exercises:
 | + others with ≤4 workouts | | | | |
 
 Catalog rows that **never appear** in this export: `bench-press-db`, `chest-dip`,
-`chest-fly-peck-deck`, `incline-bench-press-bb`.
+`incline-bench-press-bb`.
 
-### Chest Fly (open)
+Bare Strong `Chest Fly` aliases to `chest-fly-peck-deck` (`Chest Fly (machine)` / Machine).
+`Chest Fly (Cable)` matches `chest-fly-cable`. `Chest Fly (Band)` is still created (Bodyweight —
+`band` is not an infer keyword).
 
-Strong has three fly names in the full backup; Bybon already has two catalog rows:
+Bare names in this export that **lack** an equipment word in the string:
 
-| Strong name | Sessions | Bybon today |
-|-------------|----------|-------------|
-| `Chest Fly (Cable)` | (matches) | `chest-fly-cable` — `Chest Fly (cable)` |
-| `Chest Fly` | 15 | **Created** `chest-fly` (Other / Bodyweight) — no equipment in the Strong name |
-| `Chest Fly (Band)` | 11 | **Created** `chest-fly-band` (Other / Bodyweight — no `Band` equipment type) |
-| *(none)* | | `chest-fly-peck-deck` — `Chest Fly (machine)` unused in this export |
-
-Need a call on whether bare `Chest Fly` and/or band should alias onto cable, machine, or stay
-separate.
+| Strong name | Import |
+|-------------|--------|
+| `Chest Fly` | Alias → catalog Machine |
+| `Leg Press` | Alias → catalog Machine |
+| `Triceps Press` | Alias → catalog Machine |
+| `Bulgarian Split Squat` | Alias → catalog Dumbbell |
+| `Back Extension` | Created Bodyweight |
+| `Reverse Lunges` | Created Bodyweight |
 
 Genuine new movements (Hip Thrust, Reverse Lunges, Cable Pushdown, Iso-Lateral Chest Press,
 Skullcrusher (Barbell), Standing Calf Raise (Barbell), …) creating new exercises is **won't do** to
