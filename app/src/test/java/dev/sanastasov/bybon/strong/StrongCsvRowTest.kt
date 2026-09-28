@@ -305,21 +305,27 @@ class StrongCsvRowTest {
                 "Seated Leg Curl (Machine)",
                 "Lying Leg Curl (Machine)",
                 "Dumbbell lateral raises ",
+                "Chest Fly",
             ),
         )
 
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalogExercises)
 
         assert(result.exercises.isEmpty())
+        val imported = result.sessionHistory.single().exercises
         assert(
-            result.sessionHistory.single().exercises.map { it.id } == listOf(
+            imported.map { it.id } == listOf(
                 "lat-pull-down",
                 "leg-press-machine",
                 "seated-leg-curl",
                 "lying-leg-curl",
                 "lateral-raise-db",
+                "chest-fly-peck-deck",
             ),
         )
+        val chestFly = imported.last().exerciseDefinition
+        assert(chestFly.name == "Chest Fly (machine)")
+        assert(chestFly.equipment == Equipment.Machine)
         assert(
             catalogExercises.first { it.id == "lateral-raise-machine" }.equipment ==
                 Equipment.Machine,
@@ -365,6 +371,7 @@ class StrongCsvRowTest {
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = emptyList())
         assert(result.exercises.single().name == "Reverse Lunges")
         assert(result.exercises.single().id == "reverse-lunges")
+        assert(result.exercises.single().equipment == Equipment.Bodyweight)
     }
 
     @Test

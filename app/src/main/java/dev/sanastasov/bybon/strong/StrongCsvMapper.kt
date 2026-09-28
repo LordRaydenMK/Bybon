@@ -32,6 +32,7 @@ private val strongExerciseAliases = mapOf(
     "triceps press" to "triceps-press-machine",
     "leg press" to "leg-press-machine",
     "dumbbell lateral raises" to "lateral-raise-db",
+    "chest fly" to "chest-fly-peck-deck",
 )
 
 data class StrongImportResult(
