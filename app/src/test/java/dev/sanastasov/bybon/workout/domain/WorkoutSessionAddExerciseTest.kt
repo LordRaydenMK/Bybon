@@ -53,9 +53,9 @@ class WorkoutSessionAddExerciseTest {
     fun `removeExercise drops the matching exercise`() {
         val session = fullBodyA.toOverviewSession()
 
-        val actual = session.removeExercise("leg-curl")
+        val actual = session.removeExercise("seated-leg-curl")
 
-        assert(actual.exercises.none { it.id == "leg-curl" })
+        assert(actual.exercises.none { it.id == "seated-leg-curl" })
         assert(actual.exercises.size == session.exercises.size - 1)
         assert(actual.exercises.first() == session.exercises.first())
     }
@@ -83,9 +83,9 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `removeExercise keeps in-progress on another exercise`() {
         val session = fullBodyA.toWorkoutSession()
-        val actual = session.removeExercise("leg-curl")
+        val actual = session.removeExercise("seated-leg-curl")
 
-        assert(actual.exercises.none { it.id == "leg-curl" })
+        assert(actual.exercises.none { it.id == "seated-leg-curl" })
         assert(
             actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress,
         )
@@ -134,7 +134,7 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `toWorkoutSession follows the plan even if the previous session added or removed exercises`() {
         val previous = fullBodyA.toWorkoutSession()
-            .removeExercise("leg-curl")
+            .removeExercise("seated-leg-curl")
             .addExercise(catalogExercise("incline-curl-db"))
             .let { session ->
                 session.copy(
@@ -155,7 +155,7 @@ class WorkoutSessionAddExerciseTest {
 
         assert(actual.exercises.map { it.id } == fullBodyA.sets.map { it.exercise.id })
         assert(actual.exercises.none { it.id == "incline-curl-db" })
-        assert(actual.exercises.any { it.id == "leg-curl" })
+        assert(actual.exercises.any { it.id == "seated-leg-curl" })
     }
 
     @Test

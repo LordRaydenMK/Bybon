@@ -217,7 +217,9 @@ class WorkoutOverviewViewModelTest {
             assert(draft.exercises.first().restAfterWorkSet == 2.minutes)
             assert(draft.exercises.first().restAfterWorkSet.formatRestClock() == "2:00")
             assert(
-                draft.exercises.first { it.id == "leg-curl" }.restAfterWorkSet.formatRestClock() ==
+                draft.exercises.first {
+                    it.id == "seated-leg-curl"
+                }.restAfterWorkSet.formatRestClock() ==
                     "1:30",
             )
             assert(
@@ -376,11 +378,11 @@ class WorkoutOverviewViewModelTest {
         viewModel.uiState.test {
             assert(awaitItem() == null)
             val draft = awaitItem()!!
-            val removed = draft.exercises.first { it.id == "leg-curl" }
+            val removed = draft.exercises.first { it.id == "seated-leg-curl" }
 
             viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(removed))
             val updated = awaitItem()!!
-            assert(updated.exercises.none { it.id == "leg-curl" })
+            assert(updated.exercises.none { it.id == "seated-leg-curl" })
             assert(updated.exercises.size == draft.exercises.size - 1)
             assert(repository.workoutSessions().first().isEmpty())
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
@@ -388,7 +390,7 @@ class WorkoutOverviewViewModelTest {
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
             assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
             val saved = repository.workoutSessions().first().single()
-            assert(saved.exercises.none { it.id == "leg-curl" })
+            assert(saved.exercises.none { it.id == "seated-leg-curl" })
             assert(saved.exercises.size == draft.exercises.size - 1)
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }

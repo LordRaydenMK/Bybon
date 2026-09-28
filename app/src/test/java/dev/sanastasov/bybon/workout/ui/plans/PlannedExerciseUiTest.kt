@@ -29,7 +29,7 @@ class PlannedExerciseUiTest {
 
     @Test
     fun `leg curl has no warmup rows`() {
-        val curl = fullBodyA.sets.first { it.exercise.id == "leg-curl" }
+        val curl = fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }
         val rows = curl.toPlannedSets()
 
         assert(rows.size == 3)
@@ -38,7 +38,7 @@ class PlannedExerciseUiTest {
         assert(curl.subtitle() == "Legs · Machine")
         assert(
             rows.first().contentDescription(curl.exercise.name) ==
-                "Leg Curl (machine) set 1, 12–14 reps, rest 1:30",
+                "Seated Leg Curl (machine) set 1, 12–14 reps, rest 1:30",
         )
     }
 

@@ -23,7 +23,7 @@ private val compoundExerciseIds = setOf(
     "rdl-bb",
     "deadlift-barbell",
     "split-squat-db",
-    "leg-press",
+    "leg-press-machine",
     "pullup-assisted",
     "lat-pull-down",
     "iso-lat-row",

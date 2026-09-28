@@ -186,7 +186,7 @@ class ExerciseLibraryViewModelTest {
             state.groups.map { it.bodyPart } == expectedGroups
         }
         assert(state.groups.flatMap { it.exercises }.any { it.id == "incline-curl-db" })
-        assert(state.groups.flatMap { it.exercises }.any { it.id == "leg-press" })
+        assert(state.groups.flatMap { it.exercises }.any { it.id == "leg-press-machine" })
         assert(state.groups.flatMap { it.exercises }.none { it.id == "bench-press-bb" })
         assert(state.groups.flatMap { it.exercises }.none { it.id == "squat-bb" })
     }
