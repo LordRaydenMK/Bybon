@@ -2,25 +2,24 @@ package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
-import java.util.Locale
 
 val NumberedSet.oneRmLabel: String
-    get() = "@ ${formatOneRmKg(set.oneRm.kilogramsValue)} kg 1RM"
+    get() = set.oneRm.toOneRmLabel()
 
 val NumberedSet.previousLabel: String?
     get() = set.previous?.let { previous ->
-        "${previous.weight.kilograms} x ${previous.reps}"
+        "${previous.weight.toLoadLabel()} x ${previous.reps}"
     }
 
 val NumberedSet.weightRepsLabel: String
-    get() = "${set.weight.kilograms} kg x ${set.reps}"
+    get() = formatLoadedSet(set.weight, set.reps)
 
 val NumberedSet.setTitle: String
     get() = if (isWarmup) "Warmup set" else "Set $workSetNumber"
 
 val NumberedSet.overviewContentDescription: String
     get() = buildString {
-        append("$setTitle, ${set.weight.kilograms} kg by ${set.reps}")
+        append("$setTitle, ${set.weight.toContentLoadLabel()} by ${set.reps}")
         if (!isWarmup) {
             append(", $oneRmLabel")
         }
@@ -33,7 +32,7 @@ val NumberedSet.sessionContentDescription: String
         if (set.setState == SetState.InProgress) {
             append(" in progress")
         }
-        append(", ${set.weight.kilograms} kg by ${set.reps}")
+        append(", ${set.weight.toContentLoadLabel()} by ${set.reps}")
         if (!isWarmup) {
             append(", $oneRmLabel")
         }
@@ -50,9 +49,6 @@ val NumberedSet.completedContentDescription: String
             append(weightRepsLabel)
         } else {
             append("$workSetNumber. ")
-            append(weightRepsLabel)
-            append(" $oneRmLabel")
+            append(formatSetPerformance(set.weight, set.reps, set.oneRm))
         }
     }
-
-fun formatOneRmKg(kg: Float): String = "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')

@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.SetState
-import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
@@ -21,7 +20,7 @@ import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
-import dev.sanastasov.bybon.workout.domain.updateWeight
+import dev.sanastasov.bybon.workout.domain.updateWeightFromField
 import dev.sanastasov.bybon.workout.domain.updateWorkout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -133,16 +132,12 @@ class WorkoutSessionViewModel(
         action: WorkoutSessionAction,
     ): WorkoutSession? = when (action) {
         is WorkoutSessionAction.OnWeightUpdated ->
-            action.newWeight.toFloatOrNull()
-                ?.let { Weight.kilogramsOrNull(it) }
-                ?.let { weight ->
-                    session.updateWeight(
-                        action.exercise,
-                        action.index,
-                        weight,
-                        action.isWarmup,
-                    )
-                } ?: session
+            session.updateWeightFromField(
+                action.exercise,
+                action.index,
+                action.newWeight,
+                action.isWarmup,
+            )
 
         is WorkoutSessionAction.OnRepsUpdated ->
             action.newReps.toIntOrNull()?.takeIf { it > 0 }?.let { reps ->

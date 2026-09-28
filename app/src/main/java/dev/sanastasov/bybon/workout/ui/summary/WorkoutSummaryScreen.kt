@@ -31,6 +31,7 @@ import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.formatSetPerformance
 
 @Composable
 fun WorkoutModule.WorkoutSummaryScreen(sessionId: WorkoutSessionId, onNavigateBack: () -> Unit) {
@@ -116,7 +117,7 @@ private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
 
 @Composable
 private fun CompletedSetRow(set: WorkoutSummarySetUi) {
-    val summary = "${set.number}. ${set.weightKg} kg x ${set.reps} @ ${set.oneRm.kilograms} kg 1RM"
+    val summary = "${set.number}. ${formatSetPerformance(set.weightKg, set.reps, set.oneRm)}"
     Row(
         Modifier
             .defaultMinSize(minHeight = 48.dp)

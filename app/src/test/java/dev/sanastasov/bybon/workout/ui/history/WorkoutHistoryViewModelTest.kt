@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
@@ -212,6 +213,40 @@ class WorkoutHistoryViewModelTest {
     }
 
     @Test
+    fun `history renders dash when the top set has no load`() = runTest {
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(
+                WorkoutExercise(
+                    exerciseDefinition = catalogExercise("pullup-assisted"),
+                    repRange = 6..10,
+                    sets = listOf(
+                        ExerciseSet(
+                            catalogExercise("pullup-assisted"),
+                            null,
+                            8,
+                            SetState.Completed,
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val topSet = (awaitItem() as WorkoutHistoryUiState.History)
+                .sessions.single().exercises.single()
+            assert(topSet.weightKg == "-")
+            assert(topSet.reps == 8)
+            assert(topSet.oneRm == null)
+        }
+    }
+
+    @Test
     fun `ui state updates when the repository emits new sessions`() = runTest {
         val repository = FakeWorkoutsRepository()
         val viewModel = historyViewModel(repository)
@@ -282,7 +317,7 @@ class WorkoutHistoryViewModelTest {
             assert(summary.exercisesImportedCount == 1)
             assert(summary.firstSessionDate == LocalDate.of(2026, 2, 17))
             assert(summary.lastSessionDate == LocalDate.of(2026, 8, 20))
-            assert(summary.workingSetCount == 825)
+            assert(summary.workingSetCount == 854)
         }
     }
 

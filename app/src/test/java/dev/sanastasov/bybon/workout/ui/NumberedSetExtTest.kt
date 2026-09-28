@@ -38,6 +38,25 @@ class NumberedSetExtTest {
     }
 
     @Test
+    fun `missing load renders as dash and has no 1RM`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                catalogExercise("pullup-assisted"),
+                null,
+                8,
+                SetState.Completed,
+            ),
+            isWarmup = false,
+            index = 0,
+        )
+
+        assert(numbered.oneRmLabel == "-")
+        assert(numbered.weightRepsLabel == "- x 8")
+        assert(numbered.overviewContentDescription == "Set 1, - by 8, -")
+        assert(numbered.completedContentDescription == "1. - x 8 @ -")
+    }
+
+    @Test
     fun `in-progress warmup description omits 1RM and includes complete hint`() {
         val numbered = NumberedSet(
             set = ExerciseSet(

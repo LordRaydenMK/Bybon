@@ -29,7 +29,11 @@ fun WorkoutPlan.toWorkoutSession(
                     val previousSet = previousExercise?.sets?.getOrNull(setIndex)
                     ExerciseSet(
                         planedExercise.exercise,
-                        previousSet?.weight ?: Weight.kilograms(50),
+                        if (previousSet != null) {
+                            previousSet.weight
+                        } else {
+                            planedExercise.exercise.equipment.defaultWorkWeight
+                        },
                         previousSet?.reps ?: planedExercise.repRange.first,
                         SetState.NotStated,
                         previous = previousSet?.let {
@@ -57,7 +61,11 @@ private fun warmupSetsFromPlan(
         val previousWarmup = previousWarmups?.getOrNull(index)
         ExerciseSet(
             exerciseDefinition = exercise,
-            weight = previousWarmup?.weight ?: exercise.equipment.defaultWarmupWeight,
+            weight = if (previousWarmup != null) {
+                previousWarmup.weight
+            } else {
+                exercise.equipment.defaultWarmupWeight
+            },
             reps = previousWarmup?.reps
                 ?: defaultWarmupReps.getOrElse(index) { defaultWarmupReps.last() },
             setState = SetState.NotStated,

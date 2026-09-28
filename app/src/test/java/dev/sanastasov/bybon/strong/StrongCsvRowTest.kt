@@ -12,6 +12,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.upperBodyA
+import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
@@ -99,7 +100,7 @@ class StrongCsvRowTest {
             .first { it.planId == fullBodyB.id }
             .exercises
             .first { it.id == "split-squat-db" }
-        assert(firstSplitSquat.warmupSets == null)
+        assert(firstSplitSquat.warmupSets?.map { it.weight to it.reps } == listOf(null to 6))
         val firstFullBodyA = result.sessionHistory.first { it.planId == fullBodyA.id }
         assert(
             firstFullBodyA.exercises.first { it.id == "bench-press-bb" }.restAfterWorkSet ==
@@ -396,6 +397,113 @@ class StrongCsvRowTest {
         assert(result.sessionHistory.none { it.planId == upperBodyA.id })
         assert(result.sessionHistory.count { it.planId == WorkoutPlanId("upper-body-a") } == 3)
     }
+
+    @Test
+    fun `imports zero-load work sets and warmups from the strong backup sample`() {
+        val result = StrongCsvParser.parse(
+            readStrongBackupSample(javaClass.classLoader),
+        ).toStrongImport(
+            plans = listOf(fullBodyA, fullBodyB),
+            exerciseCatalog = catalogExercises,
+        )
+
+        assert(
+            result.sessionHistory.sumOf { session ->
+                session.exercises.sumOf { exercise -> exercise.sets.count { it.weight == null } }
+            } == 29,
+        )
+        assert(
+            result.sessionHistory.sumOf { session ->
+                session.exercises.sumOf { exercise ->
+                    exercise.warmupSets.orEmpty().count { it.weight == null }
+                }
+            } == 15,
+        )
+
+        val mixedPullUp = result.sessionHistory
+            .first { it.startedAt == LocalDateTime.of(2026, 4, 7, 17, 29, 3) }
+            .exercises
+            .first { it.id == "pullup-assisted" }
+        assert(
+            mixedPullUp.sets.map { it.weight to it.reps } == listOf(
+                null to 8,
+                Weight.kilograms(12.5f) to 9,
+                Weight.kilograms(12.5f) to 8,
+            ),
+        )
+
+        val unassisted = result.sessionHistory
+            .first { it.startedAt == LocalDateTime.of(2026, 4, 28, 17, 15, 54) }
+            .exercises
+            .first { it.id == "pullup-assisted" }
+        assert(unassisted.sets.map { it.weight to it.reps } == listOf(null to 8, null to 6))
+        assert(unassisted.sets.all { it.oneRm == null })
+    }
+
+    @Test
+    fun `keeps an exercise when every work set is zero load`() {
+        val rows = listOf(
+            setRow("Pull Up (Assisted)", "1", 0.0, 8),
+            setRow("Pull Up (Assisted)", "2", 0.0, 6),
+        )
+
+        val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
+
+        val pullUp = result.sessionHistory.single().exercises.single()
+        assert(pullUp.id == "pullup-assisted")
+        assert(pullUp.sets.map { it.weight to it.reps } == listOf(null to 8, null to 6))
+    }
+
+    @Test
+    fun `keeps a zero-load warmup on a loaded exercise`() {
+        val rows = listOf(
+            setRow("Bulgarian Split Squat", "W", 0.0, 6),
+            setRow("Bulgarian Split Squat", "1", 14.0, 8),
+        )
+
+        val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalogExercises)
+
+        val splitSquat = result.sessionHistory.single().exercises.single()
+        assert(splitSquat.id == "split-squat-db")
+        assert(splitSquat.warmupSets?.map { it.weight to it.reps } == listOf(null to 6))
+        assert(splitSquat.sets.map { it.weight to it.reps } == listOf(Weight.kilograms(14f) to 8))
+    }
+
+    @Test
+    fun `still drops set rows without positive reps`() {
+        val rows = listOf(
+            setRow("Bench Press (Barbell)", "1", 0.0, 0),
+            setRow("Bench Press (Barbell)", "2", 50.0, 8),
+        )
+
+        val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
+
+        assert(
+            result.sessionHistory.single().exercises.single().sets.map { it.weight to it.reps } ==
+                listOf(Weight.kilograms(50) to 8),
+        )
+    }
+
+    private fun setRow(
+        exerciseName: String,
+        setOrder: String,
+        weightKg: Double?,
+        reps: Int?,
+    ): StrongCsvRow = StrongCsvRow(
+        workoutNumber = 1,
+        date = "2026-01-01 12:00:00",
+        workoutName = "Zero load",
+        durationSec = 1800,
+        exerciseName = exerciseName,
+        setOrder = setOrder,
+        weightKg = weightKg,
+        reps = reps,
+        rpe = null,
+        distanceMeters = null,
+        seconds = null,
+        notes = null,
+        workoutNotes = null,
+    )
 
     private fun workout(
         number: Int,

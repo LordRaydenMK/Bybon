@@ -240,9 +240,8 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
 }
 
 private fun StrongCsvRow.toCompletedSet(definition: ExerciseDefinition): ExerciseSet? {
-    val reps = reps?.takeIf { it > 0 }
+    val reps = reps?.takeIf { it > 0 } ?: return null
     val weight = weightKg?.toFloat()?.let { Weight.kilogramsOrNull(it) }
-    if (reps == null || weight == null) return null
     return ExerciseSet(
         exerciseDefinition = definition,
         weight = weight,

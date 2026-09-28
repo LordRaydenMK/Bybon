@@ -88,9 +88,9 @@ From
   `WorkoutState` = `NotStarted` | `InProgress` | `Completed(duration)`.
 - **`WorkoutExercise`**: definition + target `repRange` + optional `warmupSets` list (null or
   non-empty) + working `sets` + `restAfterWorkSet`.
-- **`ExerciseSet`**: `Weight` (positive hundredths of a kg; `32.5` kg → `3250`), `reps > 0`,
-  `SetState` (`NotStated` / `InProgress` / `Completed`), optional `previous` performance. **Weight
-  cannot be 0.**
+- **`ExerciseSet`**: optional `Weight` (positive hundredths when present; `32.5` kg → `3250`;
+  Strong `0.0` / empty → `null`), `reps > 0`, `SetState` (`NotStated` / `InProgress` /
+  `Completed`), optional `previous` performance. **`oneRm` is null when weight is null.**
 - Rest is a per-exercise duration shown between work sets (display-only; not a logged rest event).
 - No RPE/RIR, distance, timed sets, per-exercise notes, or first-class session notes. Strong workout
   notes are currently stuffed into `planDescription`.
@@ -170,17 +170,17 @@ Re-import appends again (**TODO:** idempotent on `WorkoutSessionId`, not Strong 
 
 | Strong row                         | Bybon                                                                 |
 |------------------------------------|-----------------------------------------------------------------------|
-| `W` with weight > 0 and reps > 0   | `warmupSets` (`SetState.Completed`)                                   |
-| Digit `1..N` with weight > 0, reps > 0 | Working `sets`                                                    |
-| `W` or working with `Weight = 0.0` | **Dropped** (`Weight` must be positive)                               |
+| `W` with reps > 0                  | `warmupSets` (`SetState.Completed`); `0.0` kg → `weight = null`       |
+| Digit `1..N` with reps > 0         | Working `sets`; `0.0` kg → `weight = null`                            |
+| `W` or working with `reps` missing/`0` | **Dropped**                                                       |
 | `Rest Timer`                       | First `Seconds` value → `restAfterWorkSet`; rest rows themselves discarded |
 | No rest rows                       | `exercise.defaultRest`                                                |
 | `Note`                             | **Dropped** (including `"Rep range 11-15"`)                           |
 | `RPE` / `Distance` / timed `Seconds` on sets | Parsed on the DTO, unused                                    |
 
-On the sample this drops **29** unassisted pull-up working sets (`0.0` kg) and **15** bodyweight
-Bulgarian Split Squat warmups. CSV working sets 854 → imported **825**. One Full Body A session
-(#220) loses every pull-up working set.
+Sample zero-load rows are kept: **29** unassisted pull-up working sets and **15** bodyweight
+Bulgarian Split Squat warmups. CSV working sets 854 → imported **854**. Workout #220 still has
+pull-ups.
 
 ---
 
@@ -247,12 +247,12 @@ persistence itself.
 | Trim Strong exercise names | Parser and created definitions strip leading/trailing spaces |
 | Seed Upper Body A id | Renamed to `upper-body-legacy` / `Upper Body (legacy)` so import can own `upper-body-a` |
 | `lateral-raise-machine` equipment | Catalog uses `Equipment.Machine` |
+| Zero-load sets | `ExerciseSet.weight` is `Weight?`. Strong `0.0` (and blank kg) import as `null`; `Weight` stays `> 0` when present. 1RM is null when weight is. Sample keeps 29 pull-up work + 15 BSS warmups; full backup 109 rows no longer drop. |
 
 ### TODO (before Room)
 
 | Topic | Current behavior | Intended |
 |-------|------------------|----------|
-| Zero-load sets | `Weight` must be `> 0`; importer drops `0.0` kg rows | Keep unassisted pull-ups / BW warmups. Sample: 29 pull-up work + 15 BSS warmups. Full backup: **109** rows (BSS W 62, pull-up work 34, Back Extension work 9, BSS work 4); some sessions lose every work set for that exercise |
 | Exercise notes | `Set Order=Note` rows discarded (46 sample / 90 full) | Store per-exercise notes (rep-range hints, “Right knee slight pain”, …) |
 | Idempotent import | Re-picking the CSV appends duplicate sessions | Skip sessions whose `WorkoutSessionId(planId, startedAt)` already exists. Keep Bybon identity; do **not** key off Strong `Workout #` |
 | Archive unmatched plans | New plans are `isArchived = false` and show in the list | Unmatched Strong names should be created **archived**. Full backup adds ~11 extra names (`Chest, back side delts`, JE variants, Upper/Lower Body 1–2, …) on top of Upper body A/B |
@@ -300,8 +300,9 @@ names. Still **no** RPE, distance, or timed-work rows. Identity timestamps are u
 | `Afternoon Workout`     | 1        | New |
 
 Zero-load rows grow from 44 in the sample to **109**: BSS warmups 62, pull-up work 34, Back
-Extension work 9, BSS work 4. Sessions that lose **every** work set for an exercise: Back Extension
-#15/#17/#21, BSS #114/#118, pull-up #189/#220.
+Extension work 9, BSS work 4. These import as `weight = null` (unassisted / no extra load). Sessions
+that previously lost **every** work set for an exercise keep it: Back Extension #15/#17/#21, BSS
+#114/#118, pull-up #189/#220.
 
 Rest is still one duration per exercise. Unlike the sample, **20** workout+exercise blocks mix rest
 lengths (typically 120s then 60s on laterals). First `Rest Timer` wins; in 16 of those the first
@@ -364,4 +365,5 @@ force onto the current catalog.
 3. Fuzzy-match plan or insert a new plan from the most common exercise sequence (unarchived today;
    **TODO:** archive unmatched names).
 4. Build `WorkoutSession(Completed)` with Strong date/duration, notes in `planDescription`, warmups
-   + work sets with positive weight/reps, rest duration from the first rest-timer row.
+   + work sets (`Weight?` + reps; Strong `0.0` → `null` weight), rest duration from the first
+   rest-timer row.

@@ -143,7 +143,7 @@ private fun CompletedSessionSetRow(
         onResetSet = {
             onEvent(ExerciseCardEvent.OnResetSet(numbered.index, numbered.isWarmup))
         },
-        weight = { ColumnValue(set.weight.kilograms) },
+        weight = { ColumnValue(set.weight.toLoadLabel()) },
         reps = { ColumnValue(set.reps.toString()) },
         trailing = {
             Checkbox(
