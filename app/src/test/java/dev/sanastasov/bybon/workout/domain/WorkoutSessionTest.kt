@@ -223,19 +223,18 @@ class WorkoutSessionTest {
     }
 
     @Test
-    fun `toWorkoutSession copies plan exercise notes and leaves the session note empty`() {
+    fun `toWorkoutSession copies plan description and exercise notes`() {
         val plan = fullBodyA.copy(
             sets = fullBodyA.sets.mapIndexed { index, exercise ->
-                if (index == 0) exercise.copy(note = "Cue: elbows in") else exercise
+                if (index == 0) exercise.copy(notes = listOf("Cue: elbows in")) else exercise
             },
         )
 
         val actual = plan.toWorkoutSession()
 
-        assert(actual.note == null)
-        assert(actual.planDescription == fullBodyA.description)
-        assert(actual.exercises.first().note == "Cue: elbows in")
-        assert(actual.exercises.drop(1).all { it.note == null })
+        assert(actual.note == fullBodyA.description)
+        assert(actual.exercises.first().notes == listOf("Cue: elbows in"))
+        assert(actual.exercises.drop(1).all { it.notes.isEmpty() })
     }
 
     @Test

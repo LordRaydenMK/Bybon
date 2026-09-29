@@ -140,7 +140,7 @@ private fun OverviewHeader(state: WorkoutSession, onAction: (WorkoutOverviewActi
     ) {
         Column(Modifier.weight(1f)) {
             Text(state.planName, fontWeight = FontWeight.Bold)
-            state.planDescription?.let {
+            state.note?.let {
                 Spacer(Modifier.height(4.dp))
                 Text(it)
             }

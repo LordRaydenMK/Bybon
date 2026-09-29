@@ -127,7 +127,7 @@ class WorkoutSessionStateTest {
             WorkoutSession(
                 planId = WorkoutPlanId("empty"),
                 planName = "Empty",
-                planDescription = null,
+                note = null,
                 exercises = emptyList(),
                 startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
             )

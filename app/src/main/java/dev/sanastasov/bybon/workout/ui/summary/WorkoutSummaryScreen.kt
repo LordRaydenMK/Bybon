@@ -118,7 +118,7 @@ private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
             exercise.name,
             fontWeight = FontWeight.Bold,
         )
-        exercise.note?.let { note ->
+        exercise.notes.forEach { note ->
             Text(
                 note,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -174,7 +174,7 @@ private fun WorkoutSummaryContentPreview() {
                     WorkoutSummaryExerciseUi(
                         id = "incline-bench-press-db",
                         name = "Incline Bench Press (dumbbell)",
-                        note = "Rep range 11-15",
+                        notes = listOf("Rep range 11-15"),
                         sets = listOf(
                             WorkoutSummarySetUi(1, "20", 13, Weight.kilograms(28.67f)),
                             WorkoutSummarySetUi(2, "20", 11, Weight.kilograms(27.33f)),

@@ -6,11 +6,10 @@ import kotlin.time.Duration
 data class WorkoutSession(
     val planId: WorkoutPlanId,
     val planName: String,
-    val planDescription: String?,
+    val note: String?,
     val exercises: List<WorkoutExercise>,
     val startedAt: LocalDateTime,
     val duration: Duration? = null,
-    val note: String? = null,
 ) {
     val id: WorkoutSessionId
         get() = WorkoutSessionId(planId, startedAt)

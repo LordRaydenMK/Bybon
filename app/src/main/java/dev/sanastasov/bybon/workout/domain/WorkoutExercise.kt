@@ -8,7 +8,7 @@ data class WorkoutExercise(
     val warmupSets: List<ExerciseSet>? = null,
     val sets: List<ExerciseSet>,
     val restAfterWorkSet: Duration = exerciseDefinition.defaultRest,
-    val note: String? = null,
+    val notes: List<String> = emptyList(),
 ) {
     init {
         require(warmupSets == null || warmupSets.isNotEmpty()) {

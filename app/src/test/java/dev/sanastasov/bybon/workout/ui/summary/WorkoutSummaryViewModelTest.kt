@@ -159,7 +159,7 @@ class WorkoutSummaryViewModelTest {
                 completedExercise(
                     "incline-bench-press-db",
                     20f to 13,
-                    note = "Rep range 11-15",
+                    notes = listOf("Rep range 11-15", "Pause at the bottom"),
                 ),
             ),
             note = "Friday full body workout",
@@ -170,8 +170,8 @@ class WorkoutSummaryViewModelTest {
             skipItems(1)
             val actual = awaitItem() as WorkoutSummaryUiState.Content
             assert(actual.note == "Friday full body workout")
-            assert(actual.exercises.first().note == null)
-            assert(actual.exercises.last().note == "Rep range 11-15")
+            assert(actual.exercises.first().notes.isEmpty())
+            assert(actual.exercises.last().notes == listOf("Rep range 11-15", "Pause at the bottom"))
         }
     }
 

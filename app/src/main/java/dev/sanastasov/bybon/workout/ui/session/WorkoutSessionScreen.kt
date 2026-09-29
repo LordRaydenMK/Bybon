@@ -115,7 +115,7 @@ private fun SessionScreenContent(
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .fillMaxSize(),
         ) {
-            state.planDescription?.let {
+            state.note?.let {
                 Text(it)
                 Spacer(Modifier.height(8.dp))
             }

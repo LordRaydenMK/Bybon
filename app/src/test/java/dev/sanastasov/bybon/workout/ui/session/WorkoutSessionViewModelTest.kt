@@ -212,7 +212,7 @@ class WorkoutSessionViewModelTest {
         val session = WorkoutSession(
             planId = fullBodyA.id,
             planName = fullBodyA.name,
-            planDescription = null,
+            note = null,
             exercises = listOf(
                 WorkoutExercise(
                     exerciseDefinition = bench,
@@ -401,7 +401,7 @@ class WorkoutSessionViewModelTest {
         val session = WorkoutSession(
             planId = fullBodyA.id,
             planName = fullBodyA.name,
-            planDescription = null,
+            note = null,
             exercises = listOf(
                 WorkoutExercise(
                     exerciseDefinition = bench,
@@ -503,7 +503,7 @@ private fun twoExerciseSession(firstState: SetState, secondState: SetState): Wor
     return WorkoutSession(
         planId = fullBodyA.id,
         planName = fullBodyA.name,
-        planDescription = null,
+        note = null,
         exercises = listOf(
             WorkoutExercise(
                 exerciseDefinition = bench,

@@ -350,18 +350,23 @@ class StrongCsvRowTest {
 
         val session = result.sessionHistory.single()
         assert(session.note == "Full body B without legs")
-        assert(session.planDescription == null)
-        assert(session.exercises.first { it.id == "bench-press-bb" }.note == "Rep range 11-15")
-        assert(session.exercises.first { it.id == "crunch-machine" }.note == null)
         assert(
-            result.plans.single().sets.first { it.exercise.id == "bench-press-bb" }.note ==
-                "Rep range 11-15",
+            session.exercises.first { it.id == "bench-press-bb" }.notes ==
+                listOf("Rep range 11-15"),
         )
-        assert(result.plans.single().sets.first { it.exercise.id == "crunch-machine" }.note == null)
+        assert(session.exercises.first { it.id == "crunch-machine" }.notes.isEmpty())
+        assert(result.plans.single().description == "Full body B without legs")
+        assert(
+            result.plans.single().sets.first { it.exercise.id == "bench-press-bb" }.notes ==
+                listOf("Rep range 11-15"),
+        )
+        assert(
+            result.plans.single().sets.first { it.exercise.id == "crunch-machine" }.notes.isEmpty(),
+        )
     }
 
     @Test
-    fun `concatenates multiple note rows for an exercise`() {
+    fun `keeps multiple note rows as a list on the exercise`() {
         val rows = workout(
             number = 1,
             name = "Upper body A",
@@ -374,12 +379,56 @@ class StrongCsvRowTest {
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
 
         assert(
-            result.sessionHistory.single().exercises.single().note ==
-                "Rep range 11-15\nPause at the bottom",
+            result.sessionHistory.single().exercises.single().notes ==
+                listOf("Rep range 11-15", "Pause at the bottom"),
         )
         assert(
-            result.plans.single().sets.single().note == "Rep range 11-15\nPause at the bottom",
+            result.plans.single().sets.single().notes ==
+                listOf("Rep range 11-15", "Pause at the bottom"),
         )
+    }
+
+    @Test
+    fun `sets a new plan description from the most common workout notes`() {
+        val rows = listOf(
+            Triple(1, "2026-01-01 12:00:00", "Cue A"),
+            Triple(2, "2026-01-08 12:00:00", "Cue B"),
+            Triple(3, "2026-01-15 12:00:00", "Cue A"),
+        ).flatMap { (number, date, notes) ->
+            workout(
+                number = number,
+                name = "Upper body A",
+                date = date,
+                exercises = listOf("Bench Press (Barbell)"),
+                workoutNotes = notes,
+            )
+        }
+
+        val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
+
+        assert(result.plans.single().description == "Cue A")
+        assert(result.sessionHistory.map { it.note } == listOf("Cue A", "Cue B", "Cue A"))
+    }
+
+    @Test
+    fun `uses the last workout notes when frequencies tie`() {
+        val rows = workout(
+            number = 1,
+            name = "Upper body A",
+            date = "2026-01-01 12:00:00",
+            exercises = listOf("Bench Press (Barbell)"),
+            workoutNotes = "Cue A",
+        ) + workout(
+            number = 2,
+            name = "Upper body A",
+            date = "2026-01-08 12:00:00",
+            exercises = listOf("Bench Press (Barbell)"),
+            workoutNotes = "Cue B",
+        )
+
+        val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
+
+        assert(result.plans.single().description == "Cue B")
     }
 
     @Test
@@ -459,9 +508,11 @@ class StrongCsvRowTest {
         assert(result.plans == emptyList<WorkoutPlan>())
         val session = result.sessionHistory.single()
         assert(session.note == "Monday full body workout")
-        assert(session.planDescription == fullBodyPlan.description)
-        assert(session.exercises.first { it.id == "squat-bb" }.note == "Right knee slight pain")
-        assert(fullBodyPlan.sets.all { it.note == null })
+        assert(
+            session.exercises.first { it.id == "squat-bb" }.notes ==
+                listOf("Right knee slight pain"),
+        )
+        assert(fullBodyPlan.sets.all { it.notes.isEmpty() })
     }
 
     @Test
@@ -517,17 +568,16 @@ class StrongCsvRowTest {
 
         val firstFullBodyB = result.sessionHistory.first { it.planId == fullBodyB.id }
         assert(firstFullBodyB.note == "Friday full body workout")
-        assert(firstFullBodyB.planDescription == fullBodyB.description)
         assert(
-            firstFullBodyB.exercises.first { it.id == "incline-bench-press-db" }.note ==
-                "Rep range 11-15",
+            firstFullBodyB.exercises.first { it.id == "incline-bench-press-db" }.notes ==
+                listOf("Rep range 11-15"),
         )
 
         val upperBodyBPlan = result.plans.first { it.name == "Upper body B" }
-        assert(upperBodyBPlan.description == null)
+        assert(upperBodyBPlan.description == "Full body B without legs")
         assert(
-            upperBodyBPlan.sets.first { it.exercise.id == "incline-bench-press-db" }.note ==
-                "Rep range 11-15",
+            upperBodyBPlan.sets.first { it.exercise.id == "incline-bench-press-db" }.notes ==
+                listOf("Rep range 11-15"),
         )
 
         val lastUpperBodyB = result.sessionHistory.last {
@@ -535,13 +585,13 @@ class StrongCsvRowTest {
         }
         assert(lastUpperBodyB.note == "Full body B without legs")
         assert(
-            lastUpperBodyB.exercises.first { it.id == "incline-bench-press-db" }.note ==
-                "Rep range 11-15",
+            lastUpperBodyB.exercises.first { it.id == "incline-bench-press-db" }.notes ==
+                listOf("Rep range 11-15"),
         )
 
         val legCurlNoteSession = result.sessionHistory.first { session ->
             session.exercises.any {
-                it.id == "seated-leg-curl" && it.note == "Rep range: 12-14"
+                it.id == "seated-leg-curl" && it.notes == listOf("Rep range: 12-14")
             }
         }
         assert(legCurlNoteSession.planId == fullBodyA.id)

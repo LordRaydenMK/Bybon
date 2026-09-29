@@ -82,18 +82,19 @@ From
 - **`WorkoutPlan`**: `WorkoutPlanId`, `name`, `description?`, ordered `PlanedExercise`s,
   `isArchived`. Built-ins: Full Body A/B (active), Upper Body (legacy) (archived).
 - **`PlanedExercise`**: exercise + `warmupSets: Int` + prescribed `sets` + `repRange` +
-  `restAfterWorkSet: Duration` (defaults to compound 2:00 / isolation 1:00 / else 0:90).
-- **`WorkoutSession`**: always tied to `planId` + denormalized `planName` / `planDescription`.
+  `restAfterWorkSet: Duration` (defaults to compound 2:00 / isolation 1:00 / else 0:90) +
+  `notes: List<String>`.
+- **`WorkoutSession`**: always tied to `planId` + denormalized `planName` + `note?`.
   Identity is `WorkoutSessionId(planId, startedAt)` — no separate UUID, no Strong workout number.
-  `WorkoutState` = `NotStarted` | `InProgress` | `Completed(duration)`.
+  `WorkoutState` = `NotStarted` | `InProgress` | `Completed(duration)`. Live start copies
+  `WorkoutPlan.description` into `note`.
 - **`WorkoutExercise`**: definition + target `repRange` + optional `warmupSets` list (null or
-  non-empty) + working `sets` + `restAfterWorkSet`.
+  non-empty) + working `sets` + `restAfterWorkSet` + `notes: List<String>`.
 - **`ExerciseSet`**: optional `Weight` (positive hundredths when present; `32.5` kg → `3250`;
   Strong `0.0` / empty → `null`), `reps > 0`, `SetState` (`NotStated` / `InProgress` /
   `Completed`), optional `previous` performance. **`oneRm` is null when weight is null.**
 - Rest is a per-exercise duration shown between work sets (display-only; not a logged rest event).
-- No RPE/RIR, distance, timed sets, per-exercise notes, or first-class session notes. Strong workout
-  notes are currently stuffed into `planDescription`.
+- No RPE/RIR, distance, or timed sets. Session `note` and exercise `notes` are first-class.
 
 Persistence: [`BybonDatabase`](../app/src/main/java/dev/sanastasov/bybon/data/BybonDatabase.kt) is
 Room v2 with `WeightEntryEntity` + `DietPhaseEntity` only.
@@ -146,8 +147,8 @@ unmatched imports):
 
 - `id = slugify(trimmed Strong name)` (e.g. `upper-body-a`)
 - `name` = trimmed Strong name (keeps Strong casing: `"Upper body A"`)
-- `description = null`
-- Exercises / warmup count / work-set count / rest / observed `repRange` taken from the
+- `description` = most frequent non-empty `Workout Notes` for that name (last workout on a tie)
+- Exercises / warmup count / work-set count / rest / observed `repRange` / `notes` taken from the
   **representative** session = most common exercise-id sequence for that name (ties: first seen)
 
 Sample with only Full Body A/B already in the repo: creates **Upper body A** and **Upper body B**.
@@ -161,7 +162,7 @@ to the plan template).
 | `Date`                         | `startedAt`                                        |
 | `Duration (sec)`               | `WorkoutState.Completed(duration)`                 |
 | Matched/created plan           | `planId` + `planName` (Bybon name if matched)      |
-| `Workout Notes`                | `planDescription` (else the plan’s description)    |
+| `Workout Notes`                | Session `note`. New plans also take the most frequent value as `WorkoutPlan.description` (last workout on a tie). Existing Bybon plans keep their description. |
 | `Workout #`                    | Used only to group rows; **not stored** (Bybon identity is `planId + startedAt`) |
 
 Re-import appends again (**TODO:** idempotent on `WorkoutSessionId`, not Strong `Workout #`).
@@ -175,7 +176,7 @@ Re-import appends again (**TODO:** idempotent on `WorkoutSessionId`, not Strong 
 | `W` or working with `reps` missing/`0` | **Dropped**                                                       |
 | `Rest Timer`                       | First `Seconds` value → `restAfterWorkSet`; rest rows themselves discarded |
 | No rest rows                       | `exercise.defaultRest`                                                |
-| `Note`                             | **Dropped** (including `"Rep range 11-15"`)                           |
+| `Note`                             | One item in that exercise’s `notes: List<String>` |
 | `RPE` / `Distance` / timed `Seconds` on sets | Parsed on the DTO, unused                                    |
 
 Sample zero-load rows are kept: **29** unassisted pull-up working sets and **15** bodyweight
@@ -227,7 +228,6 @@ persistence itself.
 
 | Topic | Why it's fine |
 |-------|----------------|
-| Session notes in `planDescription` | No separate session-notes field needed; stuffing Strong `Workout Notes` into the denormalized plan blurb is OK |
 | Rest as one `Duration` per exercise | By design. Not rest *events*, not mixed per-set rests |
 | RPE / distance / timed sets | Unused in both the sample and the full 252-session export; out of domain (spec wants RIR later, not Strong RPE) |
 | Plan template vs session exercises | A plan is a plan. Sessions may drop/swap exercises (busy machine, sore knee, ran out of time) |
@@ -248,12 +248,12 @@ persistence itself.
 | Seed Upper Body A id | Renamed to `upper-body-legacy` / `Upper Body (legacy)` so import can own `upper-body-a` |
 | `lateral-raise-machine` equipment | Catalog uses `Equipment.Machine` |
 | Zero-load sets | `ExerciseSet.weight` is `Weight?`. Strong `0.0` (and blank kg) import as `null`; `Weight` stays `> 0` when present. 1RM is null when weight is. Sample keeps 29 pull-up work + 15 BSS warmups; full backup 109 rows no longer drop. |
+| Session and exercise notes | `Workout Notes` → session `note`. New plan `description` is the most common `Workout Notes` (last on a tie). Each `Set Order=Note` row is one item in `notes`. Existing Bybon plans keep their description and planned-exercise notes. |
 
 ### TODO (before Room)
 
 | Topic | Current behavior | Intended |
 |-------|------------------|----------|
-| Exercise notes | `Set Order=Note` rows discarded (46 sample / 90 full) | Store per-exercise notes (rep-range hints, “Right knee slight pain”, …) |
 | Idempotent import | Re-picking the CSV appends duplicate sessions | Skip sessions whose `WorkoutSessionId(planId, startedAt)` already exists. Keep Bybon identity; do **not** key off Strong `Workout #` |
 | Archive unmatched plans | New plans are `isArchived = false` and show in the list | Unmatched Strong names should be created **archived**. Full backup adds ~11 extra names (`Chest, back side delts`, JE variants, Upper/Lower Body 1–2, …) on top of Upper body A/B |
 | History / summary hide warmups | Warmups import; history is top **work** set, summary lists work sets only | Show warmups on those screens |
@@ -364,6 +364,6 @@ force onto the current catalog.
 2. Resolve exercises (alias / name / create).
 3. Fuzzy-match plan or insert a new plan from the most common exercise sequence (unarchived today;
    **TODO:** archive unmatched names).
-4. Build `WorkoutSession(Completed)` with Strong date/duration, notes in `planDescription`, warmups
-   + work sets (`Weight?` + reps; Strong `0.0` → `null` weight), rest duration from the first
-   rest-timer row.
+4. Build `WorkoutSession(Completed)` with Strong date/duration, that session’s `Workout Notes` in
+   `note`, warmups + work sets (`Weight?` + reps; Strong `0.0` → `null` weight), rest duration from
+   the first rest-timer row, and `Set Order=Note` rows as `notes`.

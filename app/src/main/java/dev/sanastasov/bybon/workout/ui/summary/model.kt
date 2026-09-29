@@ -20,7 +20,7 @@ data class WorkoutSummaryExerciseUi(
     val id: String,
     val name: String,
     val sets: List<WorkoutSummarySetUi>,
-    val note: String? = null,
+    val notes: List<String> = emptyList(),
 )
 
 data class WorkoutSummarySetUi(
@@ -56,6 +56,6 @@ private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
                 oneRm = set.oneRm,
             )
         },
-        note = note,
+        notes = notes,
     )
 }
