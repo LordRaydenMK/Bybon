@@ -122,6 +122,7 @@ private fun ImportHistoryResult.toSummaryUi(): ImportSummaryUi {
         sessionCount = sessions.size,
         sessionsByPlan = sessionsByPlan,
         plansCreatedCount = plans.size,
+        plansArchivedCount = plans.count { it.isArchived },
         exercisesImportedCount = exercises.size,
         firstSessionDate = dates.minOrNull(),
         lastSessionDate = dates.maxOrNull(),

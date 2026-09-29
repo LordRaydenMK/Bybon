@@ -147,6 +147,7 @@ class StrongCsvRowTest {
         )
 
         assert(result.plans.map { it.name } == listOf("Upper body A", "Upper body B"))
+        assert(result.plans.all { it.isArchived })
         assert(
             result.plans.first { it.name == "Upper body A" }.sets.map { it.exercise.id } == listOf(
                 "bench-press-bb",
@@ -255,6 +256,7 @@ class StrongCsvRowTest {
         val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
 
         assert(result.plans.map { it.name } == listOf("Upper body A"))
+        assert(result.plans.single().isArchived)
         assert(result.sessionHistory.single().planId == WorkoutPlanId("upper-body-a"))
         assert(
             result.plans.single().sets.map { it.exercise.id } == listOf(
@@ -263,6 +265,47 @@ class StrongCsvRowTest {
             ),
         )
         assert(result.plans.single().sets.map { it.sets } == listOf(3, 3))
+    }
+
+    @Test
+    fun `archives unmatched plans executed fewer than five times and keeps busier ones`() {
+        val rare = (1..4).flatMap { number ->
+            workout(
+                number = number,
+                name = "Upper body A",
+                exercises = listOf("Bench Press (Barbell)"),
+                date = "2026-01-0$number 12:00:00",
+            )
+        }
+        val frequent = (1..5).flatMap { number ->
+            workout(
+                number = number + 10,
+                name = "Chest day",
+                exercises = listOf("Bench Press (Barbell)", "Squat (Barbell)"),
+                date = "2026-02-0$number 12:00:00",
+            )
+        }
+        val matched = workout(
+            number = 99,
+            name = "Full body A",
+            exercises = listOf("Bench Press (Barbell)", "Squat (Barbell)", "Pull Up (Assisted)"),
+            date = "2026-03-01 12:00:00",
+        )
+
+        val result = (rare + frequent + matched).toStrongImport(
+            plans = listOf(fullBodyPlan),
+            exerciseCatalog = catalog,
+        )
+
+        assert(result.plans.single { it.name == "Upper body A" }.isArchived)
+        assert(!result.plans.single { it.name == "Chest day" }.isArchived)
+        assert(result.plans.none { it.id == fullBodyPlan.id })
+        assert(result.sessionHistory.count { it.planId == WorkoutPlanId("upper-body-a") } == 4)
+        assert(result.sessionHistory.count { it.planId == WorkoutPlanId("chest-day") } == 5)
+        assert(
+            result.sessionHistory.single { it.planName == fullBodyPlan.name }.planId ==
+                fullBodyPlan.id,
+        )
     }
 
     @Test

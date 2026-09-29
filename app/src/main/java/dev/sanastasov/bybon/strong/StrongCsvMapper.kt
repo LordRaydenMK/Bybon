@@ -79,7 +79,10 @@ fun List<StrongCsvRow>.toStrongImport(
             if (matched != null) {
                 resolvedPlans[planName] = matched
             } else {
-                val imported = representative.toWorkoutPlan(workoutsForPlan.templateNote())
+                val imported = representative.toWorkoutPlan(
+                    description = workoutsForPlan.templateNote(),
+                    isArchived = workoutsForPlan.size < PLAN_ARCHIVE_BELOW_EXECUTIONS,
+                )
                 resolvedPlans[planName] = imported
                 plansToImport += imported
             }
@@ -148,7 +151,10 @@ private fun List<ParsedWorkout>.templateNote(): String? {
     return notes.last { counts.getValue(it) == maxCount }
 }
 
-private fun ParsedWorkout.toWorkoutPlan(description: String?): WorkoutPlan = WorkoutPlan(
+private fun ParsedWorkout.toWorkoutPlan(
+    description: String?,
+    isArchived: Boolean,
+): WorkoutPlan = WorkoutPlan(
     id = WorkoutPlanId(planName.slugify()),
     name = planName,
     description = description,
@@ -162,6 +168,7 @@ private fun ParsedWorkout.toWorkoutPlan(description: String?): WorkoutPlan = Wor
             notes = exercise.notes,
         )
     },
+    isArchived = isArchived,
 )
 
 private fun List<WorkoutPlan>.findMatchingPlan(
@@ -179,6 +186,8 @@ private fun List<WorkoutPlan>.findMatchingPlan(
 }
 
 private const val PLAN_MATCH_THRESHOLD = 0.70
+
+private const val PLAN_ARCHIVE_BELOW_EXECUTIONS = 5
 
 private fun combinedPlanScore(nameScore: Double, exerciseScore: Double): Double =
     0.55 * nameScore + 0.45 * exerciseScore

@@ -25,6 +25,7 @@ data class ImportSummaryUi(
     val sessionCount: Int,
     val sessionsByPlan: List<PlanSessionCountUi>,
     val plansCreatedCount: Int,
+    val plansArchivedCount: Int,
     val exercisesImportedCount: Int,
     val firstSessionDate: LocalDate?,
     val lastSessionDate: LocalDate?,

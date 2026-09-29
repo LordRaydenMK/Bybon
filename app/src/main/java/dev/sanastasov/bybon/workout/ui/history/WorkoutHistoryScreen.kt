@@ -183,6 +183,7 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
             Text("${plan.planName}: ${plan.sessionCount}")
         }
         Text("${summary.plansCreatedCount} ${plansLabel(summary.plansCreatedCount)} created")
+        Text("${summary.plansArchivedCount} ${plansLabel(summary.plansArchivedCount)} archived")
         Text(
             "${summary.exercisesImportedCount} ${exercisesLabel(
                 summary.exercisesImportedCount,
@@ -328,6 +329,7 @@ private fun WorkoutHistoryImportSummaryPreview() {
                         PlanSessionCountUi("Upper body B", 3),
                     ),
                     plansCreatedCount = 2,
+                    plansArchivedCount = 2,
                     exercisesImportedCount = 1,
                     firstSessionDate = LocalDate.of(2026, 2, 17),
                     lastSessionDate = LocalDate.of(2026, 8, 20),
