@@ -14,6 +14,7 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise is still created, as today.
 - Kettlebell, `loop_band`, and `resistance_band` are excluded. Other equipment stays in the catalog. Splitting new equipment values (cable, EZ-bar, Smith, and the rest) waits for a later pass.
 - General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
+- `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
 - Ambiguous Bybon → RepDB exercise picks are decided one at a time. See the end of this doc.
 
 ## Catalog filter
@@ -51,20 +52,49 @@ Parsed into the exercise model from the pinned file:
 | `primary_muscles`, `secondary_muscles` | Specific muscles. Fractional sets later. 27 included exercises have no secondary list. |
 | `equipment` | RepDB slug, kept even when the load class is one of the current five. |
 | `mechanic` | `compound` or `isolation`. Default rest. |
+| `force_type` | `push`, `pull`, `static`, or `dynamic`. |
+| `difficulty` | `beginner`, `intermediate`, or `advanced`. |
+| `tags` | The slug list as published. Seven included exercises have an empty list. |
 
 Used only while filtering, not stored on the exercise: `category`, `goals`.
 
-Left out of the model until something needs them:
+Not stored: `met`, `is_unilateral`, `is_bodyweight` (same fact as a missing `equipment`), and every German and Spanish field. This change stores the new fields and does not add library filters for them. The detail screen can show them later.
 
-| Field | What it is |
+## Force, difficulty, tags
+
+Counts inside the 410.
+
+`force_type`: push 187, pull 155, static 50, dynamic 18.
+
+- Push: Barbell Bench Press, Dumbbell Lateral Raise, Cable Tricep Pushdown.
+- Pull: Barbell Deadlift, Romanian Deadlift, Lat Pulldown, Incline Dumbbell Curl.
+- Static: a hold. High Plank, Dead Hang, Wall Sit, Dumbbell Farmer's Walk, L-Sit, and also yoga poses that passed the strength filter (Warrior II, Tree Pose, Crow Pose, Chair Pose).
+- Dynamic: the body moves through a cycle. Thruster, Barbell Ab Rollout, Jackknife Sit-Up, and several Pilates and downward-dog variations.
+
+`difficulty`: intermediate 235, beginner 140, advanced 35. Barbell Bench Press and Barbell Back Squat are intermediate. Dumbbell Lateral Raise, Lat Pulldown, and Cable Face Pull are beginner.
+
+`tags` has 23 slugs. The common ones are safety and setup labels, then day labels. `no_axial_load` means the load is not stacked through the spine. `big_three` is squat, bench, and deadlift.
+
+| Tag | Count |
 | --- | --- |
-| `force_type` | `push`, `pull`, `static`, or `dynamic`. Bench press is push, deadlift and lat pulldown are pull, a hold is static. Separate from `mechanic`. |
-| `difficulty` | `beginner`, `intermediate`, `advanced`. In the strength category overall: 181 / 267 / 43. |
-| `tags` | Labels such as `knee_safe`, `push_day`, `requires_bench`, `big_three`. Possible library filters later. |
-| `met` | Metabolic equivalent, a single number (about 5 or 6 for these lifts). For calorie estimates. |
-| `is_unilateral` | True when the movement is one side at a time (106 of 491 strength exercises). The logger has no per-side sets today. |
-| `is_bodyweight` | True when `equipment` is absent. |
-| `name_de` / `name_es` and the other translated text | Not used. |
+| `knee_safe` | 265 |
+| `lower_back_safe` | 242 |
+| `no_axial_load` | 239 |
+| `shoulder_safe` | 239 |
+| `calisthenics` | 75 |
+| `requires_bench` | 62 |
+| `leg_day` | 61 |
+| `push_day` | 57 |
+| `pull_day` | 48 |
+| `arm_day` | 43 |
+| `core` | 39 |
+| `core_focus`, `glute_focus`, `shoulder_focus`, `grip_focus`, `shoulder_stability`, `calf_focus`, `chest_focus`, `back_focus` | 11 or fewer each |
+| `powerlifting` | 5 |
+| `big_three` | 3 |
+| `full_body` | 3 |
+| `back_day` | 1 |
+
+Barbell Bench Press is tagged `powerlifting`, `push_day`, `big_three`, `knee_safe`, `no_axial_load`, `lower_back_safe`, `shoulder_safe`, `requires_bench`. The slugs are stored as strings. Friendly labels can wait for the screen that shows them.
 
 ## Images
 
@@ -207,6 +237,8 @@ Already clear:
 | `incline-curl-db` | `incline-db-curl` | Incline Dumbbell Curl |
 | `skullcrusher-db` | `db-skull-crusher` | Dumbbell Skull Crusher |
 | `face-pull` | `face-pull` | Cable Face Pull |
+
+Open, besides the exercise picks: the strength filter still includes yoga poses and Pilates variations (`Warrior II`, `Tree Pose`, `Crow Pose`, downward-dog flows). They are `category: strength` and carry a hypertrophy or strength goal, so they are in the 410. Say if those should be excluded.
 
 Still to pick, one at a time:
 
