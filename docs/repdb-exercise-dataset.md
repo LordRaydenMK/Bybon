@@ -2,87 +2,184 @@
 
 Status: proposal only. No implementation in this change.
 
-Snapshot reviewed: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset) `main` @ `9ed9357f09c7566ea0256c57ebd6374ebb8b575e` (2026-09-16). `exercises.json` is schema 3, **601** exercises.
+Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset) `9ed9357f09c7566ea0256c57ebd6374ebb8b575e` (2026-09-16). `exercises.json` schema 3, 601 exercises in the full file.
 
-## Request
+## Decisions
 
-- Exercises ship inside the app and are available on first launch, with no download step.
-- The RepDB snapshot replaces the hardcoded catalog in `CatalogExercises.kt`.
-- Full Body A, Full Body B, and Upper Body (legacy) keep their prescriptions and point at RepDB exercises.
-- Strong CSV import still resolves exercises, matches plans, and creates sessions.
-- Where an exercise’s identity, name, muscles, or equipment disagree, RepDB wins. Bybon stays the source of truth for plans, sessions, sets, and progression.
+- Ship a **subset**, built at compile time from that pinned file. The file is downloaded by Gradle and filtered into a build asset. It is not committed.
+- English only (`name_en`, `description_en`, `instructions_en`, `tips_en`). German and Spanish are dropped at build time.
+- Images are **URLs**, loaded at runtime. The APK does not contain the WebPs.
+- Exercise detail screen, library search, and the about screen come later.
+- README gets the credit line `Exercise data by RepDB (repdb.co)` when the data is wired in. The free-tier license asks for that credit on any in-app use; the README line covers it.
+- Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise is still created, as today.
+- Kettlebell, `loop_band`, and `resistance_band` are excluded. Other equipment stays in the catalog. Splitting new equipment values (cable, EZ-bar, Smith, and the rest) waits for a later pass.
+- General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
+- Ambiguous Bybon → RepDB exercise picks are decided one at a time. See the end of this doc.
 
-## Bybon today
+## Catalog filter
 
-Workout exercises, plans, and sessions live in memory (`WorkoutsRepositoryImpl`). Room persists body weight only, so swapping exercise ids does not migrate stored workouts.
+An exercise is included when all of these hold:
 
-The catalog is 32 `ExerciseDefinition` values: `id`, `name`, `primaryMuscleGroup`, `equipment`. Ids are Bybon slugs (`bench-press-bb`, `squat-bb`, `rdl-bb`). Names put the equipment in parentheses (`Bench Press (barbell)`).
+1. `category` is `strength`.
+2. `goals` contains `hypertrophy` or `strength` (many list both).
+3. `equipment` is not `kettlebell`, `loop_band`, or `resistance_band`.
 
-`MuscleGroup` is Arms, Back, Chest, Core, FullBody, Legs, Shoulders, Other. `Equipment` is Barbell, Dumbbell, Machine, Bodyweight, AssistedBodyWeight. That enum drives progression increments (barbell 2.5 kg, dumbbell 2 kg, machine and assisted 2.5 kg, bodyweight none), default warm-up and work weights, and the library filter chips.
+That is **410** exercises.
 
-Default rest is a hardcoded id list: 2:00 for a compound set, 1:00 for an isolation set, 1:30 otherwise. Face pull is on the isolation list.
+`category` and `goals` are different fields. `category` is the kind of movement (`strength`, `stretching`, `cardio`, `olympic`, `plyometrics`). `goals` is why someone would do it, and an exercise can list several.
 
-The exercise library groups by `MuscleGroup` and filters by muscle and equipment. There is no search and no exercise-detail screen. There is no in-app credits screen.
+This filter drops:
 
-Strong import (`StrongCsvMapper`) resolves a Strong `Exercise Name` in this order:
+- Stretching (76), plyometrics (4), and cardio except as noted below.
+- All 14 olympic lifts. They are `category: olympic` with goals `power` + `strength` (Clean, Snatch, Push Jerk, and so on). Nine of them are barbell or dumbbell; five are kettlebell and would be dropped by the equipment rule anyway.
+- Air Bike, the one cardio exercise tagged hypertrophy and strength.
+- Eight `category: strength` exercises whose goals are endurance, power, rehab, or mobility only: Bear Crawl, Bird-Dog, Clap Push-Ups, Dead Bug, Dead Bug Hold, Heel-to-Toe Walk, Medicine Ball Slam, One-Arm Dumbbell Swing.
+- 56 kettlebell exercises in the strength category, 15 `loop_band`, 2 `resistance_band` (Band Assisted Pull Ups, Band Pull Apart, Banded Squat, Banded Hip Thrust, and the rest of that list).
 
-1. A 7-entry alias map (`romanian deadlift (barbell)` → `rdl-bb`, and similar).
-2. Case-insensitive match on the catalog display name.
-3. Otherwise it creates a new `ExerciseDefinition` (`id` = slug of the Strong name, equipment guessed from words in the name, muscle `Core` or `Other`).
+## What we store
 
-Plans embed a full `ExerciseDefinition` on each `PlanedExercise`, plus warm-up count, work-set count, rep range, rest, and notes.
+Parsed into the exercise model from the pinned file:
 
-## RepDB free tier
-
-`exercises.json` is about 2.1 MB. Each record has `id`, `name_en` / `name_de` / `name_es`, descriptions, instructions, and tips in those three languages, `category`, `force_type`, `mechanic` (`compound` / `isolation`), `difficulty`, `equipment` (absent on bodyweight moves), `body_part`, `primary_muscles`, `secondary_muscles`, `goals`, `tags`, `met`, `is_unilateral`, `is_bodyweight`, and `images.flat`.
-
-| Field | Counts |
+| Field | Use |
 | --- | --- |
-| `category` | strength 491, stretching 76, cardio 16, olympic 14, plyometrics 4 |
-| `mechanic` | compound 416, isolation 185 |
-| `body_part` | upper_legs 156, back 104, shoulders 73, core 70, upper_arms 65, chest 61, full_body 43, lower_legs 18, lower_arms 11 |
-| `equipment` | absent (bodyweight) 179; otherwise ~50 slugs, led by dumbbell 79, barbell 68, kettlebell 61, cable 27 |
+| `id` | Stable id. Replaces Bybon slugs such as `bench-press-bb`. |
+| `name_en` | Display name. `Barbell Bench Press`, not `Bench Press (barbell)`. |
+| `description_en` | One-line summary for the detail screen. |
+| `instructions_en`, `tips_en` | Steps and form cues for the detail screen. Stored now so that screen does not need another import. |
+| `images.flat` | `start` + `peak`, or a single `main`. Turned into pinned URLs at build time. |
+| `body_part` | General muscle group. |
+| `primary_muscles`, `secondary_muscles` | Specific muscles. Fractional sets later. 27 included exercises have no secondary list. |
+| `equipment` | RepDB slug, kept even when the load class is one of the current five. |
+| `mechanic` | `compound` or `isolation`. Default rest. |
 
-Images under `images/flat/` are 512×512 WebP: **1056** files, **16.7 MB**. Most exercises have `start` and `peak`; 134 have a single `main`. A few variants share a file. `images/equipment/` (55 files, 0.3 MB) and `images/muscles/` (27 files, 0.2 MB) are separate icon sets.
+Used only while filtering, not stored on the exercise: `category`, `goals`.
 
-License ([LICENSE-DATA.md](https://github.com/RepDB/exercise-dataset/blob/main/LICENSE-DATA.md)): free in-app use, including commercial; visible attribution **"Exercise data by RepDB (repdb.co)"** in an about/credits screen, the project README, or a website footer; no redistribution as a dataset or API; `premium-samples/` is evaluation-only and stays out. Bybon’s GitHub repo is public.
+Left out of the model until something needs them:
 
-## What this change would do
+| Field | What it is |
+| --- | --- |
+| `force_type` | `push`, `pull`, `static`, or `dynamic`. Bench press is push, deadlift and lat pulldown are pull, a hold is static. Separate from `mechanic`. |
+| `difficulty` | `beginner`, `intermediate`, `advanced`. In the strength category overall: 181 / 267 / 43. |
+| `tags` | Labels such as `knee_safe`, `push_day`, `requires_bench`, `big_three`. Possible library filters later. |
+| `met` | Metabolic equivalent, a single number (about 5 or 6 for these lifts). For calorie estimates. |
+| `is_unilateral` | True when the movement is one side at a time (106 of 491 strength exercises). The logger has no per-side sets today. |
+| `is_bodyweight` | True when `equipment` is absent. |
+| `name_de` / `name_es` and the other translated text | Not used. |
 
-These follow from the request. They stay out of the code until the open questions below are answered.
+## Images
 
-1. **Bundle a pinned snapshot in the APK.** Parse it at startup into the existing in-memory exercise list. No network fetch, no Room table for the catalog. Record the RepDB commit SHA next to the asset so a later refresh is a deliberate bump.
-2. **Delete `catalogExercises`.** Exercise `id` becomes the RepDB id. Display name becomes `name_en`. Plans, the library, and Strong resolution all read that list.
-3. **Retarget the three built-in plans** once each current exercise has a confirmed RepDB id. Set counts, rep ranges, and warm-up counts stay as they are in `WorkoutPlans.kt`. Plan ids and names stay (`full-body-a`, `Full Body A`, and the legacy upper-body plan).
-4. **Retarget Strong import** at that same list: alias, then case-insensitive match on `name_en`, then the unmatched-name rule from question 6. Plan fuzzy-matching stays. Session identity stays `planId + startedAt`.
-5. **Keep prescription and progression in Bybon.** RepDB does not define sets, reps, rest, or load increments. `mechanic` is the input available for default rest (question 5).
+Each exercise points at repo-relative WebP paths, for example `images/flat/bench-press-start.webp` and `images/flat/bench-press-peak.webp`. Holds use `main` instead of the pair.
 
-`ExerciseDefinition` grows only with fields the UI or progression actually needs. The raw JSON can stay the asset; the domain type stays the type plans and sessions already embed.
+The build writes absolute URLs pinned to the same commit:
 
-## Name mismatch (why Strong aliases have to grow)
+`https://raw.githubusercontent.com/RepDB/exercise-dataset/9ed9357f09c7566ea0256c57ebd6374ebb8b575e/images/flat/<file>.webp`
 
-RepDB puts equipment in the name and uses its own word order. After the switch, case-insensitive equality with Strong’s `Exercise Name` fails for almost every current catalog hit.
+That URL returns `image/webp` for the bench-press start pose. `https://exercise-dataset.com/images/flat/...` also serves the files, and it tracks the live site, so a later RepDB commit could change a picture without changing our JSON. The raw URL with the SHA stays on this snapshot.
 
-| Strong `Exercise Name` | RepDB `name_en` | RepDB `id` |
+The app has no image loader and no `INTERNET` permission. This change adds both. Coil is the loader, since the UI is Compose and nothing in the project loads remote images today. Names, muscles, and prescriptions work with no network. A row shows the `peak` image, or `main` when there is no pair. `start` is kept for the detail screen. Coil caches files it has already fetched.
+
+## Mechanic and rest
+
+`mechanic` is RepDB’s label for how many joints the lift uses.
+
+- **Compound**: more than one joint, several muscles share the work.
+- **Isolation**: one joint, one muscle does the work.
+
+It is not the same thing as `force_type`. A compound lift can be a push or a pull.
+
+| Exercise | `mechanic` | `force_type` | Muscles RepDB lists |
+| --- | --- | --- | --- |
+| Barbell Bench Press | compound | push | chest primary; front delt and triceps secondary |
+| Barbell Back Squat | compound | push | glutes and quads primary; spinal erectors and hamstrings secondary |
+| Romanian Deadlift | compound | pull | glutes and hamstrings primary; spinal erectors secondary |
+| Lat Pulldown | compound | pull | lats primary; biceps, rear delt, rhomboids secondary |
+| Dumbbell Lateral Raise | isolation | push | side delt primary; front delt secondary |
+| Incline Dumbbell Curl | isolation | pull | biceps |
+| Cable Tricep Pushdown | isolation | push | triceps |
+| Single Arm Tricep Pushdown | compound | push | triceps primary, plus shoulder |
+| Cable Face Pull | compound | pull | rear delt and rhomboids primary; traps secondary |
+| Back Extension | isolation | pull | spinal erectors |
+
+Bybon’s default rest is a hardcoded id list: 2:00 compound, 1:00 isolation, 1:30 for anything not on either list. The proposal replaces that list with `mechanic`:
+
+- compound → 2:00
+- isolation → 1:00
+
+Bench, squat, lat pulldown, and lateral raise stay on the same clock they have today. Face pull moves from 1:00 (it is on Bybon’s isolation list) to 2:00, because RepDB marks it compound. Back Extension, which is not in the current catalog, would be 1:00 instead of the 1:30 fallback. The two pushdown rows above show the label is per exercise, not per muscle: the two-arm cable pushdown is isolation and the single-arm variation is compound.
+
+## Muscles
+
+Two layers, both stored.
+
+**General group** is `body_part`. Counts inside the 410:
+
+| `body_part` | Count | Bybon group today |
 | --- | --- | --- |
-| Bench Press (Barbell) | Barbell Bench Press | `bench-press` |
-| Squat (Barbell) | Barbell Back Squat | `squat` |
-| Incline Bench Press (Dumbbell) | Incline Dumbbell Press | `incline-db-press` |
-| Romanian Deadlift (Barbell) | Romanian Deadlift | `romanian-deadlift` |
-| Lat Pulldown (Cable) | Lat Pulldown | `lat-pulldown` |
-| Pull Up (Assisted) | Assisted Pull Ups | `assisted-pull-ups` |
-| Skullcrusher (Dumbbell) | Dumbbell Skull Crusher | `db-skull-crusher` |
-| Lateral Raise (Dumbbell) | Dumbbell Lateral Raise | `lateral-raise` |
-| Overhead Press (Barbell) | Barbell Overhead Press | `ohp` |
-| Deadlift (Barbell) | Barbell Deadlift | `deadlift` |
+| `upper_legs` | 91 | Legs |
+| `back` | 79 | Back |
+| `core` | 56 | Core |
+| `upper_arms` | 55 | Arms |
+| `shoulders` | 54 | Shoulders |
+| `chest` | 51 | Chest |
+| `lower_legs` | 11 | Legs |
+| `lower_arms` | 8 | Arms |
+| `full_body` | 5 | FullBody |
 
-A few Strong strings already equal `name_en`: `Bulgarian Split Squat` (`bulgarian-split-squat`), `Leg Press` (`leg-press`), `Seated Leg Curl` (`seated-leg-curl`), `Back Extension` (`back-extension`).
+The library groups by these nine. That splits today’s Arms into upper arms and lower arms, and today’s Legs into upper legs and lower legs.
 
-The implementation should include a reviewed Strong-name → RepDB-id table covering the names in the sample and the full backup described in `docs/strong-import.md`, not a guess inside the matcher.
+**Specific muscles** are the anatomical slugs. Barbell Bench Press is the shape you described: general group chest, primary `pectoralis_major`, secondary `anterior_deltoid` and `triceps_brachii`. Fractional sets (a set of bench counting toward chest, front delt, and triceps) use this list later. This change only stores it.
 
-## Plan exercises
+Primary slugs that show up in the 410, most common first: `gluteus_maximus`, `pectoralis_major`, `quadriceps`, `latissimus_dorsi`, `rectus_abdominis`, `triceps_brachii`, `anterior_deltoid`, `biceps_brachii`, `lateral_deltoid`, `hamstrings`, `rhomboids`, `erector_spinae`, `trapezius`, `obliques`, `hip_flexors`, `gluteus_medius`, `gastrocnemius`, `forearm_flexors`, `posterior_deltoid`, `brachialis`, `transverse_abdominis`, `forearm_extensors`, `brachioradialis`, `abductors`, `soleus`, `adductors`. Secondary-only slugs: `serratus_anterior`, `quadratus_lumborum`, `forearms`, `supraspinatus`.
 
-Clear RepDB counterparts (same movement and equipment):
+## Equipment
+
+Excluded now: `kettlebell`, `loop_band`, `resistance_band`.
+
+The RepDB slug is stored on every included exercise. Progression still needs a load class. Until the later equipment pass, the class is:
+
+| RepDB `equipment` | Load class | Increment |
+| --- | --- | --- |
+| `barbell`, `trap_bar` | Barbell | 2.5 kg |
+| `dumbbell` | Dumbbell | 2 kg |
+| absent (bodyweight) | Bodyweight | none |
+| `assisted_pullup_machine`, `dip_machine` | Assisted | 2.5 kg |
+| everything else that we kept | Machine | 2.5 kg |
+
+“Everything else” is the list to split later. Counts inside the 410:
+
+| Slug | Count | Examples |
+| --- | --- | --- |
+| `cable` | 27 | Lat Pulldown, Cable Fly, Cable Lateral Raise |
+| `ez_bar` | 21 | EZ-bar curls and skull crushers |
+| `pull_up_bar` | 21 | Pull-Up, Chin-Up |
+| `smith_machine` | 19 | Smith Machine Squat |
+| `suspension_trainer` | 12 | TRX rows and presses |
+| `stability_ball` | 7 | Stability Ball Leg Curl |
+| `rings` | 7 | Ring Dips |
+| `leg_press` | 6 | Leg Press |
+| `plates` | 4 | plate raises |
+| named machines | 1–3 each | leg curl, hack squat, pec deck, chest press, calf raise, and the other single-machine slugs |
+| `ab_wheel`, `sled`, `climbing_rope`, `wrist_roller` | 1 each | |
+
+`pull_up_bar` is in the Machine bucket only as a stand-in. Unassisted pull-ups are bodyweight work; say if that slug should be Bodyweight when we do the equipment pass.
+
+## Strong import
+
+Resolution order:
+
+1. Alias from the backup’s `Exercise Name` to a shipped RepDB id.
+2. Case-insensitive match on `name_en`.
+3. If the shipped catalog has no exercise for that name, create one, same as today (slug id, guessed muscle and equipment).
+
+Step 2 fails for most current Strong strings, because RepDB word order differs (`Bench Press (Barbell)` vs `Barbell Bench Press`). The alias table is how those attach. It will be written from the names in `docs/strong-import.md` and the sample CSV. Names that only match an excluded exercise (kettlebell, band) fall through to step 3. `Chest Fly (Band)` is in that group: the dataset has no band fly, and band equipment is excluded.
+
+Plan fuzzy-matching, session identity, and the in-memory repository stay.
+
+## Plans
+
+Set counts, rep ranges, warm-up counts, and plan names stay. Each planned exercise id changes to the RepDB id once that row is confirmed.
+
+Already clear:
 
 | Current id | RepDB id | RepDB name |
 | --- | --- | --- |
@@ -109,56 +206,23 @@ Clear RepDB counterparts (same movement and equipment):
 | `lat-pull-down` | `lat-pulldown` | Lat Pulldown |
 | `incline-curl-db` | `incline-db-curl` | Incline Dumbbell Curl |
 | `skullcrusher-db` | `db-skull-crusher` | Dumbbell Skull Crusher |
+| `face-pull` | `face-pull` | Cable Face Pull |
 
-No equally named RepDB exercise exists for the rows below. Candidates are listed under question 4.
+Still to pick, one at a time:
 
-| Current id | Current name | Used by |
+| Current id | Current name | Where it matters |
 | --- | --- | --- |
 | `incline-row-db` | Incline Row (dumbbell) | Full Body B, Upper Body (legacy) |
 | `iso-lat-row` | Iso-Lateral Row (machine) | catalog only |
-| `squat-machine` | Squat (machine) | catalog only; Strong `Squat (Machine)` |
-| `triceps-press-machine` | Triceps Press (machine) | catalog only; Strong `Triceps Press` |
+| `squat-machine` | Squat (machine) | catalog; Strong `Squat (Machine)` |
+| `triceps-press-machine` | Triceps Press (machine) | catalog; Strong `Triceps Press` |
 | `chest-dip` | Chest Dip (assisted) | catalog only |
-| `chest-fly-peck-deck` | Chest Fly (machine) | catalog only; Strong bare `Chest Fly` |
-| `biceps-curl-machine` | Curl (machine) | catalog only; Strong `Bicep Curl (Machine)` |
-| `lateral-raise-machine` | Lateral Raise (machine) | catalog only; Strong `Lateral Raise (Machine)` |
-| `face-pull` | Face Pull (cable) | catalog only; RepDB id `face-pull` exists, and its `mechanic` is `compound` |
+| `chest-fly-peck-deck` | Chest Fly (machine) | catalog; Strong bare `Chest Fly` |
+| `biceps-curl-machine` | Curl (machine) | catalog; Strong `Bicep Curl (Machine)` |
+| `lateral-raise-machine` | Lateral Raise (machine) | catalog; Strong `Lateral Raise (Machine)` |
 
-## Open questions
-
-Implementation waits on these.
-
-1. **Which exercises ship?** All 601, or a subset (for example strength only, 491)? Stretching, cardio, olympic lifts, and plyometrics are in the same file.
-
-2. **Which RepDB fields does the app use in this change?** The domain today needs id, name, a muscle group, and an equipment value. Also in the file: images, instructions, tips, secondary muscles, `mechanic`, `difficulty`, `body_part`, equipment slug, goals, tags, MET, and German/Spanish text. The spec asks for secondary muscle groups. The app is English-only and has no exercise-detail screen.
-
-3. **Images.** Flat art is 16.7 MB in the APK if it ships. Show it in the library (and where else), or leave images out of this change?
-
-4. **Which RepDB exercise replaces each ambiguous Bybon exercise?**
-   - Incline Row (dumbbell): `chest-supported-db-row` (Chest-Supported Dumbbell Row), `bent-over-db-row`, or `single-arm-db-row`?
-   - Iso-Lateral Row (machine): no plate-loaded iso-lateral row. Nearest are `seated-cable-row` and `t-bar-row`. Drop it from the catalog (it is not on a built-in plan)?
-   - Squat (machine): `hack-squat` or `smith-machine-squat`?
-   - Triceps Press (machine): `machine-triceps-extension`?
-   - Chest Dip (assisted): `assisted-dips` (Machine Assisted Dips, `body_part` upper_arms) or `dips` (Chest Dips, dip station, unassisted)?
-   - Chest Fly (machine), which Strong’s bare `Chest Fly` aliases to today: `pec-deck` or `machine-chest-fly`?
-   - Curl (machine): `machine-bicep-curl` or `machine-preacher-curl`?
-   - Lateral Raise (machine): `plate-loaded-lateral-raise`?
-   - Strong names with no exact RepDB row: `Chest Fly (Band)` (no band fly), `Cable Pushdown (rope)` (closest `tricep-pushdown`), `Triceps Extension (Cable)`, `Reverse Lunges` (`reverse-lunge` is dumbbell; bodyweight and barbell variants also exist), `Crunch (Machine)` (closest `machine-seated-crunch`).
-
-5. **Rest.** Use RepDB `mechanic` for the default (compound 2:00, isolation 1:00), or keep a Bybon list? `face-pull` would move from 1:00 to 2:00 if mechanic wins. Cable pushdowns are mixed in RepDB (`tricep-pushdown` isolation, `single-arm-tricep-pushdown` compound).
-
-6. **Strong names that still match nothing.** Today those become new exercises with guessed muscle and equipment. Options: keep creating them; require an alias and skip or fail the row; alias every name from the known backup and keep creating only genuine unknowns. This is the conflict between “Strong import still works” and “RepDB is the source of truth.”
-
-7. **Equipment model.** Progression and the library filters use five Bybon values. RepDB has ~50 equipment slugs (kettlebell, cable, ez_bar, smith_machine, bands, and individual machines). Options: map each slug onto the existing five for increments and filters, and keep the RepDB slug for display; or replace `Equipment` with the RepDB slug and define an increment per slug. Cable is `Machine` today (2.5 kg). Kettlebell has no Bybon value.
-
-8. **Muscle groups.** Map `body_part` onto the current eight (`upper_arms` + `lower_arms` → Arms, `upper_legs` + `lower_legs` → Legs), or group the library by RepDB `body_part` (9) or by `primary_muscles` (~27)? `lat-pulldown` is `back`. `romanian-deadlift` is `upper_legs` (Bybon files RDL under Legs). `face-pull` is `shoulders`. `assisted-dips` is `upper_arms`.
-
-9. **Library UX.** With the coarse groups, Legs is on the order of 170 exercises, and the screen has no search. Is a name search part of this change?
-
-10. **How the files get into the build.** In-app use is allowed. Republishing the dataset from a public repo is not. Bybon is public. Options: download the pinned commit at build time and keep it out of git; commit the JSON and WebPs into this repo anyway. Attribution has to land in the README, an in-app credits surface, or both. There is no credits screen today.
-
-11. **Languages.** Display `name_en` only, and leave `de` / `es` unused in the bundled file?
+Strong strings with no exact included exercise, after the picks above: `Chest Fly (Band)`, `Cable Pushdown (rope)`, `Triceps Extension (Cable)`, `Reverse Lunges`, `Crunch (Machine)`.
 
 ## Left as they are
 
-Set and rep prescriptions, warm-up counts, plan names, Strong plan matching, session identity, and the in-memory workout repository. Paid-tier animations and `premium-samples/` stay out. Workout Room persistence stays a separate task.
+Plan names, set and rep prescriptions, warm-up counts, Strong plan matching, session identity, and the in-memory workout repository. Paid-tier animations stay out. Workout Room persistence stays a separate task. Library search, the detail screen, fractional sets, and the about screen stay later. The data for the detail screen and for fractional sets is stored in this change.
