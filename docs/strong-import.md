@@ -142,8 +142,8 @@ Group Strong sessions by trimmed `Workout Name`. Score each existing Bybon plan:
   tolerant). `"Full body A"` still matches if one exercise is swapped for Crunch; `"Full body A"`
   does **not** match `"Full Body B"`.
 
-If no plan clears the threshold, create a **new plan** (today `isArchived = false`; **TODO:** archive
-unmatched imports):
+If no plan clears the threshold, create a **new plan**. Archive it when that Strong name was executed
+fewer than 5 times (`isArchived = true`); names with 5 or more sessions stay active:
 
 - `id = slugify(trimmed Strong name)` (e.g. `upper-body-a`)
 - `name` = trimmed Strong name (keeps Strong casing: `"Upper body A"`)
@@ -151,7 +151,9 @@ unmatched imports):
 - Exercises / warmup count / work-set count / rest / observed `repRange` / `notes` taken from the
   **representative** session = most common exercise-id sequence for that name (ties: first seen)
 
-Sample with only Full Body A/B already in the repo: creates **Upper body A** and **Upper body B**.
+Sample with only Full Body A/B already in the repo: creates **Upper body A** and **Upper body B**,
+both archived (3 sessions each). The import summary counts how many of the inserted plans are
+archived.
 Sessions keep the Strong exercise list even when matched to a Bybon plan (history is not rewritten
 to the plan template).
 
@@ -165,7 +167,7 @@ to the plan template).
 | `Workout Notes`                | Session `note`. New plans also take the most frequent value as `WorkoutPlan.description` (last workout on a tie). Existing Bybon plans keep their description. |
 | `Workout #`                    | Used only to group rows; **not stored** (Bybon identity is `planId + startedAt`) |
 
-`importHistory` skips a session when `WorkoutSessionId(planId, startedAt)` is already stored and leaves that session unchanged. Strong `Workout #` is not read at insert time. Two rows in one file that resolve to the same id keep the first. Plans and exercises already stored under the same id are not inserted again. The summary counts inserted sessions, and when any were skipped it also shows how many were already in history.
+`importHistory` skips a session when `WorkoutSessionId(planId, startedAt)` is already stored and leaves that session unchanged. Strong `Workout #` is not read at insert time. Two rows in one file that resolve to the same id keep the first. Plans and exercises already stored under the same id are not inserted again. The summary counts inserted sessions, how many of the inserted plans are archived, and when any sessions were skipped it also shows how many were already in history.
 
 ### 4. Sets / rest / notes
 
@@ -250,12 +252,12 @@ persistence itself.
 | Zero-load sets | `ExerciseSet.weight` is `Weight?`. Strong `0.0` (and blank kg) import as `null`; `Weight` stays `> 0` when present. 1RM is null when weight is. Sample keeps 29 pull-up work + 15 BSS warmups; full backup 109 rows no longer drop. |
 | Session and exercise notes | `Workout Notes` → session `note`. New plan `description` is the most common `Workout Notes` (last on a tie). Each `Set Order=Note` row is one item in `notes`. Existing Bybon plans keep their description and planned-exercise notes. |
 | Idempotent import | `importHistory` skips sessions whose `WorkoutSessionId(planId, startedAt)` already exists and does not replace them. The same id inside one file keeps the first session. Strong `Workout #` stays a CSV grouping key. The summary counts inserted sessions and, when some were skipped, how many were already stored. |
+| Archive rare unmatched plans | New plans whose Strong name was executed fewer than 5 times are created `isArchived = true`. Names with 5 or more sessions stay in the active list. Matched Bybon plans keep their archive flag. The import summary shows how many inserted plans were archived. Sample Upper body A/B (3 each) are archived. A full backup archives the five names under 5 sessions (`Full body A by JE cut`, `Full body A by JE`, `Upper body A`, `Upper body B`, `Afternoon Workout`) and keeps the six busier new names active. |
 
 ### TODO (before Room)
 
 | Topic | Current behavior | Intended |
 |-------|------------------|----------|
-| Archive unmatched plans | New plans are `isArchived = false` and show in the list | Unmatched Strong names should be created **archived**. Full backup adds ~11 extra names (`Chest, back side delts`, JE variants, Upper/Lower Body 1–2, …) on top of Upper body A/B |
 | History / summary hide warmups | Warmups import; history is top **work** set, summary lists work sets only | Show warmups on those screens |
 
 ### TODO (after the above)
@@ -269,8 +271,8 @@ persistence itself.
 ## Superseded schema notes
 
 The original doc locked **import fidelity (1A)** (keep notes, RPE, rest events, 0 kg) and **unmatched
-names → archived plans**. Implementation only kept warmups + rest *duration*; archive-on-create is
-still TODO.
+names → archived plans**. Implementation kept warmups + rest *duration*, and archives unmatched
+names used fewer than 5 times.
 
 The proposed Room event-row schema (`workout_set.kind`, `exercise_alias`, `strong_workout_number`,
 weight tenths) is **not** the persistence target. When Room happens, persist the current domain.
@@ -293,11 +295,15 @@ names. Still **no** RPE, distance, or timed-work rows. Identity timestamps are u
 | `Full body B by JE`     | 8        | New (score 0.60 vs Full Body B) |
 | `Lower Body 2`          | 6        | New |
 | `Upper Body 2`          | 6        | New |
-| `Full body A by JE cut` | 4        | New |
-| `Full body A by JE`     | 3        | New |
-| `Upper body A`          | 3        | New `upper-body-a` (seed plan is now `upper-body-legacy`) |
-| `Upper body B `         | 3        | New `upper-body-b` |
-| `Afternoon Workout`     | 1        | New |
+| `Full body A by JE cut` | 4        | New, archived (< 5 sessions) |
+| `Full body A by JE`     | 3        | New, archived (< 5 sessions) |
+| `Upper body A`          | 3        | New `upper-body-a`, archived (seed plan is `upper-body-legacy`) |
+| `Upper body B `         | 3        | New `upper-body-b`, archived |
+| `Afternoon Workout`     | 1        | New, archived (< 5 sessions) |
+
+New plans with fewer than 5 sessions are created archived: `Full body A by JE cut`, `Full body A by
+JE`, `Upper body A`, `Upper body B`, `Afternoon Workout`. The other new names (43 down to 6
+sessions) stay active.
 
 Zero-load rows grow from 44 in the sample to **109**: BSS warmups 62, pull-up work 34, Back
 Extension work 9, BSS work 4. These import as `weight = null` (unassisted / no extra load). Sessions
@@ -362,8 +368,9 @@ force onto the current catalog.
 
 1. Parse `;` CSV into `StrongCsvRow`.
 2. Resolve exercises (alias / name / create).
-3. Fuzzy-match plan or insert a new plan from the most common exercise sequence (unarchived today;
-   **TODO:** archive unmatched names).
+3. Fuzzy-match plan or insert a new plan from the most common exercise sequence. Unmatched names
+   executed fewer than 5 times are archived; busier names stay active. The summary counts archived
+   plans.
 4. Build `WorkoutSession(Completed)` with Strong date/duration, that session’s `Workout Notes` in
    `note`, warmups + work sets (`Weight?` + reps; Strong `0.0` → `null` weight), rest duration from
    the first rest-timer row, and `Set Order=Note` rows as `notes`.

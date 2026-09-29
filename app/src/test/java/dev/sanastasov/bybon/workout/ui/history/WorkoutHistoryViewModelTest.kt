@@ -316,6 +316,7 @@ class WorkoutHistoryViewModelTest {
                 ),
             )
             assert(summary.plansCreatedCount == 2)
+            assert(summary.plansArchivedCount == 2)
             assert(summary.exercisesImportedCount == 1)
             assert(summary.firstSessionDate == LocalDate.of(2026, 2, 17))
             assert(summary.lastSessionDate == LocalDate.of(2026, 8, 20))
@@ -401,12 +402,20 @@ class WorkoutHistoryViewModelTest {
             assert(second.summary.sessionCount == 0)
             assert(second.summary.sessionsSkipped == 52)
             assert(second.summary.plansCreatedCount == 0)
+            assert(second.summary.plansArchivedCount == 0)
             assert(second.summary.exercisesImportedCount == 0)
             assert(second.summary.sessionsByPlan.isEmpty())
         }
 
         assert(repository.workoutSessions().first().size == 52)
-        assert(repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().size == 4)
+        val plans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+        assert(plans.size == 4)
+        val importedUpperBody = plans.filter {
+            it.id.id == "upper-body-a" || it.id.id == "upper-body-b"
+        }
+        assert(importedUpperBody.all { it.isArchived })
+        val matchedFullBody = plans.filter { it.id == fullBodyA.id || it.id == fullBodyB.id }
+        assert(matchedFullBody.none { it.isArchived })
         assert(repository.exercises().first().count { it.id == "crunch-machine" } == 1)
     }
 
