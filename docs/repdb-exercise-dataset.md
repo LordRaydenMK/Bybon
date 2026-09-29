@@ -11,7 +11,7 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - Images are **URLs**, loaded at runtime. The APK does not contain the WebPs.
 - Exercise detail screen, library search, and the about screen come later.
 - README gets the credit line `Exercise data by RepDB (repdb.co)` when the data is wired in. The free-tier license asks for that credit on any in-app use; the README line covers it.
-- Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise is created only when that exercise shows up in at least 5 workouts in the file.
+- Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise becomes an active exercise only after 5 workouts in the file. Below that, the sets stay in history on an archived exercise, and the library does not list it.
 - Kettlebell, `loop_band`, and `resistance_band` are excluded. Other equipment stays in the catalog. Splitting new equipment values (cable, EZ-bar, Smith, and the rest) waits for a later pass.
 - Yoga and Pilates are excluded by English name. See the catalog filter.
 - General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
@@ -209,13 +209,15 @@ Resolution order:
 
 A name that resolves in step 1 or 2 is imported for every workout it appears in. That exercise already exists, so it is not a new duplicate.
 
-A name that falls through to step 3 is created only when it appears in **at least 5 workouts** in the file being imported. One workout counts once, when that exercise has at least one set with reps greater than 0. The count is for the whole file. When the name qualifies, every one of those workouts is imported, not only the fifth onward. The new exercise is still a slug id with guessed muscle and equipment.
+A name that falls through to step 3 is counted across the whole file. One workout counts once, when that exercise has at least one set with reps greater than 0.
 
-Below 5 workouts, the name is dropped. No exercise row is created, and its sets are left out of the session. A session that then has no exercises is skipped. Plan matching and the representative-session template use the exercises that remain.
+**Five or more workouts.** The name becomes an active exercise: slug id, guessed muscle and equipment. Every workout is imported, not only the fifth onward. It shows in the library.
 
-This is aimed at one-off Strong names that are usually a second spelling of an exercise already in the catalog. A name that clears 5 workouts and still matches nothing is its own exercise. Aliases are how a frequent Strong spelling attaches to RepDB instead of becoming that extra row.
+**Fewer than five workouts.** No active exercise is created. The sets stay on the imported session, so history still shows the Strong name, weight, and reps. The session already stores that name on each exercise. The definition is also saved as **archived**, because a few lookups resolve an exercise by id from the repository (`requireExercise`). Archived exercises are left out of the library and out of the exercise picker. An imported plan template is built only from active exercises, so a one-off name does not become something you schedule. The historical session still contains it.
 
-Step 2 fails for most current Strong strings, because RepDB word order differs (`Bench Press (Barbell)` vs `Barbell Bench Press`). The alias table is how those attach. It will be written from the names in `docs/strong-import.md` and the sample CSV. Names that only match an excluded exercise (kettlebell, band, yoga, Pilates) fall through to step 3. `Chest Fly (Band)` is in that group: the dataset has no band fly, and band equipment is excluded. In the full backup it appears in 11 workouts, so it would still be created. The backup’s created names with 4 workouts or fewer would not.
+This is aimed at one-off Strong names that are usually a second spelling of an exercise already in the catalog. A name that clears 5 workouts and still matches nothing is its own active exercise. Aliases are how a frequent Strong spelling attaches to RepDB instead of becoming that extra row.
+
+Step 2 fails for most current Strong strings, because RepDB word order differs (`Bench Press (Barbell)` vs `Barbell Bench Press`). The alias table is how those attach. It will be written from the names in `docs/strong-import.md` and the sample CSV. Names that only match an excluded exercise (kettlebell, band, yoga, Pilates) fall through to step 3. `Chest Fly (Band)` is in that group: the dataset has no band fly, and band equipment is excluded. In the full backup it appears in 11 workouts, so it would still become an active exercise. Created names with 4 workouts or fewer stay in history as archived exercises.
 
 Plan fuzzy-matching, session identity, and the in-memory repository stay.
 
