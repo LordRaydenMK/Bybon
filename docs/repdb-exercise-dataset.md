@@ -13,6 +13,7 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - README gets the credit line `Exercise data by RepDB (repdb.co)` when the data is wired in. The free-tier license asks for that credit on any in-app use; the README line covers it.
 - Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise is still created, as today.
 - Kettlebell, `loop_band`, and `resistance_band` are excluded. Other equipment stays in the catalog. Splitting new equipment values (cable, EZ-bar, Smith, and the rest) waits for a later pass.
+- Yoga and Pilates are excluded by English name. See the catalog filter.
 - General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
 - `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
 - Ambiguous Bybon → RepDB exercise picks are decided one at a time. See the end of this doc.
@@ -24,8 +25,13 @@ An exercise is included when all of these hold:
 1. `category` is `strength`.
 2. `goals` contains `hypertrophy` or `strength` (many list both).
 3. `equipment` is not `kettlebell`, `loop_band`, or `resistance_band`.
+4. The English name does not mark the exercise as yoga or Pilates. A name matches when it contains `Pilates`, `Pose`, `Warrior`, `Downward Dog`, `Upward Dog`, `Crescent Lunge`, or `Shoulderstand`.
 
-That is **410** exercises.
+That is **382** exercises. The name rule removes 28: 23 yoga asanas and 5 Pilates exercises. Bird Dog stays. Four more Pilates exercises (`Pilates Roll Down`, `Pilates Saw`, `Pilates Spine Stretch Forward`, `Pilates Spine Twist`) are stretches with a mobility goal, so the category and goal rules already drop them.
+
+Yoga names removed: Boat Pose, Bow Pose, Chair Pose, Crescent Lunge, Crow Pose, Dancer Pose, Dolphin Pose, Downward Dog Knee Tuck, Downward Dog to Knee Drive, Downward Dog to Plank, Downward Dog to Upward Dog, Eagle Pose, Extended Side Angle Pose, Half Moon Pose, Locust Pose, Revolved Chair Pose, Revolved Crescent Lunge, Supported Shoulderstand, Three-Legged Downward Dog, Tree Pose, Warrior I, Warrior II, Warrior III.
+
+Pilates names removed: Pilates Kneeling Side Kick, Pilates Leg Pull Back, Pilates Leg Pull Front, Pilates Roll Over, Pilates Side Bend.
 
 `category` and `goals` are different fields. `category` is the kind of movement (`strength`, `stretching`, `cardio`, `olympic`, `plyometrics`). `goals` is why someone would do it, and an exercise can list several.
 
@@ -62,16 +68,16 @@ Not stored: `met`, `is_unilateral`, `is_bodyweight` (same fact as a missing `equ
 
 ## Force, difficulty, tags
 
-Counts inside the 410.
+Counts inside the 382.
 
-`force_type`: push 187, pull 155, static 50, dynamic 18.
+`force_type`: push 187, pull 155, static 31, dynamic 9.
 
 - Push: Barbell Bench Press, Dumbbell Lateral Raise, Cable Tricep Pushdown.
 - Pull: Barbell Deadlift, Romanian Deadlift, Lat Pulldown, Incline Dumbbell Curl.
-- Static: a hold. High Plank, Dead Hang, Wall Sit, Dumbbell Farmer's Walk, L-Sit, and also yoga poses that passed the strength filter (Warrior II, Tree Pose, Crow Pose, Chair Pose).
-- Dynamic: the body moves through a cycle. Thruster, Barbell Ab Rollout, Jackknife Sit-Up, and several Pilates and downward-dog variations.
+- Static: a hold. High Plank, Dead Hang, Wall Sit, Dumbbell Farmer's Walk, L-Sit.
+- Dynamic: the body moves through a cycle. Thruster, Barbell Ab Rollout, Jackknife Sit-Up.
 
-`difficulty`: intermediate 235, beginner 140, advanced 35. Barbell Bench Press and Barbell Back Squat are intermediate. Dumbbell Lateral Raise, Lat Pulldown, and Cable Face Pull are beginner.
+`difficulty`: intermediate 213, beginner 138, advanced 31. Barbell Bench Press and Barbell Back Squat are intermediate. Dumbbell Lateral Raise, Lat Pulldown, and Cable Face Pull are beginner.
 
 `tags` has 23 slugs. The common ones are safety and setup labels, then day labels. `no_axial_load` means the load is not stacked through the spine. `big_three` is squat, bench, and deadlift.
 
@@ -81,13 +87,13 @@ Counts inside the 410.
 | `lower_back_safe` | 242 |
 | `no_axial_load` | 239 |
 | `shoulder_safe` | 239 |
-| `calisthenics` | 75 |
+| `calisthenics` | 47 |
 | `requires_bench` | 62 |
 | `leg_day` | 61 |
 | `push_day` | 57 |
 | `pull_day` | 48 |
 | `arm_day` | 43 |
-| `core` | 39 |
+| `core` | 28 |
 | `core_focus`, `glute_focus`, `shoulder_focus`, `grip_focus`, `shoulder_stability`, `calf_focus`, `chest_focus`, `back_focus` | 11 or fewer each |
 | `powerlifting` | 5 |
 | `big_three` | 3 |
@@ -141,16 +147,16 @@ Bench, squat, lat pulldown, and lateral raise stay on the same clock they have t
 
 Two layers, both stored.
 
-**General group** is `body_part`. Counts inside the 410:
+**General group** is `body_part`. Counts inside the 382:
 
 | `body_part` | Count | Bybon group today |
 | --- | --- | --- |
-| `upper_legs` | 91 | Legs |
-| `back` | 79 | Back |
-| `core` | 56 | Core |
-| `upper_arms` | 55 | Arms |
-| `shoulders` | 54 | Shoulders |
+| `upper_legs` | 81 | Legs |
+| `back` | 77 | Back |
+| `upper_arms` | 54 | Arms |
 | `chest` | 51 | Chest |
+| `shoulders` | 50 | Shoulders |
+| `core` | 45 | Core |
 | `lower_legs` | 11 | Legs |
 | `lower_arms` | 8 | Arms |
 | `full_body` | 5 | FullBody |
@@ -159,7 +165,7 @@ The library groups by these nine. That splits today’s Arms into upper arms and
 
 **Specific muscles** are the anatomical slugs. Barbell Bench Press is the shape you described: general group chest, primary `pectoralis_major`, secondary `anterior_deltoid` and `triceps_brachii`. Fractional sets (a set of bench counting toward chest, front delt, and triceps) use this list later. This change only stores it.
 
-Primary slugs that show up in the 410, most common first: `gluteus_maximus`, `pectoralis_major`, `quadriceps`, `latissimus_dorsi`, `rectus_abdominis`, `triceps_brachii`, `anterior_deltoid`, `biceps_brachii`, `lateral_deltoid`, `hamstrings`, `rhomboids`, `erector_spinae`, `trapezius`, `obliques`, `hip_flexors`, `gluteus_medius`, `gastrocnemius`, `forearm_flexors`, `posterior_deltoid`, `brachialis`, `transverse_abdominis`, `forearm_extensors`, `brachioradialis`, `abductors`, `soleus`, `adductors`. Secondary-only slugs: `serratus_anterior`, `quadratus_lumborum`, `forearms`, `supraspinatus`.
+Primary slugs that show up in the 382, most common first: `gluteus_maximus`, `pectoralis_major`, `latissimus_dorsi`, `quadriceps`, `triceps_brachii`, `rectus_abdominis`, `anterior_deltoid`, `biceps_brachii`, `lateral_deltoid`, `rhomboids`, `hamstrings`, `trapezius`, `erector_spinae`, `obliques`, `hip_flexors`, `gastrocnemius`, `forearm_flexors`, `posterior_deltoid`, `brachialis`, `gluteus_medius`, `transverse_abdominis`, `forearm_extensors`, `brachioradialis`, `abductors`, `soleus`, `adductors`. Secondary-only slugs: `serratus_anterior`, `quadratus_lumborum`, `forearms`, `supraspinatus`.
 
 ## Equipment
 
@@ -175,7 +181,7 @@ The RepDB slug is stored on every included exercise. Progression still needs a l
 | `assisted_pullup_machine`, `dip_machine` | Assisted | 2.5 kg |
 | everything else that we kept | Machine | 2.5 kg |
 
-“Everything else” is the list to split later. Counts inside the 410:
+“Everything else” is the list to split later. Counts inside the 382:
 
 | Slug | Count | Examples |
 | --- | --- | --- |
@@ -237,8 +243,6 @@ Already clear:
 | `incline-curl-db` | `incline-db-curl` | Incline Dumbbell Curl |
 | `skullcrusher-db` | `db-skull-crusher` | Dumbbell Skull Crusher |
 | `face-pull` | `face-pull` | Cable Face Pull |
-
-Open, besides the exercise picks: the strength filter still includes yoga poses and Pilates variations (`Warrior II`, `Tree Pose`, `Crow Pose`, downward-dog flows). They are `category: strength` and carry a hypertrophy or strength goal, so they are in the 410. Say if those should be excluded.
 
 Still to pick, one at a time:
 
