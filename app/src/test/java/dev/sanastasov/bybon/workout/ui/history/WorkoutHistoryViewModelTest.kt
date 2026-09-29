@@ -410,8 +410,12 @@ class WorkoutHistoryViewModelTest {
         assert(repository.workoutSessions().first().size == 52)
         val plans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
         assert(plans.size == 4)
-        assert(plans.filter { it.id.id == "upper-body-a" || it.id.id == "upper-body-b" }.all { it.isArchived })
-        assert(plans.filter { it.id == fullBodyA.id || it.id == fullBodyB.id }.none { it.isArchived })
+        val importedUpperBody = plans.filter {
+            it.id.id == "upper-body-a" || it.id.id == "upper-body-b"
+        }
+        assert(importedUpperBody.all { it.isArchived })
+        val matchedFullBody = plans.filter { it.id == fullBodyA.id || it.id == fullBodyB.id }
+        assert(matchedFullBody.none { it.isArchived })
         assert(repository.exercises().first().count { it.id == "crunch-machine" } == 1)
     }
 

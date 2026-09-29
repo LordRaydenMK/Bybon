@@ -151,25 +151,23 @@ private fun List<ParsedWorkout>.templateNote(): String? {
     return notes.last { counts.getValue(it) == maxCount }
 }
 
-private fun ParsedWorkout.toWorkoutPlan(
-    description: String?,
-    isArchived: Boolean,
-): WorkoutPlan = WorkoutPlan(
-    id = WorkoutPlanId(planName.slugify()),
-    name = planName,
-    description = description,
-    sets = exercises.map { exercise ->
-        PlanedExercise(
-            exercise = exercise.exerciseDefinition,
-            warmupSets = exercise.warmupSets?.size ?: 0,
-            sets = exercise.sets.size,
-            repRange = exercise.repRange,
-            restAfterWorkSet = exercise.restAfterWorkSet,
-            notes = exercise.notes,
-        )
-    },
-    isArchived = isArchived,
-)
+private fun ParsedWorkout.toWorkoutPlan(description: String?, isArchived: Boolean): WorkoutPlan =
+    WorkoutPlan(
+        id = WorkoutPlanId(planName.slugify()),
+        name = planName,
+        description = description,
+        sets = exercises.map { exercise ->
+            PlanedExercise(
+                exercise = exercise.exerciseDefinition,
+                warmupSets = exercise.warmupSets?.size ?: 0,
+                sets = exercise.sets.size,
+                repRange = exercise.repRange,
+                restAfterWorkSet = exercise.restAfterWorkSet,
+                notes = exercise.notes,
+            )
+        },
+        isArchived = isArchived,
+    )
 
 private fun List<WorkoutPlan>.findMatchingPlan(
     strongName: String,
