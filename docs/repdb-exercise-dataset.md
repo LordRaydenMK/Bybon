@@ -12,7 +12,7 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - Exercise detail screen, library search, and the about screen come later.
 - README gets the credit line `Exercise data by RepDB (repdb.co)` when the data is wired in. The free-tier license asks for that credit on any in-app use; the README line covers it.
 - Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise is still created, as today.
-- Kettlebell, `loop_band`, and `resistance_band` were the first exclusions. Every RepDB equipment slug still needs an explicit in-or-out and a load class. See [Equipment](#equipment).
+- Kettlebell, `loop_band`, and `resistance_band` are excluded. Other equipment stays in the catalog. Splitting new equipment values (cable, EZ-bar, Smith, and the rest) waits for a later pass.
 - General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
 - `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
 - Ambiguous Bybon → RepDB exercise picks are decided one at a time. See the end of this doc.
@@ -163,71 +163,35 @@ Primary slugs that show up in the 410, most common first: `gluteus_maximus`, `pe
 
 ## Equipment
 
-RepDB has 56 equipment values, counting exercises with no `equipment` field as bodyweight. The slug is stored on the exercise. A separate **load class** drives the progression increment, the default work and warm-up weight, and the library filter chips. Bybon has five load classes today:
+Excluded now: `kettlebell`, `loop_band`, `resistance_band`.
 
-| Load class | Increment | Default work | Default warm-up |
-| --- | --- | --- | --- |
-| Barbell | 2.5 kg | 50 kg | 20 kg |
-| Dumbbell | 2 kg | 50 kg | 10 kg |
-| Machine | 2.5 kg | 50 kg | 20 kg |
-| Assisted | 2.5 kg | none | none |
-| Bodyweight | none | none | none |
+The RepDB slug is stored on every included exercise. Progression still needs a load class. Until the later equipment pass, the class is:
 
-A new load class needs its own increment and defaults. One chip is shown per load class. Giving every slug its own class adds one chip per slug.
-
-Counts below are exercises with `category: strength` and a `hypertrophy` or `strength` goal. That is the set this decision changes. The same slug on a stretch, cardio piece, or olympic lift is already outside the catalog.
-
-| Slug | Exercises | Examples |
+| RepDB `equipment` | Load class | Increment |
 | --- | --- | --- |
-| *(none — bodyweight)* | 109 | Push-Up, Back Extension, Plank, Bodyweight Squat, Lunge |
-| `dumbbell` | 77 | Dumbbell Bench Press, Dumbbell Lateral Raise, Bulgarian Split Squat |
-| `barbell` | 60 | Barbell Bench Press, Barbell Back Squat, Romanian Deadlift |
-| `kettlebell` | 54 | Goblet Squat, Kettlebell Deadlift, Kettlebell Turkish Get Ups |
-| `cable` | 27 | Lat Pulldown, Cable Fly, Cable Tricep Pushdown |
-| `ez_bar` | 21 | EZ-Bar Curl, EZ-Bar Lying Triceps Extension, Preacher Curl |
-| `pull_up_bar` | 21 | Pull-Up, Chin-Ups, Weighted Pull-Up, Hanging Leg Raise |
-| `smith_machine` | 19 | Smith Machine Squat, Smith Machine Bench Press, Smith Machine Romanian Deadlift |
-| `loop_band` | 15 | Banded Squat, Banded Hip Thrust, Banded Romanian Deadlift |
-| `suspension_trainer` | 12 | TRX Row, TRX Chest Press, TRX Hamstring Curl |
-| `rings` | 7 | Ring Dips, Ring Row, Ring Muscle-Up |
-| `stability_ball` | 7 | Stability Ball Leg Curl, Stability Ball Push-Up, Ball Pike |
-| `leg_press` | 6 | Leg Press, Close-Stance Leg Press, Single Leg Press |
-| `plates` | 4 | Plate Pinch, Svend Press, Plate Pullover, Weighted Wall Crunch |
-| `dip_station` | 3 | Chest Dips, Weighted Dips, L Sit |
-| `leg_curl` | 3 | Lying Leg Curl, Seated Leg Curl, Single Leg Lying Leg Curl |
-| `resistance_band` | 2 | Band Assisted Pull Ups, Band Pull Apart |
-| `hack_squat` | 2 | Hack Squat, Hack Squat Calf Raise |
-| `lat_pulldown_machine` | 2 | V-Bar Lat Pulldown, Behind-the-Neck Lat Pulldown |
-| `leg_extension` | 2 | Leg Extension, Single Leg Extension |
-| `plate_loaded_lateral_raise_machine` | 2 | Plate-Loaded Lateral Raise, Single-Arm Plate-Loaded Lateral Raise |
-| `shoulder_press_machine` | 2 | Machine Shoulder Press, Single-Arm Machine Shoulder Press |
-| `standing_calf_raise_machine` | 2 | Standing Calf Raise, Machine Calf Raise |
-| `ab_crunch_machine` | 1 | Machine Seated Crunch |
-| `ab_wheel` | 1 | Ab Wheel Rollout |
-| `assisted_pullup_machine` | 1 | Assisted Pull Ups |
-| `back_extension_machine` | 1 | Machine Back Extension |
-| `bicep_curl_machine` | 1 | Machine Bicep Curl |
-| `chest_fly_machine` | 1 | Machine Chest Fly |
-| `chest_press_machine` | 1 | Machine Chest Press |
-| `climbing_rope` | 1 | Rope Climb |
-| `dip_machine` | 1 | Machine Assisted Dips |
-| `donkey_calf_raise_machine` | 1 | Plate-Loaded Donkey Calf Raise |
-| `glute_ham_developer` | 1 | Nordic Hamstring Curl |
-| `hip_abduction_machine` | 1 | Machine Hip Abduction |
-| `hip_adduction_machine` | 1 | Hip Adduction |
-| `hip_thrust_machine` | 1 | Plate-Loaded Glute Drive |
-| `pec_deck` | 1 | Pec Deck |
-| `preacher_curl_machine` | 1 | Machine Preacher Curl |
-| `seated_calf_raise_machine` | 1 | Seated Calf Raise |
-| `shrug_machine` | 1 | Plate-Loaded Shrug |
-| `sled` | 1 | Sled Row |
-| `trap_bar` | 1 | Hex Bar Deadlift |
-| `tricep_extension_machine` | 1 | Machine Triceps Extension |
-| `wrist_roller` | 1 | Wrist Roller |
+| `barbell`, `trap_bar` | Barbell | 2.5 kg |
+| `dumbbell` | Dumbbell | 2 kg |
+| absent (bodyweight) | Bodyweight | none |
+| `assisted_pullup_machine`, `dip_machine` | Assisted | 2.5 kg |
+| everything else that we kept | Machine | 2.5 kg |
 
-For each row: include the exercises, or drop them, and if they stay, which load class. `kettlebell` (54), `loop_band` (15), and `resistance_band` (2) were the earlier exclusions. Eleven more `resistance_band` exercises are stretches and are already out through `category`.
+“Everything else” is the list to split later. Counts inside the 410:
 
-These slugs have no exercise in that set, so the category and goal filter already removes them: `flat_bench` (10 stretches), `battle_rope`, `treadmill`, `air_bike`, `elliptical`, `jump_rope`, `rower`, `stair_climber`, `stationary_bike`, `plyo_box`, `slam_ball` (Medicine Ball Slam, goals are power and endurance).
+| Slug | Count | Examples |
+| --- | --- | --- |
+| `cable` | 27 | Lat Pulldown, Cable Fly, Cable Lateral Raise |
+| `ez_bar` | 21 | EZ-bar curls and skull crushers |
+| `pull_up_bar` | 21 | Pull-Up, Chin-Up |
+| `smith_machine` | 19 | Smith Machine Squat |
+| `suspension_trainer` | 12 | TRX rows and presses |
+| `stability_ball` | 7 | Stability Ball Leg Curl |
+| `rings` | 7 | Ring Dips |
+| `leg_press` | 6 | Leg Press |
+| `plates` | 4 | plate raises |
+| named machines | 1–3 each | leg curl, hack squat, pec deck, chest press, calf raise, and the other single-machine slugs |
+| `ab_wheel`, `sled`, `climbing_rope`, `wrist_roller` | 1 each | |
+
+`pull_up_bar` is in the Machine bucket only as a stand-in. Unassisted pull-ups are bodyweight work; say if that slug should be Bodyweight when we do the equipment pass.
 
 ## Strong import
 
