@@ -16,7 +16,8 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - Yoga and Pilates are excluded by English name. See the catalog filter.
 - General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
 - `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
-- Ambiguous Bybon → RepDB exercise picks are decided one at a time. See the end of this doc.
+- The library is three sources: the RepDB subset, a few exercises Bybon ships because RepDB has no match, and exercises the user creates. Bybon-shipped and user-created exercises use the same definition as a RepDB row, with RepDB-only fields empty (images, instructions, tips, tags, and the rest).
+- Iso-Lateral Row stays a Bybon-shipped exercise (`iso-lat-row`, "Iso-Lateral Row (machine)", back, machine). It is not mapped to Seated Cable Row.
 
 ## Catalog filter
 
@@ -254,12 +255,17 @@ Already clear:
 | `skullcrusher-db` | `db-skull-crusher` | Dumbbell Skull Crusher |
 | `face-pull` | `face-pull` | Cable Face Pull |
 
+Picked:
+
+| Current id | Current name | Decision |
+| --- | --- | --- |
+| `incline-row-db` | Incline Row (dumbbell) | `chest-supported-db-row` (Chest-Supported Dumbbell Row) |
+| `iso-lat-row` | Iso-Lateral Row (machine) | Bybon-shipped. Not mapped to a RepDB id. |
+
 Still to pick, one at a time:
 
 | Current id | Current name | Where it matters |
 | --- | --- | --- |
-| `incline-row-db` | Incline Row (dumbbell) | Full Body B, Upper Body (legacy) |
-| `iso-lat-row` | Iso-Lateral Row (machine) | catalog only |
 | `squat-machine` | Squat (machine) | catalog; Strong `Squat (Machine)` |
 | `triceps-press-machine` | Triceps Press (machine) | catalog; Strong `Triceps Press` |
 | `chest-dip` | Chest Dip (assisted) | catalog only |
