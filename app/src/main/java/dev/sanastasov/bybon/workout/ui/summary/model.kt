@@ -1,11 +1,12 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
-import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
+import dev.sanastasov.bybon.workout.ui.toLoadLabel
 
 sealed class WorkoutSummaryUiState {
     data object Loading : WorkoutSummaryUiState()
@@ -24,10 +25,11 @@ data class WorkoutSummaryExerciseUi(
 )
 
 data class WorkoutSummarySetUi(
-    val number: Int,
+    val number: Int?,
     val weightKg: String,
     val reps: Int,
     val oneRm: Weight?,
+    val isWarmup: Boolean = false,
 )
 
 internal fun List<WorkoutSession>.requireCompletedSummary(
@@ -44,18 +46,27 @@ internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content =
 
 private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null
-    // Warmups are imported but omitted from summary; include them when this screen is fixed.
+    val warmups = warmupSets.orEmpty().map { it.toWarmupSummaryUi() }
+    val work = sets.mapIndexed { index, set -> set.toWorkSummaryUi(index + 1) }
     return WorkoutSummaryExerciseUi(
         id = id,
         name = exerciseDefinition.name,
-        sets = sets.mapIndexed { index, set ->
-            WorkoutSummarySetUi(
-                number = index + 1,
-                weightKg = set.weight?.kilograms ?: MISSING_LOAD_LABEL,
-                reps = set.reps,
-                oneRm = set.oneRm,
-            )
-        },
+        sets = warmups + work,
         notes = notes,
     )
 }
+
+private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummarySetUi(
+    number = null,
+    weightKg = weight.toLoadLabel(),
+    reps = reps,
+    oneRm = null,
+    isWarmup = true,
+)
+
+private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = WorkoutSummarySetUi(
+    number = number,
+    weightKg = weight.toLoadLabel(),
+    reps = reps,
+    oneRm = oneRm,
+)

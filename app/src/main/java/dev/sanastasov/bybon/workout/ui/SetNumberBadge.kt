@@ -2,7 +2,9 @@ package dev.sanastasov.bybon.workout.ui
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -72,3 +74,21 @@ fun SetNumberBadge(
 }
 
 private fun Color.takeOr(fallback: Color): Color = if (this == Color.Unspecified) fallback else this
+
+@Composable
+fun WarmupLoadRow(loadLabel: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier.semantics(mergeDescendants = true) {
+            contentDescription = "Warmup set, $loadLabel"
+        },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SetNumberBadge(
+            isWarmup = true,
+            workSetNumber = null,
+            onClick = null,
+        )
+        Text(loadLabel)
+    }
+}

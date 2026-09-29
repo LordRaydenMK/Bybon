@@ -181,8 +181,52 @@ class WorkoutHistoryViewModelTest {
         viewModel.uiState.test {
             skipItems(1)
             val actual = awaitItem() as WorkoutHistoryUiState.History
-            assert(actual.sessions.single().exercises.single().weightKg == "80")
-            assert(actual.sessions.single().exercises.single().reps == 8)
+            val exercise = actual.sessions.single().exercises.single()
+            assert(exercise.weightKg == "80")
+            assert(exercise.reps == 8)
+            assert(exercise.warmups == listOf(HistoryWarmupUi("200", 1)))
+        }
+    }
+
+    @Test
+    fun `history lists warmups in logged order under the top work set`() = runTest {
+        val bench = completedExercise("bench-press-bb", 80f to 8, 70f to 10).copy(
+            warmupSets = listOf(
+                ExerciseSet(
+                    exerciseDefinition = catalogExercise("bench-press-bb"),
+                    weight = Weight.kilograms(40),
+                    reps = 5,
+                    setState = SetState.Completed,
+                ),
+                ExerciseSet(
+                    exerciseDefinition = catalogExercise("bench-press-bb"),
+                    weight = null,
+                    reps = 6,
+                    setState = SetState.Completed,
+                ),
+            ),
+        )
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(bench),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val exercise = (awaitItem() as WorkoutHistoryUiState.History)
+                .sessions.single().exercises.single()
+            assert(exercise.weightKg == "80")
+            assert(exercise.reps == 8)
+            assert(
+                exercise.warmups == listOf(
+                    HistoryWarmupUi("40", 5),
+                    HistoryWarmupUi("-", 6),
+                ),
+            )
         }
     }
 

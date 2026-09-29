@@ -149,6 +149,43 @@ class WorkoutSummaryViewModelTest {
     }
 
     @Test
+    fun `summary lists warmups before numbered work sets and omits warmup 1RM`() {
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(
+                completedExercise("bench-press-bb", 80f to 8, 80f to 7).copy(
+                    warmupSets = listOf(
+                        ExerciseSet(
+                            exerciseDefinition = catalogExercise("bench-press-bb"),
+                            weight = Weight.kilograms(40),
+                            reps = 5,
+                            setState = SetState.Completed,
+                        ),
+                        ExerciseSet(
+                            exerciseDefinition = catalogExercise("bench-press-bb"),
+                            weight = null,
+                            reps = 6,
+                            setState = SetState.Completed,
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val sets = session.toSummaryUi().exercises.single().sets
+        assert(
+            sets == listOf(
+                WorkoutSummarySetUi(null, "40", 5, null, isWarmup = true),
+                WorkoutSummarySetUi(null, "-", 6, null, isWarmup = true),
+                WorkoutSummarySetUi(1, "80", 8, oneRm(80f, 8)),
+                WorkoutSummarySetUi(2, "80", 7, oneRm(80f, 7)),
+            ),
+        )
+    }
+
+    @Test
     fun `session and exercise notes are shown in the summary`() = runTest {
         val session = completedSession(
             planId = "full-body-b",

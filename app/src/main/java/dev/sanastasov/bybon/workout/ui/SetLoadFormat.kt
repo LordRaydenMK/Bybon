@@ -19,13 +19,17 @@ fun Weight?.toOneRmLabel(): String =
 
 fun formatLoadedSet(weight: Weight?, reps: Int): String = "${weight.toContentLoadLabel()} x $reps"
 
+fun formatLoadedSet(weightKg: String, reps: Int): String = "${weightKg.toDisplayLoad()} x $reps"
+
 fun formatSetPerformance(weight: Weight?, reps: Int, oneRm: Weight?): String {
     val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
     return "${formatLoadedSet(weight, reps)} @ $rm"
 }
 
 fun formatSetPerformance(weightKg: String, reps: Int, oneRm: Weight?): String {
-    val load = if (weightKg == MISSING_LOAD_LABEL) MISSING_LOAD_LABEL else "$weightKg kg"
     val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
-    return "$load x $reps @ $rm"
+    return "${formatLoadedSet(weightKg, reps)} @ $rm"
 }
+
+private fun String.toDisplayLoad(): String =
+    if (this == MISSING_LOAD_LABEL) MISSING_LOAD_LABEL else "$this kg"
