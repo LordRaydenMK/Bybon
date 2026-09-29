@@ -171,7 +171,10 @@ class WorkoutSummaryViewModelTest {
             val actual = awaitItem() as WorkoutSummaryUiState.Content
             assert(actual.note == "Friday full body workout")
             assert(actual.exercises.first().notes.isEmpty())
-            assert(actual.exercises.last().notes == listOf("Rep range 11-15", "Pause at the bottom"))
+            assert(
+                actual.exercises.last().notes ==
+                    listOf("Rep range 11-15", "Pause at the bottom"),
+            )
         }
     }
 
