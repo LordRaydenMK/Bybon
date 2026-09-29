@@ -18,6 +18,7 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
 - The library is three sources: the RepDB subset, a few exercises Bybon ships because RepDB has no match, and exercises the user creates. Bybon-shipped and user-created exercises use the same definition as a RepDB row, with RepDB-only fields empty (images, instructions, tips, tags, and the rest).
 - Iso-Lateral Row stays a Bybon-shipped exercise (`iso-lat-row`, "Iso-Lateral Row (machine)", back, machine). It is not mapped to Seated Cable Row.
+- Squat (machine) stays a Bybon-shipped exercise (`squat-machine`). It is a plate-loaded squat machine, and it is not Hack Squat or Smith Machine Squat.
 
 ## Catalog filter
 
@@ -261,12 +262,12 @@ Picked:
 | --- | --- | --- |
 | `incline-row-db` | Incline Row (dumbbell) | `chest-supported-db-row` (Chest-Supported Dumbbell Row) |
 | `iso-lat-row` | Iso-Lateral Row (machine) | Bybon-shipped. Not mapped to a RepDB id. |
+| `squat-machine` | Squat (machine) | Bybon-shipped. Plate-loaded, not Hack Squat or Smith Machine Squat. |
 
 Still to pick, one at a time:
 
 | Current id | Current name | Where it matters |
 | --- | --- | --- |
-| `squat-machine` | Squat (machine) | catalog; Strong `Squat (Machine)` |
 | `triceps-press-machine` | Triceps Press (machine) | catalog; Strong `Triceps Press` |
 | `chest-dip` | Chest Dip (assisted) | catalog only |
 | `chest-fly-peck-deck` | Chest Fly (machine) | catalog; Strong bare `Chest Fly` |
