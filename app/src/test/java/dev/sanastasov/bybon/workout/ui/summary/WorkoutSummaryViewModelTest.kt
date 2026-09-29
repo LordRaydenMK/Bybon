@@ -148,6 +148,36 @@ class WorkoutSummaryViewModelTest {
         assert(content.exercises.single().sets.single().oneRm == null)
     }
 
+    @Test
+    fun `session and exercise notes are shown in the summary`() = runTest {
+        val session = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(
+                completedExercise("rdl-bb", 45f to 12),
+                completedExercise(
+                    "incline-bench-press-db",
+                    20f to 13,
+                    notes = listOf("Rep range 11-15", "Pause at the bottom"),
+                ),
+            ),
+            note = "Friday full body workout",
+        )
+        val viewModel = summaryViewModel(session)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val actual = awaitItem() as WorkoutSummaryUiState.Content
+            assert(actual.note == "Friday full body workout")
+            assert(actual.exercises.first().notes.isEmpty())
+            assert(
+                actual.exercises.last().notes ==
+                    listOf("Rep range 11-15", "Pause at the bottom"),
+            )
+        }
+    }
+
     private fun oneRm(kg: Float, reps: Int): Weight = Weight.kilograms(estimateOneRmKg(kg, reps))
 
     private fun TestScope.summaryViewModel(session: WorkoutSession) = WorkoutSummaryViewModel(

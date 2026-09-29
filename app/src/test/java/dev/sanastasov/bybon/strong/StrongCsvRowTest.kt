@@ -511,8 +511,27 @@ class StrongCsvRowTest {
         exercises: List<String>,
         date: String = "2026-01-01 12:00:00",
         durationSec: Int = 1800,
+        workoutNotes: String? = null,
+        exerciseNotes: Map<String, List<String>> = emptyMap(),
     ): List<StrongCsvRow> = exercises.flatMap { exerciseName ->
-        (1..3).map { setNumber ->
+        val noteRows = exerciseNotes[exerciseName].orEmpty().map { note ->
+            StrongCsvRow(
+                workoutNumber = number,
+                date = date,
+                workoutName = name,
+                durationSec = durationSec,
+                exerciseName = exerciseName,
+                setOrder = "Note",
+                weightKg = null,
+                reps = null,
+                rpe = null,
+                distanceMeters = null,
+                seconds = null,
+                notes = note,
+                workoutNotes = workoutNotes,
+            )
+        }
+        val setRows = (1..3).map { setNumber ->
             StrongCsvRow(
                 workoutNumber = number,
                 date = date,
@@ -526,8 +545,9 @@ class StrongCsvRowTest {
                 distanceMeters = null,
                 seconds = null,
                 notes = null,
-                workoutNotes = null,
+                workoutNotes = workoutNotes,
             )
         }
+        noteRows + setRows
     }
 }

@@ -134,7 +134,7 @@ class WorkoutHistoryViewModelTest {
         val inProgress = WorkoutSession(
             planId = WorkoutPlanId("full-body-a"),
             planName = "Full Body A",
-            planDescription = null,
+            note = null,
             exercises = listOf(
                 completedExercise("bench-press-bb", 80f to 8).let { exercise ->
                     exercise.copy(

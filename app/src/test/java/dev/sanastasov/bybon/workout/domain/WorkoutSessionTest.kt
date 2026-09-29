@@ -223,6 +223,21 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `toWorkoutSession copies plan description and exercise notes`() {
+        val plan = fullBodyA.copy(
+            sets = fullBodyA.sets.mapIndexed { index, exercise ->
+                if (index == 0) exercise.copy(notes = listOf("Cue: elbows in")) else exercise
+            },
+        )
+
+        val actual = plan.toWorkoutSession()
+
+        assert(actual.note == fullBodyA.description)
+        assert(actual.exercises.first().notes == listOf("Cue: elbows in"))
+        assert(actual.exercises.drop(1).all { it.notes.isEmpty() })
+    }
+
+    @Test
     fun `update weight preserves previous set reference`() {
         val previous = PreviousSetPerformance(Weight.kilograms(45), 12)
         val session = fullBodyA.toWorkoutSession().let { session ->

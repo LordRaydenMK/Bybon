@@ -79,7 +79,7 @@ fun List<StrongCsvRow>.toStrongImport(
             if (matched != null) {
                 resolvedPlans[planName] = matched
             } else {
-                val imported = representative.toWorkoutPlan()
+                val imported = representative.toWorkoutPlan(workoutsForPlan.templateNote())
                 resolvedPlans[planName] = imported
                 plansToImport += imported
             }
@@ -134,16 +134,24 @@ private fun List<StrongCsvRow>.toParsedWorkout(
 private fun ParsedWorkout.toWorkoutSession(plan: WorkoutPlan): WorkoutSession = WorkoutSession(
     planId = plan.id,
     planName = plan.name,
-    planDescription = workoutNotes ?: plan.description,
+    note = workoutNotes,
     exercises = exercises,
     startedAt = startedAt,
     duration = duration,
 )
 
-private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
+private fun List<ParsedWorkout>.templateNote(): String? {
+    val notes = mapNotNull { it.workoutNotes?.trim()?.takeIf { note -> note.isNotEmpty() } }
+    if (notes.isEmpty()) return null
+    val counts = notes.groupingBy { it }.eachCount()
+    val maxCount = counts.maxOf { it.value }
+    return notes.last { counts.getValue(it) == maxCount }
+}
+
+private fun ParsedWorkout.toWorkoutPlan(description: String?): WorkoutPlan = WorkoutPlan(
     id = WorkoutPlanId(planName.slugify()),
     name = planName,
-    description = null,
+    description = description,
     sets = exercises.map { exercise ->
         PlanedExercise(
             exercise = exercise.exerciseDefinition,
@@ -151,6 +159,7 @@ private fun ParsedWorkout.toWorkoutPlan(): WorkoutPlan = WorkoutPlan(
             sets = exercise.sets.size,
             repRange = exercise.repRange,
             restAfterWorkSet = exercise.restAfterWorkSet,
+            notes = exercise.notes,
         )
     },
 )
@@ -236,8 +245,13 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
             .takeIf { it.isNotEmpty() },
         sets = workSets,
         restAfterWorkSet = restAfterWorkSet,
+        notes = exerciseNotes(),
     )
 }
+
+private fun List<StrongCsvRow>.exerciseNotes(): List<String> =
+    filter { it.setOrder.equals("Note", ignoreCase = true) }
+        .mapNotNull { it.notes?.trim()?.takeIf { note -> note.isNotEmpty() } }
 
 private fun StrongCsvRow.toCompletedSet(definition: ExerciseDefinition): ExerciseSet? {
     val reps = reps?.takeIf { it > 0 } ?: return null

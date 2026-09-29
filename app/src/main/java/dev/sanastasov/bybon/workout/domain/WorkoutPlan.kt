@@ -15,6 +15,7 @@ data class PlanedExercise(
     val sets: Int,
     val repRange: IntRange,
     val restAfterWorkSet: Duration = exercise.defaultRest,
+    val notes: List<String> = emptyList(),
 ) {
     init {
         require(warmupSets >= 0) { "warmupSets must be >= 0" }

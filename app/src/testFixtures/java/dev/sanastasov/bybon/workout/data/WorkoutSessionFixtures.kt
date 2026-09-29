@@ -15,10 +15,11 @@ fun completedSession(
     planName: String,
     startedAt: LocalDateTime,
     exercises: List<WorkoutExercise>,
+    note: String? = null,
 ): WorkoutSession = WorkoutSession(
     planId = WorkoutPlanId(planId),
     planName = planName,
-    planDescription = null,
+    note = note,
     exercises = exercises,
     startedAt = startedAt,
     duration = 40.minutes,
@@ -27,6 +28,7 @@ fun completedSession(
 fun completedExercise(
     exerciseId: String,
     vararg weightAndReps: Pair<Float, Int>,
+    notes: List<String> = emptyList(),
 ): WorkoutExercise {
     val definition = catalogExercise(exerciseId)
     return WorkoutExercise(
@@ -40,5 +42,6 @@ fun completedExercise(
                 setState = SetState.Completed,
             )
         },
+        notes = notes,
     )
 }

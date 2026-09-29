@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 val sampleFullBodyBCompleted = WorkoutSession(
     planId = fullBodyB.id,
     planName = fullBodyB.name,
-    planDescription = "Friday full body workout",
+    note = "Friday full body workout",
     exercises = listOf(
         completedExercise(
             "rdl-bb",
@@ -23,6 +23,7 @@ val sampleFullBodyBCompleted = WorkoutSession(
         completedExercise(
             "incline-bench-press-db",
             listOf(20f to 13, 20f to 11, 20f to 8),
+            notes = listOf("Rep range 11-15"),
         ),
         completedExercise(
             "split-squat-db",
@@ -40,6 +41,7 @@ val sampleFullBodyBCompleted = WorkoutSession(
 private fun completedExercise(
     exerciseId: String,
     weightAndReps: List<Pair<Float, Int>>,
+    notes: List<String> = emptyList(),
 ): WorkoutExercise {
     val definition = catalogExercise(exerciseId)
     val reps = weightAndReps.map { it.second }
@@ -54,5 +56,6 @@ private fun completedExercise(
                 setState = SetState.Completed,
             )
         },
+        notes = notes,
     )
 }
