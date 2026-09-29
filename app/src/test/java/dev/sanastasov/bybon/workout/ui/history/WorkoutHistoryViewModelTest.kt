@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.catalogExercise
@@ -305,6 +306,7 @@ class WorkoutHistoryViewModelTest {
             assert(awaitItem() == WorkoutHistoryUiState.Importing)
             val summary = (awaitItem() as WorkoutHistoryUiState.Summary).summary
             assert(summary.sessionCount == 52)
+            assert(summary.sessionsSkipped == 0)
             assert(
                 summary.sessionsByPlan == listOf(
                     PlanSessionCountUi("Full Body B", 23),
@@ -371,6 +373,78 @@ class WorkoutHistoryViewModelTest {
             assert(history.sessions.any { it.planName == "Full Body B" })
             assert(history.sessions.any { it.planName == "Full Body A" })
         }
+    }
+
+    @Test
+    fun `importing the strong sample csv again skips sessions already stored`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = historyViewModel(
+            repository,
+            csv = readStrongBackupSample(javaClass.classLoader),
+        )
+
+        viewModel.uiState.test {
+            skipItems(2)
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
+            skipItems(1)
+            val first = awaitItem() as WorkoutHistoryUiState.Summary
+            assert(first.summary.sessionCount == 52)
+            assert(first.summary.sessionsSkipped == 0)
+
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
+
+            assert(awaitItem() == WorkoutHistoryUiState.Importing)
+            val second = awaitItem() as WorkoutHistoryUiState.Summary
+            assert(second.summary.sessionCount == 0)
+            assert(second.summary.sessionsSkipped == 52)
+            assert(second.summary.plansCreatedCount == 0)
+            assert(second.summary.exercisesImportedCount == 0)
+            assert(second.summary.sessionsByPlan.isEmpty())
+        }
+
+        assert(repository.workoutSessions().first().size == 52)
+        assert(repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().size == 4)
+        assert(repository.exercises().first().count { it.id == "crunch-machine" } == 1)
+    }
+
+    @Test
+    fun `import skips a stored session with the same plan and start time`() = runTest {
+        val startedAt = LocalDateTime.of(2026, 2, 19, 17, 35, 54)
+        val existing = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = startedAt,
+            exercises = listOf(completedExercise("bench-press-bb", 20f to 5)),
+            note = "kept",
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB),
+            initialExercises = catalogExercises,
+            initialSessions = listOf(existing),
+        )
+        val viewModel = historyViewModel(
+            repository,
+            csv = readStrongBackupSample(javaClass.classLoader),
+        )
+
+        viewModel.uiState.test {
+            skipItems(2)
+            viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
+            skipItems(1)
+            val summary = (awaitItem() as WorkoutHistoryUiState.Summary).summary
+            assert(summary.sessionCount == 51)
+            assert(summary.sessionsSkipped == 1)
+        }
+
+        val stored = repository.workoutSessions().first()
+        val kept = stored.single { session ->
+            session.startedAt == startedAt && session.planId == fullBodyA.id
+        }
+        assert(stored.size == 52)
+        assert(kept.note == "kept")
     }
 
     @Test

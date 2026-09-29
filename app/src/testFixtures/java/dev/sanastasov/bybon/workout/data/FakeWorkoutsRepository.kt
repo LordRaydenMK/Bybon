@@ -82,11 +82,14 @@ class FakeWorkoutsRepository(
         plans: List<WorkoutPlan>,
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
-    ) {
-        this.exercises.update { it + exercises }
-        this.plans.update { it + plans }
-        this.sessions.update { it + sessions }
-    }
+    ) = applyHistoryImport(
+        exercises = this.exercises,
+        plans = this.plans,
+        sessions = this.sessions,
+        incomingPlans = plans,
+        incomingSessions = sessions,
+        incomingExercises = exercises,
+    )
 
     fun emitSessions(value: List<WorkoutSession>) {
         sessions.value = value

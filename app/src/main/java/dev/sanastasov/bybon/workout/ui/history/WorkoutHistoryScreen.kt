@@ -168,6 +168,13 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
+        if (summary.sessionsSkipped > 0) {
+            Text(
+                "${summary.sessionsSkipped} ${sessionsLabel(
+                    summary.sessionsSkipped,
+                )} already in history",
+            )
+        }
         Text(
             "Sessions by plan",
             fontWeight = FontWeight.Bold,
@@ -325,6 +332,7 @@ private fun WorkoutHistoryImportSummaryPreview() {
                     firstSessionDate = LocalDate.of(2026, 2, 17),
                     lastSessionDate = LocalDate.of(2026, 8, 20),
                     workingSetCount = 825,
+                    sessionsSkipped = 0,
                 ),
             ),
             onNavigateBack = {},

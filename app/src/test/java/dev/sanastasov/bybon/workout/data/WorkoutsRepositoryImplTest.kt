@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.data
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addWorkSet
@@ -12,6 +13,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -122,5 +124,147 @@ class WorkoutsRepositoryImplTest {
         repository.updateWorkout(fullBodyA.toOverviewSession())
 
         assert(repository.workoutSessions().first().single() == started)
+    }
+
+    @Test
+    fun `importHistory skips a session that is already stored`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34),
+            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            note = "kept",
+        )
+
+        val first = repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(session),
+            exercises = emptyList(),
+        )
+        val second = repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(session.copy(note = "from csv")),
+            exercises = emptyList(),
+        )
+
+        assert(first.sessions == listOf(session))
+        assert(first.sessionsSkipped == 0)
+        assert(second.sessions.isEmpty())
+        assert(second.sessionsSkipped == 1)
+        assert(repository.workoutSessions().first() == listOf(session))
+    }
+
+    @Test
+    fun `importHistory appends only the session whose id is new`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34)
+        val kept = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = startedAt,
+            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            note = "kept",
+        )
+        repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(kept),
+            exercises = emptyList(),
+        )
+        val fresh = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = startedAt.plusDays(1),
+            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
+        )
+
+        val result = repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(kept.copy(note = "from csv"), fresh),
+            exercises = emptyList(),
+        )
+
+        assert(result.sessions == listOf(fresh))
+        assert(result.sessionsSkipped == 1)
+        assert(repository.workoutSessions().first() == listOf(kept, fresh))
+    }
+
+    @Test
+    fun `importHistory keeps the first session when one file repeats an id`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val first = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34),
+            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            note = "first",
+        )
+
+        val result = repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(first, first.copy(note = "second")),
+            exercises = emptyList(),
+        )
+
+        assert(result.sessions == listOf(first))
+        assert(result.sessionsSkipped == 1)
+        assert(repository.workoutSessions().first() == listOf(first))
+    }
+
+    @Test
+    fun `importHistory keeps sessions that share a start time on different plans`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34)
+        val fullBody = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = startedAt,
+            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+        )
+        repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(fullBody),
+            exercises = emptyList(),
+        )
+        val upperBody = completedSession(
+            planId = "upper-body-a",
+            planName = "Upper body A",
+            startedAt = startedAt,
+            exercises = listOf(completedExercise("bench-press-bb", 30f to 10)),
+        )
+
+        val result = repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(upperBody),
+            exercises = emptyList(),
+        )
+
+        assert(result.sessions == listOf(upperBody))
+        assert(result.sessionsSkipped == 0)
+        assert(repository.workoutSessions().first() == listOf(fullBody, upperBody))
+    }
+
+    @Test
+    fun `importHistory does not insert a plan or exercise id that already exists`() = runTest {
+        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val extra = fullBodyA.copy(id = WorkoutPlanId("extra"), name = "Extra")
+        val created = repository.importHistory(
+            plans = listOf(extra),
+            sessions = emptyList(),
+            exercises = emptyList(),
+        )
+        val bench = catalogExercises.first { it.id == "bench-press-bb" }
+
+        val again = repository.importHistory(
+            plans = listOf(extra.copy(name = "Renamed")),
+            sessions = emptyList(),
+            exercises = listOf(bench.copy(name = "Other")),
+        )
+
+        assert(created.plans == listOf(extra))
+        assert(again.plans.isEmpty())
+        assert(again.exercises.isEmpty())
+        assert(repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().last() == extra)
+        assert(repository.exercises().first().single { it.id == bench.id } == bench)
     }
 }

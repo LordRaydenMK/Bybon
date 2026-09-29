@@ -29,6 +29,7 @@ data class ImportSummaryUi(
     val firstSessionDate: LocalDate?,
     val lastSessionDate: LocalDate?,
     val workingSetCount: Int,
+    val sessionsSkipped: Int,
 )
 
 data class PlanSessionCountUi(
