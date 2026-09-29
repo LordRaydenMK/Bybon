@@ -14,7 +14,7 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise becomes an active exercise only after 5 workouts in the file. Below that, the sets stay in history on an archived exercise, and the library does not list it.
 - Kettlebell, `loop_band`, and `resistance_band` are excluded. Other equipment stays in the catalog. Splitting new equipment values (cable, EZ-bar, Smith, and the rest) waits for a later pass.
 - Yoga and Pilates are excluded by English name. See the catalog filter.
-- An exercise stores `primaryMuscles` and `secondaryMuscles`. It does not store `body_part` or `MuscleGroup`. The same muscle is the primary on exercises RepDB files under different regions, so a single group cannot be derived from the list.
+- An exercise stores `bodyPart` and the muscle lists. `bodyPart` is RepDB's nine regions and is what the library groups by. `primaryMuscles` and `secondaryMuscles` stay as the more specific list. One is not derived from the other.
 - `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
 - The library is three sources: the RepDB subset, a few exercises Bybon ships because RepDB has no match, and exercises the user creates. Bybon-shipped and user-created exercises use the same definition as a RepDB row, with RepDB-only fields empty (images, instructions, tips, tags, and the rest).
 - Bybon ships these exercises because RepDB has no match. Strong names for them alias onto these ids.
@@ -59,7 +59,8 @@ Parsed into the exercise model from the pinned file:
 | `description_en` | One-line summary for the detail screen. |
 | `instructions_en`, `tips_en` | Steps and form cues for the detail screen. Stored now so that screen does not need another import. |
 | `images` | Sealed: `StartAndPeak` or `Main`. Pinned URLs. A row is one shape, not both. |
-| `primaryMuscles`, `secondaryMuscles` | Anatomical muscles. This replaces `primaryMuscleGroup`. 191 of the 382 have more than one primary. 27 have no secondary list. |
+| `bodyPart` | RepDB `body_part`. Replaces `MuscleGroup`. Library group. |
+| `primaryMuscles`, `secondaryMuscles` | Anatomical muscles. 191 of the 382 have more than one primary. 27 have no secondary list. |
 | `equipment` | RepDB slug, kept even when the load class is one of the current five. |
 | `mechanic` | `compound` or `isolation`. Default rest. |
 | `force_type` | `push`, `pull`, `static`, or `dynamic`. |
@@ -151,9 +152,40 @@ Bench, squat, lat pulldown, and lateral raise stay on the same clock they have t
 
 ## Muscles
 
-`primaryMuscleGroup` and RepDB `body_part` are not stored. `primaryMuscles` and `secondaryMuscles` are the muscle fields. Barbell Bench Press is primary `pectoralis_major`, secondary `anterior_deltoid` and `triceps_brachii`. Fractional sets use that list later.
+Both layers are stored. `bodyPart` is the library group. The muscle lists are the specific muscles. They are stored separately because the list does not determine the region: the same primary muscle shows up under more than one RepDB `body_part`, and 191 exercises have more than one primary.
 
-`body_part` is not recoverable from the muscle list. Taking the most common region of the first primary muscle disagrees with RepDB on 41 of the 382. Chin-ups would land on upper arms, dumbbell Romanian deadlift on upper legs, and Machine Assisted Dips on chest. The library today groups and filters by `MuscleGroup`. That grouping goes away with the field. An exercise can show under each of its primary muscles.
+```kotlin
+enum class BodyPart {
+    UpperLegs,   // was Legs, together with LowerLegs
+    Back,
+    UpperArms,   // was Arms, together with LowerArms
+    Chest,
+    Shoulders,
+    Core,
+    LowerLegs,
+    LowerArms,
+    FullBody,
+    // removed: Arms, Legs, Other
+}
+```
+
+Counts inside the 382:
+
+| `body_part` | Count |
+| --- | --- |
+| `upper_legs` | 81 |
+| `back` | 77 |
+| `upper_arms` | 54 |
+| `chest` | 51 |
+| `shoulders` | 50 |
+| `core` | 45 |
+| `lower_legs` | 11 |
+| `lower_arms` | 8 |
+| `full_body` | 5 |
+
+Barbell Bench Press is `Chest`, primary `pectoralis_major`, secondary `anterior_deltoid` and `triceps_brachii`. Fractional sets use the muscle lists later.
+
+Bybon-shipped rows pick a `bodyPart` directly: Iso-Lateral Row is `Back`, Squat (machine) is `UpperLegs`, Triceps Press (machine) is `UpperArms`, Lateral Raise (machine) is `Shoulders`. A guessed Strong exercise picks one of these nine. There is no `Other`.
 
 Primary slugs that show up in the 382, most common first: `gluteus_maximus`, `pectoralis_major`, `latissimus_dorsi`, `quadriceps`, `triceps_brachii`, `rectus_abdominis`, `anterior_deltoid`, `biceps_brachii`, `lateral_deltoid`, `rhomboids`, `hamstrings`, `trapezius`, `erector_spinae`, `obliques`, `hip_flexors`, `gastrocnemius`, `forearm_flexors`, `posterior_deltoid`, `brachialis`, `gluteus_medius`, `transverse_abdominis`, `forearm_extensors`, `brachioradialis`, `abductors`, `soleus`, `adductors`. Secondary-only slugs: `serratus_anterior`, `quadratus_lumborum`, `forearms`, `supraspinatus`.
 
