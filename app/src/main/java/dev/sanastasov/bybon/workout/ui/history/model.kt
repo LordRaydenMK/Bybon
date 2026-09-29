@@ -1,12 +1,13 @@
 package dev.sanastasov.bybon.workout.ui.history
 
 import android.net.Uri
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
-import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
+import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import java.time.LocalDate
 
 sealed class WorkoutHistoryUiState {
@@ -50,6 +51,12 @@ data class ExerciseTopSetUi(
     val weightKg: String,
     val reps: Int,
     val oneRm: Weight?,
+    val warmups: List<HistoryWarmupUi> = emptyList(),
+)
+
+data class HistoryWarmupUi(
+    val weightKg: String,
+    val reps: Int,
 )
 
 sealed class WorkoutHistoryAction {
@@ -77,7 +84,6 @@ internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
 }
 
 private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi? {
-    // Warmups are imported but omitted from history; include them when this screen is fixed.
     val topSet = sets.maxWithOrNull(
         compareBy(
             { it.weight },
@@ -86,8 +92,14 @@ private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi? {
     ) ?: return null
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
-        weightKg = topSet.weight?.kilograms ?: MISSING_LOAD_LABEL,
+        weightKg = topSet.weight.toLoadLabel(),
         reps = topSet.reps,
         oneRm = topSet.oneRm,
+        warmups = warmupSets.orEmpty().map { it.toHistoryWarmupUi() },
     )
 }
+
+private fun ExerciseSet.toHistoryWarmupUi(): HistoryWarmupUi = HistoryWarmupUi(
+    weightKg = weight.toLoadLabel(),
+    reps = reps,
+)

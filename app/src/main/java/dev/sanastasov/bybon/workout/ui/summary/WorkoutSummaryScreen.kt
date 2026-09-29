@@ -3,9 +3,7 @@ package dev.sanastasov.bybon.workout.ui.summary
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -13,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,6 +29,8 @@ import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
+import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.formatSetPerformance
 
 @Composable
@@ -127,31 +126,27 @@ private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
         }
         Spacer(Modifier.height(4.dp))
         exercise.sets.forEach { set ->
-            CompletedSetRow(set)
+            if (set.isWarmup) {
+                WarmupLoadRow(
+                    formatLoadedSet(set.weightKg, set.reps),
+                    Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                )
+            } else {
+                WorkSetRow(set)
+            }
         }
     }
 }
 
 @Composable
-private fun CompletedSetRow(set: WorkoutSummarySetUi) {
-    val summary = "${set.number}. ${formatSetPerformance(set.weightKg, set.reps, set.oneRm)}"
-    Row(
+private fun WorkSetRow(set: WorkoutSummarySetUi) {
+    val number = checkNotNull(set.number)
+    Text(
+        "$number. ${formatSetPerformance(set.weightKg, set.reps, set.oneRm)}",
         Modifier
-            .defaultMinSize(minHeight = 48.dp)
             .fillMaxWidth()
             .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            summary,
-            Modifier.weight(1f),
-        )
-        Checkbox(
-            true,
-            null,
-            Modifier.padding(horizontal = 10.dp),
-        )
-    }
+    )
 }
 
 @Preview
@@ -167,6 +162,8 @@ private fun WorkoutSummaryContentPreview() {
                         id = "rdl-bb",
                         name = "Romanian Deadlift (RDL) (barbell)",
                         sets = listOf(
+                            WorkoutSummarySetUi(null, "20", 8, null, isWarmup = true),
+                            WorkoutSummarySetUi(null, "35", 4, null, isWarmup = true),
                             WorkoutSummarySetUi(1, "45", 12, Weight.kilograms(63f)),
                             WorkoutSummarySetUi(2, "45", 12, Weight.kilograms(63f)),
                         ),

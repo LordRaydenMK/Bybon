@@ -223,8 +223,7 @@ the full backup and now match (lat pulldown, both leg curls, leg press and chest
 
 ## Decisions vs Strong
 
-Statuses from triage. **TODO** items are for work **before** Room workout persistence, except
-persistence itself.
+Statuses from triage. Workout persistence is the remaining TODO.
 
 ### Won't do
 
@@ -253,14 +252,9 @@ persistence itself.
 | Session and exercise notes | `Workout Notes` → session `note`. New plan `description` is the most common `Workout Notes` (last on a tie). Each `Set Order=Note` row is one item in `notes`. Existing Bybon plans keep their description and planned-exercise notes. |
 | Idempotent import | `importHistory` skips sessions whose `WorkoutSessionId(planId, startedAt)` already exists and does not replace them. The same id inside one file keeps the first session. Strong `Workout #` stays a CSV grouping key. The summary counts inserted sessions and, when some were skipped, how many were already stored. |
 | Archive rare unmatched plans | New plans whose Strong name was executed fewer than 5 times are created `isArchived = true`. Names with 5 or more sessions stay in the active list. Matched Bybon plans keep their archive flag. The import summary shows how many inserted plans were archived. Sample Upper body A/B (3 each) are archived. A full backup archives the five names under 5 sessions (`Full body A by JE cut`, `Full body A by JE`, `Upper body A`, `Upper body B`, `Afternoon Workout`) and keeps the six busier new names active. |
+| History and summary show warmups | History still headlines each exercise with its top working set (heaviest, then most reps) and lists that exercise's warmups underneath: circled `w`, load × reps, no 1RM. The workout summary lists warmups first, then working sets numbered from 1, with the same warmup row and no checkboxes. The import summary still counts working sets only. |
 
-### TODO (before Room)
-
-| Topic | Current behavior | Intended |
-|-------|------------------|----------|
-| History / summary hide warmups | Warmups import; history is top **work** set, summary lists work sets only | Show warmups on those screens |
-
-### TODO (after the above)
+### TODO
 
 | Topic | Current behavior | Intended |
 |-------|------------------|----------|

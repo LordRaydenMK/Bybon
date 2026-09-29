@@ -40,6 +40,8 @@ import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
+import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.formatSetPerformance
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -248,7 +250,7 @@ private fun WorkoutSessionHistoryCard(
             )
             Spacer(Modifier.height(4.dp))
             session.exercises.forEach { exercise ->
-                Text(exercise.summary())
+                ExerciseHistoryBlock(exercise)
             }
         }
     }
@@ -262,6 +264,19 @@ private fun sessionsLabel(count: Int): String = if (count == 1) "session" else "
 private fun plansLabel(count: Int): String = if (count == 1) "plan" else "plans"
 
 private fun exercisesLabel(count: Int): String = if (count == 1) "exercise" else "exercises"
+
+@Composable
+private fun ExerciseHistoryBlock(exercise: ExerciseTopSetUi) {
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(exercise.summary())
+        exercise.warmups.forEach { warmup ->
+            WarmupLoadRow(
+                formatLoadedSet(warmup.weightKg, warmup.reps),
+                Modifier.padding(start = 8.dp),
+            )
+        }
+    }
+}
 
 private fun ExerciseTopSetUi.summary(): String = buildString {
     append("$name: ${formatSetPerformance(weightKg, reps, oneRm)}")
@@ -287,6 +302,10 @@ private fun WorkoutHistoryContentPreview() {
                                 weightKg = "45",
                                 reps = 12,
                                 oneRm = Weight.kilograms(63f),
+                                warmups = listOf(
+                                    HistoryWarmupUi("20", 8),
+                                    HistoryWarmupUi("35", 4),
+                                ),
                             ),
                         ),
                     ),
