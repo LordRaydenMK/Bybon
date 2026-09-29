@@ -2,9 +2,9 @@ package dev.sanastasov.bybon.workout.ui.history
 
 import android.net.Uri
 import dev.sanastasov.bybon.strong.StrongCsvParser
-import dev.sanastasov.bybon.strong.StrongImportResult
 import dev.sanastasov.bybon.strong.toStrongImport
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.ImportHistoryResult
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
@@ -58,14 +58,18 @@ class WorkoutHistoryViewModel(
                 val csv = withContext(ioDispatcher) { contentResolverReader.read(uri) }
                 val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
                 val existingExercises = repository.exercises().first()
-                val result = withContext(defaultDispatcher) {
+                val mapped = withContext(defaultDispatcher) {
                     StrongCsvParser.parse(csv).toStrongImport(
                         plans = existingPlans,
                         exerciseCatalog = existingExercises,
                     )
                 }
-                repository.importHistory(result.plans, result.sessionHistory, result.exercises)
-                importPhase.value = ImportPhase.Summary(result.toSummaryUi())
+                val imported = repository.importHistory(
+                    mapped.plans,
+                    mapped.sessionHistory,
+                    mapped.exercises,
+                )
+                importPhase.value = ImportPhase.Summary(imported.toSummaryUi())
             } catch (e: CancellationException) {
                 throw e
             } catch (_: IOException) {
@@ -104,25 +108,26 @@ class WorkoutHistoryViewModel(
     }
 }
 
-private fun StrongImportResult.toSummaryUi(): ImportSummaryUi {
-    val sessionsByPlan = sessionHistory
+private fun ImportHistoryResult.toSummaryUi(): ImportSummaryUi {
+    val sessionsByPlan = sessions
         .groupingBy { it.planName }
         .eachCount()
         .map { (planName, sessionCount) ->
             PlanSessionCountUi(planName, sessionCount)
         }
-    val dates = sessionHistory
+    val dates = sessions
         .filter { it.state is WorkoutState.Completed }
         .map { it.startedAt.toLocalDate() }
     return ImportSummaryUi(
-        sessionCount = sessionHistory.size,
+        sessionCount = sessions.size,
         sessionsByPlan = sessionsByPlan,
         plansCreatedCount = plans.size,
         exercisesImportedCount = exercises.size,
         firstSessionDate = dates.minOrNull(),
         lastSessionDate = dates.maxOrNull(),
-        workingSetCount = sessionHistory.sumOf { session ->
+        workingSetCount = sessions.sumOf { session ->
             session.exercises.sumOf { it.sets.size }
         },
+        sessionsSkipped = sessionsSkipped,
     )
 }

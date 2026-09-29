@@ -24,5 +24,12 @@ interface WorkoutsRepository {
         plans: List<WorkoutPlan>,
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
-    )
+    ): ImportHistoryResult
 }
+
+data class ImportHistoryResult(
+    val plans: List<WorkoutPlan>,
+    val sessions: List<WorkoutSession>,
+    val exercises: List<ExerciseDefinition>,
+    val sessionsSkipped: Int,
+)

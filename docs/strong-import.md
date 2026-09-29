@@ -165,7 +165,7 @@ to the plan template).
 | `Workout Notes`                | Session `note`. New plans also take the most frequent value as `WorkoutPlan.description` (last workout on a tie). Existing Bybon plans keep their description. |
 | `Workout #`                    | Used only to group rows; **not stored** (Bybon identity is `planId + startedAt`) |
 
-Re-import appends again (**TODO:** idempotent on `WorkoutSessionId`, not Strong `Workout #`).
+`importHistory` skips a session when `WorkoutSessionId(planId, startedAt)` is already stored and leaves that session unchanged. Strong `Workout #` is not read at insert time. Two rows in one file that resolve to the same id keep the first. Plans and exercises already stored under the same id are not inserted again. The summary counts inserted sessions, and when any were skipped it also shows how many were already in history.
 
 ### 4. Sets / rest / notes
 
@@ -249,12 +249,12 @@ persistence itself.
 | `lateral-raise-machine` equipment | Catalog uses `Equipment.Machine` |
 | Zero-load sets | `ExerciseSet.weight` is `Weight?`. Strong `0.0` (and blank kg) import as `null`; `Weight` stays `> 0` when present. 1RM is null when weight is. Sample keeps 29 pull-up work + 15 BSS warmups; full backup 109 rows no longer drop. |
 | Session and exercise notes | `Workout Notes` → session `note`. New plan `description` is the most common `Workout Notes` (last on a tie). Each `Set Order=Note` row is one item in `notes`. Existing Bybon plans keep their description and planned-exercise notes. |
+| Idempotent import | `importHistory` skips sessions whose `WorkoutSessionId(planId, startedAt)` already exists and does not replace them. The same id inside one file keeps the first session. Strong `Workout #` stays a CSV grouping key. The summary counts inserted sessions and, when some were skipped, how many were already stored. |
 
 ### TODO (before Room)
 
 | Topic | Current behavior | Intended |
 |-------|------------------|----------|
-| Idempotent import | Re-picking the CSV appends duplicate sessions | Skip sessions whose `WorkoutSessionId(planId, startedAt)` already exists. Keep Bybon identity; do **not** key off Strong `Workout #` |
 | Archive unmatched plans | New plans are `isArchived = false` and show in the list | Unmatched Strong names should be created **archived**. Full backup adds ~11 extra names (`Chest, back side delts`, JE variants, Upper/Lower Body 1–2, …) on top of Upper body A/B |
 | History / summary hide warmups | Warmups import; history is top **work** set, summary lists work sets only | Show warmups on those screens |
 
@@ -367,3 +367,5 @@ force onto the current catalog.
 4. Build `WorkoutSession(Completed)` with Strong date/duration, that session’s `Workout Notes` in
    `note`, warmups + work sets (`Weight?` + reps; Strong `0.0` → `null` weight), rest duration from
    the first rest-timer row, and `Set Order=Note` rows as `notes`.
+5. `importHistory` appends only plans, exercises, and sessions whose ids are not already stored.
+   Session identity is `WorkoutSessionId(planId, startedAt)`. A repeat of the same file inserts nothing.
