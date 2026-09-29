@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.data
 
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.ImportHistoryResult
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
@@ -82,14 +83,29 @@ class FakeWorkoutsRepository(
         plans: List<WorkoutPlan>,
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
-    ) = applyHistoryImport(
-        exercises = this.exercises,
-        plans = this.plans,
-        sessions = this.sessions,
-        incomingPlans = plans,
-        incomingSessions = sessions,
-        incomingExercises = exercises,
-    )
+    ): ImportHistoryResult {
+        val addedExercises = this.exercises.appendWithoutExisting(exercises) { it.id }
+        val addedPlans = this.plans.appendWithoutExisting(plans) { it.id }
+        val addedSessions = this.sessions.appendWithoutExisting(sessions) { it.id }
+        return ImportHistoryResult(
+            plans = addedPlans,
+            sessions = addedSessions,
+            exercises = addedExercises,
+            sessionsSkipped = sessions.size - addedSessions.size,
+        )
+    }
+
+    private fun <T, I> MutableStateFlow<List<T>>.appendWithoutExisting(
+        incoming: List<T>,
+        id: (T) -> I,
+    ): List<T> {
+        var added = emptyList<T>()
+        update { current ->
+            added = incoming.withoutExisting(current, id)
+            current + added
+        }
+        return added
+    }
 
     fun emitSessions(value: List<WorkoutSession>) {
         sessions.value = value
