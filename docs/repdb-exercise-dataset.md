@@ -14,7 +14,7 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - Strong import matches a name onto a shipped RepDB exercise when one exists. Aliases cover the names in the backup. A Strong name with no shipped exercise becomes an active exercise only after 5 workouts in the file. Below that, the sets stay in history on an archived exercise, and the library does not list it.
 - Kettlebell, `loop_band`, and `resistance_band` are excluded. Other equipment stays in the catalog. Splitting new equipment values (cable, EZ-bar, Smith, and the rest) waits for a later pass.
 - Yoga and Pilates are excluded by English name. See the catalog filter.
-- General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
+- An exercise stores `primaryMuscles` and `secondaryMuscles`. It does not store `body_part` or `MuscleGroup`. The same muscle is the primary on exercises RepDB files under different regions, so a single group cannot be derived from the list.
 - `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
 - The library is three sources: the RepDB subset, a few exercises Bybon ships because RepDB has no match, and exercises the user creates. Bybon-shipped and user-created exercises use the same definition as a RepDB row, with RepDB-only fields empty (images, instructions, tips, tags, and the rest).
 - Bybon ships these exercises because RepDB has no match. Strong names for them alias onto these ids.
@@ -58,9 +58,8 @@ Parsed into the exercise model from the pinned file:
 | `name_en` | Display name. `Barbell Bench Press`, not `Bench Press (barbell)`. |
 | `description_en` | One-line summary for the detail screen. |
 | `instructions_en`, `tips_en` | Steps and form cues for the detail screen. Stored now so that screen does not need another import. |
-| `images.flat` | `start` + `peak`, or a single `main`. Turned into pinned URLs at build time. |
-| `body_part` | General muscle group. |
-| `primary_muscles`, `secondary_muscles` | Specific muscles. Fractional sets later. 27 included exercises have no secondary list. |
+| `images` | Sealed: `StartAndPeak` or `Main`. Pinned URLs. A row is one shape, not both. |
+| `primaryMuscles`, `secondaryMuscles` | Anatomical muscles. This replaces `primaryMuscleGroup`. 191 of the 382 have more than one primary. 27 have no secondary list. |
 | `equipment` | RepDB slug, kept even when the load class is one of the current five. |
 | `mechanic` | `compound` or `isolation`. Default rest. |
 | `force_type` | `push`, `pull`, `static`, or `dynamic`. |
@@ -111,6 +110,8 @@ Barbell Bench Press is tagged `powerlifting`, `push_day`, `big_three`, `knee_saf
 
 Each exercise points at repo-relative WebP paths, for example `images/flat/bench-press-start.webp` and `images/flat/bench-press-peak.webp`. Holds use `main` instead of the pair.
 
+Image shape is a sealed type: `StartAndPeak(start, peak)` or `Main(main)`. A record is one of those, not a bag of optional URLs.
+
 The build writes absolute URLs pinned to the same commit:
 
 `https://raw.githubusercontent.com/RepDB/exercise-dataset/9ed9357f09c7566ea0256c57ebd6374ebb8b575e/images/flat/<file>.webp`
@@ -150,25 +151,9 @@ Bench, squat, lat pulldown, and lateral raise stay on the same clock they have t
 
 ## Muscles
 
-Two layers, both stored.
+`primaryMuscleGroup` and RepDB `body_part` are not stored. `primaryMuscles` and `secondaryMuscles` are the muscle fields. Barbell Bench Press is primary `pectoralis_major`, secondary `anterior_deltoid` and `triceps_brachii`. Fractional sets use that list later.
 
-**General group** is `body_part`. Counts inside the 382:
-
-| `body_part` | Count | Bybon group today |
-| --- | --- | --- |
-| `upper_legs` | 81 | Legs |
-| `back` | 77 | Back |
-| `upper_arms` | 54 | Arms |
-| `chest` | 51 | Chest |
-| `shoulders` | 50 | Shoulders |
-| `core` | 45 | Core |
-| `lower_legs` | 11 | Legs |
-| `lower_arms` | 8 | Arms |
-| `full_body` | 5 | FullBody |
-
-The library groups by these nine. That splits today’s Arms into upper arms and lower arms, and today’s Legs into upper legs and lower legs.
-
-**Specific muscles** are the anatomical slugs. Barbell Bench Press is the shape you described: general group chest, primary `pectoralis_major`, secondary `anterior_deltoid` and `triceps_brachii`. Fractional sets (a set of bench counting toward chest, front delt, and triceps) use this list later. This change only stores it.
+`body_part` is not recoverable from the muscle list. Taking the most common region of the first primary muscle disagrees with RepDB on 41 of the 382. Chin-ups would land on upper arms, dumbbell Romanian deadlift on upper legs, and Machine Assisted Dips on chest. The library today groups and filters by `MuscleGroup`. That grouping goes away with the field. An exercise can show under each of its primary muscles.
 
 Primary slugs that show up in the 382, most common first: `gluteus_maximus`, `pectoralis_major`, `latissimus_dorsi`, `quadriceps`, `triceps_brachii`, `rectus_abdominis`, `anterior_deltoid`, `biceps_brachii`, `lateral_deltoid`, `rhomboids`, `hamstrings`, `trapezius`, `erector_spinae`, `obliques`, `hip_flexors`, `gastrocnemius`, `forearm_flexors`, `posterior_deltoid`, `brachialis`, `gluteus_medius`, `transverse_abdominis`, `forearm_extensors`, `brachioradialis`, `abductors`, `soleus`, `adductors`. Secondary-only slugs: `serratus_anterior`, `quadratus_lumborum`, `forearms`, `supraspinatus`.
 
