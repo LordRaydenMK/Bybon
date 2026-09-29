@@ -272,9 +272,9 @@ Bybon-shipped, not a RepDB id:
 | `triceps-press-machine` | Triceps Press (machine) | Not the seated extension machine or a pushdown |
 | `lateral-raise-machine` | Lateral Raise (machine) | Pin-loaded, not the plate-loaded raise |
 
-Strong bare `Chest Fly` aliases to `pec-deck`. Strong `Bicep Curl (Machine)` aliases to `machine-bicep-curl`. Strong `Lateral Raise (Machine)` aliases to `lateral-raise-machine`. Strong `Squat (Machine)` aliases to `squat-machine`. Strong `Triceps Press` aliases to `triceps-press-machine`.
+Strong bare `Chest Fly` aliases to `pec-deck`. Strong `Bicep Curl (Machine)` aliases to `machine-bicep-curl`. Strong `Lateral Raise (Machine)` aliases to `lateral-raise-machine`. Strong `Squat (Machine)` aliases to `squat-machine`. Strong `Triceps Press` aliases to `triceps-press-machine`. Strong `Reverse Lunges` aliases to `reverse-lunge` (Reverse Lunge, dumbbells). Strong `Crunch (Machine)` aliases to `machine-seated-crunch` (Machine Seated Crunch).
 
-Strong strings with no shipped exercise yet: `Chest Fly (Band)`, `Cable Pushdown (rope)`, `Triceps Extension (Cable)`, `Reverse Lunges`, `Crunch (Machine)`. Those follow the import rule. Five or more workouts become an active exercise. Fewer stay in history as an archived exercise.
+`Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` have no alias. They follow the import rule. Five or more workouts become an active exercise. Fewer stay in history as an archived exercise. `Chest Fly (Band)` is in 11 workouts in the full backup, so it becomes active. There is no shipped band fly to attach it to.
 
 ## Left as they are
 
