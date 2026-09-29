@@ -17,9 +17,11 @@ Snapshot pin: [RepDB/exercise-dataset](https://github.com/RepDB/exercise-dataset
 - General muscle group comes from RepDB `body_part` (nine groups). Primary and secondary muscles are stored on the exercise for fractional-set tracking later.
 - `force_type`, `difficulty`, and `tags` are stored on the exercise. `met` is not.
 - The library is three sources: the RepDB subset, a few exercises Bybon ships because RepDB has no match, and exercises the user creates. Bybon-shipped and user-created exercises use the same definition as a RepDB row, with RepDB-only fields empty (images, instructions, tips, tags, and the rest).
-- Iso-Lateral Row stays a Bybon-shipped exercise (`iso-lat-row`, "Iso-Lateral Row (machine)", back, machine). It is not mapped to Seated Cable Row.
-- Squat (machine) stays a Bybon-shipped exercise (`squat-machine`). It is a plate-loaded squat machine, and it is not Hack Squat or Smith Machine Squat.
-- Triceps Press (machine) stays a Bybon-shipped exercise (`triceps-press-machine`). It is not Machine Triceps Extension or a cable pushdown.
+- Bybon ships these exercises because RepDB has no match. Strong names for them alias onto these ids.
+  - `iso-lat-row`, Iso-Lateral Row (machine). Pin-loaded row, one arm or both. Not Seated Cable Row.
+  - `squat-machine`, Squat (machine). Plate-loaded squat. Not Hack Squat or Smith Machine Squat.
+  - `triceps-press-machine`, Triceps Press (machine). Not Machine Triceps Extension or a cable pushdown.
+  - `lateral-raise-machine`, Lateral Raise (machine). Pin-loaded. Not Plate-Loaded Lateral Raise. Strong `Lateral Raise (Machine)` aliases here.
 
 ## Catalog filter
 
@@ -226,7 +228,7 @@ Plan fuzzy-matching, session identity, and the in-memory repository stay.
 
 ## Plans
 
-Set counts, rep ranges, warm-up counts, and plan names stay. Each planned exercise id changes to the RepDB id once that row is confirmed.
+Set counts, rep ranges, warm-up counts, and plan names stay. Each planned exercise uses the RepDB id in the table below. Full Body B and Upper Body (legacy) use `chest-supported-db-row` for the old incline dumbbell row.
 
 Already clear:
 
@@ -256,26 +258,23 @@ Already clear:
 | `incline-curl-db` | `incline-db-curl` | Incline Dumbbell Curl |
 | `skullcrusher-db` | `db-skull-crusher` | Dumbbell Skull Crusher |
 | `face-pull` | `face-pull` | Cable Face Pull |
+| `incline-row-db` | `chest-supported-db-row` | Chest-Supported Dumbbell Row |
+| `chest-dip` | `assisted-dips` | Machine Assisted Dips |
+| `chest-fly-peck-deck` | `pec-deck` | Pec Deck |
+| `biceps-curl-machine` | `machine-bicep-curl` | Machine Bicep Curl |
 
-Picked:
+Bybon-shipped, not a RepDB id:
 
-| Current id | Current name | Decision |
+| Current id | Name | Why it stays |
 | --- | --- | --- |
-| `incline-row-db` | Incline Row (dumbbell) | `chest-supported-db-row` (Chest-Supported Dumbbell Row) |
-| `iso-lat-row` | Iso-Lateral Row (machine) | Bybon-shipped. Not mapped to a RepDB id. |
-| `squat-machine` | Squat (machine) | Bybon-shipped. Plate-loaded, not Hack Squat or Smith Machine Squat. |
-| `triceps-press-machine` | Triceps Press (machine) | Bybon-shipped. Not Machine Triceps Extension or a cable pushdown. |
+| `iso-lat-row` | Iso-Lateral Row (machine) | Pin-loaded row, one arm or both |
+| `squat-machine` | Squat (machine) | Plate-loaded squat, not a hack squat |
+| `triceps-press-machine` | Triceps Press (machine) | Not the seated extension machine or a pushdown |
+| `lateral-raise-machine` | Lateral Raise (machine) | Pin-loaded, not the plate-loaded raise |
 
-Still to pick, one at a time:
+Strong bare `Chest Fly` aliases to `pec-deck`. Strong `Bicep Curl (Machine)` aliases to `machine-bicep-curl`. Strong `Lateral Raise (Machine)` aliases to `lateral-raise-machine`. Strong `Squat (Machine)` aliases to `squat-machine`. Strong `Triceps Press` aliases to `triceps-press-machine`.
 
-| Current id | Current name | Where it matters |
-| --- | --- | --- |
-| `chest-dip` | Chest Dip (assisted) | catalog only |
-| `chest-fly-peck-deck` | Chest Fly (machine) | catalog; Strong bare `Chest Fly` |
-| `biceps-curl-machine` | Curl (machine) | catalog; Strong `Bicep Curl (Machine)` |
-| `lateral-raise-machine` | Lateral Raise (machine) | catalog; Strong `Lateral Raise (Machine)` |
-
-Strong strings with no exact included exercise, after the picks above: `Chest Fly (Band)`, `Cable Pushdown (rope)`, `Triceps Extension (Cable)`, `Reverse Lunges`, `Crunch (Machine)`.
+Strong strings with no shipped exercise yet: `Chest Fly (Band)`, `Cable Pushdown (rope)`, `Triceps Extension (Cable)`, `Reverse Lunges`, `Crunch (Machine)`. Those follow the import rule. Five or more workouts become an active exercise. Fewer stay in history as an archived exercise.
 
 ## Left as they are
 
