@@ -94,7 +94,7 @@ class WorkoutsRepositoryImplTest {
     fun `updatePlan transforms only the matching plan`() = runTest {
         val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
 
-        repository.updatePlan(fullBodyA.id) { it.addWorkSet("bench-press-bb") }
+        repository.updatePlan(fullBodyA.id) { it.addWorkSet("bench-press") }
 
         val updated = repository.workoutPlans().first().first()
         assert(updated.sets.first().sets == 4)
@@ -133,7 +133,7 @@ class WorkoutsRepositoryImplTest {
             planId = "full-body-a",
             planName = "Full Body A",
             startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34),
-            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
             note = "kept",
         )
 
@@ -163,7 +163,7 @@ class WorkoutsRepositoryImplTest {
             planId = "full-body-a",
             planName = "Full Body A",
             startedAt = startedAt,
-            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
             note = "kept",
         )
         repository.importHistory(
@@ -175,7 +175,7 @@ class WorkoutsRepositoryImplTest {
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = startedAt.plusDays(1),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
         )
 
         val result = repository.importHistory(
@@ -196,7 +196,7 @@ class WorkoutsRepositoryImplTest {
             planId = "full-body-a",
             planName = "Full Body A",
             startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34),
-            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
             note = "first",
         )
 
@@ -219,7 +219,7 @@ class WorkoutsRepositoryImplTest {
             planId = "full-body-a",
             planName = "Full Body A",
             startedAt = startedAt,
-            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
         )
         repository.importHistory(
             plans = emptyList(),
@@ -230,7 +230,7 @@ class WorkoutsRepositoryImplTest {
             planId = "upper-body-a",
             planName = "Upper body A",
             startedAt = startedAt,
-            exercises = listOf(completedExercise("bench-press-bb", 30f to 10)),
+            exercises = listOf(completedExercise("bench-press", 30f to 10)),
         )
 
         val result = repository.importHistory(
@@ -253,7 +253,7 @@ class WorkoutsRepositoryImplTest {
             sessions = emptyList(),
             exercises = emptyList(),
         )
-        val bench = catalogExercises.first { it.id == "bench-press-bb" }
+        val bench = catalogExercises.first { it.id == "bench-press" }
 
         val again = repository.importHistory(
             plans = listOf(extra.copy(name = "Renamed")),

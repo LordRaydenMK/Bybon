@@ -1,3 +1,4 @@
+import bybon.repdb.GenerateRepdbCatalogTask
 import dev.detekt.gradle.Detekt
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.powerassert.gradle.PowerAssertCompilationFilter
@@ -11,6 +12,19 @@ plugins {
     alias(libs.plugins.kotlin.power.assert)
     alias(libs.plugins.androidx.room3)
     alias(libs.plugins.detekt)
+}
+
+val generateRepdbCatalog = tasks.register<GenerateRepdbCatalogTask>("generateRepdbCatalog") {
+    outputDirectory.set(layout.buildDirectory.dir("generated/repdb/kotlin"))
+}
+
+androidComponents {
+    onVariants { variant ->
+        variant.sources.kotlin?.addGeneratedSourceDirectory(
+            generateRepdbCatalog,
+            GenerateRepdbCatalogTask::outputDirectory,
+        )
+    }
 }
 
 android {

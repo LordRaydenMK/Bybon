@@ -9,7 +9,7 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `addExercise appends a session exercise with defaults`() {
         val session = fullBodyA.toOverviewSession()
-        val curl = catalogExercise("incline-curl-db")
+        val curl = catalogExercise("incline-db-curl")
 
         val actual = session.addExercise(curl)
         val added = actual.exercises.last()
@@ -28,7 +28,7 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `addExercise leaves assisted loads empty`() {
         val session = fullBodyB.toOverviewSession()
-        val pullUp = catalogExercise("pullup-assisted")
+        val pullUp = catalogExercise("assisted-pull-ups")
 
         val actual = session.addExercise(pullUp)
         val added = actual.exercises.last()
@@ -41,17 +41,17 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `addExercise throws when the exercise is already in the session`() {
         val session = fullBodyA.toOverviewSession()
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val error = assertFailsWith<IllegalStateException> {
             session.addExercise(bench)
         }
-        assert(error.message == "Exercise bench-press-bb is already in the session")
+        assert(error.message == "Exercise bench-press is already in the session")
     }
 
     @Test
     fun `addExercise does not start the new exercise`() {
         val session = fullBodyA.toWorkoutSession()
-        val curl = catalogExercise("incline-curl-db")
+        val curl = catalogExercise("incline-db-curl")
 
         val actual = session.addExercise(curl)
 
@@ -88,7 +88,7 @@ class WorkoutSessionAddExerciseTest {
             draft.copy(exercises = listOf(draft.exercises.first()))
         }
         val error = assertFailsWith<IllegalStateException> {
-            session.removeExercise("bench-press-bb")
+            session.removeExercise("bench-press")
         }
         assert(error.message == "Cannot remove last exercise from the session")
     }
@@ -108,10 +108,10 @@ class WorkoutSessionAddExerciseTest {
     fun `removeExercise starts the next exercise when the in-progress one is removed`() {
         val session = fullBodyA.toWorkoutSession()
 
-        val actual = session.removeExercise("bench-press-bb")
+        val actual = session.removeExercise("bench-press")
 
-        assert(actual.exercises.none { it.id == "bench-press-bb" })
-        assert(actual.exercises.first().id == "squat-bb")
+        assert(actual.exercises.none { it.id == "bench-press" })
+        assert(actual.exercises.first().id == "squat")
         assert(
             actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress,
         )
@@ -125,9 +125,9 @@ class WorkoutSessionAddExerciseTest {
         )
 
         val error = assertFailsWith<IllegalStateException> {
-            session.removeExercise("bench-press-bb")
+            session.removeExercise("bench-press")
         }
-        assert(error.message == "Cannot remove completed exercise bench-press-bb")
+        assert(error.message == "Cannot remove completed exercise bench-press")
     }
 
     @Test
@@ -137,9 +137,9 @@ class WorkoutSessionAddExerciseTest {
             secondState = SetState.InProgress,
         )
 
-        val actual = session.removeExercise("incline-curl-db")
+        val actual = session.removeExercise("incline-db-curl")
 
-        assert(actual.exercises.single().id == "bench-press-bb")
+        assert(actual.exercises.single().id == "bench-press")
         assert(actual.state is WorkoutState.Completed)
         assert(actual.duration != null)
     }
@@ -148,7 +148,7 @@ class WorkoutSessionAddExerciseTest {
     fun `toWorkoutSession follows the plan even if the previous session added or removed exercises`() {
         val previous = fullBodyA.toWorkoutSession()
             .removeExercise("seated-leg-curl")
-            .addExercise(catalogExercise("incline-curl-db"))
+            .addExercise(catalogExercise("incline-db-curl"))
             .let { session ->
                 session.copy(
                     exercises = session.exercises.map { exercise ->
@@ -167,7 +167,7 @@ class WorkoutSessionAddExerciseTest {
         val actual = fullBodyA.toWorkoutSession(previous)
 
         assert(actual.exercises.map { it.id } == fullBodyA.sets.map { it.exercise.id })
-        assert(actual.exercises.none { it.id == "incline-curl-db" })
+        assert(actual.exercises.none { it.id == "incline-db-curl" })
         assert(actual.exercises.any { it.id == "seated-leg-curl" })
     }
 
@@ -187,8 +187,8 @@ class WorkoutSessionAddExerciseTest {
 }
 
 private fun twoExerciseSession(firstState: SetState, secondState: SetState): WorkoutSession {
-    val bench = catalogExercise("bench-press-bb")
-    val curl = catalogExercise("incline-curl-db")
+    val bench = catalogExercise("bench-press")
+    val curl = catalogExercise("incline-db-curl")
     return WorkoutSession(
         planId = fullBodyA.id,
         planName = fullBodyA.name,

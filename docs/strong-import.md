@@ -77,8 +77,9 @@ From
 [`ExerciseDefinition.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseDefinition.kt):
 
 - **`ExerciseDefinition`**: stable `id`, `name`, `primaryMuscleGroup`, `equipment`. Catalog is
-  in-memory ([`CatalogExercises.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/CatalogExercises.kt),
-  32 exercises). Import can append unknown exercises to the repository list.
+  in-memory: the filtered RepDB subset generated at build time, plus four Bybon-only rows in
+  [`CatalogExercises.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/CatalogExercises.kt)
+  (386 exercises). Import can append unknown exercises to the repository list.
 - **`WorkoutPlan`**: `WorkoutPlanId`, `name`, `description?`, ordered `PlanedExercise`s,
   `isArchived`. Built-ins: Full Body A/B (active), Upper Body (legacy) (archived).
 - **`PlanedExercise`**: exercise + `warmupSets: Int` + prescribed `sets` + `repRange` +
@@ -114,14 +115,14 @@ History empty screen picks a CSV → parse → `toStrongImport(existingPlans, ex
 Resolve each Strong `Exercise Name`:
 
 1. Hardcoded aliases (normalized lowercase name → Bybon id) — see table below.
-2. Else case-insensitive name match against the catalog (`"Bench Press (Barbell)"` →
-   `"Bench Press (barbell)"`).
+2. Else case-insensitive name match against the catalog (`"Bulgarian Split Squat"` matches
+   `Bulgarian Split Squat`).
 3. Else create a new `ExerciseDefinition`: `id = slugify(name)`, Strong display name, equipment
    inferred from the name (`barbell` / `dumbbell` / `assisted` / `machine|cable` / else bodyweight),
    muscle group `Core` if the name looks like crunch/plank/sit-up else `Other`.
 
-Only **new** (non-catalog) exercises are returned for insert. Sample: **`Crunch (Machine)`** →
-`crunch-machine` / Core / Machine.
+Only **new** (non-catalog) exercises are returned for insert. The sample’s `Crunch (Machine)`
+aliases to shipped `machine-seated-crunch`, so that file inserts no new exercises.
 
 **Strong has no equipment column.** Equipment is only words inside `Exercise Name`, usually
 `Exercise (Equipment)` (`Bench Press (Barbell)`, `Chest Fly (Cable)`). A bare name (`Chest Fly`,
@@ -189,31 +190,31 @@ pull-ups.
 
 ## Catalog mapping (sample)
 
-| Strong `Exercise Name`            | Bybon id                 | How                          |
-|-----------------------------------|--------------------------|------------------------------|
-| Bench Press (Barbell)             | `bench-press-bb`         | Normalized name              |
-| Squat (Barbell)                   | `squat-bb`               | Normalized name              |
-| Squat (Machine)                   | `squat-machine`          | Normalized name              |
-| Pull Up (Assisted)                | `pullup-assisted`        | Normalized name              |
-| Incline Bench Press (Dumbbell)    | `incline-bench-press-db` | Normalized name              |
-| Incline Row (Dumbbell)            | `incline-row-db`         | Normalized name              |
-| Incline Curl (Dumbbell)           | `incline-curl-db`        | Normalized name              |
-| Lateral Raise (Dumbbell)          | `lateral-raise-db`       | Normalized name              |
-| Lateral Raise (Machine)           | `lateral-raise-machine`  | Normalized name              |
-| Skullcrusher (Dumbbell)           | `skullcrusher-db`        | Normalized name              |
-| Upright Row (Dumbbell)            | `upright-row-db`         | Normalized name              |
-| Leg Extension (Machine)           | `leg-extension`          | Normalized name              |
-| Romanian Deadlift (Barbell)       | `rdl-bb`                 | Alias (Bybon name includes `(RDL)`) |
-| Bulgarian Split Squat             | `split-squat-db`         | Alias (Bybon adds `(dumbbell)`) |
-| Bicep Curl (Machine)              | `biceps-curl-machine`    | Alias (`Curl (machine)`)     |
-| Seated Leg Curl (Machine)         | `seated-leg-curl`        | Normalized name              |
-| Triceps Press                     | `triceps-press-machine`  | Alias                        |
-| Crunch (Machine)                  | `crunch-machine`         | **Created on import**        |
+| Strong `Exercise Name`            | Bybon id                    | How                          |
+|-----------------------------------|-----------------------------|------------------------------|
+| Bench Press (Barbell)             | `bench-press`               | Alias                        |
+| Squat (Barbell)                   | `squat`                     | Alias (`Barbell Back Squat`) |
+| Squat (Machine)                   | `squat-machine`             | Alias                        |
+| Pull Up (Assisted)                | `assisted-pull-ups`         | Alias                        |
+| Incline Bench Press (Dumbbell)    | `incline-db-press`          | Alias                        |
+| Incline Row (Dumbbell)            | `chest-supported-db-row`    | Alias                        |
+| Incline Curl (Dumbbell)           | `incline-db-curl`           | Alias                        |
+| Lateral Raise (Dumbbell)          | `lateral-raise`             | Alias                        |
+| Lateral Raise (Machine)           | `lateral-raise-machine`     | Alias                        |
+| Skullcrusher (Dumbbell)           | `db-skull-crusher`          | Alias                        |
+| Upright Row (Dumbbell)            | `dumbbell-upright-row`      | Alias                        |
+| Leg Extension (Machine)           | `leg-extension`             | Alias                        |
+| Romanian Deadlift (Barbell)       | `romanian-deadlift`         | Alias                        |
+| Bulgarian Split Squat             | `bulgarian-split-squat`     | Alias                        |
+| Bicep Curl (Machine)              | `machine-bicep-curl`        | Alias                        |
+| Seated Leg Curl (Machine)         | `seated-leg-curl`           | Alias                        |
+| Triceps Press                     | `triceps-press-machine`     | Alias                        |
+| Crunch (Machine)                  | `machine-seated-crunch`     | Alias                        |
 
-Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt` for Strong strings that are not
-a case-insensitive match for the catalog (RDL, Bulgarian split squat, bicep curl, triceps press,
-bare `Leg Press`, `"Dumbbell lateral raises"`, bare `Chest Fly`). Extra Strong names still become
-new exercises.
+Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt`. RepDB word order differs from
+Strong (`Bench Press (Barbell)` vs `Barbell Bench Press`), so the sample names and the names called
+out in the RepDB proposal are aliased. A Strong name with no alias and no case-insensitive
+`name_en` match still becomes a new exercise.
 
 Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pulldown, chest
 fly variants, dips, calf raise, face pull, lying leg curl, etc. Several of those **do** appear in
@@ -240,11 +241,11 @@ Statuses from triage. Workout persistence is the remaining TODO.
 
 | Topic | What landed |
 |-------|-------------|
-| Lat pulldown hyphen | Catalog name is `Lat Pulldown (cable)` so Strong `Lat Pulldown (Cable)` matches `lat-pull-down` |
-| Leg press id collision | Catalog id is `leg-press-machine`; Strong `Leg Press` aliases onto it |
+| Lat pulldown hyphen | Strong `Lat Pulldown (Cable)` aliases to `lat-pulldown` |
+| Leg press id collision | Strong `Leg Press` aliases to `leg-press` |
 | Seated vs lying leg curl | Catalog has `seated-leg-curl` and `lying-leg-curl`; Full Body A uses seated |
-| `"Dumbbell lateral raises"` | Aliases to `lateral-raise-db` |
-| Bare `Chest Fly` | Aliases to `chest-fly-peck-deck` (`Chest Fly (machine)`) |
+| `"Dumbbell lateral raises"` | Aliases to `lateral-raise` |
+| Bare `Chest Fly` | Aliases to `pec-deck` |
 | Trim Strong exercise names | Parser and created definitions strip leading/trailing spaces |
 | Seed Upper Body A id | Renamed to `upper-body-legacy` / `Upper Body (legacy)` so import can own `upper-body-a` |
 | `lateral-raise-machine` equipment | Catalog uses `Equipment.Machine` |
@@ -311,8 +312,9 @@ value is the minority. Accepted as by-design.
 ### Exercise resolution (full)
 
 After catalog/alias fixes: lat pulldown, both machine leg curls, `Leg Press`, and bare `Chest Fly`
-attach to catalog ids. `"Dumbbell lateral raises"` aliases to `lateral-raise-db`. Created names are
-trimmed.
+attach to catalog ids. `"Dumbbell lateral raises"` aliases to `lateral-raise`. `Crunch (Machine)`
+aliases to `machine-seated-crunch`. `Reverse Lunges` aliases to `reverse-lunge`. `Back Extension`
+matches the shipped name. Created names are trimmed.
 
 High-volume names that still **create** new exercises:
 
@@ -321,19 +323,15 @@ High-volume names that still **create** new exercises:
 | Standing Calf Raise (Barbell) | 15 | 45 | `standing-calf-raise-barbell` | Other / Barbell |
 | Chest Fly (Band) | 11 | 30 | `chest-fly-band` | Other / Bodyweight |
 | Cable Pushdown (rope) | 10 | 30 | `cable-pushdown-rope` | Other / Machine |
-| Back Extension | 10 | 21 | `back-extension` | Other / Bodyweight |
 | Triceps Extension (Cable) | 7 | 21 | `triceps-extension-cable` | Other / Machine |
 | Hip Thrust (Barbell) | 6 | 18 | `hip-thrust-barbell` | Other / Barbell |
-| Reverse Lunges | 6 | 18 | `reverse-lunges` | Other / Bodyweight |
-| Crunch (Machine) | 6 | 12 | `crunch-machine` | Core / Machine |
 | + others with ≤4 workouts | | | | |
 
-Catalog rows that **never appear** in this export: `bench-press-db`, `chest-dip`,
-`incline-bench-press-bb`.
+Catalog rows that **never appear** in this export: `db-bench-press`, `assisted-dips`,
+`incline-bench-press`.
 
-Bare Strong `Chest Fly` aliases to `chest-fly-peck-deck` (`Chest Fly (machine)` / Machine).
-`Chest Fly (Cable)` matches `chest-fly-cable`. `Chest Fly (Band)` is still created (Bodyweight —
-`band` is not an infer keyword).
+Bare Strong `Chest Fly` aliases to `pec-deck`. `Chest Fly (Cable)` aliases to `cable-fly`.
+`Chest Fly (Band)` is still created (Bodyweight — `band` is not an infer keyword).
 
 Bare names in this export that **lack** an equipment word in the string:
 

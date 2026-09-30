@@ -8,53 +8,53 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Edit plan"
 - assertVisible: "Full Body A"
 - assertVisible: "Full body workout routine variant A"
-- assertVisible: "Bench Press (barbell)"
+- assertVisible: "Barbell Bench Press"
 - assertVisible: "Chest · Barbell"
-- assertVisible: "Bench Press (barbell) warmup set"
-- assertVisible: "Bench Press (barbell) set 1, 8–10 reps, rest 2:00"
-- assertVisible: "Add set to Bench Press (barbell)"
-- assertVisible: "Remove last set from Bench Press (barbell)"
-- assertVisible: "More options for Bench Press (barbell)"
-- tapOn: "More options for Bench Press (barbell)"
-- assertVisible: "Move Bench Press (barbell) up"
-- assertVisible: "Move Bench Press (barbell) down"
-- tapOn: "Move Bench Press (barbell) down"
-- assertVisible: "Squat (barbell)"
-- tapOn: "More options for Squat (barbell)"
-- tapOn: "Move Squat (barbell) down"
-- assertVisible: "Bench Press (barbell)"
-- tapOn: "Add set to Bench Press (barbell)"
+- assertVisible: "Barbell Bench Press warmup set"
+- assertVisible: "Barbell Bench Press set 1, 8–10 reps, rest 2:00"
+- assertVisible: "Add set to Barbell Bench Press"
+- assertVisible: "Remove last set from Barbell Bench Press"
+- assertVisible: "More options for Barbell Bench Press"
+- tapOn: "More options for Barbell Bench Press"
+- assertVisible: "Move Barbell Bench Press up"
+- assertVisible: "Move Barbell Bench Press down"
+- tapOn: "Move Barbell Bench Press down"
+- assertVisible: "Barbell Back Squat"
+- tapOn: "More options for Barbell Back Squat"
+- tapOn: "Move Barbell Back Squat down"
+- assertVisible: "Barbell Bench Press"
+- tapOn: "Add set to Barbell Bench Press"
 - scrollUntilVisible:
-    element: "Bench Press (barbell) set 4, 8–10 reps, rest 2:00"
+    element: "Barbell Bench Press set 4, 8–10 reps, rest 2:00"
     direction: DOWN
     centerElement: true
-- assertVisible: "Bench Press (barbell) set 4, 8–10 reps, rest 2:00"
-- tapOn: "Remove last set from Bench Press (barbell)"
-- assertNotVisible: "Bench Press (barbell) set 4, 8–10 reps, rest 2:00"
-- tapOn: "Remove last set from Bench Press (barbell)"
-- tapOn: "Remove last set from Bench Press (barbell)"
-- assertNotVisible: "Bench Press (barbell) set 2, 8–10 reps, rest 2:00"
-- assertVisible: "Remove Bench Press (barbell) from plan"
-- tapOn: "Add set to Bench Press (barbell)"
-- tapOn: "Add set to Bench Press (barbell)"
-- assertVisible: "Remove last set from Bench Press (barbell)"
+- assertVisible: "Barbell Bench Press set 4, 8–10 reps, rest 2:00"
+- tapOn: "Remove last set from Barbell Bench Press"
+- assertNotVisible: "Barbell Bench Press set 4, 8–10 reps, rest 2:00"
+- tapOn: "Remove last set from Barbell Bench Press"
+- tapOn: "Remove last set from Barbell Bench Press"
+- assertNotVisible: "Barbell Bench Press set 2, 8–10 reps, rest 2:00"
+- assertVisible: "Remove Barbell Bench Press from plan"
+- tapOn: "Add set to Barbell Bench Press"
+- tapOn: "Add set to Barbell Bench Press"
+- assertVisible: "Remove last set from Barbell Bench Press"
 - scrollUntilVisible:
-    element: "Bench Press (barbell) set 3, 8–10 reps, rest 2:00"
+    element: "Barbell Bench Press set 3, 8–10 reps, rest 2:00"
     direction: DOWN
     centerElement: true
-- assertVisible: "Bench Press (barbell) set 3, 8–10 reps, rest 2:00"
+- assertVisible: "Barbell Bench Press set 3, 8–10 reps, rest 2:00"
 - scrollUntilVisible:
-    element: "Squat (barbell)"
+    element: "Barbell Back Squat"
     direction: DOWN
     centerElement: true
-- assertVisible: "Squat (barbell)"
+- assertVisible: "Barbell Back Squat"
 - scrollUntilVisible:
-    element: "Seated Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
+    element: "Seated Leg Curl set 1, 12–14 reps, rest 1:30"
     direction: DOWN
     centerElement: true
-- assertVisible: "Seated Leg Curl (machine)"
+- assertVisible: "Seated Leg Curl"
 - assertVisible: "Legs · Machine"
-- assertVisible: "Seated Leg Curl (machine) set 1, 12–14 reps, rest 1:30"
+- assertVisible: "Seated Leg Curl set 1, 12–14 reps, rest 1:30"
 - scrollUntilVisible:
     element: "Add Exercise"
     direction: DOWN
@@ -62,7 +62,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Add Exercise"
 - assertVisible: "Exercise Library"
 - assertVisible: "Already added"
-- assertVisible: "Bench Press (barbell)"
+- assertVisible: "Barbell Bench Press"
 - assertVisible: "Arms"
 - assertVisible: "Dumbbell"
 - assertVisible: "Add exercise"
@@ -73,25 +73,25 @@ appId: dev.sanastasov.bybon.debug
     text: "Dumbbell"
     index: 0
 - scrollUntilVisible:
-    element: "Select Incline Curl (dumbbell)"
+    element: "Select Incline Dumbbell Curl"
     direction: DOWN
-- tapOn: "Select Incline Curl (dumbbell)"
+- tapOn: "Select Incline Dumbbell Curl"
 - scrollUntilVisible:
-    element: "Deselect Incline Curl (dumbbell)"
+    element: "Deselect Incline Dumbbell Curl"
     direction: UP
 - tapOn: "Add exercise"
 - assertVisible: "Edit plan"
 - scrollUntilVisible:
-    element: "Incline Curl (dumbbell)"
+    element: "Incline Dumbbell Curl"
     direction: DOWN
     centerElement: true
-- assertVisible: "Incline Curl (dumbbell)"
+- assertVisible: "Incline Dumbbell Curl"
 - assertVisible: "Arms · Dumbbell"
-- assertVisible: "Incline Curl (dumbbell) set 1, 8–12 reps, rest 1:00"
-- assertVisible: "More options for Incline Curl (dumbbell)"
-- tapOn: "More options for Incline Curl (dumbbell)"
+- assertVisible: "Incline Dumbbell Curl set 1, 8–12 reps, rest 1:00"
+- assertVisible: "More options for Incline Dumbbell Curl"
+- tapOn: "More options for Incline Dumbbell Curl"
 - tapOn: "Remove Exercise"
-- assertNotVisible: "Incline Curl (dumbbell)"
+- assertNotVisible: "Incline Dumbbell Curl"
 - scrollUntilVisible:
     element: "Archive Plan"
     direction: DOWN

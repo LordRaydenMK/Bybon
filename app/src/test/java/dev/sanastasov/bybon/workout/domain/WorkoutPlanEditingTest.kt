@@ -8,7 +8,7 @@ class WorkoutPlanEditingTest {
 
     @Test
     fun `addWorkSet appends a work set and leaves warmups unchanged`() {
-        val actual = fullBodyA.addWorkSet("bench-press-bb")
+        val actual = fullBodyA.addWorkSet("bench-press")
         val bench = actual.sets.first()
 
         assert(bench.sets == 4)
@@ -54,7 +54,7 @@ class WorkoutPlanEditingTest {
 
     @Test
     fun `addExercise appends a planned exercise with defaults`() {
-        val curl = catalogExercise("incline-curl-db")
+        val curl = catalogExercise("incline-db-curl")
         val actual = fullBodyA.addExercise(curl)
         val added = actual.sets.last()
 
@@ -68,11 +68,11 @@ class WorkoutPlanEditingTest {
 
     @Test
     fun `addExercise throws when the exercise is already on the plan`() {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val error = assertFailsWith<IllegalStateException> {
             fullBodyA.addExercise(bench)
         }
-        assert(error.message == "Exercise bench-press-bb is already on the plan")
+        assert(error.message == "Exercise bench-press is already on the plan")
     }
 
     @Test
@@ -89,26 +89,26 @@ class WorkoutPlanEditingTest {
 
     @Test
     fun `moveExerciseDown swaps with the next exercise`() {
-        val actual = fullBodyA.moveExerciseDown("bench-press-bb")
+        val actual = fullBodyA.moveExerciseDown("bench-press")
 
-        assert(actual.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(actual.sets.map { it.exercise.id }.take(2) == listOf("squat", "bench-press"))
         assert(actual.sets.drop(2) == fullBodyA.sets.drop(2))
     }
 
     @Test
     fun `moveExerciseUp swaps with the previous exercise`() {
-        val actual = fullBodyA.moveExerciseUp("squat-bb")
+        val actual = fullBodyA.moveExerciseUp("squat")
 
-        assert(actual.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(actual.sets.map { it.exercise.id }.take(2) == listOf("squat", "bench-press"))
         assert(actual.sets.drop(2) == fullBodyA.sets.drop(2))
     }
 
     @Test
     fun `moveExerciseUp throws for the first exercise`() {
         val error = assertFailsWith<IllegalStateException> {
-            fullBodyA.moveExerciseUp("bench-press-bb")
+            fullBodyA.moveExerciseUp("bench-press")
         }
-        assert(error.message == "Cannot move bench-press-bb up")
+        assert(error.message == "Cannot move bench-press up")
     }
 
     @Test
@@ -122,15 +122,15 @@ class WorkoutPlanEditingTest {
 
     @Test
     fun `moved exercise is used when creating a session`() {
-        val plan = fullBodyA.moveExerciseDown("bench-press-bb")
+        val plan = fullBodyA.moveExerciseDown("bench-press")
         val session = plan.toWorkoutSession()
 
-        assert(session.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(session.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
     }
 
     @Test
     fun `added work set is used when creating a session`() {
-        val plan = fullBodyA.addWorkSet("bench-press-bb")
+        val plan = fullBodyA.addWorkSet("bench-press")
         val session = plan.toWorkoutSession()
 
         assert(session.exercises.first().sets.size == 4)
@@ -139,7 +139,7 @@ class WorkoutPlanEditingTest {
 
     @Test
     fun `planned exercise requires at least one work set`() {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val error = assertFailsWith<IllegalArgumentException> {
             PlanedExercise(
                 exercise = bench,
@@ -168,7 +168,7 @@ class WorkoutPlanEditingTest {
     fun `removeExercise throws when only one exercise remains`() {
         val single = fullBodyA.copy(sets = listOf(fullBodyA.sets.first()))
         val error = assertFailsWith<IllegalStateException> {
-            single.removeExercise("bench-press-bb")
+            single.removeExercise("bench-press")
         }
         assert(error.message == "Cannot remove last exercise from the plan")
     }

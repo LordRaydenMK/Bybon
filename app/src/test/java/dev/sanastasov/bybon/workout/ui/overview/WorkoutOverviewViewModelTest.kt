@@ -224,7 +224,7 @@ class WorkoutOverviewViewModelTest {
             )
             assert(
                 draft.exercises.first {
-                    it.id == "skullcrusher-db"
+                    it.id == "db-skull-crusher"
                 }.restAfterWorkSet.formatRestClock() ==
                     "1:00",
             )
@@ -240,31 +240,31 @@ class WorkoutOverviewViewModelTest {
         viewModel.uiState.test {
             assert(awaitItem() == null)
             val draft = awaitItem()!!
-            assert(draft.exercises.map { it.id }.take(2) == listOf("bench-press-bb", "squat-bb"))
+            assert(draft.exercises.map { it.id }.take(2) == listOf("bench-press", "squat"))
 
             viewModel.onAction(WorkoutOverviewAction.OnMoveExerciseDown(draft.exercises.first()))
             val moved = awaitItem()!!
-            assert(moved.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+            assert(moved.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
             assert(moved.exercises.drop(2) == draft.exercises.drop(2))
             assert(repository.workoutSessions().first().isEmpty())
             assert(
                 repository.workoutPlans().first().single().sets.map { it.exercise.id }.take(2) ==
-                    listOf("bench-press-bb", "squat-bb"),
+                    listOf("bench-press", "squat"),
             )
 
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
             assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
             val saved = repository.workoutSessions().first().single()
-            assert(saved.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+            assert(saved.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
             assert(saved.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
             assert(
-                saved.exercises.first { it.id == "bench-press-bb" }
+                saved.exercises.first { it.id == "bench-press" }
                     .warmupSets!!
                     .all { it.setState == SetState.NotStated },
             )
             assert(
                 repository.workoutPlans().first().single().sets.map { it.exercise.id }.take(2) ==
-                    listOf("bench-press-bb", "squat-bb"),
+                    listOf("bench-press", "squat"),
             )
         }
     }
@@ -303,9 +303,9 @@ class WorkoutOverviewViewModelTest {
             assert(awaitItem() == null)
             val draft = awaitItem()!!
 
-            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-db-curl"))
             val added = awaitItem()!!
-            assert(added.exercises.last().id == "incline-curl-db")
+            assert(added.exercises.last().id == "incline-db-curl")
             assert(added.exercises.last().sets.size == 3)
             assert(added.exercises.last().warmupSets == null)
             assert(added.exercises.last().repRange == 8..12)
@@ -316,7 +316,7 @@ class WorkoutOverviewViewModelTest {
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
             assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
             val saved = repository.workoutSessions().first().single()
-            assert(saved.exercises.last().id == "incline-curl-db")
+            assert(saved.exercises.last().id == "incline-db-curl")
             assert(saved.exercises.last().sets.all { it.setState == SetState.NotStated })
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
@@ -330,15 +330,15 @@ class WorkoutOverviewViewModelTest {
         )
         val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
 
-        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-db-curl"))
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
             var session = awaitItem()!!
-            if (session.exercises.none { it.id == "incline-curl-db" }) {
+            if (session.exercises.none { it.id == "incline-db-curl" }) {
                 session = awaitItem()!!
             }
-            assert(session.exercises.last().id == "incline-curl-db")
+            assert(session.exercises.last().id == "incline-db-curl")
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
     }
@@ -358,14 +358,14 @@ class WorkoutOverviewViewModelTest {
         }
         advanceTimeBy(6_000)
 
-        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-curl-db"))
+        viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-db-curl"))
 
         viewModel.uiState.test {
             var session = awaitItem()!!
-            while (session.exercises.none { it.id == "incline-curl-db" }) {
+            while (session.exercises.none { it.id == "incline-db-curl" }) {
                 session = awaitItem()!!
             }
-            assert(session.exercises.last().id == "incline-curl-db")
+            assert(session.exercises.last().id == "incline-db-curl")
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
     }
@@ -448,8 +448,8 @@ class WorkoutOverviewViewModelTest {
             failures.scope,
         )
         viewModel.uiState.first { it != null }
-        failures.expectFailure("Exercise bench-press-bb is already in the session") {
-            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("bench-press-bb"))
+        failures.expectFailure("Exercise bench-press is already in the session") {
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("bench-press"))
         }
     }
 
@@ -462,11 +462,11 @@ class WorkoutOverviewViewModelTest {
         )
         val draft = viewModel.uiState.first { it != null }!!
         val missing = draft.exercises.first().copy(
-            exerciseDefinition = catalogExercise("incline-curl-db"),
+            exerciseDefinition = catalogExercise("incline-db-curl"),
         )
         val error = assertFailsWith<IllegalStateException> {
             viewModel.onAction(WorkoutOverviewAction.OnRemoveExercise(missing))
         }
-        assert(error.message == "Exercise incline-curl-db is not in the session")
+        assert(error.message == "Exercise incline-db-curl is not in the session")
     }
 }

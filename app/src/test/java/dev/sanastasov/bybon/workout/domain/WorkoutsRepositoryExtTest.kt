@@ -11,9 +11,9 @@ class WorkoutsRepositoryExtTest {
     fun `requireExercise returns the catalog exercise`() = runTest {
         val repository = FakeWorkoutsRepository(initialExercises = catalogExercises)
 
-        val actual = repository.requireExercise("bench-press-bb")
+        val actual = repository.requireExercise("bench-press")
 
-        assert(actual == catalogExercise("bench-press-bb"))
+        assert(actual == catalogExercise("bench-press"))
     }
 
     @Test

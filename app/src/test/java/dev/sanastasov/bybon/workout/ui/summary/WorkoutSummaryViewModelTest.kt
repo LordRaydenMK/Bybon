@@ -26,12 +26,12 @@ class WorkoutSummaryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(
                 completedExercise(
-                    "rdl-bb",
+                    "romanian-deadlift",
                     45f to 12,
                     45f to 11,
                 ),
                 completedExercise(
-                    "incline-bench-press-db",
+                    "incline-db-press",
                     20f to 13,
                     20f to 11,
                     20f to 8,
@@ -44,16 +44,16 @@ class WorkoutSummaryViewModelTest {
             title = "Full Body B",
             exercises = listOf(
                 WorkoutSummaryExerciseUi(
-                    id = "rdl-bb",
-                    name = "Romanian Deadlift (RDL) (barbell)",
+                    id = "romanian-deadlift",
+                    name = "Romanian Deadlift",
                     sets = listOf(
                         WorkoutSummarySetUi(1, "45", 12, oneRm(45f, 12)),
                         WorkoutSummarySetUi(2, "45", 11, oneRm(45f, 11)),
                     ),
                 ),
                 WorkoutSummaryExerciseUi(
-                    id = "incline-bench-press-db",
-                    name = "Incline Bench Press (dumbbell)",
+                    id = "incline-db-press",
+                    name = "Incline Dumbbell Press",
                     sets = listOf(
                         WorkoutSummarySetUi(1, "20", 13, oneRm(20f, 13)),
                         WorkoutSummarySetUi(2, "20", 11, oneRm(20f, 11)),
@@ -74,13 +74,13 @@ class WorkoutSummaryViewModelTest {
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
         )
         val other = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
             startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
-            exercises = listOf(completedExercise("bench-press-bb", 80f to 8)),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(other, matching))
         val viewModel = WorkoutSummaryViewModel(matching.id, repository, backgroundScope)
@@ -89,7 +89,7 @@ class WorkoutSummaryViewModelTest {
             skipItems(1)
             val actual = awaitItem() as WorkoutSummaryUiState.Content
             assert(actual.title == "Full Body B")
-            assert(actual.exercises.single().id == "rdl-bb")
+            assert(actual.exercises.single().id == "romanian-deadlift")
         }
     }
 
@@ -99,13 +99,13 @@ class WorkoutSummaryViewModelTest {
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
         )
         val updated = completedSession(
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 50f to 10)),
+            exercises = listOf(completedExercise("romanian-deadlift", 50f to 10)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(original))
         val viewModel = WorkoutSummaryViewModel(original.id, repository, backgroundScope)
@@ -128,11 +128,11 @@ class WorkoutSummaryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
             exercises = listOf(
                 WorkoutExercise(
-                    exerciseDefinition = catalogExercise("pullup-assisted"),
+                    exerciseDefinition = catalogExercise("assisted-pull-ups"),
                     repRange = 6..10,
                     sets = listOf(
                         ExerciseSet(
-                            catalogExercise("pullup-assisted"),
+                            catalogExercise("assisted-pull-ups"),
                             null,
                             8,
                             SetState.Completed,
@@ -155,16 +155,16 @@ class WorkoutSummaryViewModelTest {
             planName = "Full Body A",
             startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
             exercises = listOf(
-                completedExercise("bench-press-bb", 80f to 8, 80f to 7).copy(
+                completedExercise("bench-press", 80f to 8, 80f to 7).copy(
                     warmupSets = listOf(
                         ExerciseSet(
-                            exerciseDefinition = catalogExercise("bench-press-bb"),
+                            exerciseDefinition = catalogExercise("bench-press"),
                             weight = Weight.kilograms(40),
                             reps = 5,
                             setState = SetState.Completed,
                         ),
                         ExerciseSet(
-                            exerciseDefinition = catalogExercise("bench-press-bb"),
+                            exerciseDefinition = catalogExercise("bench-press"),
                             weight = null,
                             reps = 6,
                             setState = SetState.Completed,
@@ -192,9 +192,9 @@ class WorkoutSummaryViewModelTest {
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(
-                completedExercise("rdl-bb", 45f to 12),
+                completedExercise("romanian-deadlift", 45f to 12),
                 completedExercise(
-                    "incline-bench-press-db",
+                    "incline-db-press",
                     20f to 13,
                     notes = listOf("Rep range 11-15", "Pause at the bottom"),
                 ),
