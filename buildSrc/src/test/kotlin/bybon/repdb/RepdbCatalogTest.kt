@@ -1,6 +1,9 @@
 package bybon.repdb
 
+import java.io.File
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -88,6 +91,123 @@ class RepdbCatalogTest {
         assertTrue(source.contains("\"Barbell Bench Press\""))
         assertTrue(source.contains("MuscleGroup.Chest"))
         assertTrue(source.contains("Equipment.Barbell"))
+    }
+
+    @Test
+    fun `rejects a catalog that is not schema 3`() {
+        val error = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(catalog(exercise(id = "bench-press", name = "Barbell Bench Press")).replace("3", "2"))
+        }
+
+        assertEquals("RepDB catalog schema is 2, expected 3", error.message)
+    }
+
+    @Test
+    fun `rejects a row without an id or english name`() {
+        val missingId = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(catalog(exercise(id = "", name = "Barbell Bench Press")))
+        }
+        val missingName = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(catalog(exercise(id = "bench-press", name = "")))
+        }
+
+        assertEquals("RepDB exercise is missing id", missingId.message)
+        assertEquals("RepDB exercise bench-press is missing name_en", missingName.message)
+    }
+
+    @Test
+    fun `rejects a filter result that is not the pinned subset`() {
+        val error = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press")),
+                expectedCount = EXPECTED_REPDB_EXERCISE_COUNT,
+            )
+        }
+
+        assertEquals("RepDB catalog filter kept 1 exercises, expected 382", error.message)
+    }
+
+    @Test
+    fun `rejects a body that is not json`() {
+        val error = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog("not json")
+        }
+
+        assertEquals("RepDB catalog is not valid JSON", error.message)
+    }
+
+    @Test
+    fun `reads a cached download without contacting the network`() {
+        val cache = tempCache(catalog(exercise(id = "bench-press", name = "Barbell Bench Press")))
+        var downloads = 0
+
+        val exercises = loadRepdbCatalog(cache, download = {
+            downloads += 1
+            RepdbDownload.Failed("offline")
+        }, expectedCount = 1)
+
+        assertEquals(listOf("bench-press"), exercises.map { it.id })
+        assertEquals(0, downloads)
+    }
+
+    @Test
+    fun `stores a successful download for the next build`() {
+        val cache = tempCache(null)
+        val json = catalog(exercise(id = "bench-press", name = "Barbell Bench Press"))
+        var downloads = 0
+
+        loadRepdbCatalog(cache, download = {
+            downloads += 1
+            RepdbDownload.Ok(json)
+        }, expectedCount = 1)
+        loadRepdbCatalog(cache, download = {
+            downloads += 1
+            RepdbDownload.Failed("offline")
+        }, expectedCount = 1)
+
+        assertEquals(1, downloads)
+        assertTrue(cache.isFile)
+    }
+
+    @Test
+    fun `does not cache a download that fails validation`() {
+        val cache = tempCache(null)
+
+        val error = assertThrows(RepdbCatalogException::class.java) {
+            loadRepdbCatalog(cache) { RepdbDownload.Ok("not json") }
+        }
+
+        assertEquals("RepDB catalog is not valid JSON", error.message)
+        assertFalse(cache.exists())
+    }
+
+    @Test
+    fun `missing cache fails with the download error`() {
+        val cache = tempCache(null)
+        val http = assertThrows(RepdbCatalogException::class.java) {
+            loadRepdbCatalog(cache) { RepdbDownload.HttpStatus(404) }
+        }
+        val timedOut = assertThrows(RepdbCatalogException::class.java) {
+            loadRepdbCatalog(cache) { RepdbDownload.TimedOut }
+        }
+        val offline = assertThrows(RepdbCatalogException::class.java) {
+            loadRepdbCatalog(cache) { RepdbDownload.Failed("connection refused") }
+        }
+
+        assertEquals("RepDB download failed: HTTP 404", http.message)
+        assertEquals("RepDB download failed: timed out", timedOut.message)
+        assertEquals("RepDB download failed: connection refused", offline.message)
+    }
+
+    private fun tempCache(contents: String?): File {
+        val file = File.createTempFile("repdb-catalog", ".json")
+        if (contents == null) {
+            file.delete()
+        } else {
+            file.writeText(contents)
+        }
+        file.deleteOnExit()
+        return file
     }
 
     private fun catalog(vararg exercises: String): String = """
