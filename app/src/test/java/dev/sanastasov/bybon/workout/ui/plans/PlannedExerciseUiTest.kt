@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 
 class PlannedExerciseUiTest {
@@ -34,11 +33,11 @@ class PlannedExerciseUiTest {
 
         assert(rows.size == 3)
         assert(rows.none { it.isWarmup })
-        assert(rows.all { it.repsLabel == "12–14" && it.rest == 90.seconds })
+        assert(rows.all { it.repsLabel == "12–14" && it.rest == 1.minutes })
         assert(curl.subtitle() == "Legs · Machine")
         assert(
             rows.first().contentDescription(curl.exercise.name) ==
-                "Seated Leg Curl set 1, 12–14 reps, rest 1:30",
+                "Seated Leg Curl set 1, 12–14 reps, rest 1:00",
         )
     }
 

@@ -50,7 +50,13 @@ class RepdbCatalogTest {
                     bodyPart = "upper_legs",
                 ),
                 exercise(id = "trap", name = "Trap Bar Deadlift", equipment = "trap_bar"),
-                exercise(id = "curl", name = "Dumbbell Curl", equipment = "dumbbell", bodyPart = "upper_arms"),
+                exercise(
+                    id = "curl",
+                    name = "Dumbbell Curl",
+                    equipment = "dumbbell",
+                    bodyPart = "upper_arms",
+                    mechanic = "isolation",
+                ),
                 exercise(id = "pull-up", name = "Pull Up", equipment = null, bodyPart = "back"),
                 exercise(
                     id = "assisted-pull-ups",
@@ -77,13 +83,15 @@ class RepdbCatalogTest {
         assertEquals("Machine", exercises.getValue("lat-pulldown").equipment)
         assertEquals("Legs", exercises.getValue("squat").muscleGroup)
         assertEquals("Arms", exercises.getValue("curl").muscleGroup)
+        assertEquals("Compound", exercises.getValue("squat").mechanic)
+        assertEquals("Isolation", exercises.getValue("curl").mechanic)
     }
 
     @Test
     fun `renders exercise definitions`() {
         val source = renderRepdbCatalog(
             listOf(
-                RepdbExercise("bench-press", "Barbell Bench Press", "Chest", "Barbell"),
+                RepdbExercise("bench-press", "Barbell Bench Press", "Chest", "Barbell", "Compound"),
             ),
         )
 
@@ -96,6 +104,7 @@ class RepdbCatalogTest {
                         "Barbell Bench Press",
                         MuscleGroup.Chest,
                         Equipment.Barbell,
+                        Mechanic.Compound,
                     ),
                 )
                 """.trimIndent(),
@@ -110,6 +119,21 @@ class RepdbCatalogTest {
         }
 
         assertEquals("RepDB catalog schema is 2, expected 3", error.message)
+    }
+
+    @Test
+    fun `rejects a row with a missing or unknown mechanic`() {
+        val missing = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(catalog(exercise(id = "bench-press", name = "Barbell Bench Press", mechanic = null)))
+        }
+        val unknown = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press", mechanic = "static")),
+            )
+        }
+
+        assertEquals("RepDB exercise bench-press is missing mechanic", missing.message)
+        assertEquals("RepDB exercise bench-press has unknown mechanic: static", unknown.message)
     }
 
     @Test
@@ -236,8 +260,10 @@ class RepdbCatalogTest {
         goals: List<String> = listOf("hypertrophy"),
         equipment: String? = "barbell",
         bodyPart: String = "chest",
+        mechanic: String? = "compound",
     ): String {
         val equipmentJson = equipment?.let { "\"$it\"" } ?: "null"
+        val mechanicJson = mechanic?.let { "\"$it\"" } ?: "null"
         val goalsJson = goals.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
         return """
             {
@@ -246,7 +272,8 @@ class RepdbCatalogTest {
               "category": "$category",
               "goals": $goalsJson,
               "equipment": $equipmentJson,
-              "body_part": "$bodyPart"
+              "body_part": "$bodyPart",
+              "mechanic": $mechanicJson
             }
         """.trimIndent()
     }

@@ -220,7 +220,7 @@ class WorkoutOverviewViewModelTest {
                 draft.exercises.first {
                     it.id == "seated-leg-curl"
                 }.restAfterWorkSet.formatRestClock() ==
-                    "1:30",
+                    "1:00",
             )
             assert(
                 draft.exercises.first {

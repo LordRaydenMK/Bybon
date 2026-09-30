@@ -143,7 +143,7 @@ class WorkoutSessionViewModelTest {
                 session.exercises.first {
                     it.id == "seated-leg-curl"
                 }.restAfterWorkSet.formatRestClock() ==
-                    "1:30",
+                    "1:00",
             )
             assert(
                 session.exercises.first {
