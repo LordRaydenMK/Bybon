@@ -84,10 +84,20 @@ class RepdbCatalogTest {
             ),
         )
 
-        assertTrue(source.contains("\"bench-press\""))
-        assertTrue(source.contains("\"Barbell Bench Press\""))
-        assertTrue(source.contains("MuscleGroup.Chest"))
-        assertTrue(source.contains("Equipment.Barbell"))
+        assertTrue(
+            source.contains(
+                """
+                internal val repdbCatalogExercises: List<ExerciseDefinition> = listOf(
+                    ExerciseDefinition(
+                        "bench-press",
+                        "Barbell Bench Press",
+                        MuscleGroup.Chest,
+                        Equipment.Barbell,
+                    ),
+                )
+                """.trimIndent(),
+            ),
+        )
     }
 
     private fun catalog(vararg exercises: String): String = """
