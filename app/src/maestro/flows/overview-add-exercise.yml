@@ -10,7 +10,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Add Exercise"
 - assertVisible: "Exercise Library"
 - assertVisible: "Already added"
-- assertVisible: "Bench Press (barbell)"
+- assertVisible: "Barbell Bench Press"
 - assertVisible: "Arms"
 - assertVisible: "Dumbbell"
 - tapOn:
@@ -20,23 +20,23 @@ appId: dev.sanastasov.bybon.debug
     text: "Dumbbell"
     index: 0
 - scrollUntilVisible:
-    element: "Select Incline Curl (dumbbell)"
+    element: "Select Incline Dumbbell Curl"
     direction: DOWN
-- tapOn: "Select Incline Curl (dumbbell)"
+- tapOn: "Select Incline Dumbbell Curl"
 - scrollUntilVisible:
-    element: "Deselect Incline Curl (dumbbell)"
+    element: "Deselect Incline Dumbbell Curl"
     direction: UP
 - tapOn: "Add exercise"
 - assertVisible: "Full body workout routine variant A"
 - assertVisible: "Add Exercise"
 - assertVisible: "Start Workout"
 - scrollUntilVisible:
-    element: "3 x Incline Curl (dumbbell) in 8 - 12"
+    element: "3 x Incline Dumbbell Curl in 8 - 12"
     direction: DOWN
     centerElement: true
-- assertVisible: "3 x Incline Curl (dumbbell) in 8 - 12"
-- tapOn: "More options for Incline Curl (dumbbell)"
+- assertVisible: "3 x Incline Dumbbell Curl in 8 - 12"
+- tapOn: "More options for Incline Dumbbell Curl"
 - tapOn: "Remove Exercise"
-- assertNotVisible: "3 x Incline Curl (dumbbell) in 8 - 12"
+- assertNotVisible: "3 x Incline Dumbbell Curl in 8 - 12"
 - tapOn: "Start Workout"
 - assertVisible: "Exercise 1 / 6"
