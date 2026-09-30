@@ -1,5 +1,12 @@
 package bybon.repdb
 
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.LIST
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import com.squareup.kotlinpoet.PropertySpec
 import groovy.json.JsonSlurper
 import java.io.File
 import java.io.IOException
@@ -7,10 +14,8 @@ import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URI
 
-const val REPDB_COMMIT = "9ed9357f09c7566ea0256c57ebd6374ebb8b575e"
-
-const val REPDB_EXERCISES_URL =
-    "https://raw.githubusercontent.com/RepDB/exercise-dataset/$REPDB_COMMIT/exercises.json"
+fun repdbExercisesUrl(commit: String): String =
+    "https://raw.githubusercontent.com/RepDB/exercise-dataset/$commit/exercises.json"
 
 private val excludedEquipment = setOf("kettlebell", "loop_band", "resistance_band")
 
@@ -53,7 +58,7 @@ private data class RepdbJsonSource(
 )
 
 fun downloadRepdbExercises(
-    url: String = REPDB_EXERCISES_URL,
+    url: String,
     timeoutMillis: Int = REPDB_DOWNLOAD_TIMEOUT_MILLIS,
 ): RepdbDownload {
     val connection = URI(url).toURL().openConnection() as HttpURLConnection
@@ -158,21 +163,33 @@ private fun toExercise(row: Any?): RepdbExercise? {
     )
 }
 
-fun renderRepdbCatalog(exercises: List<RepdbExercise>): String = buildString {
-    appendLine("package dev.sanastasov.bybon.workout.domain")
-    appendLine()
-    appendLine("internal val repdbCatalogExercises: List<ExerciseDefinition> = listOf(")
+private val exerciseDefinition = ClassName("dev.sanastasov.bybon.workout.domain", "ExerciseDefinition")
+private val muscleGroupType = ClassName("dev.sanastasov.bybon.workout.domain", "MuscleGroup")
+private val equipmentType = ClassName("dev.sanastasov.bybon.workout.domain", "Equipment")
+
+fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
+    val initializer = CodeBlock.builder().add("listOf(")
     exercises.forEach { exercise ->
-        appendLine("    ExerciseDefinition(")
-        appendLine("        ${kotlinString(exercise.id)},")
-        appendLine("        ${kotlinString(exercise.name)},")
-        appendLine("        MuscleGroup.${exercise.muscleGroup},")
-        appendLine("        Equipment.${exercise.equipment},")
-        appendLine("    ),")
+        initializer.add("\n    %T(", exerciseDefinition)
+        initializer.add("\n        %S,", exercise.id)
+        initializer.add("\n        %S,", exercise.name)
+        initializer.add("\n        %T.%L,", muscleGroupType, exercise.muscleGroup)
+        initializer.add("\n        %T.%L,", equipmentType, exercise.equipment)
+        initializer.add("\n    ),")
     }
-    appendLine(")")
-    appendLine()
+    initializer.add("\n)")
+    return FileSpec.builder("dev.sanastasov.bybon.workout.domain", "RepdbCatalog")
+        .indent("") // Continuation lines are spaced in the initializer itself.
+        .addProperty(
+            PropertySpec.builder("repdbCatalogExercises", LIST.parameterizedBy(exerciseDefinition))
+                .addModifiers(KModifier.INTERNAL)
+                .initializer(initializer.build())
+                .build(),
+        )
+        .build()
 }
+
+fun renderRepdbCatalog(exercises: List<RepdbExercise>): String = repdbCatalogFile(exercises).toString()
 
 internal fun includeExercise(fields: Map<*, *>): Boolean {
     if (fields["category"] != "strength") return false
@@ -201,17 +218,4 @@ internal fun loadClass(equipment: String?): String = when (equipment) {
     "dumbbell" -> "Dumbbell"
     "assisted_pullup_machine", "dip_machine" -> "AssistedBodyWeight"
     else -> "Machine"
-}
-
-private fun kotlinString(value: String): String = buildString {
-    append('"')
-    value.forEach { character ->
-        when (character) {
-            '\\' -> append("\\\\")
-            '"' -> append("\\\"")
-            '$' -> append("\\$")
-            else -> append(character)
-        }
-    }
-    append('"')
 }

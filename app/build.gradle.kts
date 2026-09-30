@@ -1,5 +1,4 @@
 import bybon.repdb.GenerateRepdbCatalogTask
-import bybon.repdb.REPDB_COMMIT
 import dev.detekt.gradle.Detekt
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.powerassert.gradle.PowerAssertCompilationFilter
@@ -16,9 +15,13 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+val repdbCommit = providers.gradleProperty("repdb.commit")
+val repdbCacheDirectory = File(gradle.gradleUserHomeDir, "caches/bybon-repdb")
+
 val generateRepdbCatalog = tasks.register<GenerateRepdbCatalogTask>("generateRepdbCatalog") {
+    commit.set(repdbCommit)
     outputDirectory.set(layout.buildDirectory.dir("generated/repdb/kotlin"))
-    cacheFile = File(gradle.gradleUserHomeDir, "caches/bybon-repdb/$REPDB_COMMIT.json")
+    cacheDirectory.set(repdbCacheDirectory)
 }
 
 androidComponents {
