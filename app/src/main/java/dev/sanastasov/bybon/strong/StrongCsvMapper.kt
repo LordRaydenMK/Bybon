@@ -2,11 +2,8 @@
 
 package dev.sanastasov.bybon.strong
 
-import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
-import dev.sanastasov.bybon.workout.domain.Mechanic
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -247,8 +244,14 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,
     exercisesById: Map<String, ExerciseDefinition>,
 ): WorkoutExercise? {
-    val strongName = first().exerciseName
-    val definition = resolveExercise(strongName, exercisesByNormalizedName, exercisesById)
+    val definition = resolveExercise(first().exerciseName, exercisesByNormalizedName, exercisesById)
+        ?: return null
+    return toResolvedWorkoutExercise(definition)
+}
+
+private fun List<StrongCsvRow>.toResolvedWorkoutExercise(
+    definition: ExerciseDefinition,
+): WorkoutExercise? {
     val warmupRows = filter { it.setOrder.equals("W", ignoreCase = true) }
     val workingRows = filter { it.setOrder.toIntOrNull() != null }
     val workSets = workingRows.mapNotNull { it.toCompletedSet(definition) }
@@ -290,43 +293,14 @@ private fun StrongCsvRow.toCompletedSet(definition: ExerciseDefinition): Exercis
     )
 }
 
-@Suppress("ReturnCount")
 private fun resolveExercise(
     strongName: String,
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,
     exercisesById: Map<String, ExerciseDefinition>,
-): ExerciseDefinition {
+): ExerciseDefinition? {
     val normalized = strongName.normalizedExerciseName()
-    strongExerciseAliases[normalized]?.let { id -> exercisesById[id] }?.let { return it }
-    exercisesByNormalizedName[normalized]?.let { return it }
-
-    val trimmedName = strongName.trim()
-    return ExerciseDefinition(
-        id = trimmedName.slugify(),
-        name = trimmedName,
-        primaryMuscleGroup = inferMuscleGroup(trimmedName),
-        equipment = inferEquipment(trimmedName),
-        mechanic = Mechanic.Isolation,
-    )
-}
-
-private fun inferEquipment(name: String): Equipment {
-    val lower = name.lowercase()
-    return when {
-        "barbell" in lower -> Equipment.Barbell
-        "dumbbell" in lower -> Equipment.Dumbbell
-        "assisted" in lower -> Equipment.AssistedBodyWeight
-        "machine" in lower || "cable" in lower -> Equipment.Machine
-        else -> Equipment.Bodyweight
-    }
-}
-
-private fun inferMuscleGroup(name: String): MuscleGroup {
-    val lower = name.lowercase()
-    return when {
-        "crunch" in lower || "plank" in lower || "sit-up" in lower || "sit up" in lower -> MuscleGroup.Core
-        else -> MuscleGroup.Other
-    }
+    return strongExerciseAliases[normalized]?.let { exercisesById[it] }
+        ?: exercisesByNormalizedName[normalized]
 }
 
 private fun String.normalizedExerciseName(): String = lowercase()

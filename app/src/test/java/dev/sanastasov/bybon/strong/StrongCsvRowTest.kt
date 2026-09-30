@@ -194,7 +194,7 @@ class StrongCsvRowTest {
     }
 
     @Test
-    fun `imports an exercise that is missing from the catalog`() {
+    fun `leaves an exercise that is missing from the catalog out of the import`() {
         val rows = workout(
             number = 1,
             name = "Upper body A",
@@ -203,12 +203,9 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
 
-        val crunch = result.exercises.single()
-        assert(crunch.name == "Crunch (Machine)")
-        assert(crunch.mechanic == Mechanic.Isolation)
-        val imported = result.sessionHistory.single().exercises.last()
-        assert(imported.id == "crunch-machine")
-        assert(imported.restAfterWorkSet == 60.seconds)
+        assert(result.exercises.isEmpty())
+        assert(result.sessionHistory.single().exercises.map { it.id } == listOf("bench-press-bb"))
+        assert(result.plans.single().sets.map { it.exercise.id } == listOf("bench-press-bb"))
     }
 
     @Test
@@ -242,17 +239,27 @@ class StrongCsvRowTest {
 
     @Test
     fun `matches plans when some exercises are substituted`() {
+        val crunch = ExerciseDefinition(
+            "machine-seated-crunch",
+            "Machine Seated Crunch",
+            MuscleGroup.Core,
+            Equipment.Machine,
+            Mechanic.Isolation,
+        )
         val rows = workout(
             number = 1,
             name = "Full Body A Workout",
             exercises = listOf("Bench Press (Barbell)", "Squat (Barbell)", "Crunch (Machine)"),
         )
 
-        val result = rows.toStrongImport(plans = listOf(fullBodyPlan), exerciseCatalog = catalog)
+        val result = rows.toStrongImport(
+            plans = listOf(fullBodyPlan),
+            exerciseCatalog = catalog + crunch,
+        )
 
         assert(result.plans == emptyList<WorkoutPlan>())
         assert(result.sessionHistory.single().planId == fullBodyPlan.id)
-        assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
+        assert(result.exercises.isEmpty())
     }
 
     @Test
@@ -268,13 +275,8 @@ class StrongCsvRowTest {
         assert(result.plans.map { it.name } == listOf("Upper body A"))
         assert(result.plans.single().isArchived)
         assert(result.sessionHistory.single().planId == WorkoutPlanId("upper-body-a"))
-        assert(
-            result.plans.single().sets.map { it.exercise.id } == listOf(
-                "bench-press-bb",
-                "crunch-machine",
-            ),
-        )
-        assert(result.plans.single().sets.map { it.sets } == listOf(3, 3))
+        assert(result.plans.single().sets.map { it.exercise.id } == listOf("bench-press-bb"))
+        assert(result.plans.single().sets.map { it.sets } == listOf(3))
     }
 
     @Test
@@ -427,9 +429,8 @@ class StrongCsvRowTest {
         assert(rows.single().exerciseName == "Reverse Lunges")
 
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = emptyList())
-        assert(result.exercises.single().name == "Reverse Lunges")
-        assert(result.exercises.single().id == "reverse-lunges")
-        assert(result.exercises.single().equipment == Equipment.Bodyweight)
+        assert(result.exercises.isEmpty())
+        assert(result.sessionHistory.isEmpty())
     }
 
     @Test
