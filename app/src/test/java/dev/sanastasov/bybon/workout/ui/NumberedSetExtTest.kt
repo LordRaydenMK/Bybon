@@ -10,7 +10,7 @@ import org.junit.Test
 
 class NumberedSetExtTest {
 
-    private val bench = catalogExercise("bench-press-bb")
+    private val bench = catalogExercise("bench-press")
 
     @Test
     fun `work set labels use set number and 1RM`() {
@@ -41,7 +41,7 @@ class NumberedSetExtTest {
     fun `missing load renders as dash and has no 1RM`() {
         val numbered = NumberedSet(
             set = ExerciseSet(
-                catalogExercise("pullup-assisted"),
+                catalogExercise("assisted-pull-ups"),
                 null,
                 8,
                 SetState.Completed,

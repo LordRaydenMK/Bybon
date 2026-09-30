@@ -137,7 +137,7 @@ class WorkoutSessionStateTest {
 
     @Test
     fun `exercise without work sets is illegal`() {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val error = assertFailsWith<IllegalArgumentException> {
             WorkoutExercise(
                 bench,
@@ -150,7 +150,7 @@ class WorkoutSessionStateTest {
 
     @Test
     fun `warmup sets cannot be an empty list`() {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val error = assertFailsWith<IllegalArgumentException> {
             WorkoutExercise(
                 exerciseDefinition = bench,
@@ -166,7 +166,7 @@ class WorkoutSessionStateTest {
 
     @Test
     fun `warmup set count cannot be negative`() {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val error = assertFailsWith<IllegalArgumentException> {
             PlanedExercise(
                 exercise = bench,
@@ -180,7 +180,7 @@ class WorkoutSessionStateTest {
 
     @Test
     fun `reps must be positive`() {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val error = assertFailsWith<IllegalArgumentException> {
             ExerciseSet(bench, Weight.kilograms(50), 0, SetState.NotStated)
         }

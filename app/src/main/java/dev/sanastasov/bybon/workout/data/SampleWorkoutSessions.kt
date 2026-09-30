@@ -17,20 +17,20 @@ val sampleFullBodyBCompleted = WorkoutSession(
     note = "Friday full body workout",
     exercises = listOf(
         completedExercise(
-            "rdl-bb",
+            "romanian-deadlift",
             listOf(45f to 12, 45f to 12),
         ),
         completedExercise(
-            "incline-bench-press-db",
+            "incline-db-press",
             listOf(20f to 13, 20f to 11, 20f to 8),
             notes = listOf("Rep range 11-15"),
         ),
         completedExercise(
-            "split-squat-db",
+            "bulgarian-split-squat",
             listOf(14f to 10, 14f to 10),
         ),
         completedExercise(
-            "incline-row-db",
+            "chest-supported-db-row",
             listOf(22f to 14, 22f to 12, 22f to 10),
         ),
     ),

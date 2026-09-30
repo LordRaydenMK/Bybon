@@ -24,15 +24,33 @@ private val strongDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 private val planNameFillers = setOf("workout", "session", "training", "routine", "day")
 
-/** Strong display names that do not case-insensitively match a Bybon catalog name. */
+/** Strong display names that do not case-insensitively match a shipped exercise name. */
 private val strongExerciseAliases = mapOf(
-    "romanian deadlift (barbell)" to "rdl-bb",
-    "bulgarian split squat" to "split-squat-db",
-    "bicep curl (machine)" to "biceps-curl-machine",
+    "bench press (barbell)" to "bench-press",
+    "squat (barbell)" to "squat",
+    "squat (machine)" to "squat-machine",
+    "pull up (assisted)" to "assisted-pull-ups",
+    "incline bench press (dumbbell)" to "incline-db-press",
+    "incline row (dumbbell)" to "chest-supported-db-row",
+    "incline curl (dumbbell)" to "incline-db-curl",
+    "lateral raise (dumbbell)" to "lateral-raise",
+    "lateral raise (machine)" to "lateral-raise-machine",
+    "skullcrusher (dumbbell)" to "db-skull-crusher",
+    "upright row (dumbbell)" to "dumbbell-upright-row",
+    "leg extension (machine)" to "leg-extension",
+    "romanian deadlift (barbell)" to "romanian-deadlift",
+    "bulgarian split squat" to "bulgarian-split-squat",
+    "bicep curl (machine)" to "machine-bicep-curl",
+    "seated leg curl (machine)" to "seated-leg-curl",
+    "lying leg curl (machine)" to "leg-curl",
     "triceps press" to "triceps-press-machine",
-    "leg press" to "leg-press-machine",
-    "dumbbell lateral raises" to "lateral-raise-db",
-    "chest fly" to "chest-fly-peck-deck",
+    "leg press" to "leg-press",
+    "dumbbell lateral raises" to "lateral-raise",
+    "chest fly" to "pec-deck",
+    "chest fly (cable)" to "cable-fly",
+    "lat pulldown (cable)" to "lat-pulldown",
+    "reverse lunges" to "reverse-lunge",
+    "crunch (machine)" to "machine-seated-crunch",
 )
 
 data class StrongImportResult(

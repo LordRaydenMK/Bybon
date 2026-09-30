@@ -298,7 +298,7 @@ private fun WorkoutHistoryContentPreview() {
                         date = LocalDate.of(2026, 8, 13),
                         exercises = listOf(
                             ExerciseTopSetUi(
-                                name = "Romanian Deadlift (RDL) (barbell)",
+                                name = "Romanian Deadlift",
                                 weightKg = "45",
                                 reps = 12,
                                 oneRm = Weight.kilograms(63f),

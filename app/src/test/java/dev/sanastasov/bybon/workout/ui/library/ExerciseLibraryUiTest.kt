@@ -43,7 +43,7 @@ class ExerciseLibraryUiTest {
     @Test
     fun `assisted equipment uses a short label`() {
         val pullUp = ExerciseDefinition(
-            "pullup-assisted",
+            "assisted-pull-ups",
             "Pull Up (assisted)",
             MuscleGroup.Back,
             Equipment.AssistedBodyWeight,
@@ -57,8 +57,8 @@ class ExerciseLibraryUiTest {
     @Test
     fun `other equipment uses the enum name`() {
         val bench = ExerciseDefinition(
-            "bench-press-bb",
-            "Bench Press (barbell)",
+            "bench-press",
+            "Barbell Bench Press",
             MuscleGroup.Chest,
             Equipment.Barbell,
         )

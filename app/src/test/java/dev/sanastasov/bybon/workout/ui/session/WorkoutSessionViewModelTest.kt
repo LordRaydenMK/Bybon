@@ -147,7 +147,7 @@ class WorkoutSessionViewModelTest {
             )
             assert(
                 session.exercises.first {
-                    it.id == "skullcrusher-db"
+                    it.id == "db-skull-crusher"
                 }.restAfterWorkSet.formatRestClock() ==
                     "1:00",
             )
@@ -207,7 +207,7 @@ class WorkoutSessionViewModelTest {
 
     @Test
     fun `completing the last set completes the workout and opens the summary`() = runTest {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val startedAt = LocalDateTime.of(2026, 1, 1, 12, 0)
         val session = WorkoutSession(
             planId = fullBodyA.id,
@@ -267,12 +267,12 @@ class WorkoutSessionViewModelTest {
         viewModel.uiState.test {
             assert(awaitItem() == null)
             val session = awaitItem()!!
-            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("incline-curl-db"))
+            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("incline-db-curl"))
             val added = awaitItem()!!
-            assert(added.exercises.last().id == "incline-curl-db")
+            assert(added.exercises.last().id == "incline-db-curl")
             assert(
                 added.exercises.last().exerciseDefinition ==
-                    catalogExercise("incline-curl-db"),
+                    catalogExercise("incline-db-curl"),
             )
             assert(
                 repository.exercises().first().any { it.id == added.exercises.last().id },
@@ -316,8 +316,8 @@ class WorkoutSessionViewModelTest {
             failures.scope,
         )
         viewModel.uiState.first { it != null }
-        failures.expectFailure("Exercise bench-press-bb is already in the session") {
-            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("bench-press-bb"))
+        failures.expectFailure("Exercise bench-press is already in the session") {
+            viewModel.onAction(WorkoutSessionAction.OnExercisePicked("bench-press"))
         }
     }
 
@@ -351,8 +351,8 @@ class WorkoutSessionViewModelTest {
 
             viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(session.exercises.first()))
             val updated = awaitItem()!!
-            assert(updated.exercises.none { it.id == "bench-press-bb" })
-            assert(updated.exercises.first().id == "squat-bb")
+            assert(updated.exercises.none { it.id == "bench-press" })
+            assert(updated.exercises.first().id == "squat")
             assert(updated.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
         }
     }
@@ -373,7 +373,7 @@ class WorkoutSessionViewModelTest {
             failures.scope,
         )
         val current = viewModel.uiState.first { it != null }!!
-        failures.expectFailure("Cannot remove completed exercise bench-press-bb") {
+        failures.expectFailure("Cannot remove completed exercise bench-press") {
             viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(current.exercises.first()))
         }
     }
@@ -388,16 +388,16 @@ class WorkoutSessionViewModelTest {
         )
         val current = viewModel.uiState.first { it != null }!!
         val missing = current.exercises.first().copy(
-            exerciseDefinition = catalogExercise("incline-curl-db"),
+            exerciseDefinition = catalogExercise("incline-db-curl"),
         )
-        failures.expectFailure("Exercise incline-curl-db is not in the session") {
+        failures.expectFailure("Exercise incline-db-curl is not in the session") {
             viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(missing))
         }
     }
 
     @Test
     fun `removing the last remaining exercise is rejected`() = runTest {
-        val bench = catalogExercise("bench-press-bb")
+        val bench = catalogExercise("bench-press")
         val session = WorkoutSession(
             planId = fullBodyA.id,
             planName = fullBodyA.name,
@@ -447,7 +447,7 @@ class WorkoutSessionViewModelTest {
         }
         val stored = repository.workoutSessions().first().single()
         assert(stored.state is WorkoutState.Completed)
-        assert(stored.exercises.single().id == "bench-press-bb")
+        assert(stored.exercises.single().id == "bench-press")
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 
@@ -459,9 +459,9 @@ class WorkoutSessionViewModelTest {
         )
         val first = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
         first.uiState.first { it != null }
-        first.onAction(WorkoutSessionAction.OnExercisePicked("incline-curl-db"))
+        first.onAction(WorkoutSessionAction.OnExercisePicked("incline-db-curl"))
         val added = first.uiState.first { session ->
-            session?.exercises?.last()?.id == "incline-curl-db"
+            session?.exercises?.last()?.id == "incline-db-curl"
         }!!
         val removed = added.exercises.first { it.id == "seated-leg-curl" }
         first.onAction(WorkoutSessionAction.OnRemoveExercise(removed))
@@ -491,15 +491,15 @@ class WorkoutSessionViewModelTest {
         }!!
 
         assert(created.exercises.map { it.id } == fullBodyA.sets.map { it.exercise.id })
-        assert(created.exercises.none { it.id == "incline-curl-db" })
+        assert(created.exercises.none { it.id == "incline-db-curl" })
         assert(created.exercises.any { it.id == "seated-leg-curl" })
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
     }
 }
 
 private fun twoExerciseSession(firstState: SetState, secondState: SetState): WorkoutSession {
-    val bench = catalogExercise("bench-press-bb")
-    val curl = catalogExercise("incline-curl-db")
+    val bench = catalogExercise("bench-press")
+    val curl = catalogExercise("incline-db-curl")
     return WorkoutSession(
         planId = fullBodyA.id,
         planName = fullBodyA.name,

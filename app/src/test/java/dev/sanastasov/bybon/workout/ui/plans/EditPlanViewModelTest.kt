@@ -42,7 +42,7 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.first { it != null }
-        viewModel.onAction(EditPlanAction.OnAddSet("bench-press-bb"))
+        viewModel.onAction(EditPlanAction.OnAddSet("bench-press"))
 
         val updated = viewModel.uiState.first { it?.sets?.first()?.sets == 4 }!!
         assert(updated.sets.first().warmupSets == 3)
@@ -86,12 +86,12 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.first { it != null }
-        viewModel.onAction(EditPlanAction.OnMoveExerciseDown("bench-press-bb"))
+        viewModel.onAction(EditPlanAction.OnMoveExerciseDown("bench-press"))
 
         val updated = viewModel.uiState.first { plan ->
-            plan?.sets?.map { it.exercise.id }?.take(2) == listOf("squat-bb", "bench-press-bb")
+            plan?.sets?.map { it.exercise.id }?.take(2) == listOf("squat", "bench-press")
         }!!
-        assert(updated.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(updated.sets.map { it.exercise.id }.take(2) == listOf("squat", "bench-press"))
         assert(updated.sets.drop(2) == fullBodyA.sets.drop(2))
         assert(repository.workoutPlans().first()[1] == fullBodyB)
     }
@@ -102,12 +102,12 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.first { it != null }
-        viewModel.onAction(EditPlanAction.OnMoveExerciseUp("squat-bb"))
+        viewModel.onAction(EditPlanAction.OnMoveExerciseUp("squat"))
 
         val updated = viewModel.uiState.first { plan ->
-            plan?.sets?.first()?.exercise?.id == "squat-bb"
+            plan?.sets?.first()?.exercise?.id == "squat"
         }!!
-        assert(updated.sets.map { it.exercise.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(updated.sets.map { it.exercise.id }.take(2) == listOf("squat", "bench-press"))
     }
 
     @Test
@@ -136,12 +136,12 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
 
-        viewModel.onAction(EditPlanAction.OnExercisePicked("incline-curl-db"))
+        viewModel.onAction(EditPlanAction.OnExercisePicked("incline-db-curl"))
 
         val added = viewModel.uiState.first { plan ->
-            plan?.sets?.last()?.exercise?.id == "incline-curl-db"
+            plan?.sets?.last()?.exercise?.id == "incline-db-curl"
         }!!.sets.last()
-        assert(added.exercise == catalogExercise("incline-curl-db"))
+        assert(added.exercise == catalogExercise("incline-db-curl"))
         assert(added.sets == 3)
         assert(added.warmupSets == 0)
         assert(added.repRange == 8..12)
@@ -178,8 +178,8 @@ class EditPlanViewModelTest {
             failures.scope,
         )
         viewModel.uiState.first { it != null }
-        failures.expectFailure("Exercise bench-press-bb is already on the plan") {
-            viewModel.onAction(EditPlanAction.OnExercisePicked("bench-press-bb"))
+        failures.expectFailure("Exercise bench-press is already on the plan") {
+            viewModel.onAction(EditPlanAction.OnExercisePicked("bench-press"))
         }
     }
 
@@ -208,7 +208,7 @@ class EditPlanViewModelTest {
         )
         viewModel.uiState.first { it != null }
         failures.expectFailure("Cannot remove last exercise from the plan") {
-            viewModel.onAction(EditPlanAction.OnRemoveExercise("bench-press-bb"))
+            viewModel.onAction(EditPlanAction.OnRemoveExercise("bench-press"))
         }
     }
 }

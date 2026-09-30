@@ -49,13 +49,13 @@ class WorkoutHistoryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
             exercises = listOf(
                 completedExercise(
-                    "bench-press-bb",
+                    "bench-press",
                     80f to 8,
                     80f to 7,
                     80f to 6,
                 ),
                 completedExercise(
-                    "squat-bb",
+                    "squat",
                     100f to 5,
                     90f to 8,
                 ),
@@ -67,7 +67,7 @@ class WorkoutHistoryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(
                 completedExercise(
-                    "rdl-bb",
+                    "romanian-deadlift",
                     45f to 12,
                     45f to 12,
                 ),
@@ -87,7 +87,7 @@ class WorkoutHistoryViewModelTest {
                     date = LocalDate.of(2026, 8, 13),
                     exercises = listOf(
                         ExerciseTopSetUi(
-                            name = "Romanian Deadlift (RDL) (barbell)",
+                            name = "Romanian Deadlift",
                             weightKg = "45",
                             reps = 12,
                             oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
@@ -103,13 +103,13 @@ class WorkoutHistoryViewModelTest {
                     date = LocalDate.of(2026, 8, 10),
                     exercises = listOf(
                         ExerciseTopSetUi(
-                            name = "Bench Press (barbell)",
+                            name = "Barbell Bench Press",
                             weightKg = "80",
                             reps = 8,
                             oneRm = Weight.kilograms(estimateOneRmKg(80f, 8)),
                         ),
                         ExerciseTopSetUi(
-                            name = "Squat (barbell)",
+                            name = "Barbell Back Squat",
                             weightKg = "100",
                             reps = 5,
                             oneRm = Weight.kilograms(estimateOneRmKg(100f, 5)),
@@ -130,14 +130,14 @@ class WorkoutHistoryViewModelTest {
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
         )
         val inProgress = WorkoutSession(
             planId = WorkoutPlanId("full-body-a"),
             planName = "Full Body A",
             note = null,
             exercises = listOf(
-                completedExercise("bench-press-bb", 80f to 8).let { exercise ->
+                completedExercise("bench-press", 80f to 8).let { exercise ->
                     exercise.copy(
                         sets = exercise.sets.map { it.copy(setState = SetState.InProgress) },
                     )
@@ -159,10 +159,10 @@ class WorkoutHistoryViewModelTest {
 
     @Test
     fun `history top set ignores warmup sets`() = runTest {
-        val bench = completedExercise("bench-press-bb", 80f to 8, 80f to 7).copy(
+        val bench = completedExercise("bench-press", 80f to 8, 80f to 7).copy(
             warmupSets = listOf(
                 ExerciseSet(
-                    exerciseDefinition = catalogExercise("bench-press-bb"),
+                    exerciseDefinition = catalogExercise("bench-press"),
                     weight = Weight.kilograms(200),
                     reps = 1,
                     setState = SetState.Completed,
@@ -190,16 +190,16 @@ class WorkoutHistoryViewModelTest {
 
     @Test
     fun `history lists warmups in logged order under the top work set`() = runTest {
-        val bench = completedExercise("bench-press-bb", 80f to 8, 70f to 10).copy(
+        val bench = completedExercise("bench-press", 80f to 8, 70f to 10).copy(
             warmupSets = listOf(
                 ExerciseSet(
-                    exerciseDefinition = catalogExercise("bench-press-bb"),
+                    exerciseDefinition = catalogExercise("bench-press"),
                     weight = Weight.kilograms(40),
                     reps = 5,
                     setState = SetState.Completed,
                 ),
                 ExerciseSet(
-                    exerciseDefinition = catalogExercise("bench-press-bb"),
+                    exerciseDefinition = catalogExercise("bench-press"),
                     weight = null,
                     reps = 6,
                     setState = SetState.Completed,
@@ -238,7 +238,7 @@ class WorkoutHistoryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
             exercises = listOf(
                 completedExercise(
-                    "bench-press-bb",
+                    "bench-press",
                     50f to 5,
                     45f to 12,
                 ),
@@ -265,11 +265,11 @@ class WorkoutHistoryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
             exercises = listOf(
                 WorkoutExercise(
-                    exerciseDefinition = catalogExercise("pullup-assisted"),
+                    exerciseDefinition = catalogExercise("assisted-pull-ups"),
                     repRange = 6..10,
                     sets = listOf(
                         ExerciseSet(
-                            catalogExercise("pullup-assisted"),
+                            catalogExercise("assisted-pull-ups"),
                             null,
                             8,
                             SetState.Completed,
@@ -299,7 +299,7 @@ class WorkoutHistoryViewModelTest {
             planId = "full-body-b",
             planName = "Full Body B",
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(completedExercise("rdl-bb", 45f to 12)),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
         )
         val expected = WorkoutHistoryUiState.History(
             listOf(
@@ -312,7 +312,7 @@ class WorkoutHistoryViewModelTest {
                     date = LocalDate.of(2026, 8, 13),
                     exercises = listOf(
                         ExerciseTopSetUi(
-                            name = "Romanian Deadlift (RDL) (barbell)",
+                            name = "Romanian Deadlift",
                             weightKg = "45",
                             reps = 12,
                             oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
@@ -361,7 +361,7 @@ class WorkoutHistoryViewModelTest {
             )
             assert(summary.plansCreatedCount == 2)
             assert(summary.plansArchivedCount == 2)
-            assert(summary.exercisesImportedCount == 1)
+            assert(summary.exercisesImportedCount == 0)
             assert(summary.firstSessionDate == LocalDate.of(2026, 2, 17))
             assert(summary.lastSessionDate == LocalDate.of(2026, 8, 20))
             assert(summary.workingSetCount == 854)
@@ -388,7 +388,8 @@ class WorkoutHistoryViewModelTest {
 
         val stored = repository.exercises().first()
         assert(stored.containsAll(catalogExercises))
-        assert(stored.single { it.id == "crunch-machine" }.name == "Crunch (Machine)")
+        assert(stored.single { it.id == "machine-seated-crunch" }.name == "Machine Seated Crunch")
+        assert(stored.none { it.id == "crunch-machine" })
     }
 
     @Test
@@ -460,7 +461,8 @@ class WorkoutHistoryViewModelTest {
         assert(importedUpperBody.all { it.isArchived })
         val matchedFullBody = plans.filter { it.id == fullBodyA.id || it.id == fullBodyB.id }
         assert(matchedFullBody.none { it.isArchived })
-        assert(repository.exercises().first().count { it.id == "crunch-machine" } == 1)
+        assert(repository.exercises().first().count { it.id == "machine-seated-crunch" } == 1)
+        assert(repository.exercises().first().none { it.id == "crunch-machine" })
     }
 
     @Test
@@ -470,7 +472,7 @@ class WorkoutHistoryViewModelTest {
             planId = "full-body-a",
             planName = "Full Body A",
             startedAt = startedAt,
-            exercises = listOf(completedExercise("bench-press-bb", 20f to 5)),
+            exercises = listOf(completedExercise("bench-press", 20f to 5)),
             note = "kept",
         )
         val repository = FakeWorkoutsRepository(

@@ -19,11 +19,11 @@ class PlannedExerciseUiTest {
         assert(bench.subtitle() == "Chest · Barbell")
         assert(
             rows.first().contentDescription(bench.exercise.name) ==
-                "Bench Press (barbell) warmup set",
+                "Barbell Bench Press warmup set",
         )
         assert(
             rows[3].contentDescription(bench.exercise.name) ==
-                "Bench Press (barbell) set 1, 8–10 reps, rest 2:00",
+                "Barbell Bench Press set 1, 8–10 reps, rest 2:00",
         )
     }
 
@@ -38,13 +38,13 @@ class PlannedExerciseUiTest {
         assert(curl.subtitle() == "Legs · Machine")
         assert(
             rows.first().contentDescription(curl.exercise.name) ==
-                "Seated Leg Curl (machine) set 1, 12–14 reps, rest 1:30",
+                "Seated Leg Curl set 1, 12–14 reps, rest 1:30",
         )
     }
 
     @Test
     fun `assisted equipment uses a short label`() {
-        val pullUp = fullBodyA.sets.first { it.exercise.id == "pullup-assisted" }
+        val pullUp = fullBodyA.sets.first { it.exercise.id == "assisted-pull-ups" }
         assert(pullUp.subtitle() == "Back · Assisted")
     }
 

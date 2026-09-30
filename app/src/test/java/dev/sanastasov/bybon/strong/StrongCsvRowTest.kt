@@ -86,7 +86,7 @@ class StrongCsvRowTest {
         assert(result.sessionHistory.count { it.planId == fullBodyA.id } == 23)
         assert(result.sessionHistory.count { it.planId == fullBodyB.id } == 23)
         val firstRdl = result.sessionHistory.first { it.planId == fullBodyB.id }.exercises.first()
-        assert(firstRdl.id == "rdl-bb")
+        assert(firstRdl.id == "romanian-deadlift")
         assert(firstRdl.warmupSets?.size == 2)
         assert(
             firstRdl.warmupSets?.map { it.weight to it.reps } == listOf(
@@ -99,11 +99,11 @@ class StrongCsvRowTest {
         val firstSplitSquat = result.sessionHistory
             .first { it.planId == fullBodyB.id }
             .exercises
-            .first { it.id == "split-squat-db" }
+            .first { it.id == "bulgarian-split-squat" }
         assert(firstSplitSquat.warmupSets?.map { it.weight to it.reps } == listOf(null to 6))
         val firstFullBodyA = result.sessionHistory.first { it.planId == fullBodyA.id }
         assert(
-            firstFullBodyA.exercises.first { it.id == "bench-press-bb" }.restAfterWorkSet ==
+            firstFullBodyA.exercises.first { it.id == "bench-press" }.restAfterWorkSet ==
                 120.seconds,
         )
         assert(
@@ -113,12 +113,12 @@ class StrongCsvRowTest {
                 90.seconds,
         )
         assert(
-            firstFullBodyA.exercises.first { it.id == "skullcrusher-db" }.restAfterWorkSet ==
+            firstFullBodyA.exercises.first { it.id == "db-skull-crusher" }.restAfterWorkSet ==
                 60.seconds,
         )
         val crunch = result.sessionHistory
             .flatMap { it.exercises }
-            .first { it.id == "crunch-machine" }
+            .first { it.id == "machine-seated-crunch" }
         assert(crunch.restAfterWorkSet == 120.seconds)
     }
 
@@ -131,10 +131,12 @@ class StrongCsvRowTest {
             exerciseCatalog = catalogExercises,
         )
 
-        assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
-        assert(result.exercises.single().id == "crunch-machine")
-        assert(result.exercises.single().primaryMuscleGroup == MuscleGroup.Core)
-        assert(result.exercises.single().equipment == Equipment.Machine)
+        assert(result.exercises.isEmpty())
+        val crunch = result.sessionHistory.flatMap { it.exercises }
+            .first { it.id == "machine-seated-crunch" }
+        assert(crunch.exerciseDefinition.name == "Machine Seated Crunch")
+        assert(crunch.exerciseDefinition.primaryMuscleGroup == MuscleGroup.Core)
+        assert(crunch.exerciseDefinition.equipment == Equipment.Machine)
     }
 
     @Test
@@ -150,20 +152,20 @@ class StrongCsvRowTest {
         assert(result.plans.all { it.isArchived })
         assert(
             result.plans.first { it.name == "Upper body A" }.sets.map { it.exercise.id } == listOf(
-                "bench-press-bb",
-                "pullup-assisted",
-                "upright-row-db",
-                "skullcrusher-db",
-                "crunch-machine",
+                "bench-press",
+                "assisted-pull-ups",
+                "dumbbell-upright-row",
+                "db-skull-crusher",
+                "machine-seated-crunch",
             ),
         )
         assert(
             result.plans.first { it.name == "Upper body B" }.sets.map { it.exercise.id } == listOf(
-                "incline-bench-press-db",
-                "incline-row-db",
-                "lateral-raise-db",
-                "incline-curl-db",
-                "crunch-machine",
+                "incline-db-press",
+                "chest-supported-db-row",
+                "lateral-raise",
+                "incline-db-curl",
+                "machine-seated-crunch",
             ),
         )
     }
@@ -362,16 +364,16 @@ class StrongCsvRowTest {
         val imported = result.sessionHistory.single().exercises
         assert(
             imported.map { it.id } == listOf(
-                "lat-pull-down",
-                "leg-press-machine",
+                "lat-pulldown",
+                "leg-press",
                 "seated-leg-curl",
-                "lying-leg-curl",
-                "lateral-raise-db",
-                "chest-fly-peck-deck",
+                "leg-curl",
+                "lateral-raise",
+                "pec-deck",
             ),
         )
         val chestFly = imported.last().exerciseDefinition
-        assert(chestFly.name == "Chest Fly (machine)")
+        assert(chestFly.name == "Pec Deck")
         assert(chestFly.equipment == Equipment.Machine)
         assert(
             catalogExercises.first { it.id == "lateral-raise-machine" }.equipment ==
@@ -466,7 +468,7 @@ class StrongCsvRowTest {
         val mixedPullUp = result.sessionHistory
             .first { it.startedAt == LocalDateTime.of(2026, 4, 7, 17, 29, 3) }
             .exercises
-            .first { it.id == "pullup-assisted" }
+            .first { it.id == "assisted-pull-ups" }
         assert(
             mixedPullUp.sets.map { it.weight to it.reps } == listOf(
                 null to 8,
@@ -478,7 +480,7 @@ class StrongCsvRowTest {
         val unassisted = result.sessionHistory
             .first { it.startedAt == LocalDateTime.of(2026, 4, 28, 17, 15, 54) }
             .exercises
-            .first { it.id == "pullup-assisted" }
+            .first { it.id == "assisted-pull-ups" }
         assert(unassisted.sets.map { it.weight to it.reps } == listOf(null to 8, null to 6))
         assert(unassisted.sets.all { it.oneRm == null })
     }
@@ -507,7 +509,7 @@ class StrongCsvRowTest {
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalogExercises)
 
         val splitSquat = result.sessionHistory.single().exercises.single()
-        assert(splitSquat.id == "split-squat-db")
+        assert(splitSquat.id == "bulgarian-split-squat")
         assert(splitSquat.warmupSets?.map { it.weight to it.reps } == listOf(null to 6))
         assert(splitSquat.sets.map { it.weight to it.reps } == listOf(Weight.kilograms(14f) to 8))
     }

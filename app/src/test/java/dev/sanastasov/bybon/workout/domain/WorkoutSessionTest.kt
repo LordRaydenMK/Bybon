@@ -188,7 +188,7 @@ class WorkoutSessionTest {
         val previous = fullBodyA.toWorkoutSession().let { session ->
             session.copy(
                 exercises = session.exercises.map { exercise ->
-                    if (exercise.id != "pullup-assisted") {
+                    if (exercise.id != "assisted-pull-ups") {
                         exercise
                     } else {
                         exercise.copy(
@@ -215,7 +215,7 @@ class WorkoutSessionTest {
         }
 
         val actual = fullBodyA.toWorkoutSession(previous)
-        val pullUp = actual.exercises.first { it.id == "pullup-assisted" }
+        val pullUp = actual.exercises.first { it.id == "assisted-pull-ups" }
 
         assert(pullUp.sets.all { it.weight == null && it.reps == 8 })
         assert(pullUp.warmupSets!!.all { it.weight == null && it.reps == 6 })
@@ -402,7 +402,7 @@ class WorkoutSessionTest {
     @Test
     fun `estimated one RM is a Weight`() {
         val set = ExerciseSet(
-            catalogExercise("bench-press-bb"),
+            catalogExercise("bench-press"),
             Weight.kilograms(60),
             8,
             SetState.Completed,
@@ -414,7 +414,7 @@ class WorkoutSessionTest {
     @Test
     fun `estimated one RM is null when the set has no load`() {
         val set = ExerciseSet(
-            catalogExercise("pullup-assisted"),
+            catalogExercise("assisted-pull-ups"),
             null,
             8,
             SetState.Completed,
@@ -443,7 +443,7 @@ class WorkoutSessionTest {
     @Test
     fun `toWorkoutSession leaves assisted loads empty`() {
         val session = fullBodyA.toWorkoutSession()
-        val pullUp = session.exercises.first { it.id == "pullup-assisted" }
+        val pullUp = session.exercises.first { it.id == "assisted-pull-ups" }
         assert(pullUp.warmupSets!!.all { it.weight == null })
         assert(pullUp.sets.all { it.weight == null })
     }
@@ -464,11 +464,11 @@ class WorkoutSessionTest {
     @Test
     fun `converting the last remaining warmup leaves warmup sets null`() {
         val session = fullBodyB.toOverviewSession()
-        val splitSquat = session.exercises.first { it.id == "split-squat-db" }
+        val splitSquat = session.exercises.first { it.id == "bulgarian-split-squat" }
         assert(splitSquat.warmupSets?.size == 1)
 
         val actual = session.convertLastWarmupToWorkSet(splitSquat)
-        val updated = actual.exercises.first { it.id == "split-squat-db" }
+        val updated = actual.exercises.first { it.id == "bulgarian-split-squat" }
 
         assert(updated.warmupSets == null)
         assert(updated.sets.size == 4)
@@ -521,11 +521,11 @@ class WorkoutSessionTest {
 
     @Test
     fun `default rest is 2 minutes for compounds, 1 for isolation, 1_5 otherwise`() {
-        assert(catalogExercise("bench-press-bb").defaultRest == 2.minutes)
-        assert(catalogExercise("squat-bb").defaultRest == 2.minutes)
-        assert(catalogExercise("rdl-bb").defaultRest == 2.minutes)
-        assert(catalogExercise("skullcrusher-db").defaultRest == 1.minutes)
-        assert(catalogExercise("incline-curl-db").defaultRest == 1.minutes)
+        assert(catalogExercise("bench-press").defaultRest == 2.minutes)
+        assert(catalogExercise("squat").defaultRest == 2.minutes)
+        assert(catalogExercise("romanian-deadlift").defaultRest == 2.minutes)
+        assert(catalogExercise("db-skull-crusher").defaultRest == 1.minutes)
+        assert(catalogExercise("incline-db-curl").defaultRest == 1.minutes)
         assert(catalogExercise("seated-leg-curl").defaultRest == 90.seconds)
         assert(catalogExercise("leg-extension").defaultRest == 90.seconds)
         assert(2.minutes.formatRestClock() == "2:00")
@@ -539,12 +539,12 @@ class WorkoutSessionTest {
 
         assert(
             session.exercises.map { it.id to it.restAfterWorkSet } == listOf(
-                "bench-press-bb" to 2.minutes,
-                "squat-bb" to 2.minutes,
-                "pullup-assisted" to 2.minutes,
+                "bench-press" to 2.minutes,
+                "squat" to 2.minutes,
+                "assisted-pull-ups" to 2.minutes,
                 "seated-leg-curl" to 90.seconds,
-                "upright-row-db" to 1.minutes,
-                "skullcrusher-db" to 1.minutes,
+                "dumbbell-upright-row" to 1.minutes,
+                "db-skull-crusher" to 1.minutes,
             ),
         )
     }

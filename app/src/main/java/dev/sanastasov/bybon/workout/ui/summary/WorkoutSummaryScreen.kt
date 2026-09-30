@@ -159,8 +159,8 @@ private fun WorkoutSummaryContentPreview() {
                 note = "Friday full body workout",
                 exercises = listOf(
                     WorkoutSummaryExerciseUi(
-                        id = "rdl-bb",
-                        name = "Romanian Deadlift (RDL) (barbell)",
+                        id = "romanian-deadlift",
+                        name = "Romanian Deadlift",
                         sets = listOf(
                             WorkoutSummarySetUi(null, "20", 8, null, isWarmup = true),
                             WorkoutSummarySetUi(null, "35", 4, null, isWarmup = true),
@@ -169,8 +169,8 @@ private fun WorkoutSummaryContentPreview() {
                         ),
                     ),
                     WorkoutSummaryExerciseUi(
-                        id = "incline-bench-press-db",
-                        name = "Incline Bench Press (dumbbell)",
+                        id = "incline-db-press",
+                        name = "Incline Dumbbell Press",
                         notes = listOf("Rep range 11-15"),
                         sets = listOf(
                             WorkoutSummarySetUi(1, "20", 13, Weight.kilograms(28.67f)),

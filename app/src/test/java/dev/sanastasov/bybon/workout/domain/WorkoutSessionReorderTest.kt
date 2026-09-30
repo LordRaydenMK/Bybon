@@ -9,9 +9,9 @@ class WorkoutSessionReorderTest {
     fun `moveExerciseDown swaps with the next exercise`() {
         val session = fullBodyA.toOverviewSession()
 
-        val actual = session.moveExerciseDown("bench-press-bb")
+        val actual = session.moveExerciseDown("bench-press")
 
-        assert(actual.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(actual.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
         assert(actual.exercises.drop(2) == session.exercises.drop(2))
     }
 
@@ -19,9 +19,9 @@ class WorkoutSessionReorderTest {
     fun `moveExerciseUp swaps with the previous exercise`() {
         val session = fullBodyA.toOverviewSession()
 
-        val actual = session.moveExerciseUp("squat-bb")
+        val actual = session.moveExerciseUp("squat")
 
-        assert(actual.exercises.map { it.id }.take(2) == listOf("squat-bb", "bench-press-bb"))
+        assert(actual.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
         assert(actual.exercises.drop(2) == session.exercises.drop(2))
     }
 
@@ -29,9 +29,9 @@ class WorkoutSessionReorderTest {
     fun `moveExerciseUp throws for the first exercise`() {
         val session = fullBodyA.toOverviewSession()
         val error = assertFailsWith<IllegalStateException> {
-            session.moveExerciseUp("bench-press-bb")
+            session.moveExerciseUp("bench-press")
         }
-        assert(error.message == "Cannot move bench-press-bb up")
+        assert(error.message == "Cannot move bench-press up")
     }
 
     @Test
@@ -56,15 +56,15 @@ class WorkoutSessionReorderTest {
 
     @Test
     fun `startWorkout after reorder marks the new first exercise in progress`() {
-        val overview = fullBodyA.toOverviewSession().moveExerciseDown("bench-press-bb")
+        val overview = fullBodyA.toOverviewSession().moveExerciseDown("bench-press")
 
         val actual = overview.startWorkout()
         val squat = actual.exercises.first()
 
-        assert(squat.id == "squat-bb")
+        assert(squat.id == "squat")
         assert(checkNotNull(squat.warmupSets).first().setState == SetState.InProgress)
         assert(
-            actual.exercises.first { it.id == "bench-press-bb" }
+            actual.exercises.first { it.id == "bench-press" }
                 .warmupSets!!
                 .all { it.setState == SetState.NotStated },
         )

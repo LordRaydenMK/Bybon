@@ -288,7 +288,7 @@ private fun ExerciseLibraryContentPreview() {
     Surface {
         ExerciseLibraryContent(
             catalogExercises.toLibraryUiState(
-                selectedExerciseId = "incline-curl-db",
+                selectedExerciseId = "incline-db-curl",
                 existingExerciseIds = fullBodyA.sets.map { it.exercise.id },
             ),
             {},
@@ -303,7 +303,7 @@ private fun ExerciseLibraryEmptyFilterPreview() {
     Surface {
         ExerciseLibraryContent(
             catalogExercises.toLibraryUiState(
-                filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Core)),
+                filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Other)),
             ),
             {},
             {},

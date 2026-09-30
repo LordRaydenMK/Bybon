@@ -20,12 +20,12 @@ val fullBodyA = WorkoutPlan(
     "Full Body A",
     "Full body workout routine variant A",
     listOf(
-        planned("bench-press-bb", 3, 8..10, warmupSets = 3),
-        planned("squat-bb", 3, 8..10, warmupSets = 3),
-        planned("pullup-assisted", 3, 6..10, warmupSets = 2),
+        planned("bench-press", 3, 8..10, warmupSets = 3),
+        planned("squat", 3, 8..10, warmupSets = 3),
+        planned("assisted-pull-ups", 3, 6..10, warmupSets = 2),
         planned("seated-leg-curl", 3, 12..14),
-        planned("upright-row-db", 3, 10..14),
-        planned("skullcrusher-db", 3, 10..16),
+        planned("dumbbell-upright-row", 3, 10..14),
+        planned("db-skull-crusher", 3, 10..16),
     ),
 )
 
@@ -34,12 +34,12 @@ val fullBodyB = WorkoutPlan(
     "Full Body B",
     "Full body workout routine variant B",
     listOf(
-        planned("rdl-bb", 3, 8..10, warmupSets = 2),
-        planned("incline-bench-press-db", 3, 10..15, warmupSets = 2),
-        planned("split-squat-db", 3, 8..10, warmupSets = 1),
-        planned("incline-row-db", 3, 10..16),
-        planned("lateral-raise-db", 3, 10..15),
-        planned("incline-curl-db", 2, 10..16),
+        planned("romanian-deadlift", 3, 8..10, warmupSets = 2),
+        planned("incline-db-press", 3, 10..15, warmupSets = 2),
+        planned("bulgarian-split-squat", 3, 8..10, warmupSets = 1),
+        planned("chest-supported-db-row", 3, 10..16),
+        planned("lateral-raise", 3, 10..15),
+        planned("incline-db-curl", 2, 10..16),
     ),
 )
 
@@ -48,13 +48,13 @@ val upperBodyA = WorkoutPlan(
     "Upper Body (legacy)",
     "Upper body workout routine variant A",
     listOf(
-        planned("bench-press-bb", 3, 8..10, warmupSets = 3),
-        planned("incline-row-db", 3, 10..16, warmupSets = 2),
-        planned("overhead-press-bb", 3, 8..10, warmupSets = 2),
-        planned("lat-pull-down", 3, 8..12),
-        planned("lateral-raise-db", 3, 10..15),
-        planned("incline-curl-db", 2, 10..16),
-        planned("skullcrusher-db", 3, 10..16),
+        planned("bench-press", 3, 8..10, warmupSets = 3),
+        planned("chest-supported-db-row", 3, 10..16, warmupSets = 2),
+        planned("ohp", 3, 8..10, warmupSets = 2),
+        planned("lat-pulldown", 3, 8..12),
+        planned("lateral-raise", 3, 10..15),
+        planned("incline-db-curl", 2, 10..16),
+        planned("db-skull-crusher", 3, 10..16),
     ),
     isArchived = true,
 )

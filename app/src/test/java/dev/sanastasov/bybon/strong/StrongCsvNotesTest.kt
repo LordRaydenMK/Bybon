@@ -172,14 +172,14 @@ class StrongCsvNotesTest {
         val firstFullBodyB = result.sessionHistory.first { it.planId == fullBodyB.id }
         assert(firstFullBodyB.note == "Friday full body workout")
         assert(
-            firstFullBodyB.exercises.first { it.id == "incline-bench-press-db" }.notes ==
+            firstFullBodyB.exercises.first { it.id == "incline-db-press" }.notes ==
                 listOf("Rep range 11-15"),
         )
 
         val upperBodyBPlan = result.plans.first { it.name == "Upper body B" }
         assert(upperBodyBPlan.description == "Full body B without legs")
         assert(
-            upperBodyBPlan.sets.first { it.exercise.id == "incline-bench-press-db" }.notes ==
+            upperBodyBPlan.sets.first { it.exercise.id == "incline-db-press" }.notes ==
                 listOf("Rep range 11-15"),
         )
 
@@ -188,7 +188,7 @@ class StrongCsvNotesTest {
         }
         assert(lastUpperBodyB.note == "Full body B without legs")
         assert(
-            lastUpperBodyB.exercises.first { it.id == "incline-bench-press-db" }.notes ==
+            lastUpperBodyB.exercises.first { it.id == "incline-db-press" }.notes ==
                 listOf("Rep range 11-15"),
         )
 
