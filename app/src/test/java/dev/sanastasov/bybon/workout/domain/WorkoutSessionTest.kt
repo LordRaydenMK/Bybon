@@ -535,7 +535,8 @@ class WorkoutSessionTest {
                 "Custom",
                 MuscleGroup.Arms,
                 Equipment.Dumbbell,
-            ).defaultRest == 90.seconds,
+                Mechanic.Isolation,
+            ).defaultRest == 1.minutes,
         )
         assert(2.minutes.formatRestClock() == "2:00")
         assert(90.seconds.formatRestClock() == "1:30")

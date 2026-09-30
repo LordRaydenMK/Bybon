@@ -119,7 +119,8 @@ Resolve each Strong `Exercise Name`:
    `Bulgarian Split Squat`).
 3. Else create a new `ExerciseDefinition`: `id = slugify(name)`, Strong display name, equipment
    inferred from the name (`barbell` / `dumbbell` / `assisted` / `machine|cable` / else bodyweight),
-   muscle group `Core` if the name looks like crunch/plank/sit-up else `Other`.
+   muscle group `Core` if the name looks like crunch/plank/sit-up else `Other`, mechanic
+   `Isolation` (Strong has no mechanic; default rest is then 1:00 unless a Rest Timer row is present).
 
 Only **new** (non-catalog) exercises are returned for insert. The sample’s `Crunch (Machine)`
 aliases to shipped `machine-seated-crunch`, so that file inserts no new exercises.

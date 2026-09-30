@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.strong
 
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -24,18 +25,21 @@ class StrongCsvRowTest {
         "Bench Press (barbell)",
         MuscleGroup.Chest,
         Equipment.Barbell,
+        Mechanic.Compound,
     )
     private val squat = ExerciseDefinition(
         "squat-bb",
         "Squat (barbell)",
         MuscleGroup.Legs,
         Equipment.Barbell,
+        Mechanic.Compound,
     )
     private val pullUp = ExerciseDefinition(
         "pullup-assisted",
         "Pull Up (assisted)",
         MuscleGroup.Back,
         Equipment.AssistedBodyWeight,
+        Mechanic.Compound,
     )
     private val catalog = listOf(bench, squat, pullUp)
     private val fullBodyPlan = WorkoutPlan(
@@ -199,8 +203,12 @@ class StrongCsvRowTest {
 
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalog)
 
-        assert(result.exercises.map { it.name } == listOf("Crunch (Machine)"))
-        assert(result.sessionHistory.single().exercises.last().id == "crunch-machine")
+        val crunch = result.exercises.single()
+        assert(crunch.name == "Crunch (Machine)")
+        assert(crunch.mechanic == Mechanic.Isolation)
+        val imported = result.sessionHistory.single().exercises.last()
+        assert(imported.id == "crunch-machine")
+        assert(imported.restAfterWorkSet == 60.seconds)
     }
 
     @Test
@@ -327,6 +335,7 @@ class StrongCsvRowTest {
                         "Romanian Deadlift (barbell)",
                         MuscleGroup.Legs,
                         Equipment.Barbell,
+                        Mechanic.Compound,
                     ),
                     sets = 3,
                     repRange = 8..10,

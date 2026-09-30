@@ -149,6 +149,7 @@ class WorkoutProgressionTest {
             "Push Up",
             MuscleGroup.Chest,
             Equipment.Bodyweight,
+            Mechanic.Compound,
         )
         val set = ExerciseSet(definition, Weight.kilograms(70), 10, SetState.NotStated)
         val range = 8..10

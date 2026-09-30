@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.strong
 
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
@@ -18,18 +19,21 @@ class StrongCsvNotesTest {
         "Bench Press (barbell)",
         MuscleGroup.Chest,
         Equipment.Barbell,
+        Mechanic.Compound,
     )
     private val squat = ExerciseDefinition(
         "squat-bb",
         "Squat (barbell)",
         MuscleGroup.Legs,
         Equipment.Barbell,
+        Mechanic.Compound,
     )
     private val pullUp = ExerciseDefinition(
         "pullup-assisted",
         "Pull Up (assisted)",
         MuscleGroup.Back,
         Equipment.AssistedBodyWeight,
+        Mechanic.Compound,
     )
     private val catalog = listOf(bench, squat, pullUp)
     private val fullBodyPlan = WorkoutPlan(

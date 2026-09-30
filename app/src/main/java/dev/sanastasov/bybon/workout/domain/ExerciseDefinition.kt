@@ -1,18 +1,17 @@
 package dev.sanastasov.bybon.workout.domain
 
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 data class ExerciseDefinition(
     val id: String,
     val name: String,
     val primaryMuscleGroup: MuscleGroup,
     val equipment: Equipment,
-    val mechanic: Mechanic? = null,
+    val mechanic: Mechanic,
 )
 
 val ExerciseDefinition.defaultRest: Duration
-    get() = mechanic?.defaultRest ?: 90.seconds
+    get() = mechanic.defaultRest
 
 fun Duration.formatRestClock(): String {
     val totalSeconds = inWholeSeconds.coerceAtLeast(0)

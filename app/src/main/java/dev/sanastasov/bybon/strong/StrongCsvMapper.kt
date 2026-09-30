@@ -5,6 +5,7 @@ package dev.sanastasov.bybon.strong
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -305,6 +306,7 @@ private fun resolveExercise(
         name = trimmedName,
         primaryMuscleGroup = inferMuscleGroup(trimmedName),
         equipment = inferEquipment(trimmedName),
+        mechanic = Mechanic.Isolation,
     )
 }
 
