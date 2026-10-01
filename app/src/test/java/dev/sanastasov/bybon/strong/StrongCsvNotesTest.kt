@@ -61,11 +61,19 @@ class StrongCsvNotesTest {
 
         val session = result.sessionHistory.single()
         assert(session.note == "Full body B without legs")
-        assert(session.exercises.map { it.id } == listOf("bench-press-bb"))
-        assert(session.exercises.single().notes == listOf("Rep range 11-15"))
+        assert(
+            session.exercises.first { it.id == "bench-press-bb" }.notes ==
+                listOf("Rep range 11-15"),
+        )
+        assert(session.exercises.first { it.id == "crunch-machine" }.notes.isEmpty())
         assert(result.plans.single().description == "Full body B without legs")
-        assert(result.plans.single().sets.map { it.exercise.id } == listOf("bench-press-bb"))
-        assert(result.plans.single().sets.single().notes == listOf("Rep range 11-15"))
+        assert(
+            result.plans.single().sets.first { it.exercise.id == "bench-press-bb" }.notes ==
+                listOf("Rep range 11-15"),
+        )
+        assert(
+            result.plans.single().sets.first { it.exercise.id == "crunch-machine" }.notes.isEmpty(),
+        )
     }
 
     @Test

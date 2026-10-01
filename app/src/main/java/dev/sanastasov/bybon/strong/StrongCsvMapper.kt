@@ -2,8 +2,11 @@
 
 package dev.sanastasov.bybon.strong
 
+import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.Mechanic
+import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -22,33 +25,67 @@ private val strongDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 private val planNameFillers = setOf("workout", "session", "training", "routine", "day")
 
-/** Strong display names that do not case-insensitively match a shipped exercise name. */
-private val strongExerciseAliases = mapOf(
-    "bench press (barbell)" to "bench-press",
-    "squat (barbell)" to "squat",
-    "squat (machine)" to "squat-machine",
-    "pull up (assisted)" to "assisted-pull-ups",
-    "incline bench press (dumbbell)" to "incline-db-press",
-    "incline row (dumbbell)" to "chest-supported-db-row",
-    "incline curl (dumbbell)" to "incline-db-curl",
-    "lateral raise (dumbbell)" to "lateral-raise",
-    "lateral raise (machine)" to "lateral-raise-machine",
-    "skullcrusher (dumbbell)" to "db-skull-crusher",
-    "upright row (dumbbell)" to "dumbbell-upright-row",
-    "leg extension (machine)" to "leg-extension",
-    "romanian deadlift (barbell)" to "romanian-deadlift",
-    "bulgarian split squat" to "bulgarian-split-squat",
-    "bicep curl (machine)" to "machine-bicep-curl",
-    "seated leg curl (machine)" to "seated-leg-curl",
-    "lying leg curl (machine)" to "leg-curl",
-    "triceps press" to "triceps-press-machine",
-    "leg press" to "leg-press",
-    "dumbbell lateral raises" to "lateral-raise",
-    "chest fly" to "pec-deck",
-    "chest fly (cable)" to "cable-fly",
-    "lat pulldown (cable)" to "lat-pulldown",
-    "reverse lunges" to "reverse-lunge",
-    "crunch (machine)" to "machine-seated-crunch",
+/**
+ * Strong display name → catalog id, when the name is that exercise.
+ * Mechanic is the RepDB value, used only when this catalog does not contain the id.
+ */
+private data class StrongExercise(
+    val catalogId: String? = null,
+    val mechanic: Mechanic,
+    val muscleGroup: MuscleGroup? = null,
+    val equipment: Equipment? = null,
+)
+
+private val strongExercises = mapOf(
+    "bench press (barbell)" to StrongExercise("bench-press", Mechanic.Compound),
+    "squat (barbell)" to StrongExercise("squat", Mechanic.Compound),
+    "squat (machine)" to StrongExercise("squat-machine", Mechanic.Compound),
+    "pull up (assisted)" to StrongExercise("assisted-pull-ups", Mechanic.Compound),
+    "incline bench press (dumbbell)" to StrongExercise("incline-db-press", Mechanic.Compound),
+    "incline row (dumbbell)" to StrongExercise("chest-supported-db-row", Mechanic.Compound),
+    "incline curl (dumbbell)" to StrongExercise("incline-db-curl", Mechanic.Isolation),
+    "lateral raise (dumbbell)" to StrongExercise("lateral-raise", Mechanic.Isolation),
+    "lateral raise (machine)" to StrongExercise("lateral-raise-machine", Mechanic.Isolation),
+    "skullcrusher (dumbbell)" to StrongExercise("db-skull-crusher", Mechanic.Isolation),
+    "skullcrusher (barbell)" to StrongExercise("skull-crusher", Mechanic.Isolation),
+    "upright row (dumbbell)" to StrongExercise("dumbbell-upright-row", Mechanic.Compound),
+    "leg extension (machine)" to StrongExercise("leg-extension", Mechanic.Isolation),
+    "romanian deadlift (barbell)" to StrongExercise("romanian-deadlift", Mechanic.Compound),
+    "bulgarian split squat" to StrongExercise("bulgarian-split-squat", Mechanic.Compound),
+    "bicep curl (machine)" to StrongExercise("machine-bicep-curl", Mechanic.Isolation),
+    "seated leg curl (machine)" to StrongExercise("seated-leg-curl", Mechanic.Isolation),
+    "lying leg curl (machine)" to StrongExercise("leg-curl", Mechanic.Isolation),
+    "triceps press" to StrongExercise("triceps-press-machine", Mechanic.Isolation),
+    "leg press" to StrongExercise("leg-press", Mechanic.Compound),
+    "dumbbell lateral raises" to StrongExercise("lateral-raise", Mechanic.Isolation),
+    "chest fly" to StrongExercise("pec-deck", Mechanic.Isolation),
+    "chest fly (cable)" to StrongExercise("cable-fly", Mechanic.Isolation),
+    "chest fly (band)" to StrongExercise(
+        mechanic = Mechanic.Isolation,
+        muscleGroup = MuscleGroup.Chest,
+        equipment = Equipment.Bodyweight,
+    ),
+    "lat pulldown (cable)" to StrongExercise("lat-pulldown", Mechanic.Compound),
+    "reverse lunges" to StrongExercise("reverse-lunge", Mechanic.Compound),
+    "crunch (machine)" to StrongExercise("machine-seated-crunch", Mechanic.Isolation),
+    "standing calf raise (barbell)" to StrongExercise("barbell-calf-raise", Mechanic.Isolation),
+    "hip thrust (barbell)" to StrongExercise("hip-thrust", Mechanic.Compound),
+    "cable pushdown (rope)" to StrongExercise(
+        mechanic = Mechanic.Isolation,
+        muscleGroup = MuscleGroup.Arms,
+        equipment = Equipment.Machine,
+    ),
+    "triceps extension (cable)" to StrongExercise(
+        mechanic = Mechanic.Isolation,
+        muscleGroup = MuscleGroup.Arms,
+        equipment = Equipment.Machine,
+    ),
+    "iso-lateral chest press" to StrongExercise(
+        mechanic = Mechanic.Compound,
+        muscleGroup = MuscleGroup.Chest,
+        equipment = Equipment.Machine,
+    ),
+    "back extension" to StrongExercise("back-extension", Mechanic.Isolation),
 )
 
 data class StrongImportResult(
@@ -245,7 +282,6 @@ private fun List<StrongCsvRow>.toWorkoutExercise(
     exercisesById: Map<String, ExerciseDefinition>,
 ): WorkoutExercise? {
     val definition = resolveExercise(first().exerciseName, exercisesByNormalizedName, exercisesById)
-        ?: return null
     return toResolvedWorkoutExercise(definition)
 }
 
@@ -293,14 +329,44 @@ private fun StrongCsvRow.toCompletedSet(definition: ExerciseDefinition): Exercis
     )
 }
 
+@Suppress("ReturnCount")
 private fun resolveExercise(
     strongName: String,
     exercisesByNormalizedName: Map<String, ExerciseDefinition>,
     exercisesById: Map<String, ExerciseDefinition>,
-): ExerciseDefinition? {
+): ExerciseDefinition {
     val normalized = strongName.normalizedExerciseName()
-    return strongExerciseAliases[normalized]?.let { exercisesById[it] }
-        ?: exercisesByNormalizedName[normalized]
+    val mapped = strongExercises[normalized]
+    mapped?.catalogId?.let { exercisesById[it] }?.let { return it }
+    exercisesByNormalizedName[normalized]?.let { return it }
+
+    val trimmedName = strongName.trim()
+    return ExerciseDefinition(
+        id = trimmedName.slugify(),
+        name = trimmedName,
+        primaryMuscleGroup = mapped?.muscleGroup ?: inferMuscleGroup(trimmedName),
+        equipment = mapped?.equipment ?: inferEquipment(trimmedName),
+        mechanic = mapped?.mechanic,
+    )
+}
+
+private fun inferEquipment(name: String): Equipment {
+    val lower = name.lowercase()
+    return when {
+        "barbell" in lower -> Equipment.Barbell
+        "dumbbell" in lower -> Equipment.Dumbbell
+        "assisted" in lower -> Equipment.AssistedBodyWeight
+        "machine" in lower || "cable" in lower -> Equipment.Machine
+        else -> Equipment.Bodyweight
+    }
+}
+
+private fun inferMuscleGroup(name: String): MuscleGroup {
+    val lower = name.lowercase()
+    return when {
+        "crunch" in lower || "plank" in lower || "sit-up" in lower || "sit up" in lower -> MuscleGroup.Core
+        else -> MuscleGroup.Other
+    }
 }
 
 private fun String.normalizedExerciseName(): String = lowercase()
