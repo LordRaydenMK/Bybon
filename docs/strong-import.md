@@ -114,22 +114,17 @@ History empty screen picks a CSV → parse → `toStrongImport(existingPlans, ex
 
 Resolve each Strong `Exercise Name`:
 
-1. Hardcoded aliases (normalized lowercase name → Bybon id) — see table below.
-2. Else case-insensitive name match against the catalog (`"Bulgarian Split Squat"` matches
-   `Bulgarian Split Squat`).
-3. Else create a new `ExerciseDefinition`: `id = slugify(name)`, Strong display name, equipment
-   inferred from the name (`barbell` / `dumbbell` / `assisted` / `machine|cable` / else bodyweight),
-   muscle group `Core` if the name looks like crunch/plank/sit-up else `Other`.
+1. `strongExercises` in `StrongCsvMapper.kt`: normalized Strong name → catalog id, when that name
+   is a shipped exercise. The row also stores the RepDB mechanic.
+2. Else case-insensitive name match against the catalog (`"Back Extension"` matches `Back Extension`).
+3. Else create a new `ExerciseDefinition` and import it. Mechanic comes from that same map.
+   A name that is not in the map is still imported, with `mechanic = null`, because Strong does not
+   record one. Muscle and equipment on a created row come from the map when it has them.
 
-Only **new** (non-catalog) exercises are returned for insert. The sample’s `Crunch (Machine)`
-aliases to shipped `machine-seated-crunch`, so that file inserts no new exercises.
-
-**Strong has no equipment column.** Equipment is only words inside `Exercise Name`, usually
-`Exercise (Equipment)` (`Bench Press (Barbell)`, `Chest Fly (Cable)`). A bare name (`Chest Fly`,
-`Leg Press`, `Triceps Press`) is not a missing field — Strong stored whatever display string the
-library used. Catalog matches and aliases take Bybon’s `equipment`; guessing happens **only** when
-creating a new exercise. `Band` is not a Bybon `Equipment` value and is not in the keyword list, so
-`Chest Fly (Band)` is created as Bodyweight.
+The sample’s `Crunch (Machine)` aliases to shipped `machine-seated-crunch`, so that file inserts no
+new exercises. `Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are not
+shipped exercises; they are created with the mapped mechanic. `Hip Thrust (Barbell)`,
+`Standing Calf Raise (Barbell)`, and `Skullcrusher (Barbell)` resolve to the catalog rows.
 
 ### 2. Plans
 
@@ -211,10 +206,10 @@ pull-ups.
 | Triceps Press                     | `triceps-press-machine`     | Alias                        |
 | Crunch (Machine)                  | `machine-seated-crunch`     | Alias                        |
 
-Aliases live in `strongExerciseAliases` inside `StrongCsvMapper.kt`. RepDB word order differs from
+The map is `strongExercises` inside `StrongCsvMapper.kt`. RepDB word order differs from
 Strong (`Bench Press (Barbell)` vs `Barbell Bench Press`), so the sample names and the names called
-out in the RepDB proposal are aliased. A Strong name with no alias and no case-insensitive
-`name_en` match still becomes a new exercise.
+out in the RepDB proposal are in `strongExercises`. A Strong name that is not in that map and does
+not match a catalog name is still imported, with `mechanic = null`, because Strong does not record one.
 
 Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pulldown, chest
 fly variants, dips, calf raise, face pull, lying leg curl, etc. Several of those **do** appear in
@@ -234,7 +229,7 @@ Statuses from triage. Workout persistence is the remaining TODO.
 | RPE / distance / timed sets | Unused in both the sample and the full 252-session export; out of domain (spec wants RIR later, not Strong RPE) |
 | Plan template vs session exercises | A plan is a plan. Sessions may drop/swap exercises (busy machine, sore knee, ran out of time) |
 | Import `repRange` = min..max logged reps | Fine for import; don't parse Strong “Rep range …” notes into prescription |
-| Unknown-exercise metadata | Creating Crunch as Core/Machine (guessed) is OK |
+| Unknown Strong mechanic | `mechanic` is null when the name is not in `strongExercises`. Strong does not record one |
 | Hardcoded Strong name aliases | Keep a small map in `StrongCsvMapper` for names that will never equal the catalog string. No alias table. |
 
 ### Done
@@ -246,7 +241,7 @@ Statuses from triage. Workout persistence is the remaining TODO.
 | Seated vs lying leg curl | Catalog has `seated-leg-curl` and `lying-leg-curl`; Full Body A uses seated |
 | `"Dumbbell lateral raises"` | Aliases to `lateral-raise` |
 | Bare `Chest Fly` | Aliases to `pec-deck` |
-| Trim Strong exercise names | Parser and created definitions strip leading/trailing spaces |
+| Trim Strong exercise names | Parser strips leading/trailing spaces before alias and name lookup |
 | Seed Upper Body A id | Renamed to `upper-body-legacy` / `Upper Body (legacy)` so import can own `upper-body-a` |
 | `lateral-raise-machine` equipment | Catalog uses `Equipment.Machine` |
 | Zero-load sets | `ExerciseSet.weight` is `Weight?`. Strong `0.0` (and blank kg) import as `null`; `Weight` stays `> 0` when present. 1RM is null when weight is. Sample keeps 29 pull-up work + 15 BSS warmups; full backup 109 rows no longer drop. |
@@ -316,24 +311,15 @@ attach to catalog ids. `"Dumbbell lateral raises"` aliases to `lateral-raise`. `
 aliases to `machine-seated-crunch`. `Reverse Lunges` aliases to `reverse-lunge`. `Back Extension`
 matches the shipped name. Created names are trimmed.
 
-High-volume names that still **create** new exercises:
-
-| Strong name | Workouts | Work sets | Created id | Inferred |
-|-------------|----------|-----------|------------|----------|
-| Standing Calf Raise (Barbell) | 15 | 45 | `standing-calf-raise-barbell` | Other / Barbell |
-| Chest Fly (Band) | 11 | 30 | `chest-fly-band` | Other / Bodyweight |
-| Cable Pushdown (rope) | 10 | 30 | `cable-pushdown-rope` | Other / Machine |
-| Triceps Extension (Cable) | 7 | 21 | `triceps-extension-cable` | Other / Machine |
-| Hip Thrust (Barbell) | 6 | 18 | `hip-thrust-barbell` | Other / Barbell |
-| + others with ≤4 workouts | | | | |
+`Hip Thrust (Barbell)` resolves to `hip-thrust`. `Standing Calf Raise (Barbell)` resolves to
+`barbell-calf-raise`. `Skullcrusher (Barbell)` resolves to `skull-crusher`. `Chest Fly (Band)`,
+`Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are created with the mapped mechanic.
 
 Catalog rows that **never appear** in this export: `db-bench-press`, `assisted-dips`,
 `incline-bench-press`.
 
-Bare Strong `Chest Fly` aliases to `pec-deck`. `Chest Fly (Cable)` aliases to `cable-fly`.
-`Chest Fly (Band)` is still created (Bodyweight — `band` is not an infer keyword).
-
-Bare names in this export that **lack** an equipment word in the string:
+Bare Strong `Chest Fly` maps to `pec-deck`. `Chest Fly (Cable)` maps to `cable-fly`.
+`Chest Fly (Band)` is created.
 
 | Strong name | Import |
 |-------------|--------|
@@ -341,12 +327,8 @@ Bare names in this export that **lack** an equipment word in the string:
 | `Leg Press` | Alias → catalog Machine |
 | `Triceps Press` | Alias → catalog Machine |
 | `Bulgarian Split Squat` | Alias → catalog Dumbbell |
-| `Back Extension` | Created Bodyweight |
-| `Reverse Lunges` | Created Bodyweight |
-
-Genuine new movements (Hip Thrust, Reverse Lunges, Cable Pushdown, Iso-Lateral Chest Press,
-Skullcrusher (Barbell), Standing Calf Raise (Barbell), …) creating new exercises is **won't do** to
-force onto the current catalog.
+| `Back Extension` | Name match → catalog |
+| `Reverse Lunges` | Alias → `reverse-lunge` |
 
 ---
 
@@ -359,7 +341,7 @@ force onto the current catalog.
 **Strong import (today):**
 
 1. Parse `;` CSV into `StrongCsvRow`.
-2. Resolve exercises (alias / name / create).
+2. Resolve exercises (`strongExercises`, then catalog name). A name in neither is still imported.
 3. Fuzzy-match plan or insert a new plan from the most common exercise sequence. Unmatched names
    executed fewer than 5 times are archived; busier names stay active. The summary counts archived
    plans.

@@ -520,14 +520,23 @@ class WorkoutSessionTest {
     }
 
     @Test
-    fun `default rest is 2 minutes for compounds, 1 for isolation, 1_5 otherwise`() {
+    fun `default rest follows mechanic`() {
         assert(catalogExercise("bench-press").defaultRest == 2.minutes)
         assert(catalogExercise("squat").defaultRest == 2.minutes)
         assert(catalogExercise("romanian-deadlift").defaultRest == 2.minutes)
+        assert(catalogExercise("face-pull").defaultRest == 2.minutes)
         assert(catalogExercise("db-skull-crusher").defaultRest == 1.minutes)
         assert(catalogExercise("incline-db-curl").defaultRest == 1.minutes)
-        assert(catalogExercise("seated-leg-curl").defaultRest == 90.seconds)
-        assert(catalogExercise("leg-extension").defaultRest == 90.seconds)
+        assert(catalogExercise("seated-leg-curl").defaultRest == 1.minutes)
+        assert(catalogExercise("leg-extension").defaultRest == 1.minutes)
+        assert(
+            ExerciseDefinition(
+                "custom",
+                "Custom",
+                MuscleGroup.Arms,
+                Equipment.Dumbbell,
+            ).defaultRest == 90.seconds,
+        )
         assert(2.minutes.formatRestClock() == "2:00")
         assert(90.seconds.formatRestClock() == "1:30")
         assert(1.minutes.formatRestClock() == "1:00")
@@ -542,8 +551,8 @@ class WorkoutSessionTest {
                 "bench-press" to 2.minutes,
                 "squat" to 2.minutes,
                 "assisted-pull-ups" to 2.minutes,
-                "seated-leg-curl" to 90.seconds,
-                "dumbbell-upright-row" to 1.minutes,
+                "seated-leg-curl" to 1.minutes,
+                "dumbbell-upright-row" to 2.minutes,
                 "db-skull-crusher" to 1.minutes,
             ),
         )

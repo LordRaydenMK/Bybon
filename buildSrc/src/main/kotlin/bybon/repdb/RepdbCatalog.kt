@@ -38,6 +38,7 @@ data class RepdbExercise(
     val name: String,
     val muscleGroup: String,
     val equipment: String,
+    val mechanic: String,
 )
 
 class RepdbCatalogException(message: String) : RuntimeException(message)
@@ -160,12 +161,14 @@ private fun toExercise(row: Any?): RepdbExercise? {
         name = name,
         muscleGroup = muscleGroup(bodyPart),
         equipment = loadClass(fields["equipment"] as? String),
+        mechanic = mechanic(id, fields["mechanic"]),
     )
 }
 
 private val exerciseDefinition = ClassName("dev.sanastasov.bybon.workout.domain", "ExerciseDefinition")
 private val muscleGroupType = ClassName("dev.sanastasov.bybon.workout.domain", "MuscleGroup")
 private val equipmentType = ClassName("dev.sanastasov.bybon.workout.domain", "Equipment")
+private val mechanicType = ClassName("dev.sanastasov.bybon.workout.domain", "Mechanic")
 
 fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
     val initializer = CodeBlock.builder().add("listOf(")
@@ -175,6 +178,7 @@ fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
         initializer.add("\n        %S,", exercise.name)
         initializer.add("\n        %T.%L,", muscleGroupType, exercise.muscleGroup)
         initializer.add("\n        %T.%L,", equipmentType, exercise.equipment)
+        initializer.add("\n        %T.%L,", mechanicType, exercise.mechanic)
         initializer.add("\n    ),")
     }
     initializer.add("\n)")
@@ -210,6 +214,13 @@ internal fun muscleGroup(bodyPart: String): String = when (bodyPart) {
     "core" -> "Core"
     "full_body" -> "FullBody"
     else -> throw RepdbCatalogException("RepDB catalog has unknown body part: $bodyPart")
+}
+
+internal fun mechanic(id: String, value: Any?): String = when (value) {
+    "compound" -> "Compound"
+    "isolation" -> "Isolation"
+    null -> throw RepdbCatalogException("RepDB exercise $id is missing mechanic")
+    else -> throw RepdbCatalogException("RepDB exercise $id has unknown mechanic: $value")
 }
 
 internal fun loadClass(equipment: String?): String = when (equipment) {

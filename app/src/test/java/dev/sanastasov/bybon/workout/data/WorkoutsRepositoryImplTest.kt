@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.data
 
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
@@ -35,6 +36,7 @@ class WorkoutsRepositoryImplTest {
             "Crunch (Machine)",
             MuscleGroup.Core,
             Equipment.Machine,
+            Mechanic.Isolation,
         )
 
         repository.importHistory(

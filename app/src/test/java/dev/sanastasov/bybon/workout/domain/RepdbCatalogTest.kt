@@ -1,7 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 
 class RepdbCatalogTest {
@@ -27,8 +26,13 @@ class RepdbCatalogTest {
         assert(catalogExercise("archer-push-ups").equipment == Equipment.Bodyweight)
         assert(catalogExercise("lat-pulldown").primaryMuscleGroup == MuscleGroup.Back)
         assert(catalogExercises.none { "Pose" in it.name || "Pilates" in it.name })
+        assert(bench.mechanic == Mechanic.Compound)
+        assert(catalogExercise("face-pull").mechanic == Mechanic.Compound)
+        assert(catalogExercise("seated-leg-curl").mechanic == Mechanic.Isolation)
         assert(catalogExercise("bench-press").defaultRest == 2.minutes)
-        assert(catalogExercise("face-pull").defaultRest == 1.minutes)
-        assert(catalogExercise("seated-leg-curl").defaultRest == 90.seconds)
+        assert(catalogExercise("face-pull").defaultRest == 2.minutes)
+        assert(catalogExercise("seated-leg-curl").defaultRest == 1.minutes)
+        assert(catalogExercise("iso-lat-row").defaultRest == 2.minutes)
+        assert(catalogExercise("lateral-raise-machine").defaultRest == 1.minutes)
     }
 }

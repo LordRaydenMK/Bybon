@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import org.junit.Test
 
@@ -9,9 +10,27 @@ class ExerciseLibraryUiTest {
 
     @Test
     fun `groups exercises by body part in enum order and skips empty groups`() {
-        val chest = ExerciseDefinition("bench", "Bench", MuscleGroup.Chest, Equipment.Barbell)
-        val arms = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
-        val core = ExerciseDefinition("plank", "Plank", MuscleGroup.Core, Equipment.Bodyweight)
+        val chest = ExerciseDefinition(
+            "bench",
+            "Bench",
+            MuscleGroup.Chest,
+            Equipment.Barbell,
+            Mechanic.Compound,
+        )
+        val arms = ExerciseDefinition(
+            "curl",
+            "Curl",
+            MuscleGroup.Arms,
+            Equipment.Dumbbell,
+            Mechanic.Isolation,
+        )
+        val core = ExerciseDefinition(
+            "plank",
+            "Plank",
+            MuscleGroup.Core,
+            Equipment.Bodyweight,
+            Mechanic.Isolation,
+        )
         val groups = listOf(chest, core, arms).groupedByBodyPart()
 
         assert(
@@ -28,12 +47,19 @@ class ExerciseLibraryUiTest {
 
     @Test
     fun `keeps catalog order within a body part`() {
-        val first = ExerciseDefinition("curl-db", "Curl DB", MuscleGroup.Arms, Equipment.Dumbbell)
+        val first = ExerciseDefinition(
+            "curl-db",
+            "Curl DB",
+            MuscleGroup.Arms,
+            Equipment.Dumbbell,
+            Mechanic.Isolation,
+        )
         val second = ExerciseDefinition(
             "curl-machine",
             "Curl Machine",
             MuscleGroup.Arms,
             Equipment.Machine,
+            Mechanic.Isolation,
         )
         val groups = listOf(first, second).groupedByBodyPart()
 
@@ -47,6 +73,7 @@ class ExerciseLibraryUiTest {
             "Pull Up (assisted)",
             MuscleGroup.Back,
             Equipment.AssistedBodyWeight,
+            Mechanic.Compound,
         )
 
         val item = listOf(pullUp).groupedByBodyPart().single().exercises.single()
@@ -61,6 +88,7 @@ class ExerciseLibraryUiTest {
             "Barbell Bench Press",
             MuscleGroup.Chest,
             Equipment.Barbell,
+            Mechanic.Compound,
         )
 
         val item = listOf(bench).groupedByBodyPart().single().exercises.single()
@@ -70,8 +98,20 @@ class ExerciseLibraryUiTest {
 
     @Test
     fun `marks only the selected exercise`() {
-        val chest = ExerciseDefinition("bench", "Bench", MuscleGroup.Chest, Equipment.Barbell)
-        val arms = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+        val chest = ExerciseDefinition(
+            "bench",
+            "Bench",
+            MuscleGroup.Chest,
+            Equipment.Barbell,
+            Mechanic.Compound,
+        )
+        val arms = ExerciseDefinition(
+            "curl",
+            "Curl",
+            MuscleGroup.Arms,
+            Equipment.Dumbbell,
+            Mechanic.Isolation,
+        )
         val groups = listOf(chest, arms).groupedByBodyPart("curl")
 
         assert(groups[0].exercises.single().selected)
@@ -80,7 +120,13 @@ class ExerciseLibraryUiTest {
 
     @Test
     fun `addEnabled is true when an exercise is selected`() {
-        val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+        val curl = ExerciseDefinition(
+            "curl",
+            "Curl",
+            MuscleGroup.Arms,
+            Equipment.Dumbbell,
+            Mechanic.Isolation,
+        )
         val state = listOf(curl).toLibraryUiState("curl")
 
         assert(state.addEnabled)
@@ -90,7 +136,13 @@ class ExerciseLibraryUiTest {
 
     @Test
     fun `addEnabled is false when nothing is selected`() {
-        val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+        val curl = ExerciseDefinition(
+            "curl",
+            "Curl",
+            MuscleGroup.Arms,
+            Equipment.Dumbbell,
+            Mechanic.Isolation,
+        )
         val state = listOf(curl).toLibraryUiState()
 
         assert(!state.addEnabled)
@@ -272,13 +324,32 @@ class ExerciseLibraryUiTest {
         assert(filters == ExerciseLibraryFilters())
     }
 
-    private val curl = ExerciseDefinition("curl", "Curl", MuscleGroup.Arms, Equipment.Dumbbell)
+    private val curl = ExerciseDefinition(
+        "curl",
+        "Curl",
+        MuscleGroup.Arms,
+        Equipment.Dumbbell,
+        Mechanic.Isolation,
+    )
     private val machineCurl = ExerciseDefinition(
         "curl-machine",
         "Curl Machine",
         MuscleGroup.Arms,
         Equipment.Machine,
+        Mechanic.Isolation,
     )
-    private val bench = ExerciseDefinition("bench", "Bench", MuscleGroup.Chest, Equipment.Barbell)
-    private val squat = ExerciseDefinition("squat", "Squat", MuscleGroup.Legs, Equipment.Barbell)
+    private val bench = ExerciseDefinition(
+        "bench",
+        "Bench",
+        MuscleGroup.Chest,
+        Equipment.Barbell,
+        Mechanic.Compound,
+    )
+    private val squat = ExerciseDefinition(
+        "squat",
+        "Squat",
+        MuscleGroup.Legs,
+        Equipment.Barbell,
+        Mechanic.Compound,
+    )
 }
