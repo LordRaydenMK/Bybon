@@ -1,8 +1,8 @@
 package dev.sanastasov.bybon.workout.ui.library
 
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.label
@@ -20,14 +20,16 @@ class ExerciseLibraryViewModelTest {
 
         val state = viewModel.uiState.first { it.groups.isNotEmpty() }
 
-        val stockedGroups = MuscleGroup.entries.filter { group ->
-            catalogExercises.any { it.primaryMuscleGroup == group }
+        val stockedGroups = BodyPart.entries.filter { group ->
+            catalogExercises.any { it.bodyPart == group }
         }
-        val firstArms = catalogExercises.first { it.primaryMuscleGroup == MuscleGroup.Arms }
+        val firstExercise = catalogExercises.first { it.bodyPart == stockedGroups.first() }
         assert(state.groups.map { it.bodyPart } == stockedGroups)
-        assert(state.groups.first().exercises.first().name == firstArms.name)
-        assert(state.groups.first().exercises.first().equipment == firstArms.equipment)
-        assert(state.groups.first().exercises.first().equipmentLabel == firstArms.equipment.label)
+        assert(state.groups.first().exercises.first().name == firstExercise.name)
+        assert(state.groups.first().exercises.first().equipment == firstExercise.equipment)
+        assert(
+            state.groups.first().exercises.first().equipmentLabel == firstExercise.equipment.label,
+        )
         assert(!state.addEnabled)
         assert(state.groups.flatMap { it.exercises }.none { it.selected })
         assert(state.filterChips.none { it.selected })
@@ -148,14 +150,14 @@ class ExerciseLibraryViewModelTest {
 
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms),
             ),
         )
 
         val state = viewModel.uiState.first { it.groups.size == 1 }
-        assert(state.groups.single().bodyPart == MuscleGroup.Arms)
+        assert(state.groups.single().bodyPart == BodyPart.UpperArms)
         val armsChip = state.filterChips.single {
-            it.id == ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms)
+            it.id == ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms)
         }
         assert(armsChip.selected)
         assert(state.filterChips.first().id == ExerciseLibraryFilterId.ClearAll)
@@ -169,16 +171,16 @@ class ExerciseLibraryViewModelTest {
 
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms),
             ),
         )
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Legs),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperLegs),
             ),
         )
 
-        val expectedGroups = listOf(MuscleGroup.Arms, MuscleGroup.Legs)
+        val expectedGroups = listOf(BodyPart.UpperLegs, BodyPart.UpperArms)
         val state = viewModel.uiState.first { state ->
             state.groups.map { it.bodyPart } == expectedGroups
         }
@@ -195,7 +197,7 @@ class ExerciseLibraryViewModelTest {
 
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms),
             ),
         )
         viewModel.onAction(
@@ -210,7 +212,7 @@ class ExerciseLibraryViewModelTest {
                 exercises.all { it.equipment == Equipment.Dumbbell } &&
                 exercises.any { it.id == "incline-db-curl" }
         }
-        assert(state.groups.single().bodyPart == MuscleGroup.Arms)
+        assert(state.groups.single().bodyPart == BodyPart.UpperArms)
         assert(state.groups.single().exercises.none { it.id == "machine-bicep-curl" })
         assert(state.existingExercises.any { it.id == "db-skull-crusher" && !it.selectable })
     }
@@ -221,14 +223,14 @@ class ExerciseLibraryViewModelTest {
         viewModel.uiState.first { it.groups.isNotEmpty() }
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms),
             ),
         )
         viewModel.uiState.first { it.groups.size == 1 }
 
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms),
             ),
         )
 
@@ -243,7 +245,7 @@ class ExerciseLibraryViewModelTest {
         viewModel.uiState.first { it.groups.isNotEmpty() }
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms),
             ),
         )
         viewModel.onAction(
@@ -261,8 +263,8 @@ class ExerciseLibraryViewModelTest {
             current.filterChips.none { it.selected }
         }
         assert(state.filterChips.none { it.id == ExerciseLibraryFilterId.ClearAll })
-        val stockedGroups = MuscleGroup.entries.filter { group ->
-            catalogExercises.any { it.primaryMuscleGroup == group }
+        val stockedGroups = BodyPart.entries.filter { group ->
+            catalogExercises.any { it.bodyPart == group }
         }
         assert(state.groups.map { it.bodyPart } == stockedGroups)
     }
@@ -274,7 +276,12 @@ class ExerciseLibraryViewModelTest {
 
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Other),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.LowerArms),
+            ),
+        )
+        viewModel.onAction(
+            ExerciseLibraryAction.OnToggleFilter(
+                ExerciseLibraryFilterId.EquipmentFilter(Equipment.AssistedBodyWeight),
             ),
         )
 
@@ -282,10 +289,10 @@ class ExerciseLibraryViewModelTest {
         assert(state.groups.isEmpty())
         assert(state.existingHeader == "Already added")
         assert(state.existingExercises.isNotEmpty())
-        val otherChip = state.filterChips.single {
-            it.id == ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Other)
+        val lowerArms = state.filterChips.single {
+            it.id == ExerciseLibraryFilterId.BodyPartFilter(BodyPart.LowerArms)
         }
-        assert(otherChip.selected)
+        assert(lowerArms.selected)
     }
 
     @Test
@@ -297,12 +304,12 @@ class ExerciseLibraryViewModelTest {
 
         viewModel.onAction(
             ExerciseLibraryAction.OnToggleFilter(
-                ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Chest),
+                ExerciseLibraryFilterId.BodyPartFilter(BodyPart.Chest),
             ),
         )
 
         val state = viewModel.uiState.first {
-            it.groups.singleOrNull()?.bodyPart == MuscleGroup.Chest
+            it.groups.singleOrNull()?.bodyPart == BodyPart.Chest
         }
         assert(state.selectedExerciseId == "incline-db-curl")
         assert(state.addEnabled)

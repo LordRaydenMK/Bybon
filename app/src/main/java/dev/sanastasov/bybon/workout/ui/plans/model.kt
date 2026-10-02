@@ -110,8 +110,7 @@ data class PlannedSetUi(
     val rest: Duration?,
 )
 
-fun PlanedExercise.subtitle(): String =
-    "${exercise.primaryMuscleGroup.name} · ${exercise.equipment.label}"
+fun PlanedExercise.subtitle(): String = "${exercise.bodyPart.label} · ${exercise.equipment.label}"
 
 fun PlanedExercise.toPlannedSets(): List<PlannedSetUi> {
     val warmup = List(warmupSets) {

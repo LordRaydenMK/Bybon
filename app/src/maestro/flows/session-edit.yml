@@ -13,7 +13,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Add Exercise"
 - assertVisible: "Exercise Library"
 - tapOn:
-    text: "Arms"
+    text: "Upper arms"
     index: 0
 - tapOn:
     text: "Dumbbell"

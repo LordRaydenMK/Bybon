@@ -1,8 +1,8 @@
 package dev.sanastasov.bybon.workout.ui.library
 
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.label
 
 const val EXERCISE_LIBRARY_RESULT_KEY = "exercise_id"
@@ -27,7 +27,7 @@ data class ExerciseLibraryUiState(
 }
 
 data class ExerciseLibraryGroup(
-    val bodyPart: MuscleGroup,
+    val bodyPart: BodyPart,
     val exercises: List<ExerciseLibraryItemUi>,
 )
 
@@ -50,8 +50,8 @@ data class ExerciseLibraryFilterChipUi(
 sealed interface ExerciseLibraryFilterId {
     data object ClearAll : ExerciseLibraryFilterId
 
-    data class MuscleGroupFilter(
-        val muscleGroup: MuscleGroup,
+    data class BodyPartFilter(
+        val bodyPart: BodyPart,
     ) : ExerciseLibraryFilterId
 
     data class EquipmentFilter(
@@ -60,16 +60,16 @@ sealed interface ExerciseLibraryFilterId {
 }
 
 data class ExerciseLibraryFilters(
-    val muscleGroups: Set<MuscleGroup> = emptySet(),
+    val bodyParts: Set<BodyPart> = emptySet(),
     val equipment: Set<Equipment> = emptySet(),
 ) {
-    val isActive: Boolean get() = muscleGroups.isNotEmpty() || equipment.isNotEmpty()
+    val isActive: Boolean get() = bodyParts.isNotEmpty() || equipment.isNotEmpty()
 
     fun toggle(id: ExerciseLibraryFilterId): ExerciseLibraryFilters = when (id) {
         ExerciseLibraryFilterId.ClearAll -> ExerciseLibraryFilters()
 
-        is ExerciseLibraryFilterId.MuscleGroupFilter -> copy(
-            muscleGroups = muscleGroups.toggle(id.muscleGroup),
+        is ExerciseLibraryFilterId.BodyPartFilter -> copy(
+            bodyParts = bodyParts.toggle(id.bodyPart),
         )
 
         is ExerciseLibraryFilterId.EquipmentFilter -> copy(
@@ -129,21 +129,21 @@ private fun List<String>.toExistingItems(
 
 fun List<ExerciseDefinition>.matching(filters: ExerciseLibraryFilters): List<ExerciseDefinition> =
     filter { exercise ->
-        val matchesMuscle =
-            filters.muscleGroups.isEmpty() || exercise.primaryMuscleGroup in filters.muscleGroups
+        val matchesBodyPart =
+            filters.bodyParts.isEmpty() || exercise.bodyPart in filters.bodyParts
         val matchesEquipment =
             filters.equipment.isEmpty() || exercise.equipment in filters.equipment
-        matchesMuscle && matchesEquipment
+        matchesBodyPart && matchesEquipment
     }
 
 fun List<ExerciseDefinition>.groupedByBodyPart(
     selectedExerciseId: String? = null,
 ): List<ExerciseLibraryGroup> {
-    val byGroup = groupBy { it.primaryMuscleGroup }
-    return MuscleGroup.entries.mapNotNull { muscleGroup ->
-        byGroup[muscleGroup]?.let { exercises ->
+    val byGroup = groupBy { it.bodyPart }
+    return BodyPart.entries.mapNotNull { bodyPart ->
+        byGroup[bodyPart]?.let { exercises ->
             ExerciseLibraryGroup(
-                bodyPart = muscleGroup,
+                bodyPart = bodyPart,
                 exercises = exercises.map { it.toLibraryItem(selectedExerciseId) },
             )
         }
@@ -160,12 +160,12 @@ fun ExerciseLibraryFilters.toChips(): List<ExerciseLibraryFilterChipUi> = buildL
             ),
         )
     }
-    MuscleGroup.entries.forEach { muscleGroup ->
+    BodyPart.entries.forEach { bodyPart ->
         add(
             ExerciseLibraryFilterChipUi(
-                id = ExerciseLibraryFilterId.MuscleGroupFilter(muscleGroup),
-                label = muscleGroup.name,
-                selected = muscleGroup in muscleGroups,
+                id = ExerciseLibraryFilterId.BodyPartFilter(bodyPart),
+                label = bodyPart.label,
+                selected = bodyPart in bodyParts,
             ),
         )
     }

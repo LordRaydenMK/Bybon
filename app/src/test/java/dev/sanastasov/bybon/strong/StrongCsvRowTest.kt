@@ -1,9 +1,9 @@
 package dev.sanastasov.bybon.strong
 
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
@@ -23,21 +23,21 @@ class StrongCsvRowTest {
     private val bench = ExerciseDefinition(
         "bench-press-bb",
         "Bench Press (barbell)",
-        MuscleGroup.Chest,
+        BodyPart.Chest,
         Equipment.Barbell,
         Mechanic.Compound,
     )
     private val squat = ExerciseDefinition(
         "squat-bb",
         "Squat (barbell)",
-        MuscleGroup.Legs,
+        BodyPart.UpperLegs,
         Equipment.Barbell,
         Mechanic.Compound,
     )
     private val pullUp = ExerciseDefinition(
         "pullup-assisted",
         "Pull Up (assisted)",
-        MuscleGroup.Back,
+        BodyPart.Back,
         Equipment.AssistedBodyWeight,
         Mechanic.Compound,
     )
@@ -139,7 +139,7 @@ class StrongCsvRowTest {
         val crunch = result.sessionHistory.flatMap { it.exercises }
             .first { it.id == "machine-seated-crunch" }
         assert(crunch.exerciseDefinition.name == "Machine Seated Crunch")
-        assert(crunch.exerciseDefinition.primaryMuscleGroup == MuscleGroup.Core)
+        assert(crunch.exerciseDefinition.bodyPart == BodyPart.Core)
         assert(crunch.exerciseDefinition.equipment == Equipment.Machine)
     }
 
@@ -250,7 +250,7 @@ class StrongCsvRowTest {
 
         val byId = result.exercises.associateBy { it.id }
         assert(byId.getValue("chest-fly-band").mechanic == Mechanic.Isolation)
-        assert(byId.getValue("chest-fly-band").primaryMuscleGroup == MuscleGroup.Chest)
+        assert(byId.getValue("chest-fly-band").bodyPart == BodyPart.Chest)
         assert(byId.getValue("cable-pushdown-rope").mechanic == Mechanic.Isolation)
         assert(byId.getValue("cable-pushdown-rope").equipment == Equipment.Machine)
         assert(byId.getValue("some-new-lift").mechanic == null)
@@ -386,7 +386,7 @@ class StrongCsvRowTest {
                     ExerciseDefinition(
                         "rdl-bb",
                         "Romanian Deadlift (barbell)",
-                        MuscleGroup.Legs,
+                        BodyPart.UpperLegs,
                         Equipment.Barbell,
                         Mechanic.Compound,
                     ),

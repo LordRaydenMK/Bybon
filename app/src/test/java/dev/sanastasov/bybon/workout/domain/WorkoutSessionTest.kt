@@ -533,7 +533,7 @@ class WorkoutSessionTest {
             ExerciseDefinition(
                 "custom",
                 "Custom",
-                MuscleGroup.Arms,
+                BodyPart.UpperArms,
                 Equipment.Dumbbell,
             ).defaultRest == 90.seconds,
         )

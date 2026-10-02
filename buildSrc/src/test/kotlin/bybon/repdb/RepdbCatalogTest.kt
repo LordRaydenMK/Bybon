@@ -18,7 +18,7 @@ class RepdbCatalogTest {
         )
 
         assertEquals(listOf("bench-press"), exercises.map { it.id })
-        assertEquals("Chest", exercises.single().muscleGroup)
+        assertEquals("Chest", exercises.single().bodyPart)
         assertEquals("Barbell", exercises.single().equipment)
     }
 
@@ -81,8 +81,8 @@ class RepdbCatalogTest {
         assertEquals("AssistedBodyWeight", exercises.getValue("assisted-pull-ups").equipment)
         assertEquals("AssistedBodyWeight", exercises.getValue("assisted-dips").equipment)
         assertEquals("Machine", exercises.getValue("lat-pulldown").equipment)
-        assertEquals("Legs", exercises.getValue("squat").muscleGroup)
-        assertEquals("Arms", exercises.getValue("curl").muscleGroup)
+        assertEquals("UpperLegs", exercises.getValue("squat").bodyPart)
+        assertEquals("UpperArms", exercises.getValue("curl").bodyPart)
         assertEquals("Compound", exercises.getValue("squat").mechanic)
         assertEquals("Isolation", exercises.getValue("curl").mechanic)
     }
@@ -91,7 +91,15 @@ class RepdbCatalogTest {
     fun `renders exercise definitions`() {
         val source = renderRepdbCatalog(
             listOf(
-                RepdbExercise("bench-press", "Barbell Bench Press", "Chest", "Barbell", "Compound"),
+                RepdbExercise(
+                    "bench-press",
+                    "Barbell Bench Press",
+                    "Chest",
+                    "Barbell",
+                    "Compound",
+                    listOf("pectoralis_major"),
+                    listOf("anterior_deltoid", "triceps_brachii"),
+                ),
             ),
         )
 
@@ -102,9 +110,11 @@ class RepdbCatalogTest {
                     ExerciseDefinition(
                         "bench-press",
                         "Barbell Bench Press",
-                        MuscleGroup.Chest,
+                        BodyPart.Chest,
                         Equipment.Barbell,
                         Mechanic.Compound,
+                        listOf("pectoralis_major", ),
+                        listOf("anterior_deltoid", "triceps_brachii", ),
                     ),
                 )
                 """.trimIndent(),
@@ -134,6 +144,21 @@ class RepdbCatalogTest {
 
         assertEquals("RepDB exercise bench-press is missing mechanic", missing.message)
         assertEquals("RepDB exercise bench-press has unknown mechanic: static", unknown.message)
+    }
+
+    @Test
+    fun `rejects an unknown body part and a missing primary muscle list`() {
+        val bodyPart = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(catalog(exercise(id = "bench-press", name = "Barbell Bench Press", bodyPart = "arms")))
+        }
+        val muscles = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press", primaryMuscles = null)),
+            )
+        }
+
+        assertEquals("RepDB exercise bench-press has unknown body part: arms", bodyPart.message)
+        assertEquals("RepDB exercise bench-press is missing primary_muscles", muscles.message)
     }
 
     @Test
@@ -261,9 +286,13 @@ class RepdbCatalogTest {
         equipment: String? = "barbell",
         bodyPart: String = "chest",
         mechanic: String? = "compound",
+        primaryMuscles: String? = """["pectoralis_major"]""",
+        secondaryMuscles: String? = """["triceps_brachii"]""",
     ): String {
         val equipmentJson = equipment?.let { "\"$it\"" } ?: "null"
         val mechanicJson = mechanic?.let { "\"$it\"" } ?: "null"
+        val primaryJson = primaryMuscles ?: "null"
+        val secondaryJson = secondaryMuscles ?: "null"
         val goalsJson = goals.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
         return """
             {
@@ -273,7 +302,9 @@ class RepdbCatalogTest {
               "goals": $goalsJson,
               "equipment": $equipmentJson,
               "body_part": "$bodyPart",
-              "mechanic": $mechanicJson
+              "mechanic": $mechanicJson,
+              "primary_muscles": $primaryJson,
+              "secondary_muscles": $secondaryJson
             }
         """.trimIndent()
     }

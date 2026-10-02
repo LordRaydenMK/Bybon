@@ -2,11 +2,11 @@
 
 package dev.sanastasov.bybon.strong
 
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Mechanic
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -32,7 +32,7 @@ private val planNameFillers = setOf("workout", "session", "training", "routine",
 private data class StrongExercise(
     val catalogId: String? = null,
     val mechanic: Mechanic,
-    val muscleGroup: MuscleGroup? = null,
+    val bodyPart: BodyPart? = null,
     val equipment: Equipment? = null,
 )
 
@@ -62,7 +62,7 @@ private val strongExercises = mapOf(
     "chest fly (cable)" to StrongExercise("cable-fly", Mechanic.Isolation),
     "chest fly (band)" to StrongExercise(
         mechanic = Mechanic.Isolation,
-        muscleGroup = MuscleGroup.Chest,
+        bodyPart = BodyPart.Chest,
         equipment = Equipment.Bodyweight,
     ),
     "lat pulldown (cable)" to StrongExercise("lat-pulldown", Mechanic.Compound),
@@ -72,17 +72,17 @@ private val strongExercises = mapOf(
     "hip thrust (barbell)" to StrongExercise("hip-thrust", Mechanic.Compound),
     "cable pushdown (rope)" to StrongExercise(
         mechanic = Mechanic.Isolation,
-        muscleGroup = MuscleGroup.Arms,
+        bodyPart = BodyPart.UpperArms,
         equipment = Equipment.Machine,
     ),
     "triceps extension (cable)" to StrongExercise(
         mechanic = Mechanic.Isolation,
-        muscleGroup = MuscleGroup.Arms,
+        bodyPart = BodyPart.UpperArms,
         equipment = Equipment.Machine,
     ),
     "iso-lateral chest press" to StrongExercise(
         mechanic = Mechanic.Compound,
-        muscleGroup = MuscleGroup.Chest,
+        bodyPart = BodyPart.Chest,
         equipment = Equipment.Machine,
     ),
     "back extension" to StrongExercise("back-extension", Mechanic.Isolation),
@@ -344,7 +344,7 @@ private fun resolveExercise(
     return ExerciseDefinition(
         id = trimmedName.slugify(),
         name = trimmedName,
-        primaryMuscleGroup = mapped?.muscleGroup ?: inferMuscleGroup(trimmedName),
+        bodyPart = mapped?.bodyPart ?: inferBodyPart(trimmedName),
         equipment = mapped?.equipment ?: inferEquipment(trimmedName),
         mechanic = mapped?.mechanic,
     )
@@ -361,11 +361,11 @@ private fun inferEquipment(name: String): Equipment {
     }
 }
 
-private fun inferMuscleGroup(name: String): MuscleGroup {
+private fun inferBodyPart(name: String): BodyPart {
     val lower = name.lowercase()
     return when {
-        "crunch" in lower || "plank" in lower || "sit-up" in lower || "sit up" in lower -> MuscleGroup.Core
-        else -> MuscleGroup.Other
+        "crunch" in lower || "plank" in lower || "sit-up" in lower || "sit up" in lower -> BodyPart.Core
+        else -> BodyPart.FullBody
     }
 }
 

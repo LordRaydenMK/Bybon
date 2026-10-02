@@ -11,10 +11,10 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Exercise Library"
 - assertVisible: "Already added"
 - assertVisible: "Barbell Bench Press"
-- assertVisible: "Arms"
+- assertVisible: "Upper arms"
 - assertVisible: "Dumbbell"
 - tapOn:
-    text: "Arms"
+    text: "Upper arms"
     index: 0
 - tapOn:
     text: "Dumbbell"

@@ -76,7 +76,7 @@ From
 [`ExerciseSet.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseSet.kt),
 [`ExerciseDefinition.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseDefinition.kt):
 
-- **`ExerciseDefinition`**: stable `id`, `name`, `primaryMuscleGroup`, `equipment`. Catalog is
+- **`ExerciseDefinition`**: stable `id`, `name`, `bodyPart`, muscle lists, `equipment`. Catalog is
   in-memory: the filtered RepDB subset generated at build time, plus four Bybon-only rows in
   [`CatalogExercises.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/CatalogExercises.kt)
   (386 exercises). Import can append unknown exercises to the repository list.

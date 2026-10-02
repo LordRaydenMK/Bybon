@@ -6,10 +6,12 @@ import kotlin.time.Duration.Companion.seconds
 data class ExerciseDefinition(
     val id: String,
     val name: String,
-    val primaryMuscleGroup: MuscleGroup,
+    val bodyPart: BodyPart,
     val equipment: Equipment,
     // Null only for a Strong import whose name has no mapped mechanic. Strong does not record one.
     val mechanic: Mechanic? = null,
+    val primaryMuscles: List<String> = emptyList(),
+    val secondaryMuscles: List<String> = emptyList(),
 )
 
 val ExerciseDefinition.defaultRest: Duration

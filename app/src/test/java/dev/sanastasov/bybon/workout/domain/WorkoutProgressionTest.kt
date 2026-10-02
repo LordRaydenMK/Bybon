@@ -147,7 +147,7 @@ class WorkoutProgressionTest {
         val definition = ExerciseDefinition(
             "push-up",
             "Push Up",
-            MuscleGroup.Chest,
+            BodyPart.Chest,
             Equipment.Bodyweight,
             Mechanic.Compound,
         )

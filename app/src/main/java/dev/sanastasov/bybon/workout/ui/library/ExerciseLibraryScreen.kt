@@ -43,10 +43,11 @@ import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.icons.icon
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.label
 
 @Composable
 fun WorkoutModule.ExerciseLibraryScreen(
@@ -215,9 +216,9 @@ private fun LazyListScope.exerciseLibraryItems(
 }
 
 @Composable
-private fun BodyPartHeader(bodyPart: MuscleGroup) {
+private fun BodyPartHeader(bodyPart: BodyPart) {
     Text(
-        bodyPart.name,
+        bodyPart.label,
         fontWeight = FontWeight.Bold,
         style = MaterialTheme.typography.titleMedium,
     )
@@ -303,7 +304,10 @@ private fun ExerciseLibraryEmptyFilterPreview() {
     Surface {
         ExerciseLibraryContent(
             catalogExercises.toLibraryUiState(
-                filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Other)),
+                filters = ExerciseLibraryFilters(
+                    bodyParts = setOf(BodyPart.LowerArms),
+                    equipment = setOf(Equipment.AssistedBodyWeight),
+                ),
             ),
             {},
             {},

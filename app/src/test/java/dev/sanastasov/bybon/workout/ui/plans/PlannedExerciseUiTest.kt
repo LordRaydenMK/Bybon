@@ -34,7 +34,7 @@ class PlannedExerciseUiTest {
         assert(rows.size == 3)
         assert(rows.none { it.isWarmup })
         assert(rows.all { it.repsLabel == "12–14" && it.rest == 1.minutes })
-        assert(curl.subtitle() == "Legs · Machine")
+        assert(curl.subtitle() == "Upper legs · Machine")
         assert(
             rows.first().contentDescription(curl.exercise.name) ==
                 "Seated Leg Curl set 1, 12–14 reps, rest 1:00",
