@@ -36,9 +36,11 @@ const val REPDB_DOWNLOAD_TIMEOUT_MILLIS = 30_000
 data class RepdbExercise(
     val id: String,
     val name: String,
-    val muscleGroup: String,
+    val bodyPart: String,
     val equipment: String,
     val mechanic: String,
+    val primaryMuscles: List<String> = emptyList(),
+    val secondaryMuscles: List<String> = emptyList(),
 )
 
 class RepdbCatalogException(message: String) : RuntimeException(message)
@@ -159,14 +161,16 @@ private fun toExercise(row: Any?): RepdbExercise? {
     return RepdbExercise(
         id = id,
         name = name,
-        muscleGroup = muscleGroup(bodyPart),
+        bodyPart = bodyPart(id, bodyPart),
         equipment = loadClass(fields["equipment"] as? String),
         mechanic = mechanic(id, fields["mechanic"]),
+        primaryMuscles = muscleSlugs(id, "primary_muscles", fields["primary_muscles"], required = true),
+        secondaryMuscles = muscleSlugs(id, "secondary_muscles", fields["secondary_muscles"], required = false),
     )
 }
 
 private val exerciseDefinition = ClassName("dev.sanastasov.bybon.workout.domain", "ExerciseDefinition")
-private val muscleGroupType = ClassName("dev.sanastasov.bybon.workout.domain", "MuscleGroup")
+private val bodyPartType = ClassName("dev.sanastasov.bybon.workout.domain", "BodyPart")
 private val equipmentType = ClassName("dev.sanastasov.bybon.workout.domain", "Equipment")
 private val mechanicType = ClassName("dev.sanastasov.bybon.workout.domain", "Mechanic")
 
@@ -176,9 +180,11 @@ fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
         initializer.add("\n    %T(", exerciseDefinition)
         initializer.add("\n        %S,", exercise.id)
         initializer.add("\n        %S,", exercise.name)
-        initializer.add("\n        %T.%L,", muscleGroupType, exercise.muscleGroup)
+        initializer.add("\n        %T.%L,", bodyPartType, exercise.bodyPart)
         initializer.add("\n        %T.%L,", equipmentType, exercise.equipment)
         initializer.add("\n        %T.%L,", mechanicType, exercise.mechanic)
+        initializer.add("\n        %L,", muscleList(exercise.primaryMuscles))
+        initializer.add("\n        %L,", muscleList(exercise.secondaryMuscles))
         initializer.add("\n    ),")
     }
     initializer.add("\n)")
@@ -205,15 +211,36 @@ internal fun includeExercise(fields: Map<*, *>): Boolean {
     return yogaAndPilatesMarkers.none { marker -> marker in name }
 }
 
-internal fun muscleGroup(bodyPart: String): String = when (bodyPart) {
-    "upper_legs", "lower_legs" -> "Legs"
+internal fun bodyPart(id: String, bodyPart: String): String = when (bodyPart) {
+    "upper_legs" -> "UpperLegs"
+    "lower_legs" -> "LowerLegs"
     "back" -> "Back"
-    "upper_arms", "lower_arms" -> "Arms"
+    "upper_arms" -> "UpperArms"
+    "lower_arms" -> "LowerArms"
     "chest" -> "Chest"
     "shoulders" -> "Shoulders"
     "core" -> "Core"
     "full_body" -> "FullBody"
-    else -> throw RepdbCatalogException("RepDB catalog has unknown body part: $bodyPart")
+    else -> throw RepdbCatalogException("RepDB exercise $id has unknown body part: $bodyPart")
+}
+
+internal fun muscleSlugs(id: String, field: String, value: Any?, required: Boolean): List<String> {
+    if (value == null) {
+        if (required) throw RepdbCatalogException("RepDB exercise $id is missing $field")
+        return emptyList()
+    }
+    val slugs = value as? List<*>
+        ?: throw RepdbCatalogException("RepDB exercise $id has invalid $field")
+    return slugs.map { slug ->
+        slug as? String ?: throw RepdbCatalogException("RepDB exercise $id has invalid $field")
+    }
+}
+
+private fun muscleList(muscles: List<String>): CodeBlock {
+    if (muscles.isEmpty()) return CodeBlock.of("emptyList()")
+    val block = CodeBlock.builder().add("listOf(")
+    muscles.forEach { muscle -> block.add("%S, ", muscle) }
+    return block.add(")").build()
 }
 
 internal fun mechanic(id: String, value: Any?): String = when (value) {

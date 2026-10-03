@@ -1,9 +1,9 @@
 package dev.sanastasov.bybon.workout.data
 
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
@@ -34,7 +34,7 @@ class WorkoutsRepositoryImplTest {
         val crunch = ExerciseDefinition(
             "crunch-machine",
             "Crunch (Machine)",
-            MuscleGroup.Core,
+            BodyPart.Core,
             Equipment.Machine,
             Mechanic.Isolation,
         )

@@ -53,7 +53,7 @@ appId: dev.sanastasov.bybon.debug
     direction: DOWN
     centerElement: true
 - assertVisible: "Seated Leg Curl"
-- assertVisible: "Legs · Machine"
+- assertVisible: "Upper legs · Machine"
 - assertVisible: "Seated Leg Curl set 1, 12–14 reps, rest 1:00"
 - scrollUntilVisible:
     element: "Add Exercise"
@@ -63,11 +63,11 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Exercise Library"
 - assertVisible: "Already added"
 - assertVisible: "Barbell Bench Press"
-- assertVisible: "Arms"
+- assertVisible: "Upper arms"
 - assertVisible: "Dumbbell"
 - assertVisible: "Add exercise"
 - tapOn:
-    text: "Arms"
+    text: "Upper arms"
     index: 0
 - tapOn:
     text: "Dumbbell"
@@ -86,7 +86,7 @@ appId: dev.sanastasov.bybon.debug
     direction: DOWN
     centerElement: true
 - assertVisible: "Incline Dumbbell Curl"
-- assertVisible: "Arms · Dumbbell"
+- assertVisible: "Upper arms · Dumbbell"
 - assertVisible: "Incline Dumbbell Curl set 1, 8–12 reps, rest 1:00"
 - assertVisible: "More options for Incline Dumbbell Curl"
 - tapOn: "More options for Incline Dumbbell Curl"

@@ -76,7 +76,7 @@ From
 [`ExerciseSet.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseSet.kt),
 [`ExerciseDefinition.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseDefinition.kt):
 
-- **`ExerciseDefinition`**: stable `id`, `name`, `primaryMuscleGroup`, `equipment`. Catalog is
+- **`ExerciseDefinition`**: stable `id`, `name`, `bodyPart`, muscle lists, `equipment`. Catalog is
   in-memory: the filtered RepDB subset generated at build time, plus four Bybon-only rows in
   [`CatalogExercises.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/CatalogExercises.kt)
   (386 exercises). Import can append unknown exercises to the repository list.
@@ -117,9 +117,10 @@ Resolve each Strong `Exercise Name`:
 1. `strongExercises` in `StrongCsvMapper.kt`: normalized Strong name → catalog id, when that name
    is a shipped exercise. The row also stores the RepDB mechanic.
 2. Else case-insensitive name match against the catalog (`"Back Extension"` matches `Back Extension`).
-3. Else create a new `ExerciseDefinition` and import it. Mechanic comes from that same map.
-   A name that is not in the map is still imported, with `mechanic = null`, because Strong does not
-   record one. Muscle and equipment on a created row come from the map when it has them.
+3. Else create a new `ExerciseDefinition` and import it. Mechanic and body part come from that same
+   map. A name that is not in the map is still imported, with `mechanic = null` and `bodyPart = null`,
+   because Strong does not record either. Equipment on a created row comes from the map when it has
+   one, otherwise from keywords in the name.
 
 The sample’s `Crunch (Machine)` aliases to shipped `machine-seated-crunch`, so that file inserts no
 new exercises. `Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are not
@@ -209,7 +210,8 @@ pull-ups.
 The map is `strongExercises` inside `StrongCsvMapper.kt`. RepDB word order differs from
 Strong (`Bench Press (Barbell)` vs `Barbell Bench Press`), so the sample names and the names called
 out in the RepDB proposal are in `strongExercises`. A Strong name that is not in that map and does
-not match a catalog name is still imported, with `mechanic = null`, because Strong does not record one.
+not match a catalog name is still imported, with `mechanic = null` and `bodyPart = null`, because
+Strong does not record either.
 
 Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pulldown, chest
 fly variants, dips, calf raise, face pull, lying leg curl, etc. Several of those **do** appear in
@@ -229,7 +231,7 @@ Statuses from triage. Workout persistence is the remaining TODO.
 | RPE / distance / timed sets | Unused in both the sample and the full 252-session export; out of domain (spec wants RIR later, not Strong RPE) |
 | Plan template vs session exercises | A plan is a plan. Sessions may drop/swap exercises (busy machine, sore knee, ran out of time) |
 | Import `repRange` = min..max logged reps | Fine for import; don't parse Strong “Rep range …” notes into prescription |
-| Unknown Strong mechanic | `mechanic` is null when the name is not in `strongExercises`. Strong does not record one |
+| Unknown Strong mechanic or body part | Both stay null when the name is not in `strongExercises`. Strong records neither |
 | Hardcoded Strong name aliases | Keep a small map in `StrongCsvMapper` for names that will never equal the catalog string. No alias table. |
 
 ### Done

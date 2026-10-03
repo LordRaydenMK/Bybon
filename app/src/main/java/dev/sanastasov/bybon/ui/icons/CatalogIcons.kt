@@ -1,19 +1,18 @@
 package dev.sanastasov.bybon.ui.icons
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 
-val MuscleGroup.icon: ImageVector
+val BodyPart.icon: ImageVector
     get() = when (this) {
-        MuscleGroup.Arms -> MuscleGroupArms
-        MuscleGroup.Back -> MuscleGroupBack
-        MuscleGroup.Chest -> MuscleGroupChest
-        MuscleGroup.Core -> MuscleGroupCore
-        MuscleGroup.FullBody -> MuscleGroupFullBody
-        MuscleGroup.Legs -> MuscleGroupLegs
-        MuscleGroup.Shoulders -> MuscleGroupShoulders
-        MuscleGroup.Other -> MuscleGroupOther
+        BodyPart.UpperArms, BodyPart.LowerArms -> MuscleGroupArms
+        BodyPart.Back -> MuscleGroupBack
+        BodyPart.Chest -> MuscleGroupChest
+        BodyPart.Core -> MuscleGroupCore
+        BodyPart.FullBody -> MuscleGroupFullBody
+        BodyPart.UpperLegs, BodyPart.LowerLegs -> MuscleGroupLegs
+        BodyPart.Shoulders -> MuscleGroupShoulders
     }
 
 val Equipment.icon: ImageVector

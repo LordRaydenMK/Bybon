@@ -1,9 +1,9 @@
 package dev.sanastasov.bybon.workout.ui.library
 
+import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
-import dev.sanastasov.bybon.workout.domain.MuscleGroup
 import org.junit.Test
 
 class ExerciseLibraryUiTest {
@@ -13,21 +13,21 @@ class ExerciseLibraryUiTest {
         val chest = ExerciseDefinition(
             "bench",
             "Bench",
-            MuscleGroup.Chest,
+            BodyPart.Chest,
             Equipment.Barbell,
             Mechanic.Compound,
         )
         val arms = ExerciseDefinition(
             "curl",
             "Curl",
-            MuscleGroup.Arms,
+            BodyPart.UpperArms,
             Equipment.Dumbbell,
             Mechanic.Isolation,
         )
         val core = ExerciseDefinition(
             "plank",
             "Plank",
-            MuscleGroup.Core,
+            BodyPart.Core,
             Equipment.Bodyweight,
             Mechanic.Isolation,
         )
@@ -35,9 +35,9 @@ class ExerciseLibraryUiTest {
 
         assert(
             groups.map { it.bodyPart } == listOf(
-                MuscleGroup.Arms,
-                MuscleGroup.Chest,
-                MuscleGroup.Core,
+                BodyPart.UpperArms,
+                BodyPart.Chest,
+                BodyPart.Core,
             ),
         )
         assert(groups[0].exercises.single().name == "Curl")
@@ -50,14 +50,14 @@ class ExerciseLibraryUiTest {
         val first = ExerciseDefinition(
             "curl-db",
             "Curl DB",
-            MuscleGroup.Arms,
+            BodyPart.UpperArms,
             Equipment.Dumbbell,
             Mechanic.Isolation,
         )
         val second = ExerciseDefinition(
             "curl-machine",
             "Curl Machine",
-            MuscleGroup.Arms,
+            BodyPart.UpperArms,
             Equipment.Machine,
             Mechanic.Isolation,
         )
@@ -71,7 +71,7 @@ class ExerciseLibraryUiTest {
         val pullUp = ExerciseDefinition(
             "assisted-pull-ups",
             "Pull Up (assisted)",
-            MuscleGroup.Back,
+            BodyPart.Back,
             Equipment.AssistedBodyWeight,
             Mechanic.Compound,
         )
@@ -86,7 +86,7 @@ class ExerciseLibraryUiTest {
         val bench = ExerciseDefinition(
             "bench-press",
             "Barbell Bench Press",
-            MuscleGroup.Chest,
+            BodyPart.Chest,
             Equipment.Barbell,
             Mechanic.Compound,
         )
@@ -101,14 +101,14 @@ class ExerciseLibraryUiTest {
         val chest = ExerciseDefinition(
             "bench",
             "Bench",
-            MuscleGroup.Chest,
+            BodyPart.Chest,
             Equipment.Barbell,
             Mechanic.Compound,
         )
         val arms = ExerciseDefinition(
             "curl",
             "Curl",
-            MuscleGroup.Arms,
+            BodyPart.UpperArms,
             Equipment.Dumbbell,
             Mechanic.Isolation,
         )
@@ -123,7 +123,7 @@ class ExerciseLibraryUiTest {
         val curl = ExerciseDefinition(
             "curl",
             "Curl",
-            MuscleGroup.Arms,
+            BodyPart.UpperArms,
             Equipment.Dumbbell,
             Mechanic.Isolation,
         )
@@ -139,7 +139,7 @@ class ExerciseLibraryUiTest {
         val curl = ExerciseDefinition(
             "curl",
             "Curl",
-            MuscleGroup.Arms,
+            BodyPart.UpperArms,
             Equipment.Dumbbell,
             Mechanic.Isolation,
         )
@@ -157,8 +157,8 @@ class ExerciseLibraryUiTest {
 
         assert(chips.none { it.id == ExerciseLibraryFilterId.ClearAll })
         assert(
-            chips.map { it.id } == MuscleGroup.entries.map {
-                ExerciseLibraryFilterId.MuscleGroupFilter(it)
+            chips.map { it.id } == BodyPart.entries.map {
+                ExerciseLibraryFilterId.BodyPartFilter(it)
             } + Equipment.entries.map { ExerciseLibraryFilterId.EquipmentFilter(it) },
         )
         assert(chips.none { it.selected })
@@ -170,13 +170,13 @@ class ExerciseLibraryUiTest {
 
     @Test
     fun `clear all chip appears when any filter is selected`() {
-        val chips = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Arms)).toChips()
+        val chips = ExerciseLibraryFilters(bodyParts = setOf(BodyPart.UpperArms)).toChips()
 
         assert(chips.first().id == ExerciseLibraryFilterId.ClearAll)
         assert(chips.first().label == "Clear all")
         assert(!chips.first().selected)
         val arms = chips.single {
-            it.id == ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms)
+            it.id == ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms)
         }
         assert(arms.selected)
         assert(chips.filter { it.selected }.single().id == arms.id)
@@ -184,8 +184,8 @@ class ExerciseLibraryUiTest {
 
     @Test
     fun `toggling a selected chip deselects it`() {
-        val filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Arms))
-            .toggle(ExerciseLibraryFilterId.MuscleGroupFilter(MuscleGroup.Arms))
+        val filters = ExerciseLibraryFilters(bodyParts = setOf(BodyPart.UpperArms))
+            .toggle(ExerciseLibraryFilterId.BodyPartFilter(BodyPart.UpperArms))
 
         assert(filters == ExerciseLibraryFilters())
     }
@@ -200,7 +200,7 @@ class ExerciseLibraryUiTest {
     @Test
     fun `muscle group chips are OR`() {
         val matches = listOf(curl, bench, squat).matching(
-            ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Arms, MuscleGroup.Legs)),
+            ExerciseLibraryFilters(bodyParts = setOf(BodyPart.UpperArms, BodyPart.UpperLegs)),
         )
 
         assert(matches == listOf(curl, squat))
@@ -219,7 +219,7 @@ class ExerciseLibraryUiTest {
     fun `muscle group and equipment chips are AND`() {
         val matches = listOf(curl, machineCurl, bench, squat).matching(
             ExerciseLibraryFilters(
-                muscleGroups = setOf(MuscleGroup.Arms),
+                bodyParts = setOf(BodyPart.UpperArms),
                 equipment = setOf(Equipment.Dumbbell),
             ),
         )
@@ -230,7 +230,7 @@ class ExerciseLibraryUiTest {
     @Test
     fun `empty matching filters show the empty state`() {
         val state = listOf(curl, bench).toLibraryUiState(
-            filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Core)),
+            filters = ExerciseLibraryFilters(bodyParts = setOf(BodyPart.Core)),
         )
 
         assert(state.groups.isEmpty())
@@ -242,7 +242,7 @@ class ExerciseLibraryUiTest {
     fun `selected exercise remains selected in state when filtered out`() {
         val state = listOf(curl, bench).toLibraryUiState(
             selectedExerciseId = "curl",
-            filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Chest)),
+            filters = ExerciseLibraryFilters(bodyParts = setOf(BodyPart.Chest)),
         )
 
         assert(state.selectedExerciseId == "curl")
@@ -265,7 +265,7 @@ class ExerciseLibraryUiTest {
         assert(!state.existingExercises.single().selectable)
         assert(!state.existingExercises.single().selected)
         assert(
-            state.groups.map { it.bodyPart } == listOf(MuscleGroup.Arms, MuscleGroup.Legs),
+            state.groups.map { it.bodyPart } == listOf(BodyPart.UpperLegs, BodyPart.UpperArms),
         )
         assert(state.groups.flatMap { it.exercises }.none { it.id == "bench" })
     }
@@ -304,7 +304,7 @@ class ExerciseLibraryUiTest {
     @Test
     fun `empty matching filters still show existing exercises`() {
         val state = listOf(curl, bench).toLibraryUiState(
-            filters = ExerciseLibraryFilters(muscleGroups = setOf(MuscleGroup.Core)),
+            filters = ExerciseLibraryFilters(bodyParts = setOf(BodyPart.Core)),
             existingExerciseIds = listOf("bench"),
         )
 
@@ -317,7 +317,7 @@ class ExerciseLibraryUiTest {
     @Test
     fun `clear all resets both categories`() {
         val filters = ExerciseLibraryFilters(
-            muscleGroups = setOf(MuscleGroup.Arms),
+            bodyParts = setOf(BodyPart.UpperArms),
             equipment = setOf(Equipment.Dumbbell),
         ).toggle(ExerciseLibraryFilterId.ClearAll)
 
@@ -327,28 +327,28 @@ class ExerciseLibraryUiTest {
     private val curl = ExerciseDefinition(
         "curl",
         "Curl",
-        MuscleGroup.Arms,
+        BodyPart.UpperArms,
         Equipment.Dumbbell,
         Mechanic.Isolation,
     )
     private val machineCurl = ExerciseDefinition(
         "curl-machine",
         "Curl Machine",
-        MuscleGroup.Arms,
+        BodyPart.UpperArms,
         Equipment.Machine,
         Mechanic.Isolation,
     )
     private val bench = ExerciseDefinition(
         "bench",
         "Bench",
-        MuscleGroup.Chest,
+        BodyPart.Chest,
         Equipment.Barbell,
         Mechanic.Compound,
     )
     private val squat = ExerciseDefinition(
         "squat",
         "Squat",
-        MuscleGroup.Legs,
+        BodyPart.UpperLegs,
         Equipment.Barbell,
         Mechanic.Compound,
     )
