@@ -206,6 +206,7 @@ class StrongCsvRowTest {
         val crunch = result.exercises.single()
         assert(crunch.name == "Crunch (Machine)")
         assert(crunch.mechanic == Mechanic.Isolation)
+        assert(crunch.bodyPart == BodyPart.Core)
         val imported = result.sessionHistory.single().exercises.last()
         assert(imported.id == "crunch-machine")
         assert(imported.restAfterWorkSet == 60.seconds)
@@ -254,6 +255,7 @@ class StrongCsvRowTest {
         assert(byId.getValue("cable-pushdown-rope").mechanic == Mechanic.Isolation)
         assert(byId.getValue("cable-pushdown-rope").equipment == Equipment.Machine)
         assert(byId.getValue("some-new-lift").mechanic == null)
+        assert(byId.getValue("some-new-lift").bodyPart == null)
         assert(
             result.sessionHistory.single().exercises.map { it.id } == listOf(
                 "chest-fly-band",
@@ -484,6 +486,7 @@ class StrongCsvRowTest {
         assert(lunge.name == "Reverse Lunges")
         assert(lunge.id == "reverse-lunges")
         assert(lunge.mechanic == Mechanic.Compound)
+        assert(lunge.bodyPart == BodyPart.UpperLegs)
         assert(lunge.equipment == Equipment.Bodyweight)
     }
 

@@ -1,5 +1,8 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
+import dev.sanastasov.bybon.workout.domain.Equipment
+import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Test
@@ -45,6 +48,20 @@ class PlannedExerciseUiTest {
     fun `assisted equipment uses a short label`() {
         val pullUp = fullBodyA.sets.first { it.exercise.id == "assisted-pull-ups" }
         assert(pullUp.subtitle() == "Back · Assisted")
+    }
+
+    @Test
+    fun `subtitle omits a missing body part`() {
+        val planned = PlanedExercise(
+            exercise = ExerciseDefinition(
+                id = "some-new-lift",
+                name = "Some New Lift",
+                equipment = Equipment.Bodyweight,
+            ),
+            sets = 3,
+            repRange = 8..10,
+        )
+        assert(planned.subtitle() == "Bodyweight")
     }
 
     @Test
