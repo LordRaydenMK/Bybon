@@ -9,6 +9,7 @@ internal val bybonCatalogExercises = listOf(
         mechanic = Mechanic.Compound,
         primaryMuscles = listOf("latissimus_dorsi", "rhomboids"),
         secondaryMuscles = listOf("biceps_brachii", "posterior_deltoid"),
+        equipmentSlug = "iso_lateral_row_machine",
     ),
     ExerciseDefinition(
         id = "squat-machine",
@@ -18,6 +19,7 @@ internal val bybonCatalogExercises = listOf(
         mechanic = Mechanic.Compound,
         primaryMuscles = listOf("gluteus_maximus", "quadriceps"),
         secondaryMuscles = listOf("erector_spinae", "hamstrings"),
+        equipmentSlug = "squat_machine",
     ),
     ExerciseDefinition(
         id = "triceps-press-machine",
@@ -26,6 +28,7 @@ internal val bybonCatalogExercises = listOf(
         equipment = Equipment.Machine,
         mechanic = Mechanic.Isolation,
         primaryMuscles = listOf("triceps_brachii"),
+        equipmentSlug = "tricep_press_machine",
     ),
     ExerciseDefinition(
         id = "lateral-raise-machine",
@@ -35,6 +38,7 @@ internal val bybonCatalogExercises = listOf(
         mechanic = Mechanic.Isolation,
         primaryMuscles = listOf("lateral_deltoid"),
         secondaryMuscles = listOf("anterior_deltoid", "trapezius"),
+        equipmentSlug = "lateral_raise_machine",
     ),
 )
 

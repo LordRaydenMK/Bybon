@@ -27,137 +27,282 @@ private val planNameFillers = setOf("workout", "session", "training", "routine",
 
 /**
  * Strong display name → catalog id, when the name is that exercise.
- * Mechanic and body part are the RepDB values, used when this catalog does not contain the id.
+ * Mechanic, body part, and equipment are the RepDB values, used when this catalog does not contain the id.
  */
 private data class StrongExercise(
     val catalogId: String? = null,
     val mechanic: Mechanic,
     val bodyPart: BodyPart,
     val equipment: Equipment? = null,
+    val equipmentSlug: String? = null,
+)
+
+private data class NamedEquipment(
+    val equipment: Equipment? = null,
+    val slug: String? = null,
+)
+
+private data class EquipmentToken(
+    val needles: List<String>,
+    val equipment: Equipment?,
+    val slug: String?,
+    val matchAll: Boolean = false,
+)
+
+private val equipmentTokens = listOf(
+    EquipmentToken(listOf("trap bar", "hex bar"), Equipment.Barbell, "trap_bar"),
+    EquipmentToken(listOf("ez-bar", "ez bar"), Equipment.Machine, "ez_bar"),
+    EquipmentToken(listOf("smith"), Equipment.Machine, "smith_machine"),
+    EquipmentToken(listOf("kettlebell"), equipment = null, slug = "kettlebell"),
+    EquipmentToken(listOf("dumbbell"), Equipment.Dumbbell, "dumbbell"),
+    EquipmentToken(listOf("barbell"), Equipment.Barbell, "barbell"),
+    EquipmentToken(listOf("cable"), Equipment.Machine, "cable"),
+    EquipmentToken(
+        listOf("assisted", "pull"),
+        Equipment.AssistedBodyWeight,
+        "assisted_pullup_machine",
+        matchAll = true,
+    ),
+    EquipmentToken(
+        listOf("assisted", "chin"),
+        Equipment.AssistedBodyWeight,
+        "assisted_pullup_machine",
+        matchAll = true,
+    ),
+    EquipmentToken(
+        listOf("assisted", "dip"),
+        Equipment.AssistedBodyWeight,
+        "dip_machine",
+        matchAll = true,
+    ),
+    EquipmentToken(listOf("assisted"), Equipment.AssistedBodyWeight, slug = null),
+    EquipmentToken(listOf("machine"), Equipment.Machine, slug = null),
 )
 
 private val strongExercises = mapOf(
-    "bench press (barbell)" to StrongExercise("bench-press", Mechanic.Compound, BodyPart.Chest),
-    "squat (barbell)" to StrongExercise("squat", Mechanic.Compound, BodyPart.UpperLegs),
-    "squat (machine)" to StrongExercise("squat-machine", Mechanic.Compound, BodyPart.UpperLegs),
-    "pull up (assisted)" to StrongExercise("assisted-pull-ups", Mechanic.Compound, BodyPart.Back),
+    "bench press (barbell)" to StrongExercise(
+        "bench-press",
+        Mechanic.Compound,
+        BodyPart.Chest,
+        Equipment.Barbell,
+        "barbell",
+    ),
+    "squat (barbell)" to StrongExercise(
+        "squat",
+        Mechanic.Compound,
+        BodyPart.UpperLegs,
+        Equipment.Barbell,
+        "barbell",
+    ),
+    "squat (machine)" to StrongExercise(
+        "squat-machine",
+        Mechanic.Compound,
+        BodyPart.UpperLegs,
+        Equipment.Machine,
+        "squat_machine",
+    ),
+    "pull up (assisted)" to StrongExercise(
+        "assisted-pull-ups",
+        Mechanic.Compound,
+        BodyPart.Back,
+        Equipment.AssistedBodyWeight,
+        "assisted_pullup_machine",
+    ),
     "incline bench press (dumbbell)" to StrongExercise(
         "incline-db-press",
         Mechanic.Compound,
         BodyPart.Chest,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
     "incline row (dumbbell)" to StrongExercise(
         "chest-supported-db-row",
         Mechanic.Compound,
         BodyPart.Back,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
     "incline curl (dumbbell)" to StrongExercise(
         "incline-db-curl",
         Mechanic.Isolation,
         BodyPart.UpperArms,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
     "lateral raise (dumbbell)" to StrongExercise(
         "lateral-raise",
         Mechanic.Isolation,
         BodyPart.Shoulders,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
     "lateral raise (machine)" to StrongExercise(
         "lateral-raise-machine",
         Mechanic.Isolation,
         BodyPart.Shoulders,
+        Equipment.Machine,
+        "lateral_raise_machine",
     ),
     "skullcrusher (dumbbell)" to StrongExercise(
         "db-skull-crusher",
         Mechanic.Isolation,
         BodyPart.UpperArms,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
     "skullcrusher (barbell)" to StrongExercise(
         "skull-crusher",
         Mechanic.Isolation,
         BodyPart.UpperArms,
+        Equipment.Barbell,
+        "barbell",
     ),
     "upright row (dumbbell)" to StrongExercise(
         "dumbbell-upright-row",
         Mechanic.Compound,
         BodyPart.Shoulders,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
     "leg extension (machine)" to StrongExercise(
         "leg-extension",
         Mechanic.Isolation,
         BodyPart.UpperLegs,
+        Equipment.Machine,
+        "leg_extension",
     ),
     "romanian deadlift (barbell)" to StrongExercise(
         "romanian-deadlift",
         Mechanic.Compound,
         BodyPart.UpperLegs,
+        Equipment.Barbell,
+        "barbell",
     ),
     "bulgarian split squat" to StrongExercise(
         "bulgarian-split-squat",
         Mechanic.Compound,
         BodyPart.UpperLegs,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
     "bicep curl (machine)" to StrongExercise(
         "machine-bicep-curl",
         Mechanic.Isolation,
         BodyPart.UpperArms,
+        Equipment.Machine,
+        "bicep_curl_machine",
     ),
     "seated leg curl (machine)" to StrongExercise(
         "seated-leg-curl",
         Mechanic.Isolation,
         BodyPart.UpperLegs,
+        Equipment.Machine,
+        "leg_curl",
     ),
     "lying leg curl (machine)" to StrongExercise(
         "leg-curl",
         Mechanic.Isolation,
         BodyPart.UpperLegs,
+        Equipment.Machine,
+        "leg_curl",
     ),
     "triceps press" to StrongExercise(
         "triceps-press-machine",
         Mechanic.Isolation,
         BodyPart.UpperArms,
+        Equipment.Machine,
+        "tricep_press_machine",
     ),
-    "leg press" to StrongExercise("leg-press", Mechanic.Compound, BodyPart.UpperLegs),
+    "leg press" to StrongExercise(
+        "leg-press",
+        Mechanic.Compound,
+        BodyPart.UpperLegs,
+        Equipment.Machine,
+        "leg_press",
+    ),
     "dumbbell lateral raises" to StrongExercise(
         "lateral-raise",
         Mechanic.Isolation,
         BodyPart.Shoulders,
+        Equipment.Dumbbell,
+        "dumbbell",
     ),
-    "chest fly" to StrongExercise("pec-deck", Mechanic.Isolation, BodyPart.Chest),
-    "chest fly (cable)" to StrongExercise("cable-fly", Mechanic.Isolation, BodyPart.Chest),
+    "chest fly" to StrongExercise(
+        "pec-deck",
+        Mechanic.Isolation,
+        BodyPart.Chest,
+        Equipment.Machine,
+        "pec_deck",
+    ),
+    "chest fly (cable)" to StrongExercise(
+        "cable-fly",
+        Mechanic.Isolation,
+        BodyPart.Chest,
+        Equipment.Machine,
+        "cable",
+    ),
     "chest fly (band)" to StrongExercise(
         mechanic = Mechanic.Isolation,
         bodyPart = BodyPart.Chest,
-        equipment = Equipment.Bodyweight,
     ),
-    "lat pulldown (cable)" to StrongExercise("lat-pulldown", Mechanic.Compound, BodyPart.Back),
-    "reverse lunges" to StrongExercise("reverse-lunge", Mechanic.Compound, BodyPart.UpperLegs),
+    "lat pulldown (cable)" to StrongExercise(
+        "lat-pulldown",
+        Mechanic.Compound,
+        BodyPart.Back,
+        Equipment.Machine,
+        "cable",
+    ),
+    "reverse lunges" to StrongExercise(
+        "reverse-lunge",
+        Mechanic.Compound,
+        BodyPart.UpperLegs,
+        Equipment.Dumbbell,
+        "dumbbell",
+    ),
     "crunch (machine)" to StrongExercise(
         "machine-seated-crunch",
         Mechanic.Isolation,
         BodyPart.Core,
+        Equipment.Machine,
+        "ab_crunch_machine",
     ),
     "standing calf raise (barbell)" to StrongExercise(
         "barbell-calf-raise",
         Mechanic.Isolation,
         BodyPart.LowerLegs,
+        Equipment.Barbell,
+        "barbell",
     ),
-    "hip thrust (barbell)" to StrongExercise("hip-thrust", Mechanic.Compound, BodyPart.UpperLegs),
+    "hip thrust (barbell)" to StrongExercise(
+        "hip-thrust",
+        Mechanic.Compound,
+        BodyPart.UpperLegs,
+        Equipment.Barbell,
+        "barbell",
+    ),
     "cable pushdown (rope)" to StrongExercise(
         mechanic = Mechanic.Isolation,
         bodyPart = BodyPart.UpperArms,
         equipment = Equipment.Machine,
+        equipmentSlug = "cable",
     ),
     "triceps extension (cable)" to StrongExercise(
         mechanic = Mechanic.Isolation,
         bodyPart = BodyPart.UpperArms,
         equipment = Equipment.Machine,
+        equipmentSlug = "cable",
     ),
     "iso-lateral chest press" to StrongExercise(
         mechanic = Mechanic.Compound,
         bodyPart = BodyPart.Chest,
         equipment = Equipment.Machine,
     ),
-    "back extension" to StrongExercise("back-extension", Mechanic.Isolation, BodyPart.Back),
+    "back extension" to StrongExercise(
+        "back-extension",
+        Mechanic.Isolation,
+        BodyPart.Back,
+        Equipment.Bodyweight,
+    ),
 )
 
 data class StrongImportResult(
@@ -413,24 +558,27 @@ private fun resolveExercise(
     exercisesByNormalizedName[normalized]?.let { return it }
 
     val trimmedName = strongName.trim()
+    val inferred = inferEquipment(trimmedName)
     return ExerciseDefinition(
         id = trimmedName.slugify(),
         name = trimmedName,
         bodyPart = mapped?.bodyPart,
-        equipment = mapped?.equipment ?: inferEquipment(trimmedName),
+        equipment = mapped?.equipment ?: inferred.equipment,
         mechanic = mapped?.mechanic,
+        equipmentSlug = mapped?.equipmentSlug ?: inferred.slug,
     )
 }
 
-private fun inferEquipment(name: String): Equipment {
+private fun inferEquipment(name: String): NamedEquipment {
     val lower = name.lowercase()
-    return when {
-        "barbell" in lower -> Equipment.Barbell
-        "dumbbell" in lower -> Equipment.Dumbbell
-        "assisted" in lower -> Equipment.AssistedBodyWeight
-        "machine" in lower || "cable" in lower -> Equipment.Machine
-        else -> Equipment.Bodyweight
-    }
+    val token = equipmentTokens.firstOrNull { candidate ->
+        if (candidate.matchAll) {
+            candidate.needles.all { it in lower }
+        } else {
+            candidate.needles.any { it in lower }
+        }
+    } ?: return NamedEquipment()
+    return NamedEquipment(token.equipment, token.slug)
 }
 
 private fun String.normalizedExerciseName(): String = lowercase()

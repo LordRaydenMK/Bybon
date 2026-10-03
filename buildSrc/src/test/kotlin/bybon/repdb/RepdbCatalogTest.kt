@@ -75,12 +75,19 @@ class RepdbCatalogTest {
         ).associateBy { it.id }
 
         assertEquals("Barbell", exercises.getValue("squat").equipment)
+        assertEquals("barbell", exercises.getValue("squat").equipmentSlug)
         assertEquals("Barbell", exercises.getValue("trap").equipment)
+        assertEquals("trap_bar", exercises.getValue("trap").equipmentSlug)
         assertEquals("Dumbbell", exercises.getValue("curl").equipment)
+        assertEquals("dumbbell", exercises.getValue("curl").equipmentSlug)
         assertEquals("Bodyweight", exercises.getValue("pull-up").equipment)
+        assertEquals(null, exercises.getValue("pull-up").equipmentSlug)
         assertEquals("AssistedBodyWeight", exercises.getValue("assisted-pull-ups").equipment)
+        assertEquals("assisted_pullup_machine", exercises.getValue("assisted-pull-ups").equipmentSlug)
         assertEquals("AssistedBodyWeight", exercises.getValue("assisted-dips").equipment)
+        assertEquals("dip_machine", exercises.getValue("assisted-dips").equipmentSlug)
         assertEquals("Machine", exercises.getValue("lat-pulldown").equipment)
+        assertEquals("cable", exercises.getValue("lat-pulldown").equipmentSlug)
         assertEquals("UpperLegs", exercises.getValue("squat").bodyPart)
         assertEquals("UpperArms", exercises.getValue("curl").bodyPart)
         assertEquals("Compound", exercises.getValue("squat").mechanic)
@@ -99,6 +106,7 @@ class RepdbCatalogTest {
                     "Compound",
                     listOf("pectoralis_major"),
                     listOf("anterior_deltoid", "triceps_brachii"),
+                    "barbell",
                 ),
             ),
         )
@@ -115,6 +123,7 @@ class RepdbCatalogTest {
                         Mechanic.Compound,
                         listOf("pectoralis_major", ),
                         listOf("anterior_deltoid", "triceps_brachii", ),
+                        "barbell",
                     ),
                 )
                 """.trimIndent(),
@@ -159,6 +168,22 @@ class RepdbCatalogTest {
 
         assertEquals("RepDB exercise bench-press has unknown body part: arms", bodyPart.message)
         assertEquals("RepDB exercise bench-press is missing primary_muscles", muscles.message)
+    }
+
+    @Test
+    fun `rejects equipment that is not a slug`() {
+        val blank = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(catalog(exercise(id = "bench-press", name = "Barbell Bench Press", equipment = " ")))
+        }
+        val number = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press"))
+                    .replace(""""equipment": "barbell"""", """"equipment": 1"""),
+            )
+        }
+
+        assertEquals("RepDB exercise bench-press has invalid equipment", blank.message)
+        assertEquals("RepDB exercise bench-press has invalid equipment", number.message)
     }
 
     @Test
