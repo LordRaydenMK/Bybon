@@ -119,8 +119,9 @@ Resolve each Strong `Exercise Name`:
 2. Else case-insensitive name match against the catalog (`"Back Extension"` matches `Back Extension`).
 3. Else create a new `ExerciseDefinition` and import it. Mechanic and body part come from that same
    map. A name that is not in the map is still imported, with `mechanic = null` and `bodyPart = null`,
-   because Strong does not record either. Equipment on a created row comes from the map when it has
-   one, otherwise from keywords in the name.
+   because Strong does not record either. The load class on a created row comes from the map when it
+   has one, otherwise from keywords in the name. The RepDB equipment slug stays null. Strong does
+   not record one.
 
 The sample’s `Crunch (Machine)` aliases to shipped `machine-seated-crunch`, so that file inserts no
 new exercises. `Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are not
@@ -211,7 +212,7 @@ The map is `strongExercises` inside `StrongCsvMapper.kt`. RepDB word order diffe
 Strong (`Bench Press (Barbell)` vs `Barbell Bench Press`), so the sample names and the names called
 out in the RepDB proposal are in `strongExercises`. A Strong name that is not in that map and does
 not match a catalog name is still imported, with `mechanic = null` and `bodyPart = null`, because
-Strong does not record either.
+Strong does not record either. Its RepDB equipment slug stays null.
 
 Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pulldown, chest
 fly variants, dips, calf raise, face pull, lying leg curl, etc. Several of those **do** appear in

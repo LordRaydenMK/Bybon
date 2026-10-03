@@ -13,6 +13,8 @@ data class ExerciseDefinition(
     val mechanic: Mechanic? = null,
     val primaryMuscles: List<String> = emptyList(),
     val secondaryMuscles: List<String> = emptyList(),
+    // RepDB equipment slug. Null when that row lists no equipment, or the exercise is not a RepDB row.
+    val equipmentSlug: String? = null,
 )
 
 val ExerciseDefinition.defaultRest: Duration

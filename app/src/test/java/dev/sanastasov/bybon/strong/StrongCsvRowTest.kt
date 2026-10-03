@@ -252,10 +252,12 @@ class StrongCsvRowTest {
         val byId = result.exercises.associateBy { it.id }
         assert(byId.getValue("chest-fly-band").mechanic == Mechanic.Isolation)
         assert(byId.getValue("chest-fly-band").bodyPart == BodyPart.Chest)
+        assert(byId.getValue("chest-fly-band").equipmentSlug == null)
         assert(byId.getValue("cable-pushdown-rope").mechanic == Mechanic.Isolation)
         assert(byId.getValue("cable-pushdown-rope").equipment == Equipment.Machine)
         assert(byId.getValue("some-new-lift").mechanic == null)
         assert(byId.getValue("some-new-lift").bodyPart == null)
+        assert(byId.getValue("some-new-lift").equipmentSlug == null)
         assert(
             result.sessionHistory.single().exercises.map { it.id } == listOf(
                 "chest-fly-band",
