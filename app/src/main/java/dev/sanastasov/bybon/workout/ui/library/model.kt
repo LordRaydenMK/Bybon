@@ -34,11 +34,11 @@ data class ExerciseLibraryGroup(
 data class ExerciseLibraryItemUi(
     val id: String,
     val name: String,
-    val equipment: Equipment,
+    val equipment: Equipment?,
     val selected: Boolean = false,
     val selectable: Boolean = true,
 ) {
-    val equipmentLabel: String get() = equipment.label
+    val equipmentLabel: String? get() = equipment?.label
 }
 
 data class ExerciseLibraryFilterChipUi(

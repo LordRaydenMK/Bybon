@@ -28,7 +28,7 @@ class ExerciseLibraryViewModelTest {
         assert(state.groups.first().exercises.first().name == firstExercise.name)
         assert(state.groups.first().exercises.first().equipment == firstExercise.equipment)
         assert(
-            state.groups.first().exercises.first().equipmentLabel == firstExercise.equipment.label,
+            state.groups.first().exercises.first().equipmentLabel == firstExercise.equipment?.label,
         )
         assert(!state.addEnabled)
         assert(state.groups.flatMap { it.exercises }.none { it.selected })

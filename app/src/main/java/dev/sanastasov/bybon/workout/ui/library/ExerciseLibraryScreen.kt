@@ -236,7 +236,7 @@ private fun ExerciseLibraryCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        EquipmentIcon(exercise.equipment)
+        exercise.equipment?.let { EquipmentIcon(it) }
         Column(
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -245,11 +245,13 @@ private fun ExerciseLibraryCard(
                 exercise.name,
                 fontWeight = FontWeight.Bold,
             )
-            Text(
-                exercise.equipmentLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            exercise.equipmentLabel?.let { label ->
+                Text(
+                    label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         if (exercise.selectable) {
             Checkbox(

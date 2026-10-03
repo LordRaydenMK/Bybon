@@ -18,7 +18,7 @@ fun WorkoutSession.resetExercise(
 
 private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
     val originalFirst = sets.firstOrNull() ?: return this
-    val increment = exerciseDefinition.equipment.weightIncrement
+    val increment = exerciseDefinition.equipment?.weightIncrement
     val adjustedFirst = originalFirst.adjust(repRange, increment, increase)
     return copy(
         sets = listOf(adjustedFirst) + sets.drop(1).map { set ->
