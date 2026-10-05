@@ -17,7 +17,6 @@ class RepdbCatalogTest {
             ),
         )
         assert(catalogExercises.map { it.id }.toSet().size == catalogExercises.size)
-
         val bench = catalogExercise("bench-press")
         assert(bench.name == "Barbell Bench Press")
         assert(bench.bodyPart == BodyPart.Chest)
@@ -66,5 +65,43 @@ class RepdbCatalogTest {
         assert(catalogExercise("seated-leg-curl").defaultRest == 1.minutes)
         assert(catalogExercise("iso-lat-row").defaultRest == 2.minutes)
         assert(catalogExercise("lateral-raise-machine").defaultRest == 1.minutes)
+    }
+
+    @Test
+    fun `stores force difficulty and tags`() {
+        val bench = catalogExercise("bench-press")
+        assert(bench.forceType == ForceType.Push)
+        assert(bench.difficulty == Difficulty.Intermediate)
+        assert(
+            bench.tags == listOf(
+                "powerlifting",
+                "push_day",
+                "big_three",
+                "knee_safe",
+                "no_axial_load",
+                "lower_back_safe",
+                "shoulder_safe",
+                "requires_bench",
+            ),
+        )
+        assert(catalogExercise("lat-pulldown").forceType == ForceType.Pull)
+        assert(catalogExercise("lat-pulldown").difficulty == Difficulty.Beginner)
+        assert(catalogExercise("high-plank").forceType == ForceType.Static)
+        assert(catalogExercise("thruster").forceType == ForceType.Dynamic)
+        assert(catalogExercise("smith-machine-squat").tags.isEmpty())
+
+        val isoLatRow = catalogExercise("iso-lat-row")
+        assert(isoLatRow.forceType == ForceType.Pull)
+        assert(isoLatRow.difficulty == Difficulty.Intermediate)
+        val squatMachine = catalogExercise("squat-machine")
+        assert(squatMachine.forceType == ForceType.Push)
+        assert(squatMachine.difficulty == Difficulty.Intermediate)
+        assert(squatMachine.tags == listOf("leg_day"))
+        val tricepsPress = catalogExercise("triceps-press-machine")
+        assert(tricepsPress.forceType == ForceType.Push)
+        assert(tricepsPress.difficulty == Difficulty.Beginner)
+        val lateralRaise = catalogExercise("lateral-raise-machine")
+        assert(lateralRaise.forceType == ForceType.Push)
+        assert(lateralRaise.difficulty == Difficulty.Beginner)
     }
 }
