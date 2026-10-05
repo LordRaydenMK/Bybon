@@ -32,7 +32,7 @@ fun WorkoutPlan.toWorkoutSession(
                         if (previousSet != null) {
                             previousSet.weight
                         } else {
-                            planedExercise.exercise.equipment.defaultWorkWeight
+                            planedExercise.exercise.equipment?.defaultWorkWeight
                         },
                         previousSet?.reps ?: planedExercise.repRange.first,
                         SetState.NotStated,
@@ -65,7 +65,7 @@ private fun warmupSetsFromPlan(
             weight = if (previousWarmup != null) {
                 previousWarmup.weight
             } else {
-                exercise.equipment.defaultWarmupWeight
+                exercise.equipment?.defaultWarmupWeight
             },
             reps = previousWarmup?.reps
                 ?: defaultWarmupReps.getOrElse(index) { defaultWarmupReps.last() },

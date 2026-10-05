@@ -207,6 +207,8 @@ class StrongCsvRowTest {
         assert(crunch.name == "Crunch (Machine)")
         assert(crunch.mechanic == Mechanic.Isolation)
         assert(crunch.bodyPart == BodyPart.Core)
+        assert(crunch.equipment == Equipment.Machine)
+        assert(crunch.equipmentSlug == "ab_crunch_machine")
         val imported = result.sessionHistory.single().exercises.last()
         assert(imported.id == "crunch-machine")
         assert(imported.restAfterWorkSet == 60.seconds)
@@ -244,7 +246,12 @@ class StrongCsvRowTest {
         val rows = workout(
             number = 1,
             name = "Upper body A",
-            exercises = listOf("Chest Fly (Band)", "Cable Pushdown (rope)", "Some New Lift"),
+            exercises = listOf(
+                "Chest Fly (Band)",
+                "Cable Pushdown (rope)",
+                "Some New Lift",
+                "Incline Press (Dumbbell)",
+            ),
         )
 
         val result = rows.toStrongImport(plans = emptyList(), exerciseCatalog = catalogExercises)
@@ -252,15 +259,23 @@ class StrongCsvRowTest {
         val byId = result.exercises.associateBy { it.id }
         assert(byId.getValue("chest-fly-band").mechanic == Mechanic.Isolation)
         assert(byId.getValue("chest-fly-band").bodyPart == BodyPart.Chest)
+        assert(byId.getValue("chest-fly-band").equipment == null)
+        assert(byId.getValue("chest-fly-band").equipmentSlug == null)
         assert(byId.getValue("cable-pushdown-rope").mechanic == Mechanic.Isolation)
         assert(byId.getValue("cable-pushdown-rope").equipment == Equipment.Machine)
+        assert(byId.getValue("cable-pushdown-rope").equipmentSlug == "cable")
         assert(byId.getValue("some-new-lift").mechanic == null)
         assert(byId.getValue("some-new-lift").bodyPart == null)
+        assert(byId.getValue("some-new-lift").equipment == null)
+        assert(byId.getValue("some-new-lift").equipmentSlug == null)
+        assert(byId.getValue("incline-press-dumbbell").equipment == Equipment.Dumbbell)
+        assert(byId.getValue("incline-press-dumbbell").equipmentSlug == "dumbbell")
         assert(
             result.sessionHistory.single().exercises.map { it.id } == listOf(
                 "chest-fly-band",
                 "cable-pushdown-rope",
                 "some-new-lift",
+                "incline-press-dumbbell",
             ),
         )
     }
@@ -487,7 +502,8 @@ class StrongCsvRowTest {
         assert(lunge.id == "reverse-lunges")
         assert(lunge.mechanic == Mechanic.Compound)
         assert(lunge.bodyPart == BodyPart.UpperLegs)
-        assert(lunge.equipment == Equipment.Bodyweight)
+        assert(lunge.equipment == Equipment.Dumbbell)
+        assert(lunge.equipmentSlug == "dumbbell")
     }
 
     @Test

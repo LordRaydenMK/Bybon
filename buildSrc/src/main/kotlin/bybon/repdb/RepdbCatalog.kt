@@ -41,6 +41,7 @@ data class RepdbExercise(
     val mechanic: String,
     val primaryMuscles: List<String> = emptyList(),
     val secondaryMuscles: List<String> = emptyList(),
+    val equipmentSlug: String? = null,
 )
 
 class RepdbCatalogException(message: String) : RuntimeException(message)
@@ -158,14 +159,16 @@ private fun toExercise(row: Any?): RepdbExercise? {
     if (!includeExercise(fields)) return null
     val bodyPart = fields["body_part"] as? String
         ?: throw RepdbCatalogException("RepDB exercise $id is missing body_part")
+    val slug = equipmentSlug(id, fields["equipment"])
     return RepdbExercise(
         id = id,
         name = name,
         bodyPart = bodyPart(id, bodyPart),
-        equipment = loadClass(fields["equipment"] as? String),
+        equipment = loadClass(slug),
         mechanic = mechanic(id, fields["mechanic"]),
         primaryMuscles = muscleSlugs(id, "primary_muscles", fields["primary_muscles"], required = true),
         secondaryMuscles = muscleSlugs(id, "secondary_muscles", fields["secondary_muscles"], required = false),
+        equipmentSlug = slug,
     )
 }
 
@@ -185,6 +188,7 @@ fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
         initializer.add("\n        %T.%L,", mechanicType, exercise.mechanic)
         initializer.add("\n        %L,", muscleList(exercise.primaryMuscles))
         initializer.add("\n        %L,", muscleList(exercise.secondaryMuscles))
+        initializer.add("\n        %L,", equipmentSlugLiteral(exercise.equipmentSlug))
         initializer.add("\n    ),")
     }
     initializer.add("\n)")
@@ -249,6 +253,16 @@ internal fun mechanic(id: String, value: Any?): String = when (value) {
     null -> throw RepdbCatalogException("RepDB exercise $id is missing mechanic")
     else -> throw RepdbCatalogException("RepDB exercise $id has unknown mechanic: $value")
 }
+
+internal fun equipmentSlug(id: String, value: Any?): String? = when (value) {
+    null -> null
+    is String -> value.takeIf { it.isNotBlank() }
+        ?: throw RepdbCatalogException("RepDB exercise $id has invalid equipment")
+    else -> throw RepdbCatalogException("RepDB exercise $id has invalid equipment")
+}
+
+private fun equipmentSlugLiteral(slug: String?): CodeBlock =
+    if (slug == null) CodeBlock.of("null") else CodeBlock.of("%S", slug)
 
 internal fun loadClass(equipment: String?): String = when (equipment) {
     null -> "Bodyweight"

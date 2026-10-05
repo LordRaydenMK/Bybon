@@ -112,7 +112,7 @@ data class PlannedSetUi(
 
 fun PlanedExercise.subtitle(): String = listOfNotNull(
     exercise.bodyPart?.label,
-    exercise.equipment.label,
+    exercise.equipment?.label,
 ).joinToString(" · ")
 
 fun PlanedExercise.toPlannedSets(): List<PlannedSetUi> {
