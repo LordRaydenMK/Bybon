@@ -217,10 +217,15 @@ internal fun WorkoutPlanInfo(
         }
 
         plan.sets.forEach { planedSet ->
-            val summary =
-                "${planedSet.sets} x ${planedSet.exercise.name} - " +
-                    "${planedSet.repRange.first} to ${planedSet.repRange.last} reps"
-            Text(summary)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "${planedSet.sets} x ${planedSet.exercise.name}",
+                    Modifier.weight(1f),
+                )
+                Text(
+                    "${planedSet.repRange.first} to ${planedSet.repRange.last} reps",
+                )
+            }
         }
     }
 }
