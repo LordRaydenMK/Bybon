@@ -16,6 +16,10 @@ data class ExerciseDefinition(
     val secondaryMuscles: List<String> = emptyList(),
     // RepDB-style equipment slug. Null when the row lists no equipment, or a Strong import cannot name one.
     val equipmentSlug: String? = null,
+    // Null only for a Strong import. Strong does not record force or difficulty.
+    val forceType: ForceType? = null,
+    val difficulty: Difficulty? = null,
+    val tags: List<String> = emptyList(),
 )
 
 val ExerciseDefinition.defaultRest: Duration

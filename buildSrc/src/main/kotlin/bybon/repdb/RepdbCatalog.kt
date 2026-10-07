@@ -42,6 +42,9 @@ data class RepdbExercise(
     val primaryMuscles: List<String> = emptyList(),
     val secondaryMuscles: List<String> = emptyList(),
     val equipmentSlug: String? = null,
+    val forceType: String,
+    val difficulty: String,
+    val tags: List<String> = emptyList(),
 )
 
 class RepdbCatalogException(message: String) : RuntimeException(message)
@@ -169,6 +172,9 @@ private fun toExercise(row: Any?): RepdbExercise? {
         primaryMuscles = muscleSlugs(id, "primary_muscles", fields["primary_muscles"], required = true),
         secondaryMuscles = muscleSlugs(id, "secondary_muscles", fields["secondary_muscles"], required = false),
         equipmentSlug = slug,
+        forceType = forceType(id, fields["force_type"]),
+        difficulty = difficulty(id, fields["difficulty"]),
+        tags = muscleSlugs(id, "tags", fields["tags"], required = false),
     )
 }
 
@@ -176,6 +182,8 @@ private val exerciseDefinition = ClassName("dev.sanastasov.bybon.workout.domain"
 private val bodyPartType = ClassName("dev.sanastasov.bybon.workout.domain", "BodyPart")
 private val equipmentType = ClassName("dev.sanastasov.bybon.workout.domain", "Equipment")
 private val mechanicType = ClassName("dev.sanastasov.bybon.workout.domain", "Mechanic")
+private val forceTypeType = ClassName("dev.sanastasov.bybon.workout.domain", "ForceType")
+private val difficultyType = ClassName("dev.sanastasov.bybon.workout.domain", "Difficulty")
 
 fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
     val initializer = CodeBlock.builder().add("listOf(")
@@ -189,6 +197,9 @@ fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
         initializer.add("\n        %L,", muscleList(exercise.primaryMuscles))
         initializer.add("\n        %L,", muscleList(exercise.secondaryMuscles))
         initializer.add("\n        %L,", equipmentSlugLiteral(exercise.equipmentSlug))
+        initializer.add("\n        %T.%L,", forceTypeType, exercise.forceType)
+        initializer.add("\n        %T.%L,", difficultyType, exercise.difficulty)
+        initializer.add("\n        %L,", muscleList(exercise.tags))
         initializer.add("\n    ),")
     }
     initializer.add("\n)")
@@ -263,6 +274,23 @@ internal fun equipmentSlug(id: String, value: Any?): String? = when (value) {
 
 private fun equipmentSlugLiteral(slug: String?): CodeBlock =
     if (slug == null) CodeBlock.of("null") else CodeBlock.of("%S", slug)
+
+internal fun forceType(id: String, value: Any?): String = when (value) {
+    "push" -> "Push"
+    "pull" -> "Pull"
+    "static" -> "Static"
+    "dynamic" -> "Dynamic"
+    null -> throw RepdbCatalogException("RepDB exercise $id is missing force_type")
+    else -> throw RepdbCatalogException("RepDB exercise $id has unknown force type: $value")
+}
+
+internal fun difficulty(id: String, value: Any?): String = when (value) {
+    "beginner" -> "Beginner"
+    "intermediate" -> "Intermediate"
+    "advanced" -> "Advanced"
+    null -> throw RepdbCatalogException("RepDB exercise $id is missing difficulty")
+    else -> throw RepdbCatalogException("RepDB exercise $id has unknown difficulty: $value")
+}
 
 internal fun loadClass(equipment: String?): String = when (equipment) {
     null -> "Bodyweight"

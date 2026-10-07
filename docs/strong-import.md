@@ -121,7 +121,8 @@ Resolve each Strong `Exercise Name`:
    map. A name that is not in the map is still imported, with `mechanic = null` and `bodyPart = null`,
    because Strong does not record either. Equipment on a created row comes from that map, or from
    an equipment word in the name (`barbell`, `dumbbell`, `cable`, `machine`, and the same kind of
-   token). When neither source names it, `equipment` and `equipmentSlug` stay null.
+   token). When neither source names it, `equipment` and `equipmentSlug` stay null. Force and
+   difficulty stay null on a created row, and tags stay empty. Strong does not record them.
 
 The sample’s `Crunch (Machine)` aliases to shipped `machine-seated-crunch`, so that file inserts no
 new exercises. `Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are not

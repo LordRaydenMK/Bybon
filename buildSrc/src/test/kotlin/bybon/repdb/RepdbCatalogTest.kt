@@ -107,6 +107,9 @@ class RepdbCatalogTest {
                     listOf("pectoralis_major"),
                     listOf("anterior_deltoid", "triceps_brachii"),
                     "barbell",
+                    "Push",
+                    "Intermediate",
+                    listOf("powerlifting", "push_day"),
                 ),
             ),
         )
@@ -124,6 +127,9 @@ class RepdbCatalogTest {
                         listOf("pectoralis_major", ),
                         listOf("anterior_deltoid", "triceps_brachii", ),
                         "barbell",
+                        ForceType.Push,
+                        Difficulty.Intermediate,
+                        listOf("powerlifting", "push_day", ),
                     ),
                 )
                 """.trimIndent(),
@@ -153,6 +159,27 @@ class RepdbCatalogTest {
 
         assertEquals("RepDB exercise bench-press is missing mechanic", missing.message)
         assertEquals("RepDB exercise bench-press has unknown mechanic: static", unknown.message)
+    }
+
+    @Test
+    fun `rejects a row with a missing or unknown force type or difficulty`() {
+        val missingForce = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(catalog(exercise(id = "bench-press", name = "Barbell Bench Press", forceType = null)))
+        }
+        val unknownForce = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press", forceType = "hold")),
+            )
+        }
+        val missingDifficulty = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press", difficulty = null)),
+            )
+        }
+
+        assertEquals("RepDB exercise bench-press is missing force_type", missingForce.message)
+        assertEquals("RepDB exercise bench-press has unknown force type: hold", unknownForce.message)
+        assertEquals("RepDB exercise bench-press is missing difficulty", missingDifficulty.message)
     }
 
     @Test
@@ -313,11 +340,17 @@ class RepdbCatalogTest {
         mechanic: String? = "compound",
         primaryMuscles: String? = """["pectoralis_major"]""",
         secondaryMuscles: String? = """["triceps_brachii"]""",
+        forceType: String? = "push",
+        difficulty: String? = "intermediate",
+        tags: String? = """["push_day"]""",
     ): String {
         val equipmentJson = equipment?.let { "\"$it\"" } ?: "null"
         val mechanicJson = mechanic?.let { "\"$it\"" } ?: "null"
+        val forceJson = forceType?.let { "\"$it\"" } ?: "null"
+        val difficultyJson = difficulty?.let { "\"$it\"" } ?: "null"
         val primaryJson = primaryMuscles ?: "null"
         val secondaryJson = secondaryMuscles ?: "null"
+        val tagsJson = tags ?: "null"
         val goalsJson = goals.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
         return """
             {
@@ -329,7 +362,10 @@ class RepdbCatalogTest {
               "body_part": "$bodyPart",
               "mechanic": $mechanicJson,
               "primary_muscles": $primaryJson,
-              "secondary_muscles": $secondaryJson
+              "secondary_muscles": $secondaryJson,
+              "force_type": $forceJson,
+              "difficulty": $difficultyJson,
+              "tags": $tagsJson
             }
         """.trimIndent()
     }
