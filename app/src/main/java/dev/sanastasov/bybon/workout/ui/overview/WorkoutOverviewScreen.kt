@@ -15,6 +15,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -114,7 +115,7 @@ private fun OverviewScreenContent(
             }
 
             Spacer(Modifier.height(16.dp))
-            Button(
+            OutlinedButton(
                 { onAction(WorkoutOverviewAction.OnAddExercise) },
                 Modifier.fillMaxWidth(),
             ) {
