@@ -52,6 +52,7 @@ androidx-room3-testing = { module = "androidx.room3:room3-testing", version.ref 
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
 
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationCore" }
 kotlin-csv = { module = "com.jsoizo:kotlin-csv-jvm", version.ref = "kotlinCsv" }
 kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinpoet" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
