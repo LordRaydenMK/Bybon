@@ -13,18 +13,28 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.upperBodyA
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
-class WorkoutsRepositoryImpl : WorkoutsRepository {
+class WorkoutsRepositoryImpl internal constructor(
+    exerciseDao: ExerciseDao,
+    catalog: List<ExerciseDefinition> = catalogExercises,
+    seedScope: CoroutineScope? = null,
+) : WorkoutsRepository {
 
-    private val exercises = MutableStateFlow(catalogExercises)
+    private val exerciseCatalog = ExerciseCatalog(exerciseDao, catalog)
     private val plans = MutableStateFlow(listOf(fullBodyA, fullBodyB, upperBodyA))
     private val sessions = MutableStateFlow<List<WorkoutSession>>(emptyList())
 
-    override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
+    init {
+        seedScope?.launch { exerciseCatalog.ensureSeeded() }
+    }
+
+    override fun exercises(): Flow<List<ExerciseDefinition>> = exerciseCatalog.observe()
 
     override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> =
         plans.map { allPlans ->
@@ -84,7 +94,7 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
     ): ImportHistoryResult {
-        val addedExercises = this.exercises.appendWithoutExisting(exercises) { it.id }
+        val addedExercises = exerciseCatalog.import(exercises)
         val addedPlans = this.plans.appendWithoutExisting(plans) { it.id }
         val addedSessions = this.sessions.appendWithoutExisting(sessions) { it.id }
         return ImportHistoryResult(
