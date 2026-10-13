@@ -45,6 +45,9 @@ data class RepdbExercise(
     val forceType: String,
     val difficulty: String,
     val tags: List<String> = emptyList(),
+    val description: String,
+    val instructions: List<String> = emptyList(),
+    val tips: List<String> = emptyList(),
 )
 
 class RepdbCatalogException(message: String) : RuntimeException(message)
@@ -175,6 +178,9 @@ private fun toExercise(row: Any?): RepdbExercise? {
         forceType = forceType(id, fields["force_type"]),
         difficulty = difficulty(id, fields["difficulty"]),
         tags = muscleSlugs(id, "tags", fields["tags"], required = false),
+        description = englishText(id, "description_en", fields["description_en"]),
+        instructions = muscleSlugs(id, "instructions_en", fields["instructions_en"], required = true),
+        tips = muscleSlugs(id, "tips_en", fields["tips_en"], required = true),
     )
 }
 
@@ -200,6 +206,9 @@ fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
         initializer.add("\n        %T.%L,", forceTypeType, exercise.forceType)
         initializer.add("\n        %T.%L,", difficultyType, exercise.difficulty)
         initializer.add("\n        %L,", muscleList(exercise.tags))
+        initializer.add("\n        %S,", exercise.description)
+        initializer.add("\n        %L,", muscleList(exercise.instructions))
+        initializer.add("\n        %L,", muscleList(exercise.tips))
         initializer.add("\n    ),")
     }
     initializer.add("\n)")
@@ -237,6 +246,14 @@ internal fun bodyPart(id: String, bodyPart: String): String = when (bodyPart) {
     "core" -> "Core"
     "full_body" -> "FullBody"
     else -> throw RepdbCatalogException("RepDB exercise $id has unknown body part: $bodyPart")
+}
+
+internal fun englishText(id: String, field: String, value: Any?): String {
+    val text = value as? String
+    if (text.isNullOrBlank()) {
+        throw RepdbCatalogException("RepDB exercise $id is missing $field")
+    }
+    return text
 }
 
 internal fun muscleSlugs(id: String, field: String, value: Any?, required: Boolean): List<String> {

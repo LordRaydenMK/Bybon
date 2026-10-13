@@ -20,6 +20,10 @@ data class ExerciseDefinition(
     val forceType: ForceType? = null,
     val difficulty: Difficulty? = null,
     val tags: List<String> = emptyList(),
+    // Null on a Strong import. Bybon-only rows have a short description and leave the lists null.
+    val description: String? = null,
+    val instructions: List<String>? = null,
+    val tips: List<String>? = null,
 )
 
 val ExerciseDefinition.defaultRest: Duration

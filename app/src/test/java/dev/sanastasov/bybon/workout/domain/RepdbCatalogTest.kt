@@ -104,4 +104,40 @@ class RepdbCatalogTest {
         assert(lateralRaise.forceType == ForceType.Push)
         assert(lateralRaise.difficulty == Difficulty.Beginner)
     }
+
+    @Test
+    fun `stores english description instructions and tips`() {
+        val bench = catalogExercise("bench-press")
+        assert(
+            bench.description ==
+                "A compound pushing movement that targets the chest, shoulders, and triceps.",
+        )
+        assert(
+            bench.instructions == listOf(
+                "Lie flat on a bench with your eyes under the bar.",
+                "Grip the bar slightly wider than shoulder-width.",
+                "Unrack the bar and lower it to your mid-chest.",
+                "Press the bar back up to full arm extension.",
+                "Repeat for the desired number of reps.",
+            ),
+        )
+        assert(
+            bench.tips == listOf(
+                "Keep your feet flat on the floor.",
+                "Maintain a slight arch in your lower back.",
+                "Drive through your legs for stability.",
+            ),
+        )
+
+        val isoLatRow = catalogExercise("iso-lat-row")
+        assert(
+            isoLatRow.description ==
+                "A pin-loaded row you can do one arm at a time. It loads the lats and upper back.",
+        )
+        assert(isoLatRow.instructions == null)
+        assert(isoLatRow.tips == null)
+        assert(catalogExercise("squat-machine").description != null)
+        assert(catalogExercise("triceps-press-machine").instructions == null)
+        assert(catalogExercise("lateral-raise-machine").tips == null)
+    }
 }

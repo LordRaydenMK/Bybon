@@ -122,7 +122,8 @@ Resolve each Strong `Exercise Name`:
    because Strong does not record either. Equipment on a created row comes from that map, or from
    an equipment word in the name (`barbell`, `dumbbell`, `cable`, `machine`, and the same kind of
    token). When neither source names it, `equipment` and `equipmentSlug` stay null. Force and
-   difficulty stay null on a created row, and tags stay empty. Strong does not record them.
+   difficulty stay null on a created row, and tags stay empty. Description, instructions, and tips
+   stay null. Strong does not record them.
 
 The sample’s `Crunch (Machine)` aliases to shipped `machine-seated-crunch`, so that file inserts no
 new exercises. `Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are not
@@ -214,6 +215,7 @@ Strong (`Bench Press (Barbell)` vs `Barbell Bench Press`), so the sample names a
 out in the RepDB proposal are in `strongExercises`. A Strong name that is not in that map and does
 not match a catalog name is still imported, with `mechanic = null` and `bodyPart = null`, because
 Strong does not record either. Equipment stays null unless the name itself names it.
+Description, instructions, and tips stay null.
 
 Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pulldown, chest
 fly variants, dips, calf raise, face pull, lying leg curl, etc. Several of those **do** appear in
