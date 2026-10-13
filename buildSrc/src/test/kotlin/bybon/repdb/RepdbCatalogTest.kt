@@ -20,6 +20,9 @@ class RepdbCatalogTest {
         assertEquals(listOf("bench-press"), exercises.map { it.id })
         assertEquals("Chest", exercises.single().bodyPart)
         assertEquals("Barbell", exercises.single().equipment)
+        assertEquals("A compound pushing movement that targets the chest.", exercises.single().description)
+        assertEquals(listOf("Lie on the bench.", "Press the bar up."), exercises.single().instructions)
+        assertEquals(listOf("Keep the feet flat."), exercises.single().tips)
     }
 
     @Test
@@ -110,6 +113,9 @@ class RepdbCatalogTest {
                     "Push",
                     "Intermediate",
                     listOf("powerlifting", "push_day"),
+                    "A compound pushing movement that targets the chest.",
+                    listOf("Lie on the bench.", "Press the bar up."),
+                    listOf("Keep the feet flat."),
                 ),
             ),
         )
@@ -130,6 +136,9 @@ class RepdbCatalogTest {
                         ForceType.Push,
                         Difficulty.Intermediate,
                         listOf("powerlifting", "push_day", ),
+                        "A compound pushing movement that targets the chest.",
+                        listOf("Lie on the bench.", "Press the bar up.", ),
+                        listOf("Keep the feet flat.", ),
                     ),
                 )
                 """.trimIndent(),
@@ -195,6 +204,23 @@ class RepdbCatalogTest {
 
         assertEquals("RepDB exercise bench-press has unknown body part: arms", bodyPart.message)
         assertEquals("RepDB exercise bench-press is missing primary_muscles", muscles.message)
+    }
+
+    @Test
+    fun `rejects a row without english copy`() {
+        val description = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press", description = null)),
+            )
+        }
+        val instructions = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press", instructions = null)),
+            )
+        }
+
+        assertEquals("RepDB exercise bench-press is missing description_en", description.message)
+        assertEquals("RepDB exercise bench-press is missing instructions_en", instructions.message)
     }
 
     @Test
@@ -343,14 +369,20 @@ class RepdbCatalogTest {
         forceType: String? = "push",
         difficulty: String? = "intermediate",
         tags: String? = """["push_day"]""",
+        description: String? = "A compound pushing movement that targets the chest.",
+        instructions: String? = """["Lie on the bench.", "Press the bar up."]""",
+        tips: String? = """["Keep the feet flat."]""",
     ): String {
         val equipmentJson = equipment?.let { "\"$it\"" } ?: "null"
         val mechanicJson = mechanic?.let { "\"$it\"" } ?: "null"
         val forceJson = forceType?.let { "\"$it\"" } ?: "null"
         val difficultyJson = difficulty?.let { "\"$it\"" } ?: "null"
+        val descriptionJson = description?.let { "\"$it\"" } ?: "null"
         val primaryJson = primaryMuscles ?: "null"
         val secondaryJson = secondaryMuscles ?: "null"
         val tagsJson = tags ?: "null"
+        val instructionsJson = instructions ?: "null"
+        val tipsJson = tips ?: "null"
         val goalsJson = goals.joinToString(prefix = "[", postfix = "]") { "\"$it\"" }
         return """
             {
@@ -365,7 +397,10 @@ class RepdbCatalogTest {
               "secondary_muscles": $secondaryJson,
               "force_type": $forceJson,
               "difficulty": $difficultyJson,
-              "tags": $tagsJson
+              "tags": $tagsJson,
+              "description_en": $descriptionJson,
+              "instructions_en": $instructionsJson,
+              "tips_en": $tipsJson
             }
         """.trimIndent()
     }

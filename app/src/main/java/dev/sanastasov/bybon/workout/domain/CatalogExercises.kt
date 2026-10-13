@@ -13,6 +13,7 @@ internal val bybonCatalogExercises = listOf(
         forceType = ForceType.Pull,
         difficulty = Difficulty.Intermediate,
         tags = listOf("pull_day", "knee_safe", "no_axial_load", "lower_back_safe", "shoulder_safe"),
+        description = "A pin-loaded row that loads the lats and upper back.",
     ),
     ExerciseDefinition(
         id = "squat-machine",
@@ -26,6 +27,7 @@ internal val bybonCatalogExercises = listOf(
         forceType = ForceType.Push,
         difficulty = Difficulty.Intermediate,
         tags = listOf("leg_day"),
+        description = "A plate-loaded squat on a sled.",
     ),
     ExerciseDefinition(
         id = "triceps-press-machine",
@@ -38,6 +40,7 @@ internal val bybonCatalogExercises = listOf(
         forceType = ForceType.Push,
         difficulty = Difficulty.Beginner,
         tags = listOf("arm_day", "knee_safe", "lower_back_safe", "no_axial_load", "shoulder_safe"),
+        description = "A pin-loaded press that isolates the triceps.",
     ),
     ExerciseDefinition(
         id = "lateral-raise-machine",
@@ -51,6 +54,7 @@ internal val bybonCatalogExercises = listOf(
         forceType = ForceType.Push,
         difficulty = Difficulty.Beginner,
         tags = listOf("push_day", "knee_safe", "lower_back_safe", "shoulder_safe", "no_axial_load"),
+        description = "A pin-loaded raise that lifts the arms out to the sides.",
     ),
 )
 
