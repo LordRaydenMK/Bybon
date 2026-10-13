@@ -147,4 +147,26 @@ class RepdbCatalogTest {
         assert(catalogExercise("triceps-press-machine").instructions == null)
         assert(catalogExercise("lateral-raise-machine").tips == null)
     }
+
+    @Test
+    fun `stores pinned image urls and leaves bybon rows without images`() {
+        val commit = "9ed9357f09c7566ea0256c57ebd6374ebb8b575e"
+        val prefix =
+            "https://raw.githubusercontent.com/RepDB/exercise-dataset/$commit/images/flat"
+        val bench = catalogExercise("bench-press")
+        assert(
+            bench.images == ExerciseImages.StartAndPeak(
+                "$prefix/bench-press-start.webp",
+                "$prefix/bench-press-peak.webp",
+            ),
+        )
+        assert(bench.images?.libraryUrl == "$prefix/bench-press-peak.webp")
+        assert(
+            catalogExercise("high-plank").images == ExerciseImages.Main(
+                "$prefix/high-plank-main.webp",
+            ),
+        )
+        assert(catalogExercise("iso-lat-row").images == null)
+        assert(catalogExercise("squat-machine").images == null)
+    }
 }

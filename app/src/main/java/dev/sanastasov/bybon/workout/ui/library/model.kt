@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.label
+import dev.sanastasov.bybon.workout.domain.libraryUrl
 
 const val EXERCISE_LIBRARY_RESULT_KEY = "exercise_id"
 
@@ -35,6 +36,7 @@ data class ExerciseLibraryItemUi(
     val id: String,
     val name: String,
     val equipment: Equipment?,
+    val imageUrl: String? = null,
     val selected: Boolean = false,
     val selectable: Boolean = true,
 ) {
@@ -187,6 +189,7 @@ private fun ExerciseDefinition.toLibraryItem(
     id = id,
     name = name,
     equipment = equipment,
+    imageUrl = images?.libraryUrl,
     selected = selectable && id == selectedExerciseId,
     selectable = selectable,
 )

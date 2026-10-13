@@ -21,6 +21,7 @@ roomVersion = "3.0.3"
 roomCommon = "2.8.5"
 detekt = "2.0.0-alpha.6"
 composeCharts = "1.0.0"
+coil3 = "3.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -59,6 +60,8 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 retained = { module = "dev.marcellogalhardo:retained-compose", version = "2.0.0-alpha01" }
 
 compose-charts = { group = "io.github.ehsannarmani", name = "compose-charts", version.ref = "composeCharts" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil3" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil3" }
 
 detekt-rules-ktlint-wrapper = { module = "dev.detekt:detekt-rules-ktlint-wrapper", version.ref = "detekt" }
 

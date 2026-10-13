@@ -33,5 +33,6 @@ class StrongEnglishCopyTest {
         assert(imported.description == null)
         assert(imported.instructions == null)
         assert(imported.tips == null)
+        assert(imported.images == null)
     }
 }

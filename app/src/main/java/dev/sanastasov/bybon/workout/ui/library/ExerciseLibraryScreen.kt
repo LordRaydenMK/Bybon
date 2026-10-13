@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -31,6 +32,8 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -38,6 +41,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
@@ -236,7 +240,7 @@ private fun ExerciseLibraryCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        exercise.equipment?.let { EquipmentIcon(it) }
+        ExerciseArtwork(exercise)
         Column(
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -272,17 +276,38 @@ private fun ExerciseLibraryCard(
 private val EquipmentIconSize = 40.dp
 
 @Composable
-private fun EquipmentIcon(equipment: Equipment) {
-    Icon(
-        equipment.icon,
-        contentDescription = null,
+private fun ExerciseArtwork(exercise: ExerciseLibraryItemUi) {
+    val equipment = exercise.equipment
+    val imageUrl = exercise.imageUrl
+    val fallback = equipment?.let { rememberVectorPainter(it.icon) }
+    if (imageUrl == null && equipment == null) return
+    Box(
         Modifier
             .size(EquipmentIconSize)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(8.dp),
-        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (imageUrl != null) {
+            AsyncImage(
+                imageUrl,
+                contentDescription = null,
+                Modifier.size(EquipmentIconSize),
+                placeholder = fallback,
+                error = fallback,
+                contentScale = ContentScale.Crop,
+            )
+        } else if (equipment != null) {
+            Icon(
+                equipment.icon,
+                contentDescription = null,
+                Modifier
+                    .size(EquipmentIconSize)
+                    .padding(8.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Preview
