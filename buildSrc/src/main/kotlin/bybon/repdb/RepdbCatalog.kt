@@ -6,15 +6,17 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.LIST
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.STRING
 import groovy.json.JsonSlurper
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.URI
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 fun repdbExercisesUrl(commit: String): String =
     "https://raw.githubusercontent.com/RepDB/exercise-dataset/$commit/exercises.json"
@@ -55,12 +57,12 @@ data class RepdbExercise(
 
 sealed interface RepdbImages {
     data class StartAndPeak(
-        val start: String,
-        val peak: String,
+        val start: HttpUrl,
+        val peak: HttpUrl,
     ) : RepdbImages
 
     data class Main(
-        val main: String,
+        val main: HttpUrl,
     ) : RepdbImages
 }
 
@@ -108,18 +110,23 @@ fun downloadRepdbExercises(
 
 fun loadRepdbCatalog(
     cacheFile: File,
+    commit: String = "commit",
     expectedCount: Int = EXPECTED_REPDB_EXERCISE_COUNT,
     download: () -> RepdbDownload,
 ): List<RepdbExercise> {
     val source = readRepdbExercisesJson(cacheFile, download)
-    val exercises = parseRepdbCatalog(source.json, expectedCount)
+    val exercises = parseRepdbCatalog(source.json, commit, expectedCount)
     if (!source.fromCache) {
         writeRepdbExercisesCache(cacheFile, source.json)
     }
     return exercises
 }
 
-fun parseRepdbCatalog(json: String, expectedCount: Int? = null): List<RepdbExercise> {
+fun parseRepdbCatalog(
+    json: String,
+    commit: String = "commit",
+    expectedCount: Int? = null,
+): List<RepdbExercise> {
     val root = parseRoot(json)
     val schema = (root["schema_version"] as? Number)?.toInt()
     if (schema != 3) {
@@ -127,7 +134,7 @@ fun parseRepdbCatalog(json: String, expectedCount: Int? = null): List<RepdbExerc
     }
     val rows = root["exercises"] as? List<*>
         ?: throw RepdbCatalogException("RepDB catalog is missing exercises")
-    val included = rows.mapNotNull { row -> toExercise(row) }
+    val included = rows.mapNotNull { row -> toExercise(row, commit) }
     if (expectedCount != null && included.size != expectedCount) {
         throw RepdbCatalogException(
             "RepDB catalog filter kept ${included.size} exercises, expected $expectedCount",
@@ -166,7 +173,7 @@ private fun parseRoot(json: String): Map<*, *> {
     return parsed as? Map<*, *> ?: throw RepdbCatalogException("RepDB catalog is not valid JSON")
 }
 
-private fun toExercise(row: Any?): RepdbExercise? {
+private fun toExercise(row: Any?, commit: String): RepdbExercise? {
     val fields = row as? Map<*, *> ?: throw RepdbCatalogException("RepDB exercise is missing id")
     val id = fields["id"] as? String
     if (id.isNullOrBlank()) {
@@ -195,7 +202,7 @@ private fun toExercise(row: Any?): RepdbExercise? {
         description = englishText(id, "description_en", fields["description_en"]),
         instructions = muscleSlugs(id, "instructions_en", fields["instructions_en"], required = true),
         tips = muscleSlugs(id, "tips_en", fields["tips_en"], required = true),
-        images = images(id, fields["images"]),
+        images = images(id, fields["images"], commit),
     )
 }
 
@@ -211,23 +218,22 @@ private val startAndPeakType = ClassName(
     "StartAndPeak",
 )
 private val mainImageType = ClassName("dev.sanastasov.bybon.workout.domain", "ExerciseImages", "Main")
+private val toHttpUrl = MemberName("okhttp3.HttpUrl.Companion", "toHttpUrl")
 
 private const val REPDB_CATALOG_CHUNK_SIZE = 40
 
-fun repdbCatalogFile(exercises: List<RepdbExercise>, commit: String): FileSpec {
+fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
     val chunks = exercises.chunked(REPDB_CATALOG_CHUNK_SIZE).ifEmpty { listOf(emptyList()) }
     val builder = FileSpec.builder("dev.sanastasov.bybon.workout.domain", "RepdbCatalog")
         .indent("") // Continuation lines are spaced in the initializer itself.
-        .addProperty(imageBaseProperty(commit))
-        .addFunction(imageUrlFunction())
     chunks.forEachIndexed { index, chunk ->
         builder.addFunction(catalogChunkFunction(index, chunk))
     }
     return builder.addProperty(catalogProperty(chunks.size)).build()
 }
 
-fun renderRepdbCatalog(exercises: List<RepdbExercise>, commit: String = "commit"): String =
-    repdbCatalogFile(exercises, commit).toString()
+fun renderRepdbCatalog(exercises: List<RepdbExercise>): String =
+    repdbCatalogFile(exercises).toString()
 
 internal fun includeExercise(fields: Map<*, *>): Boolean {
     if (fields["category"] != "strength") return false
@@ -252,14 +258,14 @@ internal fun bodyPart(id: String, bodyPart: String): String = when (bodyPart) {
     else -> throw RepdbCatalogException("RepDB exercise $id has unknown body part: $bodyPart")
 }
 
-internal fun images(id: String, value: Any?): RepdbImages {
+internal fun images(id: String, value: Any?, commit: String): RepdbImages {
     val root = value as? Map<*, *>
         ?: throw RepdbCatalogException("RepDB exercise $id is missing images")
     val flat = root["flat"] as? Map<*, *>
         ?: throw RepdbCatalogException("RepDB exercise $id is missing images")
-    val start = imagePath(id, flat["start"])
-    val peak = imagePath(id, flat["peak"])
-    val main = imagePath(id, flat["main"])
+    val start = imagePath(id, flat["start"])?.let { imageUrl(commit, it) }
+    val peak = imagePath(id, flat["peak"])?.let { imageUrl(commit, it) }
+    val main = imagePath(id, flat["main"])?.let { imageUrl(commit, it) }
     return when {
         start != null && peak != null && main == null -> RepdbImages.StartAndPeak(start, peak)
         main != null && start == null && peak == null -> RepdbImages.Main(main)
@@ -275,21 +281,9 @@ private fun imagePath(id: String, value: Any?): String? {
     return path
 }
 
-internal fun imageUrl(commit: String, path: String): String =
-    "https://raw.githubusercontent.com/RepDB/exercise-dataset/$commit/$path"
-
-private fun imageBaseProperty(commit: String): PropertySpec =
-    PropertySpec.builder("REPDB_IMAGE_BASE", STRING, KModifier.PRIVATE, KModifier.CONST)
-        .initializer("%S", imageUrl(commit, ""))
-        .build()
-
-private fun imageUrlFunction(): FunSpec =
-    FunSpec.builder("repdbImageUrl")
-        .addModifiers(KModifier.PRIVATE)
-        .addParameter("path", STRING)
-        .returns(STRING)
-        .addStatement("return REPDB_IMAGE_BASE + path")
-        .build()
+internal fun imageUrl(commit: String, path: String): HttpUrl =
+    "https://raw.githubusercontent.com/RepDB/exercise-dataset/$commit/$path".toHttpUrlOrNull()
+        ?: throw RepdbCatalogException("RepDB exercise image is not a valid URL: $path")
 
 private fun catalogChunkFunction(index: Int, chunk: List<RepdbExercise>): FunSpec =
     FunSpec.builder("repdbCatalogChunk$index")
@@ -338,13 +332,13 @@ private fun exerciseList(exercises: List<RepdbExercise>): CodeBlock {
 private fun imagesLiteral(images: RepdbImages): CodeBlock = when (images) {
     is RepdbImages.StartAndPeak -> CodeBlock.builder()
         .add("%T(\n", startAndPeakType)
-        .add("            repdbImageUrl(%S),\n", images.start)
-        .add("            repdbImageUrl(%S),\n", images.peak)
+        .add("            %S.%M(),\n", images.start.toString(), toHttpUrl)
+        .add("            %S.%M(),\n", images.peak.toString(), toHttpUrl)
         .add("        )")
         .build()
     is RepdbImages.Main -> CodeBlock.builder()
         .add("%T(\n", mainImageType)
-        .add("            repdbImageUrl(%S),\n", images.main)
+        .add("            %S.%M(),\n", images.main.toString(), toHttpUrl)
         .add("        )")
         .build()
 }

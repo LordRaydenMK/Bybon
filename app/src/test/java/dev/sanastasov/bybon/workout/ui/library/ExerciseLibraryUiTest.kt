@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseImages
 import dev.sanastasov.bybon.workout.domain.Mechanic
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Test
 
 class ExerciseLibraryUiTest {
@@ -107,8 +108,8 @@ class ExerciseLibraryUiTest {
             Equipment.Barbell,
             Mechanic.Compound,
             images = ExerciseImages.StartAndPeak(
-                "https://example.test/bench-start.webp",
-                "https://example.test/bench-peak.webp",
+                "https://example.test/bench-start.webp".toHttpUrl(),
+                "https://example.test/bench-peak.webp".toHttpUrl(),
             ),
         )
         val plank = ExerciseDefinition(
@@ -117,14 +118,14 @@ class ExerciseLibraryUiTest {
             BodyPart.Core,
             Equipment.Bodyweight,
             Mechanic.Isolation,
-            images = ExerciseImages.Main("https://example.test/plank-main.webp"),
+            images = ExerciseImages.Main("https://example.test/plank-main.webp".toHttpUrl()),
         )
 
         val items = listOf(bench, plank).groupedByBodyPart().flatMap { it.exercises }
         val benchItem = items.single { it.id == "bench-press" }
         val plankItem = items.single { it.id == "high-plank" }
-        assert(benchItem.imageUrl == "https://example.test/bench-peak.webp")
-        assert(plankItem.imageUrl == "https://example.test/plank-main.webp")
+        assert(benchItem.imageUrl == "https://example.test/bench-peak.webp".toHttpUrl())
+        assert(plankItem.imageUrl == "https://example.test/plank-main.webp".toHttpUrl())
     }
 
     @Test

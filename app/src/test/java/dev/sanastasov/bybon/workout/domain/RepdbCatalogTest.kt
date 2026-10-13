@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.domain
 
 import kotlin.time.Duration.Companion.minutes
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Test
 
 class RepdbCatalogTest {
@@ -156,14 +157,14 @@ class RepdbCatalogTest {
         val bench = catalogExercise("bench-press")
         assert(
             bench.images == ExerciseImages.StartAndPeak(
-                "$prefix/bench-press-start.webp",
-                "$prefix/bench-press-peak.webp",
+                "$prefix/bench-press-start.webp".toHttpUrl(),
+                "$prefix/bench-press-peak.webp".toHttpUrl(),
             ),
         )
-        assert(bench.images?.libraryUrl == "$prefix/bench-press-peak.webp")
+        assert(bench.images?.libraryUrl == "$prefix/bench-press-peak.webp".toHttpUrl())
         assert(
             catalogExercise("high-plank").images == ExerciseImages.Main(
-                "$prefix/high-plank-main.webp",
+                "$prefix/high-plank-main.webp".toHttpUrl(),
             ),
         )
         assert(catalogExercise("iso-lat-row").images == null)

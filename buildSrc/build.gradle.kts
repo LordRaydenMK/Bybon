@@ -8,5 +8,6 @@ repositories {
 
 dependencies {
     implementation(libs.kotlinpoet)
+    implementation(libs.okhttp)
     testImplementation(libs.junit)
 }

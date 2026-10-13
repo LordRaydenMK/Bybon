@@ -25,8 +25,8 @@ class RepdbCatalogTest {
         assertEquals(listOf("Keep the feet flat."), exercises.single().tips)
         assertEquals(
             RepdbImages.StartAndPeak(
-                "images/flat/bench-press-start.webp",
-                "images/flat/bench-press-peak.webp",
+                imageUrl("commit", "images/flat/bench-press-start.webp"),
+                imageUrl("commit", "images/flat/bench-press-peak.webp"),
             ),
             exercises.single().images,
         )
@@ -124,15 +124,25 @@ class RepdbCatalogTest {
                     listOf("Lie on the bench.", "Press the bar up."),
                     listOf("Keep the feet flat."),
                     RepdbImages.StartAndPeak(
-                        "images/flat/bench-press-start.webp",
-                        "images/flat/bench-press-peak.webp",
+                        imageUrl("commit", "images/flat/bench-press-start.webp"),
+                        imageUrl("commit", "images/flat/bench-press-peak.webp"),
                     ),
                 ),
             ),
         )
 
-        assertTrue(source.contains("REPDB_IMAGE_BASE"))
+        assertTrue(source.contains("toHttpUrl"))
         assertTrue(source.contains("repdbCatalogChunk0()"))
+        assertTrue(
+            source.contains(
+                imageUrl("commit", "images/flat/bench-press-start.webp").toString(),
+            ),
+        )
+        assertTrue(
+            source.contains(
+                imageUrl("commit", "images/flat/bench-press-peak.webp").toString(),
+            ),
+        )
         assertTrue(
             source.contains(
                 """
@@ -152,9 +162,6 @@ class RepdbCatalogTest {
                     |        listOf("Lie on the bench.", "Press the bar up.", ),
                     |        listOf("Keep the feet flat.", ),
                     |        ExerciseImages.StartAndPeak(
-                    |            repdbImageUrl("images/flat/bench-press-start.webp"),
-                    |            repdbImageUrl("images/flat/bench-press-peak.webp"),
-                    |        ),
                     """.trimMargin(),
             ),
         )
@@ -250,7 +257,7 @@ class RepdbCatalogTest {
         )
 
         assertEquals(
-            RepdbImages.Main("images/flat/high-plank-main.webp"),
+            RepdbImages.Main(imageUrl("commit", "images/flat/high-plank-main.webp")),
             exercises.single().images,
         )
     }
