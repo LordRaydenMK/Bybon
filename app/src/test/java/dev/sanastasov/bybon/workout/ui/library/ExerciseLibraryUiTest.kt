@@ -3,7 +3,9 @@ package dev.sanastasov.bybon.workout.ui.library
 import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.ExerciseImages
 import dev.sanastasov.bybon.workout.domain.Mechanic
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.junit.Test
 
 class ExerciseLibraryUiTest {
@@ -94,6 +96,36 @@ class ExerciseLibraryUiTest {
         val item = listOf(bench).groupedByBodyPart().single().exercises.single()
         assert(item.equipment == Equipment.Barbell)
         assert(item.equipmentLabel == "Barbell")
+        assert(item.imageUrl == null)
+    }
+
+    @Test
+    fun `uses the peak or main image as the library thumbnail`() {
+        val bench = ExerciseDefinition(
+            "bench-press",
+            "Barbell Bench Press",
+            BodyPart.Chest,
+            Equipment.Barbell,
+            Mechanic.Compound,
+            images = ExerciseImages.StartAndPeak(
+                "https://example.test/bench-start.webp".toHttpUrl(),
+                "https://example.test/bench-peak.webp".toHttpUrl(),
+            ),
+        )
+        val plank = ExerciseDefinition(
+            "high-plank",
+            "High Plank",
+            BodyPart.Core,
+            Equipment.Bodyweight,
+            Mechanic.Isolation,
+            images = ExerciseImages.Main("https://example.test/plank-main.webp".toHttpUrl()),
+        )
+
+        val items = listOf(bench, plank).groupedByBodyPart().flatMap { it.exercises }
+        val benchItem = items.single { it.id == "bench-press" }
+        val plankItem = items.single { it.id == "high-plank" }
+        assert(benchItem.imageUrl == "https://example.test/bench-peak.webp".toHttpUrl())
+        assert(plankItem.imageUrl == "https://example.test/plank-main.webp".toHttpUrl())
     }
 
     @Test

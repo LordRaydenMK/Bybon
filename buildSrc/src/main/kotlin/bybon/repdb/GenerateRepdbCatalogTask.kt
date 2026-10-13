@@ -26,7 +26,7 @@ abstract class GenerateRepdbCatalogTask : DefaultTask() {
         if (cacheFile.isFile && cacheFile.length() > 0L) {
             logger.lifecycle("RepDB exercises cache hit: {}", cacheFile)
         }
-        val exercises = loadRepdbCatalog(cacheFile) {
+        val exercises = loadRepdbCatalog(cacheFile, commit) {
             logger.lifecycle("Downloading RepDB exercises from {}", url)
             downloadRepdbExercises(url).also(::logDownloadResult)
         }

@@ -24,6 +24,8 @@ data class ExerciseDefinition(
     val description: String? = null,
     val instructions: List<String>? = null,
     val tips: List<String>? = null,
+    // Null on Bybon-only and Strong-created rows. They are not in the RepDB image set.
+    val images: ExerciseImages? = null,
 )
 
 val ExerciseDefinition.defaultRest: Duration

@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.label
+import dev.sanastasov.bybon.workout.domain.libraryUrl
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -29,6 +30,9 @@ class ExerciseLibraryViewModelTest {
         assert(state.groups.first().exercises.first().equipment == firstExercise.equipment)
         assert(
             state.groups.first().exercises.first().equipmentLabel == firstExercise.equipment?.label,
+        )
+        assert(
+            state.groups.first().exercises.first().imageUrl == firstExercise.images?.libraryUrl,
         )
         assert(!state.addEnabled)
         assert(state.groups.flatMap { it.exercises }.none { it.selected })

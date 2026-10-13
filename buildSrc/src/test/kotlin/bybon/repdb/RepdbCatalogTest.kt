@@ -23,6 +23,13 @@ class RepdbCatalogTest {
         assertEquals("A compound pushing movement that targets the chest.", exercises.single().description)
         assertEquals(listOf("Lie on the bench.", "Press the bar up."), exercises.single().instructions)
         assertEquals(listOf("Keep the feet flat."), exercises.single().tips)
+        assertEquals(
+            RepdbImages.StartAndPeak(
+                imageUrl("commit", "images/flat/bench-press-start.webp"),
+                imageUrl("commit", "images/flat/bench-press-peak.webp"),
+            ),
+            exercises.single().images,
+        )
     }
 
     @Test
@@ -116,32 +123,46 @@ class RepdbCatalogTest {
                     "A compound pushing movement that targets the chest.",
                     listOf("Lie on the bench.", "Press the bar up."),
                     listOf("Keep the feet flat."),
+                    RepdbImages.StartAndPeak(
+                        imageUrl("commit", "images/flat/bench-press-start.webp"),
+                        imageUrl("commit", "images/flat/bench-press-peak.webp"),
+                    ),
                 ),
             ),
         )
 
+        assertTrue(source.contains("toHttpUrl"))
+        assertTrue(source.contains("repdbCatalogChunk0()"))
+        assertTrue(
+            source.contains(
+                imageUrl("commit", "images/flat/bench-press-start.webp").toString(),
+            ),
+        )
+        assertTrue(
+            source.contains(
+                imageUrl("commit", "images/flat/bench-press-peak.webp").toString(),
+            ),
+        )
         assertTrue(
             source.contains(
                 """
-                internal val repdbCatalogExercises: List<ExerciseDefinition> = listOf(
-                    ExerciseDefinition(
-                        "bench-press",
-                        "Barbell Bench Press",
-                        BodyPart.Chest,
-                        Equipment.Barbell,
-                        Mechanic.Compound,
-                        listOf("pectoralis_major", ),
-                        listOf("anterior_deltoid", "triceps_brachii", ),
-                        "barbell",
-                        ForceType.Push,
-                        Difficulty.Intermediate,
-                        listOf("powerlifting", "push_day", ),
-                        "A compound pushing movement that targets the chest.",
-                        listOf("Lie on the bench.", "Press the bar up.", ),
-                        listOf("Keep the feet flat.", ),
-                    ),
-                )
-                """.trimIndent(),
+                    |    ExerciseDefinition(
+                    |        "bench-press",
+                    |        "Barbell Bench Press",
+                    |        BodyPart.Chest,
+                    |        Equipment.Barbell,
+                    |        Mechanic.Compound,
+                    |        listOf("pectoralis_major", ),
+                    |        listOf("anterior_deltoid", "triceps_brachii", ),
+                    |        "barbell",
+                    |        ForceType.Push,
+                    |        Difficulty.Intermediate,
+                    |        listOf("powerlifting", "push_day", ),
+                    |        "A compound pushing movement that targets the chest.",
+                    |        listOf("Lie on the bench.", "Press the bar up.", ),
+                    |        listOf("Keep the feet flat.", ),
+                    |        ExerciseImages.StartAndPeak(
+                    """.trimMargin(),
             ),
         )
     }
@@ -221,6 +242,49 @@ class RepdbCatalogTest {
 
         assertEquals("RepDB exercise bench-press is missing description_en", description.message)
         assertEquals("RepDB exercise bench-press is missing instructions_en", instructions.message)
+    }
+
+    @Test
+    fun `parses a hold that uses a main image`() {
+        val exercises = parseRepdbCatalog(
+            catalog(
+                exercise(
+                    id = "high-plank",
+                    name = "High Plank",
+                    images = """{"flat":{"main":"images/flat/high-plank-main.webp"}}""",
+                ),
+            ),
+        )
+
+        assertEquals(
+            RepdbImages.Main(imageUrl("commit", "images/flat/high-plank-main.webp")),
+            exercises.single().images,
+        )
+    }
+
+    @Test
+    fun `rejects a row without a valid image shape`() {
+        val missing = assertThrows(RepdbCatalogException::class.java) {
+            parseRepdbCatalog(
+                catalog(exercise(id = "bench-press", name = "Barbell Bench Press", images = "null")),
+            )
+        }
+        val mixed = assertThrows(RepdbCatalogException::class.java) {
+            val mixedImages =
+                """{"flat":{"start":"a.webp","peak":"b.webp","main":"c.webp"}}"""
+            parseRepdbCatalog(
+                catalog(
+                    exercise(
+                        id = "bench-press",
+                        name = "Barbell Bench Press",
+                        images = mixedImages,
+                    ),
+                ),
+            )
+        }
+
+        assertEquals("RepDB exercise bench-press is missing images", missing.message)
+        assertEquals("RepDB exercise bench-press has invalid images", mixed.message)
     }
 
     @Test
@@ -372,6 +436,7 @@ class RepdbCatalogTest {
         description: String? = "A compound pushing movement that targets the chest.",
         instructions: String? = """["Lie on the bench.", "Press the bar up."]""",
         tips: String? = """["Keep the feet flat."]""",
+        images: String = """{"flat":{"start":"images/flat/bench-press-start.webp","peak":"images/flat/bench-press-peak.webp"}}""",
     ): String {
         val equipmentJson = equipment?.let { "\"$it\"" } ?: "null"
         val mechanicJson = mechanic?.let { "\"$it\"" } ?: "null"
@@ -400,7 +465,8 @@ class RepdbCatalogTest {
               "tags": $tagsJson,
               "description_en": $descriptionJson,
               "instructions_en": $instructionsJson,
-              "tips_en": $tipsJson
+              "tips_en": $tipsJson,
+              "images": $images
             }
         """.trimIndent()
     }
