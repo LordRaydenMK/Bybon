@@ -290,7 +290,7 @@ private fun ExerciseArtwork(exercise: ExerciseLibraryItemUi) {
     ) {
         if (imageUrl != null) {
             AsyncImage(
-                imageUrl,
+                imageUrl.toString(),
                 contentDescription = null,
                 Modifier.size(EquipmentIconSize),
                 placeholder = fallback,
