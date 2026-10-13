@@ -131,12 +131,19 @@ class RepdbCatalogTest {
 
         val isoLatRow = catalogExercise("iso-lat-row")
         assert(
-            isoLatRow.description ==
-                "A pin-loaded row you can do one arm at a time. It loads the lats and upper back.",
+            isoLatRow.description == "A pin-loaded row that loads the lats and upper back.",
         )
         assert(isoLatRow.instructions == null)
         assert(isoLatRow.tips == null)
-        assert(catalogExercise("squat-machine").description != null)
+        assert(catalogExercise("squat-machine").description == "A plate-loaded squat on a sled.")
+        assert(
+            catalogExercise("triceps-press-machine").description ==
+                "A pin-loaded press that isolates the triceps.",
+        )
+        assert(
+            catalogExercise("lateral-raise-machine").description ==
+                "A pin-loaded raise that lifts the arms out to the sides.",
+        )
         assert(catalogExercise("triceps-press-machine").instructions == null)
         assert(catalogExercise("lateral-raise-machine").tips == null)
     }
