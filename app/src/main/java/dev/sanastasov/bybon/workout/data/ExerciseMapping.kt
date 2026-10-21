@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.data
 
+import dev.sanastasov.bybon.AppJson
 import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Difficulty
 import dev.sanastasov.bybon.workout.domain.Equipment
@@ -9,12 +10,9 @@ import dev.sanastasov.bybon.workout.domain.ForceType
 import dev.sanastasov.bybon.workout.domain.Mechanic
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 private val stringListSerializer = ListSerializer(String.serializer())
-
-private val json = Json
 
 internal fun ExerciseDefinition.toEntity(
     source: String,
@@ -83,6 +81,8 @@ private fun ExerciseEntity.toImages(): ExerciseImages? = when {
     else -> null
 }
 
-private fun List<String>.toJsonArray(): String = json.encodeToString(stringListSerializer, this)
+private fun List<String>.toJsonArray(): String =
+    AppJson.json.encodeToString(stringListSerializer, this)
 
-private fun String.toStringList(): List<String> = json.decodeFromString(stringListSerializer, this)
+private fun String.toStringList(): List<String> =
+    AppJson.json.decodeFromString(stringListSerializer, this)

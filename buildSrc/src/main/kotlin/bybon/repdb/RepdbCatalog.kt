@@ -9,6 +9,7 @@ import com.squareup.kotlinpoet.LIST
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.STRING
 import groovy.json.JsonSlurper
 import java.io.File
 import java.io.IOException
@@ -222,18 +223,19 @@ private val toHttpUrl = MemberName("okhttp3.HttpUrl.Companion", "toHttpUrl")
 
 private const val REPDB_CATALOG_CHUNK_SIZE = 40
 
-fun repdbCatalogFile(exercises: List<RepdbExercise>): FileSpec {
+fun repdbCatalogFile(exercises: List<RepdbExercise>, commit: String): FileSpec {
     val chunks = exercises.chunked(REPDB_CATALOG_CHUNK_SIZE).ifEmpty { listOf(emptyList()) }
     val builder = FileSpec.builder("dev.sanastasov.bybon.workout.domain", "RepdbCatalog")
         .indent("") // Continuation lines are spaced in the initializer itself.
+        .addProperty(commitProperty(commit))
     chunks.forEachIndexed { index, chunk ->
         builder.addFunction(catalogChunkFunction(index, chunk))
     }
     return builder.addProperty(catalogProperty(chunks.size)).build()
 }
 
-fun renderRepdbCatalog(exercises: List<RepdbExercise>): String =
-    repdbCatalogFile(exercises).toString()
+fun renderRepdbCatalog(exercises: List<RepdbExercise>, commit: String): String =
+    repdbCatalogFile(exercises, commit).toString()
 
 internal fun includeExercise(fields: Map<*, *>): Boolean {
     if (fields["category"] != "strength") return false
@@ -290,6 +292,12 @@ private fun catalogChunkFunction(index: Int, chunk: List<RepdbExercise>): FunSpe
         .addModifiers(KModifier.PRIVATE)
         .returns(LIST.parameterizedBy(exerciseDefinition))
         .addCode("return %L", exerciseList(chunk))
+        .build()
+
+private fun commitProperty(commit: String): PropertySpec =
+    PropertySpec.builder("repdbCatalogCommit", STRING)
+        .addModifiers(KModifier.INTERNAL, KModifier.CONST)
+        .initializer("%S", commit)
         .build()
 
 private fun catalogProperty(chunkCount: Int): PropertySpec {

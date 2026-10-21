@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class FakeExerciseDao : ExerciseDao {
 
     private val rows = MutableStateFlow<List<ExerciseEntity>>(emptyList())
+    private var catalogCommit: String? = null
 
     override fun observeAll(): Flow<List<ExerciseEntity>> = rows
 
@@ -13,6 +14,9 @@ class FakeExerciseDao : ExerciseDao {
 
     override suspend fun idsWhereSourceIsNot(source: String): List<String> =
         rows.value.filter { it.source != source }.map { it.id }
+
+    override suspend fun catalogCommit(id: Int): String? =
+        catalogCommit.takeIf { id == REPDB_CATALOG_ROW_ID }
 
     override suspend fun upsertAll(entities: List<ExerciseEntity>) {
         if (entities.isEmpty()) return
@@ -28,12 +32,8 @@ class FakeExerciseDao : ExerciseDao {
         rows.value = current
     }
 
-    override suspend fun insertAll(entities: List<ExerciseEntity>) {
-        if (entities.isEmpty()) return
-        val current = rows.value
-        val known = current.map { it.id }.toSet()
-        val duplicate = entities.firstOrNull { it.id in known }
-        check(duplicate == null) { "Exercise ${duplicate?.id} is already stored" }
-        rows.value = current + entities
+    override suspend fun upsertCatalog(catalog: RepdbCatalogEntity) {
+        check(catalog.id == REPDB_CATALOG_ROW_ID)
+        catalogCommit = catalog.commit
     }
 }

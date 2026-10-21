@@ -31,7 +31,7 @@ abstract class GenerateRepdbCatalogTask : DefaultTask() {
             downloadRepdbExercises(url).also(::logDownloadResult)
         }
         logger.lifecycle("Wrote RepDB catalog with {} exercises", exercises.size)
-        repdbCatalogFile(exercises).writeTo(outputDirectory.get().asFile)
+        repdbCatalogFile(exercises, commit).writeTo(outputDirectory.get().asFile)
     }
 
     private fun logDownloadResult(result: RepdbDownload) {

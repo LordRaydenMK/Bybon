@@ -129,8 +129,10 @@ class RepdbCatalogTest {
                     ),
                 ),
             ),
+            commit = "commit",
         )
 
+        assertTrue(source.contains("internal const val repdbCatalogCommit: String = \"commit\""))
         assertTrue(source.contains("toHttpUrl"))
         assertTrue(source.contains("repdbCatalogChunk0()"))
         assertTrue(

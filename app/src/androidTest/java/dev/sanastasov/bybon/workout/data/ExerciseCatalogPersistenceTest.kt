@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.catalogExercises
+import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -37,6 +38,7 @@ class ExerciseCatalogPersistenceTest {
         val bench = catalogExercises.first { it.id == "bench-press" }
 
         assert(repository.exercises().first() == catalogExercises)
+        assert(dao.catalogCommit(REPDB_CATALOG_ROW_ID) == repdbCatalogCommit)
         assert(dao.observeAll().first().all { it.source == ExerciseSource.SHIPPED })
         assert(dao.observeAll().first().all { !it.isArchived })
 
@@ -66,6 +68,7 @@ class ExerciseCatalogPersistenceTest {
             catalog = catalogExercises.map { exercise ->
                 if (exercise.id == bench.id) exercise.copy(name = "Updated Bench") else exercise
             } + crunch.copy(name = "Shipped Crunch"),
+            repdbCommit = "next-commit",
         )
         val afterRefresh = refreshed.exercises().first()
         assert(afterRefresh.single { it.id == bench.id }.name == "Updated Bench")

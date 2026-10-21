@@ -7,6 +7,7 @@ import androidx.sqlite.execSQL
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sanastasov.bybon.bodyweight.data.DietPhaseEntity
+import dev.sanastasov.bybon.workout.data.REPDB_CATALOG_ROW_ID
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -97,6 +98,7 @@ class BybonDatabaseMigrationTest {
             val phases = db.dietPhaseDao().phases().first()
             assert(phases.single().kind == "Maintain")
             assert(db.exerciseDao().observeAll().first().isEmpty())
+            assert(db.exerciseDao().catalogCommit(REPDB_CATALOG_ROW_ID) == null)
         } finally {
             db.close()
         }

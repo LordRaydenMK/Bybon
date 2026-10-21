@@ -11,9 +11,15 @@ import dev.sanastasov.bybon.bodyweight.data.WeightEntryEntity
 import dev.sanastasov.bybon.data.converter.LocalDateConverter
 import dev.sanastasov.bybon.workout.data.ExerciseDao
 import dev.sanastasov.bybon.workout.data.ExerciseEntity
+import dev.sanastasov.bybon.workout.data.RepdbCatalogEntity
 
 @Database(
-    entities = [WeightEntryEntity::class, DietPhaseEntity::class, ExerciseEntity::class],
+    entities = [
+        WeightEntryEntity::class,
+        DietPhaseEntity::class,
+        ExerciseEntity::class,
+        RepdbCatalogEntity::class,
+    ],
     version = 3,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),

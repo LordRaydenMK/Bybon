@@ -293,6 +293,38 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
+    fun `reading plans seeds the shipped catalog once for this repdb commit`() = runTest {
+        val dao = FakeExerciseDao()
+        val repository = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+
+        repository.workoutPlans().first()
+
+        assert(dao.catalogCommit(REPDB_CATALOG_ROW_ID) == "commit-a")
+        assert(dao.observeAll().first().map { it.toDefinition() } == catalogExercises)
+        assert(repository.exercises().first() == catalogExercises)
+    }
+
+    @Test
+    fun `the same repdb commit does not overwrite shipped rows`() = runTest {
+        val dao = FakeExerciseDao()
+        val bench = catalogExercises.first { it.id == "bench-press" }
+        val seeded = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+        seeded.exercises().first()
+        val local = bench.toEntity(source = ExerciseSource.SHIPPED).copy(name = "Local Name")
+        dao.upsertAll(listOf(local))
+
+        val again = WorkoutsRepositoryImpl(
+            dao,
+            catalog = catalogExercises.map { exercise ->
+                if (exercise.id == bench.id) exercise.copy(name = "Updated Bench") else exercise
+            },
+            repdbCommit = "commit-a",
+        )
+
+        assert(again.exercises().first().single { it.id == bench.id }.name == "Local Name")
+    }
+
+    @Test
     fun `catalog refresh updates shipped rows and leaves import and user rows`() = runTest {
         val dao = FakeExerciseDao()
         val bench = catalogExercises.first { it.id == "bench-press" }
@@ -305,7 +337,7 @@ class WorkoutsRepositoryImplTest {
         )
         val user = ExerciseDefinition(id = "my-curl", name = "My Curl")
         dao.upsertAll(listOf(user.toEntity(source = ExerciseSource.USER, isArchived = true)))
-        val seeded = WorkoutsRepositoryImpl(dao)
+        val seeded = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
         seeded.importHistory(
             plans = emptyList(),
             sessions = emptyList(),
@@ -320,6 +352,7 @@ class WorkoutsRepositoryImplTest {
                     else -> exercise
                 }
             } + imported.copy(name = "Shipped Crunch") + user.copy(name = "Shipped Curl"),
+            repdbCommit = "commit-b",
         )
 
         val stored = refreshed.exercises().first()
@@ -332,6 +365,7 @@ class WorkoutsRepositoryImplTest {
         assert(entities.single { it.id == imported.id }.source == ExerciseSource.IMPORT)
         assert(entities.single { it.id == user.id }.source == ExerciseSource.USER)
         assert(entities.single { it.id == user.id }.isArchived)
+        assert(dao.catalogCommit(REPDB_CATALOG_ROW_ID) == "commit-b")
     }
 
     private fun repository(): WorkoutsRepository = WorkoutsRepositoryImpl(FakeExerciseDao())
