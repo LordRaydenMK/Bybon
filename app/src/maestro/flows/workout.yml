@@ -64,7 +64,8 @@ appId: dev.sanastasov.bybon.debug
       point: "90%, 50%"
 - eraseText: 8
 - inputText: "10"
-- hideKeyboard
+# hideKeyboard uses Back when the IME is already gone, which pops the session to Main.
+- tapOn: "Full body workout routine variant A"
 - assertVisible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."
 - assertVisible:
       text: "10"
