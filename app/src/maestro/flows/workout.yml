@@ -1,6 +1,7 @@
 appId: dev.sanastasov.bybon.debug
 ---
-- launchApp
+- launchApp:
+    clearState: true
 - assertVisible: "Bybon"
 - assertVisible: "Full Body A"
 - tapOn: "Start Workout"
