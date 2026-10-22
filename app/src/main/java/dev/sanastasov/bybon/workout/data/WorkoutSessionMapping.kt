@@ -68,13 +68,6 @@ internal fun WorkoutSession.toWrite(sessionId: Long = 0): WorkoutSessionWrite {
     return WorkoutSessionWrite(header, exercises)
 }
 
-internal fun List<WorkoutSessionTree>.toDomainSessions(
-    exercises: List<ExerciseEntity>,
-): List<WorkoutSession> {
-    val definitions = exercises.associate { it.id to it.toDefinition() }
-    return mapNotNull { it.toDomainOrNull(definitions) }
-}
-
 internal fun List<WorkoutSessionEntity>.toDomainSessions(
     lines: List<WorkoutSessionExerciseEntity>,
     sets: List<WorkoutSetEntity>,
@@ -92,34 +85,26 @@ internal fun List<WorkoutSessionEntity>.toDomainSessions(
     }
 }
 
-internal fun WorkoutSessionTree.toDomainOrNull(
-    exercises: Map<String, ExerciseDefinition>,
-): WorkoutSession? = session.toDomainOrNull(
-    lines = this.exercises.map { it.exercise },
-    setsByExercise = this.exercises.associate { it.exercise.id to it.sets },
-    exercises = exercises,
-)
-
 internal fun WorkoutSessionEntity.toDomainOrNull(
     lines: List<WorkoutSessionExerciseEntity>,
     setsByExercise: Map<Long, List<WorkoutSetEntity>>,
     exercises: Map<String, ExerciseDefinition>,
 ): WorkoutSession? {
-    if (lines.isEmpty()) return null
-    val mapped = lines.sortedBy { it.position }.map { line ->
-        val definition = exercises[line.exerciseId] ?: return null
+    val mapped = lines.sortedBy { it.position }.mapNotNull { line ->
+        val definition = exercises[line.exerciseId] ?: return@mapNotNull null
         val setRows = setsByExercise[line.id].orEmpty()
-        if (setRows.isEmpty()) return null
-        line.toWorkoutExercise(setRows, definition)
+        setRows.takeIf { it.isNotEmpty() }?.let { line.toWorkoutExercise(it, definition) }
     }
-    return WorkoutSession(
-        planId = WorkoutPlanId(planId),
-        planName = planName,
-        note = note,
-        exercises = mapped,
-        startedAt = startedAt,
-        duration = durationSeconds?.seconds,
-    )
+    return mapped.takeIf { it.isNotEmpty() && it.size == lines.size }?.let { exercisesMapped ->
+        WorkoutSession(
+            planId = WorkoutPlanId(planId),
+            planName = planName,
+            note = note,
+            exercises = exercisesMapped,
+            startedAt = startedAt,
+            duration = durationSeconds?.seconds,
+        )
+    }
 }
 
 internal fun WorkoutSessionExerciseEntity.toWorkoutExercise(

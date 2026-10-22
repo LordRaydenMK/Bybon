@@ -115,10 +115,12 @@ class WorkoutsRepositoryImpl internal constructor(
         ensureCatalog()
         emitAll(
             combine(
-                workoutSessionDao.observeSessionTrees(),
+                workoutSessionDao.observeSessions(),
+                workoutSessionDao.observeSessionExercises(),
+                workoutSessionDao.observeSets(),
                 exerciseDao.observeAll(),
-            ) { sessions, exercises ->
-                sessions.toDomainSessions(exercises)
+            ) { sessions, lines, sets, exercises ->
+                sessions.toDomainSessions(lines, sets, exercises)
             },
         )
     }
@@ -180,10 +182,15 @@ class WorkoutsRepositoryImpl internal constructor(
     }
 
     private suspend fun WorkoutSessionEntity.toDomainSession(): WorkoutSession {
-        val tree = checkNotNull(workoutSessionDao.sessionTree(id)) { "Session $id is missing" }
-        val exercises = exerciseDao.observeAll().first()
-        return checkNotNull(listOf(tree).toDomainSessions(exercises).singleOrNull()) {
-            "Session $id has no exercises"
+        val lines = workoutSessionDao.exercisesForSession(id)
+        val sets = if (lines.isEmpty()) {
+            emptyList()
+        } else {
+            workoutSessionDao.setsForExercises(lines.map { it.id })
         }
+        val exercises = exerciseDao.observeAll().first()
+        return checkNotNull(
+            listOf(this).toDomainSessions(lines, sets, exercises).singleOrNull(),
+        ) { "Session $id has no exercises" }
     }
 }

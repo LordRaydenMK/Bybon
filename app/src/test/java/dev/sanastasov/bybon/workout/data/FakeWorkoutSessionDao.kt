@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.workout.data
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
 
 class FakeWorkoutSessionDao(
     private val exerciseDao: ExerciseDao = FakeExerciseDao(),
@@ -16,14 +15,6 @@ class FakeWorkoutSessionDao(
     private var nextSessionId = 1L
     private var nextExerciseId = 1L
     private var nextSetId = 1L
-
-    override fun observeSessionTrees(): Flow<List<WorkoutSessionTree>> =
-        combine(sessions, exercises, sets) { sessionRows, exerciseRows, setRows ->
-            sessionRows.toTrees(exerciseRows, setRows)
-        }
-
-    override suspend fun sessionTree(id: Long): WorkoutSessionTree? =
-        sessions.value.toTrees(exercises.value, sets.value).firstOrNull { it.session.id == id }
 
     override fun observeSessions(): Flow<List<WorkoutSessionEntity>> = sessions
 
@@ -110,24 +101,5 @@ class FakeWorkoutSessionDao(
 
     override suspend fun insertImportedPlanExercises(exercises: List<WorkoutPlanExerciseEntity>) {
         workoutPlanDao.insertPlanExercises(exercises)
-    }
-}
-
-private fun List<WorkoutSessionEntity>.toTrees(
-    exerciseRows: List<WorkoutSessionExerciseEntity>,
-    setRows: List<WorkoutSetEntity>,
-): List<WorkoutSessionTree> {
-    val setsByExercise = setRows.groupBy { it.sessionExerciseId }
-    val exercisesBySession = exerciseRows.groupBy { it.sessionId }
-    return map { session ->
-        WorkoutSessionTree(
-            session = session,
-            exercises = exercisesBySession[session.id].orEmpty().map { exercise ->
-                WorkoutSessionExerciseWithSets(
-                    exercise = exercise,
-                    sets = setsByExercise[exercise.id].orEmpty(),
-                )
-            },
-        )
     }
 }

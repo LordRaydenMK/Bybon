@@ -12,14 +12,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface WorkoutSessionDao {
 
-    @Transaction
-    @Query("SELECT * FROM workout_session ORDER BY rowid")
-    fun observeSessionTrees(): Flow<List<WorkoutSessionTree>>
-
-    @Transaction
-    @Query("SELECT * FROM workout_session WHERE id = :id")
-    suspend fun sessionTree(id: Long): WorkoutSessionTree?
-
     @Query("SELECT * FROM workout_session ORDER BY rowid")
     fun observeSessions(): Flow<List<WorkoutSessionEntity>>
 
