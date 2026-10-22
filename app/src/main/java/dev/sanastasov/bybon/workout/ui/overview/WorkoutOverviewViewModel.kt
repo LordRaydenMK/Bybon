@@ -78,6 +78,9 @@ class WorkoutOverviewViewModel(
                 )
             }
 
+            is WorkoutOverviewAction.OnOpenExerciseDetails ->
+                _effects.trySend(WorkoutOverviewEffect.OpenExerciseDetails(action.exerciseId))
+
             is WorkoutOverviewAction.OnExercisePicked -> coroutineScope.launch {
                 val exercise = repository.requireExercise(action.exerciseId)
                 uiState.filterNotNull().first()

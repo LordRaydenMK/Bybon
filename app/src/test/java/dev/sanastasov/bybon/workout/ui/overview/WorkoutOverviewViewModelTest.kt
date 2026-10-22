@@ -292,6 +292,30 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
+    fun `opening details emits the exercise id`() = runTest {
+        val viewModel = WorkoutOverviewViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
+            backgroundScope,
+        )
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+
+            viewModel.onAction(
+                WorkoutOverviewAction.OnOpenExerciseDetails(draft.exercises.first().id),
+            )
+
+            assert(
+                viewModel.effects.first() == WorkoutOverviewEffect.OpenExerciseDetails(
+                    draft.exercises.first().id,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `picked exercise stays in memory until start and does not change the plan`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),

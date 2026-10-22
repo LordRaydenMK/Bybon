@@ -15,6 +15,7 @@ import androidx.navigation3.ui.NavDisplay
 import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
+import dev.sanastasov.bybon.workout.ui.details.ExerciseDetailsScreen
 import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryScreen
 import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import dev.sanastasov.bybon.workout.ui.library.ExerciseLibraryScreen
@@ -69,6 +70,9 @@ fun MainModule.BybonApp() {
                         onNavigateToExerciseLibrary = { existingExerciseIds ->
                             backStack.add(Screen.ExerciseLibrary(existingExerciseIds))
                         },
+                        onNavigateToExerciseDetails = { exerciseId ->
+                            backStack.add(Screen.ExerciseDetails(exerciseId))
+                        },
                     )
                 }
 
@@ -79,6 +83,13 @@ fun MainModule.BybonApp() {
                         onNavigateToExerciseLibrary = { existingExerciseIds ->
                             backStack.add(Screen.ExerciseLibrary(existingExerciseIds))
                         },
+                    )
+                }
+
+                is Screen.ExerciseDetails -> NavEntry(key) {
+                    ExerciseDetailsScreen(
+                        exerciseId = key.exerciseId,
+                        onNavigateBack = { backStack.removeLastOrNull() },
                     )
                 }
 

@@ -56,6 +56,7 @@ fun WorkoutModule.WorkoutOverviewScreen(
     onBack: () -> Unit,
     onStartSession: () -> Unit,
     onNavigateToExerciseLibrary: (List<String>) -> Unit,
+    onNavigateToExerciseDetails: (String) -> Unit,
 ) {
     val viewModel = retain {
         WorkoutOverviewViewModel(planId, workoutsRepository, it.coroutineScope)
@@ -72,6 +73,9 @@ fun WorkoutModule.WorkoutOverviewScreen(
 
             is WorkoutOverviewEffect.OpenExerciseLibrary ->
                 onNavigateToExerciseLibrary(effect.existingExerciseIds)
+
+            is WorkoutOverviewEffect.OpenExerciseDetails ->
+                onNavigateToExerciseDetails(effect.exerciseId)
         }
     }
     uiState?.let {
@@ -175,6 +179,9 @@ private fun LazyItemScope.OverviewExerciseCard(
                 null
             } else {
                 { onAction(WorkoutOverviewAction.OnRemoveExercise(exercise)) }
+            },
+            onTitleClick = {
+                onAction(WorkoutOverviewAction.OnOpenExerciseDetails(exercise.id))
             },
         )
     }
