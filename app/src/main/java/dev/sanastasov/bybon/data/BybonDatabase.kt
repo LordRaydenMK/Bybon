@@ -9,14 +9,26 @@ import dev.sanastasov.bybon.bodyweight.data.DietPhaseEntity
 import dev.sanastasov.bybon.bodyweight.data.WeightDao
 import dev.sanastasov.bybon.bodyweight.data.WeightEntryEntity
 import dev.sanastasov.bybon.data.converter.LocalDateConverter
+import dev.sanastasov.bybon.workout.data.ExerciseDao
+import dev.sanastasov.bybon.workout.data.ExerciseEntity
+import dev.sanastasov.bybon.workout.data.RepdbCatalogEntity
 
 @Database(
-    entities = [WeightEntryEntity::class, DietPhaseEntity::class],
-    version = 2,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    entities = [
+        WeightEntryEntity::class,
+        DietPhaseEntity::class,
+        ExerciseEntity::class,
+        RepdbCatalogEntity::class,
+    ],
+    version = 3,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2),
+        AutoMigration(from = 2, to = 3),
+    ],
 )
 @ColumnTypeConverters(LocalDateConverter::class)
 abstract class BybonDatabase : RoomDatabase() {
     abstract fun weightEntryDao(): WeightDao
     abstract fun dietPhaseDao(): DietPhaseDao
+    abstract fun exerciseDao(): ExerciseDao
 }

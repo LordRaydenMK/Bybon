@@ -23,14 +23,14 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `exposes the built-in exercise catalog`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
 
         assert(repository.exercises().first() == catalogExercises)
     }
 
     @Test
     fun `importHistory appends new exercises to the catalog`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val crunch = ExerciseDefinition(
             "crunch-machine",
             "Crunch (Machine)",
@@ -52,7 +52,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `default workoutPlans omit the archived plan`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
 
         assert(
             repository.workoutPlans().first() ==
@@ -66,7 +66,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `archivePlan hides the plan from default workoutPlans`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val before = repository.workoutPlans().first()
         val planId = before.first().id
 
@@ -82,7 +82,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `archivePlan false unarchives a plan`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
 
         repository.archivePlan(upperBodyA.id, archived = false)
 
@@ -94,7 +94,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `updatePlan transforms only the matching plan`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
 
         repository.updatePlan(fullBodyA.id) { it.addWorkSet("bench-press") }
 
@@ -108,7 +108,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `deleteWorkout removes the session`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val started = fullBodyA.toWorkoutSession()
         repository.updateWorkout(started)
 
@@ -119,7 +119,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `updateWorkout does not replace an in-progress session with an overview draft`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val started = fullBodyA.toWorkoutSession()
         repository.updateWorkout(started)
 
@@ -130,7 +130,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `importHistory skips a session that is already stored`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val session = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -159,7 +159,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `importHistory appends only the session whose id is new`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34)
         val kept = completedSession(
             planId = "full-body-a",
@@ -193,7 +193,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `importHistory keeps the first session when one file repeats an id`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val first = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -215,7 +215,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `importHistory keeps sessions that share a start time on different plans`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34)
         val fullBody = completedSession(
             planId = "full-body-a",
@@ -248,7 +248,7 @@ class WorkoutsRepositoryImplTest {
 
     @Test
     fun `importHistory does not insert a plan or exercise id that already exists`() = runTest {
-        val repository: WorkoutsRepository = WorkoutsRepositoryImpl()
+        val repository: WorkoutsRepository = repository()
         val extra = fullBodyA.copy(id = WorkoutPlanId("extra"), name = "Extra")
         val created = repository.importHistory(
             plans = listOf(extra),
@@ -269,4 +269,104 @@ class WorkoutsRepositoryImplTest {
         assert(repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().last() == extra)
         assert(repository.exercises().first().single { it.id == bench.id } == bench)
     }
+
+    @Test
+    fun `importHistory keeps the first exercise when one file repeats an id`() = runTest {
+        val repository = repository()
+        val first = ExerciseDefinition(
+            "crunch-machine",
+            "Crunch (Machine)",
+            BodyPart.Core,
+            Equipment.Machine,
+            Mechanic.Isolation,
+        )
+
+        val result = repository.importHistory(
+            plans = emptyList(),
+            sessions = emptyList(),
+            exercises = listOf(first, first.copy(name = "Second")),
+        )
+
+        assert(result.exercises == listOf(first))
+        assert(repository.exercises().first().last() == first)
+        assert(repository.exercises().first().count { it.id == first.id } == 1)
+    }
+
+    @Test
+    fun `reading plans seeds the shipped catalog once for this repdb commit`() = runTest {
+        val dao = FakeExerciseDao()
+        val repository = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+
+        repository.workoutPlans().first()
+
+        assert(dao.catalogCommit() == "commit-a")
+        assert(dao.observeAll().first().map { it.toDefinition() } == catalogExercises)
+        assert(repository.exercises().first() == catalogExercises)
+    }
+
+    @Test
+    fun `the same repdb commit does not overwrite shipped rows`() = runTest {
+        val dao = FakeExerciseDao()
+        val bench = catalogExercises.first { it.id == "bench-press" }
+        val seeded = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+        seeded.exercises().first()
+        val local = bench.toEntity(source = ExerciseSource.SHIPPED).copy(name = "Local Name")
+        dao.upsertAll(listOf(local))
+
+        val again = WorkoutsRepositoryImpl(
+            dao,
+            catalog = catalogExercises.map { exercise ->
+                if (exercise.id == bench.id) exercise.copy(name = "Updated Bench") else exercise
+            },
+            repdbCommit = "commit-a",
+        )
+
+        assert(again.exercises().first().single { it.id == bench.id }.name == "Local Name")
+    }
+
+    @Test
+    fun `catalog refresh updates shipped rows and leaves import and user rows`() = runTest {
+        val dao = FakeExerciseDao()
+        val bench = catalogExercises.first { it.id == "bench-press" }
+        val imported = ExerciseDefinition(
+            "crunch-machine",
+            "Crunch (Machine)",
+            BodyPart.Core,
+            Equipment.Machine,
+            Mechanic.Isolation,
+        )
+        val user = ExerciseDefinition(id = "my-curl", name = "My Curl")
+        dao.upsertAll(listOf(user.toEntity(source = ExerciseSource.USER, isArchived = true)))
+        val seeded = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+        seeded.importHistory(
+            plans = emptyList(),
+            sessions = emptyList(),
+            exercises = listOf(imported),
+        )
+
+        val refreshed = WorkoutsRepositoryImpl(
+            dao,
+            catalog = catalogExercises.map { exercise ->
+                when (exercise.id) {
+                    bench.id -> exercise.copy(name = "Updated Bench")
+                    else -> exercise
+                }
+            } + imported.copy(name = "Shipped Crunch") + user.copy(name = "Shipped Curl"),
+            repdbCommit = "commit-b",
+        )
+
+        val stored = refreshed.exercises().first()
+        assert(stored.single { it.id == bench.id }.name == "Updated Bench")
+        assert(stored.single { it.id == imported.id } == imported)
+        assert(stored.single { it.id == user.id } == user)
+        val entities = dao.observeAll().first()
+        assert(entities.single { it.id == bench.id }.source == ExerciseSource.SHIPPED)
+        assert(entities.single { it.id == bench.id }.isArchived == false)
+        assert(entities.single { it.id == imported.id }.source == ExerciseSource.IMPORT)
+        assert(entities.single { it.id == user.id }.source == ExerciseSource.USER)
+        assert(entities.single { it.id == user.id }.isArchived)
+        assert(dao.catalogCommit() == "commit-b")
+    }
+
+    private fun repository(): WorkoutsRepository = WorkoutsRepositoryImpl(FakeExerciseDao())
 }

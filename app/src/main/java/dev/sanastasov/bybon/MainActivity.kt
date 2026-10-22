@@ -14,9 +14,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val dbModule = DbModule.create(application)
         val module = MainModule.create(
-            BodyWeightModule.create(DbModule.create(application)),
-            WorkoutModule.create(),
+            BodyWeightModule.create(dbModule),
+            WorkoutModule.create(dbModule),
         )
         setContent {
             BybonTheme {

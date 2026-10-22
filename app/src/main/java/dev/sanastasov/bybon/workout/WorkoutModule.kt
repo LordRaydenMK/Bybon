@@ -1,19 +1,25 @@
 package dev.sanastasov.bybon.workout
 
+import dev.sanastasov.bybon.data.DbModule
 import dev.sanastasov.bybon.workout.data.WorkoutsRepositoryImpl
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 
-interface WorkoutModule {
+interface WorkoutModule : DbModule {
 
     val workoutsRepository: WorkoutsRepository
 
     companion object {
 
-        private val repository = WorkoutsRepositoryImpl()
+        // Plans and sessions stay in memory, so one repository outlives Activity recreation.
+        private var repository: WorkoutsRepository? = null
 
-        fun create(): WorkoutModule = object : WorkoutModule {
-
-            override val workoutsRepository: WorkoutsRepository = repository
+        fun create(dbModule: DbModule): WorkoutModule {
+            val workouts = repository ?: WorkoutsRepositoryImpl(
+                exerciseDao = dbModule.bybonDb.exerciseDao(),
+            ).also { repository = it }
+            return object : WorkoutModule, DbModule by dbModule {
+                override val workoutsRepository: WorkoutsRepository = workouts
+            }
         }
     }
 }

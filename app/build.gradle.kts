@@ -169,6 +169,7 @@ dependencies {
     ksp(libs.androidx.room3.compiler)
 
     implementation(libs.kotlinx.serialization.core)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.retained)
     implementation(libs.compose.charts)

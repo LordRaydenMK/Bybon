@@ -12,29 +12,49 @@ import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-class WorkoutsRepositoryImpl : WorkoutsRepository {
+class WorkoutsRepositoryImpl internal constructor(
+    private val exerciseDao: ExerciseDao,
+    private val catalog: List<ExerciseDefinition> = catalogExercises,
+    private val repdbCommit: String = repdbCatalogCommit,
+) : WorkoutsRepository {
 
-    private val exercises = MutableStateFlow(catalogExercises)
     private val plans = MutableStateFlow(listOf(fullBodyA, fullBodyB, upperBodyA))
     private val sessions = MutableStateFlow<List<WorkoutSession>>(emptyList())
+    private val seedLock = Mutex()
 
-    override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
+    @Volatile
+    private var seededCommit: String? = null
 
-    override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> =
-        plans.map { allPlans ->
-            when (filter) {
-                WorkoutPlansFilter.UnarchivedPlans -> allPlans.filter { !it.isArchived }
-                WorkoutPlansFilter.AllPlans -> allPlans
-            }
-        }
+    override fun exercises(): Flow<List<ExerciseDefinition>> = flow {
+        ensureCatalog()
+        emitAll(exerciseDao.observeAll().map { entities -> entities.map { it.toDefinition() } })
+    }
+
+    override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> = flow {
+        ensureCatalog()
+        emitAll(
+            plans.map { allPlans ->
+                when (filter) {
+                    WorkoutPlansFilter.UnarchivedPlans -> allPlans.filter { !it.isArchived }
+                    WorkoutPlansFilter.AllPlans -> allPlans
+                }
+            },
+        )
+    }
 
     override suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean) {
+        ensureCatalog()
         plans.update { list ->
             list.map { plan ->
                 if (plan.id == planId) plan.copy(isArchived = archived) else plan
@@ -46,6 +66,7 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
         planId: WorkoutPlanId,
         transform: (WorkoutPlan) -> WorkoutPlan,
     ) {
+        ensureCatalog()
         plans.update { list ->
             list.map { plan ->
                 if (plan.id == planId) transform(plan) else plan
@@ -54,6 +75,7 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
     }
 
     override suspend fun updateWorkout(session: WorkoutSession) {
+        ensureCatalog()
         sessions.update { list ->
             val index = list.indexOfFirst {
                 it.planId == session.planId && it.state !is WorkoutState.Completed
@@ -74,17 +96,32 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
     }
 
     override suspend fun deleteWorkout(sessionId: WorkoutSessionId) {
+        ensureCatalog()
         sessions.update { list -> list.filterNot { it.id == sessionId } }
     }
 
-    override fun workoutSessions(): Flow<List<WorkoutSession>> = sessions
+    override fun workoutSessions(): Flow<List<WorkoutSession>> = flow {
+        ensureCatalog()
+        emitAll(sessions)
+    }
 
     override suspend fun importHistory(
         plans: List<WorkoutPlan>,
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
     ): ImportHistoryResult {
-        val addedExercises = this.exercises.appendWithoutExisting(exercises) { it.id }
+        val addedExercises = seedLock.withLock {
+            seedLocked()
+            if (exercises.isEmpty()) {
+                emptyList()
+            } else {
+                val added = exercises.withoutExistingIds(exerciseDao.ids().toSet()) { it.id }
+                if (added.isNotEmpty()) {
+                    exerciseDao.upsertAll(added.map { it.toEntity(source = ExerciseSource.IMPORT) })
+                }
+                added
+            }
+        }
         val addedPlans = this.plans.appendWithoutExisting(plans) { it.id }
         val addedSessions = this.sessions.appendWithoutExisting(sessions) { it.id }
         return ImportHistoryResult(
@@ -93,6 +130,26 @@ class WorkoutsRepositoryImpl : WorkoutsRepository {
             exercises = addedExercises,
             sessionsSkipped = sessions.size - addedSessions.size,
         )
+    }
+
+    private suspend fun ensureCatalog() {
+        if (seededCommit == repdbCommit) return
+        seedLock.withLock { seedLocked() }
+    }
+
+    private suspend fun seedLocked() {
+        if (seededCommit == repdbCommit) return
+        if (exerciseDao.catalogCommit() != repdbCommit) {
+            val protectedIds = exerciseDao.idsWhereSourceIsNot(ExerciseSource.SHIPPED).toSet()
+            val rows = catalog
+                .map { it.toEntity(source = ExerciseSource.SHIPPED) }
+                .filter { it.id !in protectedIds }
+            if (rows.isNotEmpty()) {
+                exerciseDao.upsertAll(rows)
+            }
+            exerciseDao.insertCatalog(RepdbCatalogEntity(commit = repdbCommit))
+        }
+        seededCommit = repdbCommit
     }
 
     private fun <T, I> MutableStateFlow<List<T>>.appendWithoutExisting(
