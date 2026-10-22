@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.data
 
 import androidx.room3.Dao
+import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -18,12 +19,12 @@ interface ExerciseDao {
     @Query("SELECT id FROM exercise WHERE source != :source")
     suspend fun idsWhereSourceIsNot(source: String): List<String>
 
-    @Query("SELECT repdb_commit FROM repdb_catalog WHERE id = :id")
-    suspend fun catalogCommit(id: Int): String?
+    @Query("SELECT repdb_commit FROM repdb_catalog ORDER BY id DESC LIMIT 1")
+    suspend fun catalogCommit(): String?
 
     @Upsert
     suspend fun upsertAll(entities: List<ExerciseEntity>)
 
-    @Upsert
-    suspend fun upsertCatalog(catalog: RepdbCatalogEntity)
+    @Insert
+    suspend fun insertCatalog(catalog: RepdbCatalogEntity)
 }

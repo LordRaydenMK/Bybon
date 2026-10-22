@@ -299,7 +299,7 @@ class WorkoutsRepositoryImplTest {
 
         repository.workoutPlans().first()
 
-        assert(dao.catalogCommit(REPDB_CATALOG_ROW_ID) == "commit-a")
+        assert(dao.catalogCommit() == "commit-a")
         assert(dao.observeAll().first().map { it.toDefinition() } == catalogExercises)
         assert(repository.exercises().first() == catalogExercises)
     }
@@ -365,7 +365,7 @@ class WorkoutsRepositoryImplTest {
         assert(entities.single { it.id == imported.id }.source == ExerciseSource.IMPORT)
         assert(entities.single { it.id == user.id }.source == ExerciseSource.USER)
         assert(entities.single { it.id == user.id }.isArchived)
-        assert(dao.catalogCommit(REPDB_CATALOG_ROW_ID) == "commit-b")
+        assert(dao.catalogCommit() == "commit-b")
     }
 
     private fun repository(): WorkoutsRepository = WorkoutsRepositoryImpl(FakeExerciseDao())

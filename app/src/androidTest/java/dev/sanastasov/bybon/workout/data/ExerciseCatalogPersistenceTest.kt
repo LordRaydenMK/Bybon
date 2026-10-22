@@ -32,15 +32,22 @@ class ExerciseCatalogPersistenceTest {
     }
 
     @Test
-    fun freshDatabaseSeedsShippedCatalogAndImportDoesNotClobberIds() = runBlocking {
+    fun freshDatabaseSeedsTheShippedCatalog() = runBlocking {
+        val dao = db.exerciseDao()
+        val repository = WorkoutsRepositoryImpl(dao)
+
+        assert(repository.exercises().first() == catalogExercises)
+        assert(dao.catalogCommit() == repdbCatalogCommit)
+        assert(dao.observeAll().first().all { it.source == ExerciseSource.SHIPPED })
+        assert(dao.observeAll().first().all { !it.isArchived })
+    }
+
+    @Test
+    fun importDoesNotClobberExistingIds() = runBlocking {
         val dao = db.exerciseDao()
         val repository = WorkoutsRepositoryImpl(dao)
         val bench = catalogExercises.first { it.id == "bench-press" }
-
-        assert(repository.exercises().first() == catalogExercises)
-        assert(dao.catalogCommit(REPDB_CATALOG_ROW_ID) == repdbCatalogCommit)
-        assert(dao.observeAll().first().all { it.source == ExerciseSource.SHIPPED })
-        assert(dao.observeAll().first().all { !it.isArchived })
+        repository.exercises().first()
 
         val crunch = ExerciseDefinition(
             "crunch-machine",
@@ -73,5 +80,6 @@ class ExerciseCatalogPersistenceTest {
         val afterRefresh = refreshed.exercises().first()
         assert(afterRefresh.single { it.id == bench.id }.name == "Updated Bench")
         assert(afterRefresh.single { it.id == crunch.id } == crunch)
+        assert(dao.catalogCommit() == "next-commit")
     }
 }

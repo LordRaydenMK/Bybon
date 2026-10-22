@@ -139,7 +139,7 @@ class WorkoutsRepositoryImpl internal constructor(
 
     private suspend fun seedLocked() {
         if (seededCommit == repdbCommit) return
-        if (exerciseDao.catalogCommit(REPDB_CATALOG_ROW_ID) != repdbCommit) {
+        if (exerciseDao.catalogCommit() != repdbCommit) {
             val protectedIds = exerciseDao.idsWhereSourceIsNot(ExerciseSource.SHIPPED).toSet()
             val rows = catalog
                 .map { it.toEntity(source = ExerciseSource.SHIPPED) }
@@ -147,7 +147,7 @@ class WorkoutsRepositoryImpl internal constructor(
             if (rows.isNotEmpty()) {
                 exerciseDao.upsertAll(rows)
             }
-            exerciseDao.upsertCatalog(RepdbCatalogEntity(commit = repdbCommit))
+            exerciseDao.insertCatalog(RepdbCatalogEntity(commit = repdbCommit))
         }
         seededCommit = repdbCommit
     }

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "5ac467388e14d5bbff85e282de95b866",
+    "identityHash": "41148f8f04fc7a3d0b1d4be622ff04f2",
     "entities": [
       {
         "tableName": "weight_entry",
@@ -238,7 +238,7 @@
       },
       {
         "tableName": "repdb_catalog",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `repdb_commit` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `repdb_commit` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -254,7 +254,7 @@
           }
         ],
         "primaryKey": {
-          "autoGenerate": false,
+          "autoGenerate": true,
           "columnNames": [
             "id"
           ]
@@ -263,7 +263,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5ac467388e14d5bbff85e282de95b866')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '41148f8f04fc7a3d0b1d4be622ff04f2')"
     ]
   }
 }

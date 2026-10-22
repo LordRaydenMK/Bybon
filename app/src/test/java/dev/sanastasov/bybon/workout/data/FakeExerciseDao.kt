@@ -15,8 +15,7 @@ class FakeExerciseDao : ExerciseDao {
     override suspend fun idsWhereSourceIsNot(source: String): List<String> =
         rows.value.filter { it.source != source }.map { it.id }
 
-    override suspend fun catalogCommit(id: Int): String? =
-        catalogCommit.takeIf { id == REPDB_CATALOG_ROW_ID }
+    override suspend fun catalogCommit(): String? = catalogCommit
 
     override suspend fun upsertAll(entities: List<ExerciseEntity>) {
         if (entities.isEmpty()) return
@@ -32,8 +31,7 @@ class FakeExerciseDao : ExerciseDao {
         rows.value = current
     }
 
-    override suspend fun upsertCatalog(catalog: RepdbCatalogEntity) {
-        check(catalog.id == REPDB_CATALOG_ROW_ID)
+    override suspend fun insertCatalog(catalog: RepdbCatalogEntity) {
         catalogCommit = catalog.commit
     }
 }
