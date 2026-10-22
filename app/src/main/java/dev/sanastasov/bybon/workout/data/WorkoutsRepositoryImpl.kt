@@ -75,7 +75,9 @@ class WorkoutsRepositoryImpl internal constructor(
     ) {
         seedLock.withLock {
             seedLocked()
-            val entity = workoutPlanDao.planById(planId.id) ?: return
+            val entity = requireNotNull(workoutPlanDao.planById(planId.id)) {
+                "Plan ${planId.id} does not exist"
+            }
             val lines = workoutPlanDao.exercisesForPlan(planId.id)
             val exercises = exerciseDao.observeAll().first()
                 .map { it.toDefinition() }

@@ -108,6 +108,22 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
+    fun `updatePlan fails when the plan does not exist`() = runTest {
+        val repository: WorkoutsRepository = repository()
+
+        val thrown = runCatching {
+            repository.updatePlan(WorkoutPlanId("missing")) { it }
+        }.exceptionOrNull()
+
+        assert(thrown is IllegalArgumentException)
+        assert(thrown?.message == "Plan missing does not exist")
+        assert(
+            repository.workoutPlans(WorkoutPlansFilter.AllPlans).first() ==
+                listOf(fullBodyA, fullBodyB, upperBodyA),
+        )
+    }
+
+    @Test
     fun `deleteWorkout removes the session`() = runTest {
         val repository: WorkoutsRepository = repository()
         val started = fullBodyA.toWorkoutSession()
