@@ -71,6 +71,18 @@ class WorkoutSessionMappingTest {
     }
 
     @Test
+    fun `completed session with no elapsed duration stores 0 not null`() {
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
+        ).copy(duration = null)
+
+        assert(session.toWrite(sessionId = 1).header.durationSeconds == 0)
+    }
+
+    @Test
     fun `incomplete session snapshots are omitted until children exist`() {
         val header = WorkoutSessionEntity(
             id = 1,

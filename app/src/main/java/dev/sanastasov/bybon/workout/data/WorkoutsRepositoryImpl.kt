@@ -99,7 +99,7 @@ class WorkoutsRepositoryImpl internal constructor(
                 }
                 workoutSessionDao.replaceSessionTree(existing.id, session.toWrite(existing.id))
             } else {
-                workoutSessionDao.insertSessionTree(session.toWrite())
+                workoutSessionDao.insertSessionTree(session.toWrite(sessionId = 0))
             }
         }
     }
@@ -142,7 +142,7 @@ class WorkoutsRepositoryImpl internal constructor(
                 exercises = addedExercises.map { it.toEntity(source = ExerciseSource.IMPORT) },
                 plans = addedPlans.map { it.toEntity() },
                 planExercises = addedPlans.flatMap { it.toExerciseEntities() },
-                sessions = addedSessions.map { it.toWrite() },
+                sessions = addedSessions.map { it.toWrite(sessionId = 0) },
             )
             return ImportHistoryResult(
                 plans = addedPlans,

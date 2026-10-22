@@ -22,9 +22,11 @@ data class WorkoutSessionExerciseWrite(
     val sets: List<WorkoutSetEntity>,
 )
 
-internal fun WorkoutSession.toWrite(sessionId: Long = 0): WorkoutSessionWrite {
-    val durationSeconds = duration?.inWholeSeconds?.toInt()
-        ?: if (state is WorkoutState.Completed) 0 else null
+internal fun WorkoutSession.toWrite(sessionId: Long): WorkoutSessionWrite {
+    val durationSeconds = when (val workoutState = state) {
+        is WorkoutState.Completed -> workoutState.duration.inWholeSeconds.toInt()
+        else -> null
+    }
     val header = WorkoutSessionEntity(
         id = sessionId,
         planId = planId.id,
