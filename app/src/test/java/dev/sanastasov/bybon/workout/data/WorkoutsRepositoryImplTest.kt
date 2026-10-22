@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
@@ -295,7 +296,7 @@ class WorkoutsRepositoryImplTest {
     @Test
     fun `reading plans seeds the shipped catalog once for this repdb commit`() = runTest {
         val dao = FakeExerciseDao()
-        val repository = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+        val repository = repository(dao, repdbCommit = "commit-a")
 
         repository.workoutPlans().first()
 
@@ -308,12 +309,12 @@ class WorkoutsRepositoryImplTest {
     fun `the same repdb commit does not overwrite shipped rows`() = runTest {
         val dao = FakeExerciseDao()
         val bench = catalogExercises.first { it.id == "bench-press" }
-        val seeded = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+        val seeded = repository(dao, repdbCommit = "commit-a")
         seeded.exercises().first()
         val local = bench.toEntity(source = ExerciseSource.SHIPPED).copy(name = "Local Name")
         dao.upsertAll(listOf(local))
 
-        val again = WorkoutsRepositoryImpl(
+        val again = repository(
             dao,
             catalog = catalogExercises.map { exercise ->
                 if (exercise.id == bench.id) exercise.copy(name = "Updated Bench") else exercise
@@ -337,14 +338,14 @@ class WorkoutsRepositoryImplTest {
         )
         val user = ExerciseDefinition(id = "my-curl", name = "My Curl")
         dao.upsertAll(listOf(user.toEntity(source = ExerciseSource.USER, isArchived = true)))
-        val seeded = WorkoutsRepositoryImpl(dao, repdbCommit = "commit-a")
+        val seeded = repository(dao, repdbCommit = "commit-a")
         seeded.importHistory(
             plans = emptyList(),
             sessions = emptyList(),
             exercises = listOf(imported),
         )
 
-        val refreshed = WorkoutsRepositoryImpl(
+        val refreshed = repository(
             dao,
             catalog = catalogExercises.map { exercise ->
                 when (exercise.id) {
@@ -368,5 +369,34 @@ class WorkoutsRepositoryImplTest {
         assert(dao.catalogCommit() == "commit-b")
     }
 
-    private fun repository(): WorkoutsRepository = WorkoutsRepositoryImpl(FakeExerciseDao())
+    @Test
+    fun `edited and archived plans survive a new repository instance`() = runTest {
+        val exerciseDao = FakeExerciseDao()
+        val planDao = FakeWorkoutPlanDao()
+        val first = repository(exerciseDao, planDao)
+
+        first.updatePlan(fullBodyA.id) { it.addWorkSet("bench-press") }
+        first.archivePlan(fullBodyA.id, archived = true)
+
+        val second = repository(exerciseDao, planDao)
+        val stored = second.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+
+        assert(stored.first().isArchived)
+        assert(stored.first().sets.first().sets == 4)
+        assert(stored[1] == fullBodyB)
+        assert(stored.last() == upperBodyA)
+        assert(second.workoutPlans().first() == listOf(fullBodyB))
+    }
+
+    private fun repository(
+        exerciseDao: ExerciseDao = FakeExerciseDao(),
+        workoutPlanDao: WorkoutPlanDao = FakeWorkoutPlanDao(),
+        catalog: List<ExerciseDefinition> = catalogExercises,
+        repdbCommit: String = repdbCatalogCommit,
+    ): WorkoutsRepository = WorkoutsRepositoryImpl(
+        exerciseDao = exerciseDao,
+        workoutPlanDao = workoutPlanDao,
+        catalog = catalog,
+        repdbCommit = repdbCommit,
+    )
 }

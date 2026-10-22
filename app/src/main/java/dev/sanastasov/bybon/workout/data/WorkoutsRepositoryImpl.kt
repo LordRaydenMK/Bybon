@@ -16,20 +16,24 @@ import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+private val builtInPlans = listOf(fullBodyA, fullBodyB, upperBodyA)
+
 class WorkoutsRepositoryImpl internal constructor(
     private val exerciseDao: ExerciseDao,
+    private val workoutPlanDao: WorkoutPlanDao,
     private val catalog: List<ExerciseDefinition> = catalogExercises,
     private val repdbCommit: String = repdbCatalogCommit,
 ) : WorkoutsRepository {
 
-    private val plans = MutableStateFlow(listOf(fullBodyA, fullBodyB, upperBodyA))
     private val sessions = MutableStateFlow<List<WorkoutSession>>(emptyList())
     private val seedLock = Mutex()
 
@@ -44,21 +48,24 @@ class WorkoutsRepositoryImpl internal constructor(
     override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> = flow {
         ensureCatalog()
         emitAll(
-            plans.map { allPlans ->
+            combine(
+                workoutPlanDao.observePlans(),
+                workoutPlanDao.observePlanExercises(),
+                exerciseDao.observeAll(),
+            ) { plans, lines, exercises ->
+                val mapped = plans.toDomainPlans(lines, exercises)
                 when (filter) {
-                    WorkoutPlansFilter.UnarchivedPlans -> allPlans.filter { !it.isArchived }
-                    WorkoutPlansFilter.AllPlans -> allPlans
+                    WorkoutPlansFilter.UnarchivedPlans -> mapped.filter { !it.isArchived }
+                    WorkoutPlansFilter.AllPlans -> mapped
                 }
             },
         )
     }
 
     override suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean) {
-        ensureCatalog()
-        plans.update { list ->
-            list.map { plan ->
-                if (plan.id == planId) plan.copy(isArchived = archived) else plan
-            }
+        seedLock.withLock {
+            seedLocked()
+            workoutPlanDao.setArchived(planId.id, archived)
         }
     }
 
@@ -66,11 +73,16 @@ class WorkoutsRepositoryImpl internal constructor(
         planId: WorkoutPlanId,
         transform: (WorkoutPlan) -> WorkoutPlan,
     ) {
-        ensureCatalog()
-        plans.update { list ->
-            list.map { plan ->
-                if (plan.id == planId) transform(plan) else plan
-            }
+        seedLock.withLock {
+            seedLocked()
+            val entity = workoutPlanDao.planById(planId.id) ?: return
+            val lines = workoutPlanDao.exercisesForPlan(planId.id)
+            val exercises = exerciseDao.observeAll().first()
+                .map { it.toDefinition() }
+                .associateBy { it.id }
+            val current = entity.toDomain(lines, exercises) ?: return
+            val updated = transform(current)
+            workoutPlanDao.replacePlan(updated.toEntity(), updated.toExerciseEntities())
         }
     }
 
@@ -110,9 +122,11 @@ class WorkoutsRepositoryImpl internal constructor(
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
     ): ImportHistoryResult {
-        val addedExercises = seedLock.withLock {
+        val addedExercises: List<ExerciseDefinition>
+        val addedPlans: List<WorkoutPlan>
+        seedLock.withLock {
             seedLocked()
-            if (exercises.isEmpty()) {
+            addedExercises = if (exercises.isEmpty()) {
                 emptyList()
             } else {
                 val added = exercises.withoutExistingIds(exerciseDao.ids().toSet()) { it.id }
@@ -121,8 +135,14 @@ class WorkoutsRepositoryImpl internal constructor(
                 }
                 added
             }
+            addedPlans = plans.withoutExistingIds(workoutPlanDao.ids().toSet()) { it.id.id }
+            if (addedPlans.isNotEmpty()) {
+                workoutPlanDao.insertPlansWithExercises(
+                    addedPlans.map { it.toEntity() },
+                    addedPlans.flatMap { it.toExerciseEntities() },
+                )
+            }
         }
-        val addedPlans = this.plans.appendWithoutExisting(plans) { it.id }
         val addedSessions = this.sessions.appendWithoutExisting(sessions) { it.id }
         return ImportHistoryResult(
             plans = addedPlans,
@@ -148,6 +168,14 @@ class WorkoutsRepositoryImpl internal constructor(
                 exerciseDao.upsertAll(rows)
             }
             exerciseDao.insertCatalog(RepdbCatalogEntity(commit = repdbCommit))
+        }
+        val existingPlans = workoutPlanDao.ids().toSet()
+        val newPlans = builtInPlans.filter { it.id.id !in existingPlans }
+        if (newPlans.isNotEmpty()) {
+            workoutPlanDao.insertPlansWithExercises(
+                newPlans.map { it.toEntity() },
+                newPlans.flatMap { it.toExerciseEntities() },
+            )
         }
         seededCommit = repdbCommit
     }

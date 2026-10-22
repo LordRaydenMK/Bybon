@@ -12,6 +12,9 @@ import dev.sanastasov.bybon.data.converter.LocalDateConverter
 import dev.sanastasov.bybon.workout.data.ExerciseDao
 import dev.sanastasov.bybon.workout.data.ExerciseEntity
 import dev.sanastasov.bybon.workout.data.RepdbCatalogEntity
+import dev.sanastasov.bybon.workout.data.WorkoutPlanDao
+import dev.sanastasov.bybon.workout.data.WorkoutPlanEntity
+import dev.sanastasov.bybon.workout.data.WorkoutPlanExerciseEntity
 
 @Database(
     entities = [
@@ -19,11 +22,14 @@ import dev.sanastasov.bybon.workout.data.RepdbCatalogEntity
         DietPhaseEntity::class,
         ExerciseEntity::class,
         RepdbCatalogEntity::class,
+        WorkoutPlanEntity::class,
+        WorkoutPlanExerciseEntity::class,
     ],
-    version = 3,
+    version = 4,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
+        AutoMigration(from = 3, to = 4),
     ],
 )
 @ColumnTypeConverters(LocalDateConverter::class)
@@ -31,4 +37,5 @@ abstract class BybonDatabase : RoomDatabase() {
     abstract fun weightEntryDao(): WeightDao
     abstract fun dietPhaseDao(): DietPhaseDao
     abstract fun exerciseDao(): ExerciseDao
+    abstract fun workoutPlanDao(): WorkoutPlanDao
 }
