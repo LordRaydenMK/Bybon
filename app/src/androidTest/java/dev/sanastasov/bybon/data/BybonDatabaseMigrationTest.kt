@@ -103,6 +103,51 @@ class BybonDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrateFrom3To4CreatesPlanTablesAndKeepsExerciseCatalog() = runBlocking {
+        helper.createDatabase(3).use { connection ->
+            connection.execSQL(
+                "INSERT INTO weight_entry (date, weight) VALUES ('2026-09-09', 6500)",
+            )
+            connection.execSQL(
+                """
+                INSERT INTO diet_phase (kind, startDate, startWeight, targetWeight, durationWeeks, endedAt)
+                VALUES ('Maintain', '2026-09-07', 6500, 6500, NULL, NULL)
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO exercise (
+                    id, name, body_part, equipment, mechanic, primary_muscles, secondary_muscles,
+                    equipment_slug, force_type, difficulty, tags, description, instructions, tips,
+                    image_start, image_peak, image_main, source, is_archived
+                ) VALUES (
+                    'bench-press', 'Barbell Bench Press', 'Chest', 'Barbell', 'Compound', '[]', '[]',
+                    NULL, NULL, NULL, '[]', NULL, NULL, NULL,
+                    NULL, NULL, NULL, 'shipped', 0
+                )
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(4).close()
+
+        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
+            .setDriver(AndroidSQLiteDriver())
+            .build()
+        try {
+            val weights = db.weightEntryDao().weightEntries().first()
+            assert(weights.single().date == LocalDate.of(2026, 9, 9))
+            assert(weights.single().weight == 6500)
+            val phases = db.dietPhaseDao().phases().first()
+            assert(phases.single().kind == "Maintain")
+            assert(db.exerciseDao().observeAll().first().single().id == "bench-press")
+            assert(db.workoutPlanDao().observePlans().first().isEmpty())
+            assert(db.workoutPlanDao().observePlanExercises().first().isEmpty())
+        } finally {
+            db.close()
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test"
     }

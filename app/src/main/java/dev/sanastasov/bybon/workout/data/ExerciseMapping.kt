@@ -81,8 +81,8 @@ private fun ExerciseEntity.toImages(): ExerciseImages? = when {
     else -> null
 }
 
-private fun List<String>.toJsonArray(): String =
+internal fun List<String>.toJsonArray(): String =
     AppJson.json.encodeToString(stringListSerializer, this)
 
-private fun String.toStringList(): List<String> =
+internal fun String.toStringList(): List<String> =
     AppJson.json.decodeFromString(stringListSerializer, this)
