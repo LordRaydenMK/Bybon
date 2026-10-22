@@ -5,6 +5,7 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sanastasov.bybon.data.BybonDatabase
+import dev.sanastasov.bybon.data.OpenSessionIndexCallback
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.addWorkSet
@@ -24,6 +25,7 @@ class WorkoutPlanPersistenceTest {
 
     private val db = Room.inMemoryDatabaseBuilder<BybonDatabase>(context)
         .setDriver(AndroidSQLiteDriver())
+        .addCallback(OpenSessionIndexCallback())
         .build()
 
     @After

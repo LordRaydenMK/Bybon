@@ -42,9 +42,7 @@ class BybonDatabaseMigrationTest {
         }
         helper.runMigrationsAndValidate(2).close()
 
-        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
-            .setDriver(AndroidSQLiteDriver())
-            .build()
+        val db = openMigratedDatabase()
         try {
             val weights = db.weightEntryDao().weightEntries().first()
             assert(weights.single().date == LocalDate.of(2026, 9, 9))
@@ -87,9 +85,7 @@ class BybonDatabaseMigrationTest {
         }
         helper.runMigrationsAndValidate(3).close()
 
-        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
-            .setDriver(AndroidSQLiteDriver())
-            .build()
+        val db = openMigratedDatabase()
         try {
             val weights = db.weightEntryDao().weightEntries().first()
             assert(weights.single().date == LocalDate.of(2026, 9, 9))
@@ -131,9 +127,7 @@ class BybonDatabaseMigrationTest {
         }
         helper.runMigrationsAndValidate(4).close()
 
-        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
-            .setDriver(AndroidSQLiteDriver())
-            .build()
+        val db = openMigratedDatabase()
         try {
             val weights = db.weightEntryDao().weightEntries().first()
             assert(weights.single().date == LocalDate.of(2026, 9, 9))
@@ -190,10 +184,7 @@ class BybonDatabaseMigrationTest {
         }
         helper.runMigrationsAndValidate(5).close()
 
-        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
-            .setDriver(AndroidSQLiteDriver())
-            .addCallback(OpenSessionIndexCallback())
-            .build()
+        val db = openMigratedDatabase()
         try {
             assert(db.weightEntryDao().weightEntries().first().single().weight == 6500)
             assert(db.workoutPlanDao().observePlans().first().single().id == "full-body-a")
@@ -204,6 +195,12 @@ class BybonDatabaseMigrationTest {
             db.close()
         }
     }
+
+    private fun openMigratedDatabase(): BybonDatabase =
+        Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
+            .setDriver(AndroidSQLiteDriver())
+            .addCallback(OpenSessionIndexCallback())
+            .build()
 
     private companion object {
         const val TEST_DB = "migration-test"
