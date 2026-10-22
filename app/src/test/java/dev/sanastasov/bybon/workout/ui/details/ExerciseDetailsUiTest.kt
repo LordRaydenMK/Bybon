@@ -1,8 +1,16 @@
 package dev.sanastasov.bybon.workout.ui.details
 
+import dev.sanastasov.bybon.workout.data.completedExercise
+import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseImages
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.catalogExercise
+import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
+import dev.sanastasov.bybon.workout.domain.exercisePerformance
+import java.time.LocalDateTime
 import org.junit.Test
 
 class ExerciseDetailsUiTest {
@@ -81,5 +89,54 @@ class ExerciseDetailsUiTest {
 
         assert(plank.images is ExerciseImages.Main)
         assert(plank.facts.contains("Static"))
+    }
+
+    @Test
+    fun `maps PR chart points and working-set history`() {
+        val older = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(completedExercise("bench-press", 50f to 5, 45f to 12)),
+        )
+        val newer = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 10, 1, 18, 0),
+            exercises = listOf(
+                completedExercise("bench-press", 80f to 8).copy(
+                    warmupSets = listOf(
+                        ExerciseSet(
+                            exerciseDefinition = catalogExercise("bench-press"),
+                            weight = Weight.kilograms(40),
+                            reps = 5,
+                            setState = SetState.Completed,
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val now = LocalDateTime.of(2026, 10, 22, 18, 0)
+        val ui = catalogExercise("bench-press").toDetailsUi(
+            listOf(older, newer).exercisePerformance("bench-press", now),
+        )
+
+        val olderOneRm = Weight.kilograms(estimateOneRmKg(50f, 5))
+        val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
+        assert(ui.personalRecordOneRm == newerOneRm)
+        assert(
+            ui.oneRmTrend == listOf(
+                ExerciseOneRmPointUi("10 Aug", olderOneRm.kilogramsValue, olderOneRm),
+                ExerciseOneRmPointUi("1 Oct", newerOneRm.kilogramsValue, newerOneRm),
+            ),
+        )
+        assert(ui.recentSessions.map { it.planName } == listOf("Full Body B", "Full Body A"))
+        assert(ui.recentSessions.first().dateLabel == "1 Oct 2026")
+        assert(
+            ui.recentSessions.first().sets == listOf(
+                ExerciseDetailsSetUi(1, "80", 8, Weight.kilograms(estimateOneRmKg(80f, 8))),
+            ),
+        )
+        assert(ui.recentSessions.last().sets.size == 2)
     }
 }

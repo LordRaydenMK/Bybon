@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 
 @Composable
@@ -78,6 +79,9 @@ private fun DetailsList(state: ExerciseDetailsUiState.Content) {
     ) {
         detailsImages(state.images)
         detailsChips("facts", state.facts)
+        detailsPersonalRecord(state.personalRecordOneRm)
+        detailsOneRmTrend(state.oneRmTrend)
+        detailsRecentSessions(state.recentSessions)
         detailsMuscleGroup("Primary muscles", state.primaryMuscles)
         detailsMuscleGroup("Secondary muscles", state.secondaryMuscles)
         state.description?.let { description ->
@@ -97,7 +101,27 @@ private fun DetailsList(state: ExerciseDetailsUiState.Content) {
 @Composable
 private fun ExerciseDetailsContentPreview() {
     Surface {
-        ExerciseDetailsContent(catalogExercise("bench-press").toDetailsUi(), {})
+        ExerciseDetailsContent(
+            catalogExercise("bench-press").toDetailsUi().copy(
+                personalRecordOneRm = Weight.kilograms(78f),
+                oneRmTrend = listOf(
+                    ExerciseOneRmPointUi("12 Jul", 70f, Weight.kilograms(70f)),
+                    ExerciseOneRmPointUi("2 Aug", 74f, Weight.kilograms(74f)),
+                    ExerciseOneRmPointUi("20 Sep", 78f, Weight.kilograms(78f)),
+                ),
+                recentSessions = listOf(
+                    ExerciseDetailsSessionUi(
+                        dateLabel = "20 Sep 2026",
+                        planName = "Full Body A",
+                        sets = listOf(
+                            ExerciseDetailsSetUi(1, "60", 8, Weight.kilograms(75f)),
+                            ExerciseDetailsSetUi(2, "60", 7, Weight.kilograms(72f)),
+                        ),
+                    ),
+                ),
+            ),
+            {},
+        )
     }
 }
 

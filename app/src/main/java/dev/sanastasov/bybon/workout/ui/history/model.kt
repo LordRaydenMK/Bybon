@@ -79,25 +79,17 @@ internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
         id = id,
         planName = planName,
         date = startedAt.toLocalDate(),
-        exercises = exercises.mapNotNull { it.toTopSetUi() },
+        exercises = exercises.map { it.toTopSetUi() },
     )
 }
 
-private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi? {
-    val topSet = sets.maxWithOrNull(
-        compareBy(
-            { it.weight },
-            { it.reps },
-        ),
-    ) ?: return null
-    return ExerciseTopSetUi(
-        name = exerciseDefinition.name,
-        weightKg = topSet.weight.toLoadLabel(),
-        reps = topSet.reps,
-        oneRm = topSet.oneRm,
-        warmups = warmupSets.orEmpty().map { it.toHistoryWarmupUi() },
-    )
-}
+private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi = ExerciseTopSetUi(
+    name = exerciseDefinition.name,
+    weightKg = topSet.weight.toLoadLabel(),
+    reps = topSet.reps,
+    oneRm = topSet.oneRm,
+    warmups = warmupSets.orEmpty().map { it.toHistoryWarmupUi() },
+)
 
 private fun ExerciseSet.toHistoryWarmupUi(): HistoryWarmupUi = HistoryWarmupUi(
     weightKg = weight.toLoadLabel(),

@@ -32,6 +32,16 @@ data class WorkoutExercise(
             NumberedSet(set, isWarmup = false, index)
         }
 
+    val topSet: ExerciseSet
+        get() = checkNotNull(
+            sets.maxWithOrNull(
+                compareBy(
+                    { it.weight },
+                    { it.reps },
+                ),
+            ),
+        ) { "sets must contain at least one set" }
+
     val canRemoveSet: Boolean
         get() {
             val lastWork = sets.last()
