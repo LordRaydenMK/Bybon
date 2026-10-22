@@ -80,7 +80,7 @@ class WorkoutsRepositoryImpl internal constructor(
             val exercises = exerciseDao.observeAll().first()
                 .map { it.toDefinition() }
                 .associateBy { it.id }
-            val current = entity.toDomain(lines, exercises) ?: return
+            val current = entity.toDomain(lines, exercises)
             val updated = transform(current)
             workoutPlanDao.replacePlan(updated.toEntity(), updated.toExerciseEntities())
         }

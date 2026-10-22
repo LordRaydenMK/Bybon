@@ -46,11 +46,10 @@ interface WorkoutPlanDao {
 
     @Transaction
     suspend fun replacePlan(plan: WorkoutPlanEntity, exercises: List<WorkoutPlanExerciseEntity>) {
+        require(exercises.isNotEmpty()) { "Plan ${plan.id} must contain at least one exercise" }
         upsertPlan(plan)
         deleteExercisesForPlan(plan.id)
-        if (exercises.isNotEmpty()) {
-            insertPlanExercises(exercises)
-        }
+        insertPlanExercises(exercises)
     }
 
     @Transaction
@@ -58,10 +57,9 @@ interface WorkoutPlanDao {
         plans: List<WorkoutPlanEntity>,
         exercises: List<WorkoutPlanExerciseEntity>,
     ) {
-        if (plans.isEmpty()) return
+        require(plans.isNotEmpty()) { "Use insertPlanExercises to insert exercises only" }
+        require(exercises.isNotEmpty()) { "Use insertPlans to insert plans only" }
         insertPlans(plans)
-        if (exercises.isNotEmpty()) {
-            insertPlanExercises(exercises)
-        }
+        insertPlanExercises(exercises)
     }
 }

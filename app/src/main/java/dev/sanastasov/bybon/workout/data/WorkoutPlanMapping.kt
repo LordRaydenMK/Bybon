@@ -34,7 +34,7 @@ internal fun List<WorkoutPlanEntity>.toDomainPlans(
 ): List<WorkoutPlan> {
     val definitions = exercises.associate { it.id to it.toDefinition() }
     val linesByPlan = lines.groupBy { it.planId }
-    return mapNotNull { plan ->
+    return map { plan ->
         plan.toDomain(linesByPlan[plan.id].orEmpty(), definitions)
     }
 }
@@ -42,11 +42,14 @@ internal fun List<WorkoutPlanEntity>.toDomainPlans(
 internal fun WorkoutPlanEntity.toDomain(
     lines: List<WorkoutPlanExerciseEntity>,
     exercises: Map<String, ExerciseDefinition>,
-): WorkoutPlan? {
-    val planned = lines.sortedBy { it.position }.mapNotNull { line ->
-        exercises[line.exerciseId]?.let { line.toPlannedExercise(it) }
+): WorkoutPlan {
+    check(lines.isNotEmpty()) { "Plan $id has no exercises" }
+    val planned = lines.sortedBy { it.position }.map { line ->
+        val exercise = checkNotNull(exercises[line.exerciseId]) {
+            "Plan $id references missing exercise ${line.exerciseId}"
+        }
+        line.toPlannedExercise(exercise)
     }
-    if (planned.isEmpty() || planned.size != lines.size) return null
     return WorkoutPlan(
         id = WorkoutPlanId(id),
         name = name,
