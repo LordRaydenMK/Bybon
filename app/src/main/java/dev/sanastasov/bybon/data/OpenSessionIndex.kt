@@ -9,10 +9,6 @@ internal const val CREATE_ONE_OPEN_SESSION_INDEX =
         "ON `workout_session`(`plan_id`) WHERE `duration_seconds` IS NULL"
 
 class OpenSessionIndexCallback : RoomDatabase.Callback() {
-    override suspend fun onCreate(connection: SQLiteConnection) {
-        connection.execSQL(CREATE_ONE_OPEN_SESSION_INDEX)
-    }
-
     override suspend fun onOpen(connection: SQLiteConnection) {
         connection.execSQL(CREATE_ONE_OPEN_SESSION_INDEX)
     }

@@ -136,11 +136,11 @@ internal fun WorkoutSetEntity.toExerciseSet(definition: ExerciseDefinition): Exe
     }
     return ExerciseSet(
         exerciseDefinition = definition,
-        weight = weight.toWeightOrNull(),
+        weight = weight?.toWeightOrNull(),
         reps = reps,
         setState = SetState.valueOf(setState),
         previous = previousReps?.let { repsLogged ->
-            PreviousSetPerformance(previousWeight.toWeightOrNull(), repsLogged)
+            PreviousSetPerformance(previousWeight?.toWeightOrNull(), repsLogged)
         },
     )
 }
@@ -153,6 +153,4 @@ internal fun Weight.toHundredths(): Int {
     return whole * 100 + fraction.toInt()
 }
 
-internal fun Int?.toWeightOrNull(): Weight? = this?.let { hundredths ->
-    if (hundredths > 0) Weight.kilograms(hundredths / 100f) else null
-}
+internal fun Int.toWeightOrNull(): Weight? = if (this > 0) Weight.kilograms(this / 100f) else null
