@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -45,6 +47,7 @@ fun ExerciseCard(
     modifier: Modifier = Modifier,
     overflow: ExerciseOverflow? = null,
     onRemoveExercise: (() -> Unit)? = null,
+    onTitleClick: (() -> Unit)? = null,
 ) {
     val scrollable = if (mode == ExerciseCardMode.Session) {
         modifier.verticalScroll(rememberScrollState())
@@ -57,7 +60,7 @@ fun ExerciseCard(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        ExerciseCardHeader(exercise, overflow, onRemoveExercise, onEvent)
+        ExerciseCardHeader(exercise, overflow, onRemoveExercise, onEvent, onTitleClick)
         SetColumnsHeader(
             canResetAll = exercise.hasPreviousPerformance,
             onResetAllSets = { onEvent(ExerciseCardEvent.OnResetAllSets) },
@@ -100,17 +103,13 @@ private fun ExerciseCardHeader(
     overflow: ExerciseOverflow?,
     onRemoveExercise: (() -> Unit)?,
     onEvent: (ExerciseCardEvent) -> Unit,
+    onTitleClick: (() -> Unit)?,
 ) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
-                "in ${exercise.repRange.first} - ${exercise.repRange.last}",
-            Modifier.weight(1f),
-            fontWeight = FontWeight.Bold,
-        )
+        ExerciseCardTitle(exercise, onTitleClick)
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
                 { onEvent(ExerciseCardEvent.OnDecrease) },
@@ -153,6 +152,29 @@ private fun ExerciseCardHeader(
             }
         }
     }
+}
+
+@Composable
+private fun RowScope.ExerciseCardTitle(exercise: WorkoutExercise, onTitleClick: (() -> Unit)?) {
+    val title =
+        "${exercise.sets.size} x ${exercise.exerciseDefinition.name} " +
+            "in ${exercise.repRange.first} - ${exercise.repRange.last}"
+    val clickable = if (onTitleClick == null) {
+        Modifier
+    } else {
+        Modifier.clickable(
+            role = Role.Button,
+            onClickLabel = "Open exercise details",
+            onClick = onTitleClick,
+        )
+    }
+    Text(
+        title,
+        Modifier
+            .weight(1f)
+            .then(clickable),
+        fontWeight = FontWeight.Bold,
+    )
 }
 
 @Composable
