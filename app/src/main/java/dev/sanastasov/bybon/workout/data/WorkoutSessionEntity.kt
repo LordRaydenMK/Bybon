@@ -1,10 +1,12 @@
 package dev.sanastasov.bybon.workout.data
 
 import androidx.room3.ColumnInfo
+import androidx.room3.Embedded
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
+import androidx.room3.Relation
 import java.time.LocalDateTime
 
 @Entity(
@@ -112,4 +114,23 @@ data class WorkoutSetEntity(
 data class WorkoutSessionIdentity(
     @ColumnInfo(name = "plan_id") val planId: String,
     @ColumnInfo(name = "started_at") val startedAt: LocalDateTime,
+)
+
+data class WorkoutSessionExerciseWithSets(
+    @Embedded val exercise: WorkoutSessionExerciseEntity,
+    @Relation(
+        parentColumns = ["id"],
+        entityColumns = ["session_exercise_id"],
+    )
+    val sets: List<WorkoutSetEntity>,
+)
+
+data class WorkoutSessionTree(
+    @Embedded val session: WorkoutSessionEntity,
+    @Relation(
+        entity = WorkoutSessionExerciseEntity::class,
+        parentColumns = ["id"],
+        entityColumns = ["session_id"],
+    )
+    val exercises: List<WorkoutSessionExerciseWithSets>,
 )

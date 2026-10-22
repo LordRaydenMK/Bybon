@@ -69,4 +69,24 @@ class WorkoutSessionMappingTest {
         assert(sets.first().weight == 8000)
         assert(sets.last().weight == 8250)
     }
+
+    @Test
+    fun `incomplete session snapshots are omitted until children exist`() {
+        val header = WorkoutSessionEntity(
+            id = 1,
+            planId = "full-body-a",
+            planName = "Full Body A",
+            note = null,
+            startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34),
+            durationSeconds = null,
+        )
+
+        assert(
+            listOf(header).toDomainSessions(
+                lines = emptyList(),
+                sets = emptyList(),
+                exercises = emptyList(),
+            ).isEmpty(),
+        )
+    }
 }

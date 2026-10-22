@@ -68,6 +68,13 @@ internal fun WorkoutSession.toWrite(sessionId: Long = 0): WorkoutSessionWrite {
     return WorkoutSessionWrite(header, exercises)
 }
 
+internal fun List<WorkoutSessionTree>.toDomainSessions(
+    exercises: List<ExerciseEntity>,
+): List<WorkoutSession> {
+    val definitions = exercises.associate { it.id to it.toDefinition() }
+    return mapNotNull { it.toDomainOrNull(definitions) }
+}
+
 internal fun List<WorkoutSessionEntity>.toDomainSessions(
     lines: List<WorkoutSessionExerciseEntity>,
     sets: List<WorkoutSetEntity>,
@@ -76,8 +83,8 @@ internal fun List<WorkoutSessionEntity>.toDomainSessions(
     val definitions = exercises.associate { it.id to it.toDefinition() }
     val linesBySession = lines.groupBy { it.sessionId }
     val setsByExercise = sets.groupBy { it.sessionExerciseId }
-    return map { session ->
-        session.toDomain(
+    return mapNotNull { session ->
+        session.toDomainOrNull(
             linesBySession[session.id].orEmpty(),
             setsByExercise,
             definitions,
@@ -85,17 +92,25 @@ internal fun List<WorkoutSessionEntity>.toDomainSessions(
     }
 }
 
-internal fun WorkoutSessionEntity.toDomain(
+internal fun WorkoutSessionTree.toDomainOrNull(
+    exercises: Map<String, ExerciseDefinition>,
+): WorkoutSession? = session.toDomainOrNull(
+    lines = this.exercises.map { it.exercise },
+    setsByExercise = this.exercises.associate { it.exercise.id to it.sets },
+    exercises = exercises,
+)
+
+internal fun WorkoutSessionEntity.toDomainOrNull(
     lines: List<WorkoutSessionExerciseEntity>,
     setsByExercise: Map<Long, List<WorkoutSetEntity>>,
     exercises: Map<String, ExerciseDefinition>,
-): WorkoutSession {
-    check(lines.isNotEmpty()) { "Session $id has no exercises" }
+): WorkoutSession? {
+    if (lines.isEmpty()) return null
     val mapped = lines.sortedBy { it.position }.map { line ->
-        val definition = checkNotNull(exercises[line.exerciseId]) {
-            "Session $id references missing exercise ${line.exerciseId}"
-        }
-        line.toWorkoutExercise(setsByExercise[line.id].orEmpty(), definition)
+        val definition = exercises[line.exerciseId] ?: return null
+        val setRows = setsByExercise[line.id].orEmpty()
+        if (setRows.isEmpty()) return null
+        line.toWorkoutExercise(setRows, definition)
     }
     return WorkoutSession(
         planId = WorkoutPlanId(planId),
