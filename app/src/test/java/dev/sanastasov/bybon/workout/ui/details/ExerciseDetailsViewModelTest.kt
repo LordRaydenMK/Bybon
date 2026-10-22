@@ -8,6 +8,8 @@ import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
+import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
@@ -59,6 +61,36 @@ class ExerciseDetailsViewModelTest {
             assert(
                 awaitItem() == catalogExercise("bench-press").toDetailsUi(
                     listOf(recent, olderPr).exercisePerformance("bench-press", now),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `incomplete sessions are omitted from performance`() = runTest {
+        val now = LocalDateTime.of(2026, 10, 22, 18, 0)
+        val completed = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = now.minusDays(5),
+            exercises = listOf(completedExercise("bench-press", 70f to 8)),
+        )
+        val inProgress = fullBodyA.toWorkoutSession(startedAt = now.minusDays(1))
+        val viewModel = ExerciseDetailsViewModel(
+            "bench-press",
+            FakeWorkoutsRepository(
+                initialExercises = catalogExercises,
+                initialSessions = listOf(completed, inProgress),
+            ),
+            backgroundScope,
+            now = { now },
+        )
+
+        viewModel.uiState.test {
+            assert(awaitItem() == ExerciseDetailsUiState.Loading)
+            assert(
+                awaitItem() == catalogExercise("bench-press").toDetailsUi(
+                    listOf(completed).exercisePerformance("bench-press", now),
                 ),
             )
         }

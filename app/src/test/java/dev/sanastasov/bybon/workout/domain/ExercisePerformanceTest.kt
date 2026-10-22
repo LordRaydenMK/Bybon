@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.domain
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 import org.junit.Test
 
 class ExercisePerformanceTest {
@@ -134,8 +135,7 @@ class ExercisePerformanceTest {
     }
 
     @Test
-    fun `in-progress sessions and other exercises are ignored`() {
-        val inProgress = fullBodyA.toWorkoutSession(startedAt = now.minusDays(1))
+    fun `sessions without the exercise are ignored`() {
         val otherLift = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -149,10 +149,25 @@ class ExercisePerformanceTest {
             exercises = listOf(completedExercise("bench-press", 70f to 8)),
         )
 
-        val performance = listOf(inProgress, otherLift, matching)
-            .exercisePerformance("bench-press", now)
+        val performance = listOf(otherLift, matching).exercisePerformance("bench-press", now)
 
         assert(performance.personalRecordOneRm == Weight.kilograms(estimateOneRmKg(70f, 8)))
         assert(performance.recentSessions.single().startedAt == matching.startedAt)
+    }
+
+    @Test
+    fun `incomplete sessions are rejected`() {
+        val inProgress = fullBodyA.toWorkoutSession(startedAt = now.minusDays(1))
+        val completed = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = now.minusDays(4),
+            exercises = listOf(completedExercise("bench-press", 70f to 8)),
+        )
+
+        val error = assertFailsWith<IllegalArgumentException> {
+            listOf(inProgress, completed).exercisePerformance("bench-press", now)
+        }
+        assert(error.message == "exercisePerformance requires completed sessions")
     }
 }

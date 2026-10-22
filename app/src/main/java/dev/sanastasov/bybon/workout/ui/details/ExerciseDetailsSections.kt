@@ -1,5 +1,3 @@
-@file:Suppress("TooManyFunctions")
-
 package dev.sanastasov.bybon.workout.ui.details
 
 import androidx.compose.foundation.background
@@ -25,8 +23,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import dev.sanastasov.bybon.workout.domain.ExerciseImages
-import dev.sanastasov.bybon.workout.domain.Weight
-import dev.sanastasov.bybon.workout.ui.formatSetPerformance
 import okhttp3.HttpUrl
 
 private val ImageHeight = 200.dp
@@ -119,88 +115,19 @@ internal fun LazyListScope.detailsMuscleGroup(title: String, muscles: List<Strin
     }
 }
 
-internal fun LazyListScope.detailsNumberedList(title: String, items: List<String>) {
+internal fun LazyListScope.detailsList(
+    title: String,
+    items: List<String>,
+    formatItem: (index: Int, text: String) -> String,
+) {
     if (items.isEmpty()) return
     item(key = title) {
         DetailsSection(title) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items.forEachIndexed { index, step ->
-                    Text("${index + 1}. $step", style = MaterialTheme.typography.bodyLarge)
+                items.forEachIndexed { index, text ->
+                    Text(formatItem(index, text), style = MaterialTheme.typography.bodyLarge)
                 }
             }
-        }
-    }
-}
-
-internal fun LazyListScope.detailsBulletedList(title: String, items: List<String>) {
-    if (items.isEmpty()) return
-    item(key = title) {
-        DetailsSection(title) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items.forEach { tip ->
-                    Text("• $tip", style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        }
-    }
-}
-
-internal fun LazyListScope.detailsPersonalRecord(personalRecordOneRm: Weight?) {
-    if (personalRecordOneRm == null) return
-    item(key = "personal-record") {
-        DetailsSection("Personal record") {
-            Text(
-                "${personalRecordOneRm.kilograms} kg 1RM",
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
-    }
-}
-
-internal fun LazyListScope.detailsOneRmTrend(points: List<ExerciseOneRmPointUi>) {
-    if (points.isEmpty()) return
-    item(key = "one-rm-trend") {
-        ExerciseOneRmTrendCard(points)
-    }
-}
-
-internal fun LazyListScope.detailsRecentSessions(sessions: List<ExerciseDetailsSessionUi>) {
-    item(key = "recent-history") {
-        DetailsSection("Last 3 months") {
-            if (sessions.isEmpty()) {
-                Text(
-                    "No working sets in the last 3 months.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    sessions.forEach { session ->
-                        RecentSessionBlock(session)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecentSessionBlock(session: ExerciseDetailsSessionUi) {
-    Column(
-        Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(session.planName, style = MaterialTheme.typography.titleSmall)
-        Text(
-            session.dateLabel,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        session.sets.forEach { set ->
-            Text(
-                "${set.number}. ${formatSetPerformance(set.weightKg, set.reps, set.oneRm)}",
-                style = MaterialTheme.typography.bodyLarge,
-            )
         }
     }
 }

@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.details
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
 import java.time.LocalDateTime
@@ -20,6 +21,7 @@ class ExerciseDetailsViewModel(
             val exercise = checkNotNull(exercises.firstOrNull { it.id == exerciseId }) {
                 "Exercise $exerciseId is not in the repository"
             }
-            exercise.toDetailsUi(sessions.exercisePerformance(exerciseId, now()))
+            val completed = sessions.filter { it.state is WorkoutState.Completed }
+            exercise.toDetailsUi(completed.exercisePerformance(exerciseId, now()))
         }.stateInWhileInForeground(coroutineScope, ExerciseDetailsUiState.Loading)
 }

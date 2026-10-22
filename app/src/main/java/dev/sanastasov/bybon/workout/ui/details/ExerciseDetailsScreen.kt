@@ -79,8 +79,10 @@ private fun DetailsList(state: ExerciseDetailsUiState.Content) {
     ) {
         detailsImages(state.images)
         detailsChips("facts", state.facts)
-        detailsPersonalRecord(state.personalRecordOneRm)
-        detailsOneRmTrend(state.oneRmTrend)
+        state.personalRecordOneRm?.let { detailsPersonalRecord(it) }
+        if (state.oneRmTrend.isNotEmpty()) {
+            detailsOneRmTrend(state.oneRmTrend)
+        }
         detailsRecentSessions(state.recentSessions)
         detailsMuscleGroup("Primary muscles", state.primaryMuscles)
         detailsMuscleGroup("Secondary muscles", state.secondaryMuscles)
@@ -91,8 +93,8 @@ private fun DetailsList(state: ExerciseDetailsUiState.Content) {
                 }
             }
         }
-        detailsNumberedList("How to", state.instructions)
-        detailsBulletedList("Tips", state.tips)
+        detailsList("How to", state.instructions) { index, step -> "${index + 1}. $step" }
+        detailsList("Tips", state.tips) { _, tip -> "• $tip" }
         detailsChips("tags", state.tags)
     }
 }

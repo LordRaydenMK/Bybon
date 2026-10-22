@@ -20,19 +20,21 @@ fun List<WorkoutSession>.exercisePerformance(
     now: LocalDateTime,
     historyWindow: Period = Period.ofMonths(3),
 ): ExercisePerformance {
-    val completed = mapNotNull { session ->
-        if (session.state !is WorkoutState.Completed) return@mapNotNull null
+    require(all { it.state is WorkoutState.Completed }) {
+        "exercisePerformance requires completed sessions"
+    }
+    val matching = mapNotNull { session ->
         val exercise = session.exercises.firstOrNull { candidate ->
             candidate.id == exerciseId
         } ?: return@mapNotNull null
         session to exercise
     }
-    val personalRecordOneRm = completed
+    val personalRecordOneRm = matching
         .flatMap { it.second.sets }
         .mapNotNull { it.oneRm }
         .maxOrNull()
     val windowStart = now.minus(historyWindow)
-    val recentSessions = completed
+    val recentSessions = matching
         .filter { (session, _) ->
             !session.startedAt.isBefore(windowStart) && !session.startedAt.isAfter(now)
         }
