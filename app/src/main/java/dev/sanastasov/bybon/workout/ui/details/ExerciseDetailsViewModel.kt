@@ -15,8 +15,10 @@ class ExerciseDetailsViewModel(
     val uiState: StateFlow<ExerciseDetailsUiState> =
         repository.exercises()
             .map { exercises ->
-                exercises.firstOrNull { it.id == exerciseId }?.toDetailsUi()
-                    ?: ExerciseDetailsUiState.Missing
+                val exercise = checkNotNull(exercises.firstOrNull { it.id == exerciseId }) {
+                    "Exercise $exerciseId is not in the repository"
+                }
+                exercise.toDetailsUi()
             }
             .stateInWhileInForeground(coroutineScope, ExerciseDetailsUiState.Loading)
 }

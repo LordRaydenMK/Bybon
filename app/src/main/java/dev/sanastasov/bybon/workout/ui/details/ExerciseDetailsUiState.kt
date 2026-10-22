@@ -7,7 +7,6 @@ import dev.sanastasov.bybon.workout.domain.toCatalogLabel
 
 sealed class ExerciseDetailsUiState {
     data object Loading : ExerciseDetailsUiState()
-    data object Missing : ExerciseDetailsUiState()
     data class Content(
         val name: String,
         val images: ExerciseImages? = null,

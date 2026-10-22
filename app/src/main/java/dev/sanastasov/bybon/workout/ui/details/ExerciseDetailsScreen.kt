@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.workout.ui.details
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,7 +39,7 @@ private fun ExerciseDetailsContent(
 ) {
     val title = when (uiState) {
         is ExerciseDetailsUiState.Content -> uiState.name
-        else -> "Exercise"
+        ExerciseDetailsUiState.Loading -> "Exercise"
     }
     Scaffold(
         modifier.fillMaxSize(),
@@ -54,7 +52,6 @@ private fun ExerciseDetailsContent(
         ) {
             when (uiState) {
                 ExerciseDetailsUiState.Loading -> LoadingIndicator()
-                ExerciseDetailsUiState.Missing -> MissingExercise()
                 is ExerciseDetailsUiState.Content -> DetailsList(uiState)
             }
         }
@@ -69,19 +66,6 @@ private fun LoadingIndicator() {
     ) {
         CircularProgressIndicator()
     }
-}
-
-@Composable
-private fun MissingExercise() {
-    Text(
-        "Exercise not found",
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 32.dp),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        style = MaterialTheme.typography.bodyLarge,
-        textAlign = TextAlign.Center,
-    )
 }
 
 @Composable
@@ -122,13 +106,5 @@ private fun ExerciseDetailsContentPreview() {
 private fun ExerciseDetailsBybonPreview() {
     Surface {
         ExerciseDetailsContent(catalogExercise("iso-lat-row").toDetailsUi(), {})
-    }
-}
-
-@Preview
-@Composable
-private fun ExerciseDetailsMissingPreview() {
-    Surface {
-        ExerciseDetailsContent(ExerciseDetailsUiState.Missing, {})
     }
 }
