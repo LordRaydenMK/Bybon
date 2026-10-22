@@ -34,7 +34,7 @@ class ExerciseCatalogPersistenceTest {
     @Test
     fun freshDatabaseSeedsTheShippedCatalog() = runBlocking {
         val dao = db.exerciseDao()
-        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao())
+        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao(), db.workoutSessionDao())
 
         assert(repository.exercises().first() == catalogExercises)
         assert(dao.catalogCommit() == repdbCatalogCommit)
@@ -45,7 +45,7 @@ class ExerciseCatalogPersistenceTest {
     @Test
     fun importDoesNotClobberExistingIds() = runBlocking {
         val dao = db.exerciseDao()
-        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao())
+        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao(), db.workoutSessionDao())
         val bench = catalogExercises.first { it.id == "bench-press" }
         repository.exercises().first()
 
@@ -73,6 +73,7 @@ class ExerciseCatalogPersistenceTest {
         val refreshed = WorkoutsRepositoryImpl(
             dao,
             db.workoutPlanDao(),
+            db.workoutSessionDao(),
             catalog = catalogExercises.map { exercise ->
                 if (exercise.id == bench.id) exercise.copy(name = "Updated Bench") else exercise
             } + crunch.copy(name = "Shipped Crunch"),

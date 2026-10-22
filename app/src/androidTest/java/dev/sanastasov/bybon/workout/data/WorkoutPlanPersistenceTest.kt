@@ -35,7 +35,7 @@ class WorkoutPlanPersistenceTest {
     fun freshDatabaseSeedsBuiltInPlansAndKeepsUserEditsAcrossInstances() = runBlocking {
         val exerciseDao = db.exerciseDao()
         val planDao = db.workoutPlanDao()
-        val repository = WorkoutsRepositoryImpl(exerciseDao, planDao)
+        val repository = WorkoutsRepositoryImpl(exerciseDao, planDao, db.workoutSessionDao())
 
         assert(
             repository.workoutPlans().first() == listOf(fullBodyA, fullBodyB),
@@ -55,7 +55,7 @@ class WorkoutPlanPersistenceTest {
             exercises = emptyList(),
         )
 
-        val relaunched = WorkoutsRepositoryImpl(exerciseDao, planDao)
+        val relaunched = WorkoutsRepositoryImpl(exerciseDao, planDao, db.workoutSessionDao())
         val stored = relaunched.workoutPlans(WorkoutPlansFilter.AllPlans).first()
         assert(stored.first().isArchived)
         assert(stored.first().sets.first().sets == 4)

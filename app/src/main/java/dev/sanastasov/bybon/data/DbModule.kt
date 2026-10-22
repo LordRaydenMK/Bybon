@@ -11,6 +11,7 @@ interface DbModule {
         fun create(appContext: Application): DbModule {
             val db = Room.databaseBuilder<BybonDatabase>(appContext, "bybon_db")
                 .setDriver(AndroidSQLiteDriver())
+                .addCallback(OpenSessionIndexCallback())
                 .build()
 
             return object : DbModule {

@@ -10,13 +10,14 @@ interface WorkoutModule : DbModule {
 
     companion object {
 
-        // Sessions stay in memory, so one repository outlives Activity recreation.
         private var repository: WorkoutsRepository? = null
 
         fun create(dbModule: DbModule): WorkoutModule {
+            val db = dbModule.bybonDb
             val workouts = repository ?: WorkoutsRepositoryImpl(
-                exerciseDao = dbModule.bybonDb.exerciseDao(),
-                workoutPlanDao = dbModule.bybonDb.workoutPlanDao(),
+                exerciseDao = db.exerciseDao(),
+                workoutPlanDao = db.workoutPlanDao(),
+                workoutSessionDao = db.workoutSessionDao(),
             ).also { repository = it }
             return object : WorkoutModule, DbModule by dbModule {
                 override val workoutsRepository: WorkoutsRepository = workouts

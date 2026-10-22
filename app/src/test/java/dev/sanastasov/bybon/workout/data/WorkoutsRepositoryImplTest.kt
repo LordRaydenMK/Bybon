@@ -245,6 +245,10 @@ class WorkoutsRepositoryImplTest {
             sessions = listOf(fullBody),
             exercises = emptyList(),
         )
+        val upperBodyPlan = fullBodyA.copy(
+            id = WorkoutPlanId("upper-body-a"),
+            name = "Upper body A",
+        )
         val upperBody = completedSession(
             planId = "upper-body-a",
             planName = "Upper body A",
@@ -253,7 +257,7 @@ class WorkoutsRepositoryImplTest {
         )
 
         val result = repository.importHistory(
-            plans = emptyList(),
+            plans = listOf(upperBodyPlan),
             sessions = listOf(upperBody),
             exercises = emptyList(),
         )
@@ -386,6 +390,34 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
+    fun `completed history and an in-progress session survive a new repository instance`() =
+        runTest {
+            val exerciseDao = FakeExerciseDao()
+            val planDao = FakeWorkoutPlanDao()
+            val sessionDao = FakeWorkoutSessionDao(exerciseDao, planDao)
+            val first = repository(exerciseDao, planDao, sessionDao)
+            val history = completedSession(
+                planId = "full-body-a",
+                planName = "Full Body A",
+                startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34),
+                exercises = listOf(completedExercise("bench-press", 80f to 8)),
+            )
+            val live = fullBodyA.toWorkoutSession(
+                startedAt = LocalDateTime.of(2026, 8, 21, 18, 0, 0),
+            )
+            first.importHistory(
+                plans = emptyList(),
+                sessions = listOf(history),
+                exercises = emptyList(),
+            )
+            first.updateWorkout(live)
+
+            val second = repository(exerciseDao, planDao, sessionDao)
+
+            assert(second.workoutSessions().first() == listOf(history, live))
+        }
+
+    @Test
     fun `edited and archived plans survive a new repository instance`() = runTest {
         val exerciseDao = FakeExerciseDao()
         val planDao = FakeWorkoutPlanDao()
@@ -407,11 +439,13 @@ class WorkoutsRepositoryImplTest {
     private fun repository(
         exerciseDao: ExerciseDao = FakeExerciseDao(),
         workoutPlanDao: WorkoutPlanDao = FakeWorkoutPlanDao(),
+        workoutSessionDao: WorkoutSessionDao = FakeWorkoutSessionDao(exerciseDao, workoutPlanDao),
         catalog: List<ExerciseDefinition> = catalogExercises,
         repdbCommit: String = repdbCatalogCommit,
     ): WorkoutsRepository = WorkoutsRepositoryImpl(
         exerciseDao = exerciseDao,
         workoutPlanDao = workoutPlanDao,
+        workoutSessionDao = workoutSessionDao,
         catalog = catalog,
         repdbCommit = repdbCommit,
     )
