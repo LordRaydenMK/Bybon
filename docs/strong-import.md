@@ -1,8 +1,8 @@
 # Strong CSV ↔ Bybon
 
 Living comparison of Strong’s CSV export vs Bybon’s workout domain **as implemented today**.
-Import is live (History empty-state → file picker). Workout data is still in-memory — Room only
-persists body-weight tables.
+Import is live (History empty-state → file picker). Room persists the exercise catalog, workout
+plans, and workout sessions (live, completed, and imported history).
 
 Reference export in repo:
 [`app/src/test/resources/strong-backup-sample.csv`](../app/src/test/resources/strong-backup-sample.csv)
@@ -77,9 +77,9 @@ From
 [`ExerciseDefinition.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/ExerciseDefinition.kt):
 
 - **`ExerciseDefinition`**: stable `id`, `name`, `bodyPart`, muscle lists, `equipment`. Catalog is
-  in-memory: the filtered RepDB subset generated at build time, plus four Bybon-only rows in
+  the filtered RepDB subset generated at build time, plus four Bybon-only rows in
   [`CatalogExercises.kt`](../app/src/main/java/dev/sanastasov/bybon/workout/domain/CatalogExercises.kt)
-  (386 exercises). Import can append unknown exercises to the repository list.
+  (386 exercises), stored in Room. Import can append unknown exercises to the catalog table.
 - **`WorkoutPlan`**: `WorkoutPlanId`, `name`, `description?`, ordered `PlanedExercise`s,
   `isArchived`. Built-ins: Full Body A/B (active), Upper Body (legacy) (archived).
 - **`PlanedExercise`**: exercise + `warmupSets: Int` + prescribed `sets` + `repRange` +
@@ -98,9 +98,10 @@ From
 - No RPE/RIR, distance, or timed sets. Session `note` and exercise `notes` are first-class.
 
 Persistence: [`BybonDatabase`](../app/src/main/java/dev/sanastasov/bybon/data/BybonDatabase.kt) is
-Room v2 with `WeightEntryEntity` + `DietPhaseEntity` only.
+Room v5. Body-weight tables sit next to `exercise`, `workout_plan` / `workout_plan_exercise`, and
+`workout_session` / `workout_session_exercise` / `workout_set`.
 [`WorkoutsRepositoryImpl`](../app/src/main/java/dev/sanastasov/bybon/workout/data/WorkoutsRepositoryImpl.kt)
-holds exercises, plans, and sessions in `MutableStateFlow`s.
+reads and writes those tables; there is no in-memory workout source of truth.
 
 ---
 
@@ -225,7 +226,7 @@ the full backup and now match (lat pulldown, both leg curls, leg press and chest
 
 ## Decisions vs Strong
 
-Statuses from triage. Workout persistence is the remaining TODO.
+Statuses from triage. Catalog, plans, and sessions persist in Room.
 
 ### Won't do
 
@@ -256,11 +257,11 @@ Statuses from triage. Workout persistence is the remaining TODO.
 | Archive rare unmatched plans | New plans whose Strong name was executed fewer than 5 times are created `isArchived = true`. Names with 5 or more sessions stay in the active list. Matched Bybon plans keep their archive flag. The import summary shows how many inserted plans were archived. Sample Upper body A/B (3 each) are archived. A full backup archives the five names under 5 sessions (`Full body A by JE cut`, `Full body A by JE`, `Upper body A`, `Upper body B`, `Afternoon Workout`) and keeps the six busier new names active. |
 | History and summary show warmups | History still headlines each exercise with its top working set (heaviest, then most reps) and lists that exercise's warmups underneath: circled `w`, load × reps, no 1RM. The workout summary lists warmups first, then working sets numbered from 1, with the same warmup row and no checkboxes. The import summary still counts working sets only. |
 
-### TODO
+### Done (persistence)
 
-| Topic | Current behavior | Intended |
-|-------|------------------|----------|
-| Workout persistence | In-memory `MutableStateFlow`; process death loses import | Room (or equivalent) for plans, sessions, exercises. Persist the **domain** (warmup lists, rest `Duration`, weight hundredths), not Strong event rows |
+| Topic | What landed |
+|-------|-------------|
+| Workout persistence | Room v5 stores catalog, plans, and sessions. Live edits, cancel, complete, history, and Strong import survive process death. Import is one transaction and skips duplicate `(plan_id, started_at)`. Domain encodings: ISO-8601 `LocalDateTime`, weight hundredths, duration seconds, `SetState.NotStated` spelling. |
 
 ---
 

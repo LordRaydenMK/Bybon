@@ -42,9 +42,7 @@ class BybonDatabaseMigrationTest {
         }
         helper.runMigrationsAndValidate(2).close()
 
-        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
-            .setDriver(AndroidSQLiteDriver())
-            .build()
+        val db = openMigratedDatabase()
         try {
             val weights = db.weightEntryDao().weightEntries().first()
             assert(weights.single().date == LocalDate.of(2026, 9, 9))
@@ -87,9 +85,7 @@ class BybonDatabaseMigrationTest {
         }
         helper.runMigrationsAndValidate(3).close()
 
-        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
-            .setDriver(AndroidSQLiteDriver())
-            .build()
+        val db = openMigratedDatabase()
         try {
             val weights = db.weightEntryDao().weightEntries().first()
             assert(weights.single().date == LocalDate.of(2026, 9, 9))
@@ -131,9 +127,7 @@ class BybonDatabaseMigrationTest {
         }
         helper.runMigrationsAndValidate(4).close()
 
-        val db = Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
-            .setDriver(AndroidSQLiteDriver())
-            .build()
+        val db = openMigratedDatabase()
         try {
             val weights = db.weightEntryDao().weightEntries().first()
             assert(weights.single().date == LocalDate.of(2026, 9, 9))
@@ -147,6 +141,66 @@ class BybonDatabaseMigrationTest {
             db.close()
         }
     }
+
+    @Test
+    fun migrateFrom4To5CreatesSessionTablesAndKeepsPlans() = runBlocking {
+        helper.createDatabase(4).use { connection ->
+            connection.execSQL(
+                "INSERT INTO weight_entry (date, weight) VALUES ('2026-09-09', 6500)",
+            )
+            connection.execSQL(
+                """
+                INSERT INTO diet_phase (kind, startDate, startWeight, targetWeight, durationWeeks, endedAt)
+                VALUES ('Maintain', '2026-09-07', 6500, 6500, NULL, NULL)
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO exercise (
+                    id, name, body_part, equipment, mechanic, primary_muscles, secondary_muscles,
+                    equipment_slug, force_type, difficulty, tags, description, instructions, tips,
+                    image_start, image_peak, image_main, source, is_archived
+                ) VALUES (
+                    'bench-press', 'Barbell Bench Press', 'Chest', 'Barbell', 'Compound', '[]', '[]',
+                    NULL, NULL, NULL, '[]', NULL, NULL, NULL,
+                    NULL, NULL, NULL, 'shipped', 0
+                )
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO workout_plan (id, name, description, is_archived)
+                VALUES ('full-body-a', 'Full Body A', 'Full body workout routine variant A', 0)
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO workout_plan_exercise (
+                    plan_id, exercise_id, position, warmup_sets, work_sets, rep_min, rep_max,
+                    rest_after_work_set_seconds, notes
+                ) VALUES ('full-body-a', 'bench-press', 0, 3, 3, 8, 10, 120, '[]')
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(5).close()
+
+        val db = openMigratedDatabase()
+        try {
+            assert(db.weightEntryDao().weightEntries().first().single().weight == 6500)
+            assert(db.workoutPlanDao().observePlans().first().single().id == "full-body-a")
+            assert(db.workoutSessionDao().observeSessions().first().isEmpty())
+            assert(db.workoutSessionDao().observeSessionExercises().first().isEmpty())
+            assert(db.workoutSessionDao().observeSets().first().isEmpty())
+        } finally {
+            db.close()
+        }
+    }
+
+    private fun openMigratedDatabase(): BybonDatabase =
+        Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
+            .setDriver(AndroidSQLiteDriver())
+            .addCallback(OpenSessionIndexCallback())
+            .build()
 
     private companion object {
         const val TEST_DB = "migration-test"

@@ -5,6 +5,7 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sanastasov.bybon.data.BybonDatabase
+import dev.sanastasov.bybon.data.OpenSessionIndexCallback
 import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
@@ -24,6 +25,7 @@ class ExerciseCatalogPersistenceTest {
 
     private val db = Room.inMemoryDatabaseBuilder<BybonDatabase>(context)
         .setDriver(AndroidSQLiteDriver())
+        .addCallback(OpenSessionIndexCallback())
         .build()
 
     @After
@@ -34,7 +36,7 @@ class ExerciseCatalogPersistenceTest {
     @Test
     fun freshDatabaseSeedsTheShippedCatalog() = runBlocking {
         val dao = db.exerciseDao()
-        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao())
+        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao(), db.workoutSessionDao())
 
         assert(repository.exercises().first() == catalogExercises)
         assert(dao.catalogCommit() == repdbCatalogCommit)
@@ -45,7 +47,7 @@ class ExerciseCatalogPersistenceTest {
     @Test
     fun importDoesNotClobberExistingIds() = runBlocking {
         val dao = db.exerciseDao()
-        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao())
+        val repository = WorkoutsRepositoryImpl(dao, db.workoutPlanDao(), db.workoutSessionDao())
         val bench = catalogExercises.first { it.id == "bench-press" }
         repository.exercises().first()
 
@@ -73,6 +75,7 @@ class ExerciseCatalogPersistenceTest {
         val refreshed = WorkoutsRepositoryImpl(
             dao,
             db.workoutPlanDao(),
+            db.workoutSessionDao(),
             catalog = catalogExercises.map { exercise ->
                 if (exercise.id == bench.id) exercise.copy(name = "Updated Bench") else exercise
             } + crunch.copy(name = "Shipped Crunch"),

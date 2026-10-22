@@ -5,6 +5,7 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sanastasov.bybon.data.BybonDatabase
+import dev.sanastasov.bybon.data.OpenSessionIndexCallback
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.addWorkSet
@@ -24,6 +25,7 @@ class WorkoutPlanPersistenceTest {
 
     private val db = Room.inMemoryDatabaseBuilder<BybonDatabase>(context)
         .setDriver(AndroidSQLiteDriver())
+        .addCallback(OpenSessionIndexCallback())
         .build()
 
     @After
@@ -35,7 +37,7 @@ class WorkoutPlanPersistenceTest {
     fun freshDatabaseSeedsBuiltInPlansAndKeepsUserEditsAcrossInstances() = runBlocking {
         val exerciseDao = db.exerciseDao()
         val planDao = db.workoutPlanDao()
-        val repository = WorkoutsRepositoryImpl(exerciseDao, planDao)
+        val repository = WorkoutsRepositoryImpl(exerciseDao, planDao, db.workoutSessionDao())
 
         assert(
             repository.workoutPlans().first() == listOf(fullBodyA, fullBodyB),
@@ -55,7 +57,7 @@ class WorkoutPlanPersistenceTest {
             exercises = emptyList(),
         )
 
-        val relaunched = WorkoutsRepositoryImpl(exerciseDao, planDao)
+        val relaunched = WorkoutsRepositoryImpl(exerciseDao, planDao, db.workoutSessionDao())
         val stored = relaunched.workoutPlans(WorkoutPlansFilter.AllPlans).first()
         assert(stored.first().isArchived)
         assert(stored.first().sets.first().sets == 4)

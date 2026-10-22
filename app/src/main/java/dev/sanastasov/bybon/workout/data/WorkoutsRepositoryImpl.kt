@@ -15,13 +15,11 @@ import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -30,11 +28,11 @@ private val builtInPlans = listOf(fullBodyA, fullBodyB, upperBodyA)
 class WorkoutsRepositoryImpl internal constructor(
     private val exerciseDao: ExerciseDao,
     private val workoutPlanDao: WorkoutPlanDao,
+    private val workoutSessionDao: WorkoutSessionDao,
     private val catalog: List<ExerciseDefinition> = catalogExercises,
     private val repdbCommit: String = repdbCatalogCommit,
 ) : WorkoutsRepository {
 
-    private val sessions = MutableStateFlow<List<WorkoutSession>>(emptyList())
     private val seedLock = Mutex()
 
     @Volatile
@@ -89,34 +87,42 @@ class WorkoutsRepositoryImpl internal constructor(
     }
 
     override suspend fun updateWorkout(session: WorkoutSession) {
-        ensureCatalog()
-        sessions.update { list ->
-            val index = list.indexOfFirst {
-                it.planId == session.planId && it.state !is WorkoutState.Completed
-            }
-            if (index >= 0) {
-                val existing = list[index]
+        seedLock.withLock {
+            seedLocked()
+            val existing = workoutSessionDao.openSessionForPlan(session.planId.id)
+            if (existing != null) {
+                val current = existing.toDomainSession()
                 if (session.state is WorkoutState.NotStarted &&
-                    existing.state is WorkoutState.InProgress
+                    current.state is WorkoutState.InProgress
                 ) {
-                    list
-                } else {
-                    list.toMutableList().apply { set(index, session) }
+                    return
                 }
+                workoutSessionDao.replaceSessionTree(existing.id, session.toWrite(existing.id))
             } else {
-                list + session
+                workoutSessionDao.insertSessionTree(session.toWrite(sessionId = 0))
             }
         }
     }
 
     override suspend fun deleteWorkout(sessionId: WorkoutSessionId) {
-        ensureCatalog()
-        sessions.update { list -> list.filterNot { it.id == sessionId } }
+        seedLock.withLock {
+            seedLocked()
+            workoutSessionDao.deleteSession(sessionId.planId.id, sessionId.startedAt)
+        }
     }
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = flow {
         ensureCatalog()
-        emitAll(sessions)
+        emitAll(
+            combine(
+                workoutSessionDao.observeSessions(),
+                workoutSessionDao.observeSessionExercises(),
+                workoutSessionDao.observeSets(),
+                exerciseDao.observeAll(),
+            ) { sessions, lines, sets, exercises ->
+                sessions.toDomainSessions(lines, sets, exercises)
+            },
+        )
     }
 
     override suspend fun importHistory(
@@ -124,34 +130,27 @@ class WorkoutsRepositoryImpl internal constructor(
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
     ): ImportHistoryResult {
-        val addedExercises: List<ExerciseDefinition>
-        val addedPlans: List<WorkoutPlan>
         seedLock.withLock {
             seedLocked()
-            addedExercises = if (exercises.isEmpty()) {
-                emptyList()
-            } else {
-                val added = exercises.withoutExistingIds(exerciseDao.ids().toSet()) { it.id }
-                if (added.isNotEmpty()) {
-                    exerciseDao.upsertAll(added.map { it.toEntity(source = ExerciseSource.IMPORT) })
-                }
-                added
-            }
-            addedPlans = plans.withoutExistingIds(workoutPlanDao.ids().toSet()) { it.id.id }
-            if (addedPlans.isNotEmpty()) {
-                workoutPlanDao.insertPlansWithExercises(
-                    addedPlans.map { it.toEntity() },
-                    addedPlans.flatMap { it.toExerciseEntities() },
-                )
-            }
+            val addedExercises = exercises.withoutExistingIds(exerciseDao.ids().toSet()) { it.id }
+            val addedPlans = plans.withoutExistingIds(workoutPlanDao.ids().toSet()) { it.id.id }
+            val existingSessionIds = workoutSessionDao.sessionIdentities()
+                .map { WorkoutSessionId(WorkoutPlanId(it.planId), it.startedAt) }
+                .toSet()
+            val addedSessions = sessions.withoutExistingIds(existingSessionIds) { it.id }
+            workoutSessionDao.importAdded(
+                exercises = addedExercises.map { it.toEntity(source = ExerciseSource.IMPORT) },
+                plans = addedPlans.map { it.toEntity() },
+                planExercises = addedPlans.flatMap { it.toExerciseEntities() },
+                sessions = addedSessions.map { it.toWrite(sessionId = 0) },
+            )
+            return ImportHistoryResult(
+                plans = addedPlans,
+                sessions = addedSessions,
+                exercises = addedExercises,
+                sessionsSkipped = sessions.size - addedSessions.size,
+            )
         }
-        val addedSessions = this.sessions.appendWithoutExisting(sessions) { it.id }
-        return ImportHistoryResult(
-            plans = addedPlans,
-            sessions = addedSessions,
-            exercises = addedExercises,
-            sessionsSkipped = sessions.size - addedSessions.size,
-        )
     }
 
     private suspend fun ensureCatalog() {
@@ -182,15 +181,16 @@ class WorkoutsRepositoryImpl internal constructor(
         seededCommit = repdbCommit
     }
 
-    private fun <T, I> MutableStateFlow<List<T>>.appendWithoutExisting(
-        incoming: List<T>,
-        id: (T) -> I,
-    ): List<T> {
-        var added = emptyList<T>()
-        update { current ->
-            added = incoming.withoutExisting(current, id)
-            current + added
+    private suspend fun WorkoutSessionEntity.toDomainSession(): WorkoutSession {
+        val lines = workoutSessionDao.exercisesForSession(id)
+        val sets = if (lines.isEmpty()) {
+            emptyList()
+        } else {
+            workoutSessionDao.setsForExercises(lines.map { it.id })
         }
-        return added
+        val exercises = exerciseDao.observeAll().first()
+        return checkNotNull(
+            listOf(this).toDomainSessions(lines, sets, exercises).singleOrNull(),
+        ) { "Session $id has no exercises" }
     }
 }
