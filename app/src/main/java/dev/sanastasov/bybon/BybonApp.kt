@@ -105,6 +105,9 @@ fun MainModule.BybonApp() {
                             backStack.removeLastOrNull()
                         },
                         onNavigateBack = { backStack.removeLastOrNull() },
+                        onNavigateToExerciseDetails = { exerciseId ->
+                            backStack.add(Screen.ExerciseDetails(exerciseId))
+                        },
                     )
                 }
 
@@ -118,6 +121,9 @@ fun MainModule.BybonApp() {
                         },
                         onNavigateToExerciseLibrary = { existingExerciseIds ->
                             backStack.add(Screen.ExerciseLibrary(existingExerciseIds))
+                        },
+                        onNavigateToExerciseDetails = { exerciseId ->
+                            backStack.add(Screen.ExerciseDetails(exerciseId))
                         },
                     )
                 }
@@ -139,6 +145,9 @@ fun MainModule.BybonApp() {
                     WorkoutSummaryScreen(
                         sessionId = key.sessionId,
                         onNavigateBack = { backStack.removeLastOrNull() },
+                        onNavigateToExerciseDetails = { exerciseId ->
+                            backStack.add(Screen.ExerciseDetails(exerciseId))
+                        },
                     )
                 }
             }

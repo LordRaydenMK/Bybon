@@ -123,6 +123,22 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
+    fun `opening details emits the exercise id without picking it`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.first { it.groups.isNotEmpty() }
+
+        viewModel.onAction(ExerciseLibraryAction.OnOpenExerciseDetails("bench-press"))
+
+        assert(
+            viewModel.effects.first() ==
+                ExerciseLibraryEffect.OpenExerciseDetails("bench-press"),
+        )
+        val state = viewModel.uiState.value
+        assert(!state.addEnabled)
+        assert(state.selectedExerciseId == null)
+    }
+
+    @Test
     fun `adding an already added exercise is rejected`() = runTest {
         val viewModel = viewModel()
         viewModel.uiState.first { it.groups.isNotEmpty() }

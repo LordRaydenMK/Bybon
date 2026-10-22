@@ -95,6 +95,11 @@ class WorkoutSessionViewModel(
 
                 is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
 
+                is WorkoutSessionAction.OnOpenExerciseDetails ->
+                    _effects.trySend(
+                        WorkoutSessionEffect.OpenExerciseDetails(action.exerciseId),
+                    )
+
                 else -> {
                     val updated = repository.updateWorkout(planId) { session ->
                         reduce(session, action)

@@ -257,6 +257,24 @@ class WorkoutSessionViewModelTest {
     }
 
     @Test
+    fun `opening details emits the exercise id`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(
+                WorkoutSessionAction.OnOpenExerciseDetails(session.exercises.first().id),
+            )
+            assert(
+                awaitItem() == WorkoutSessionEffect.OpenExerciseDetails(
+                    session.exercises.first().id,
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `picked exercise is appended to the session`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),

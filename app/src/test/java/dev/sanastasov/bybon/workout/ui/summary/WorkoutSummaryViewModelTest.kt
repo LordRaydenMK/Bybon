@@ -12,6 +12,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import java.time.LocalDateTime
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -213,6 +214,24 @@ class WorkoutSummaryViewModelTest {
                     listOf("Rep range 11-15", "Pause at the bottom"),
             )
         }
+    }
+
+    @Test
+    fun `opening details emits the exercise id`() = runTest {
+        val session = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
+        )
+        val viewModel = summaryViewModel(session)
+
+        viewModel.onAction(WorkoutSummaryAction.OnOpenExerciseDetails("romanian-deadlift"))
+
+        assert(
+            viewModel.effects.first() ==
+                WorkoutSummaryEffect.OpenExerciseDetails("romanian-deadlift"),
+        )
     }
 
     private fun oneRm(kg: Float, reps: Int): Weight = Weight.kilograms(estimateOneRmKg(kg, reps))

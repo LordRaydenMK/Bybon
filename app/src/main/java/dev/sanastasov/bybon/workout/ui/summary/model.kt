@@ -32,6 +32,18 @@ data class WorkoutSummarySetUi(
     val isWarmup: Boolean = false,
 )
 
+sealed class WorkoutSummaryAction {
+    data class OnOpenExerciseDetails(
+        val exerciseId: String,
+    ) : WorkoutSummaryAction()
+}
+
+sealed class WorkoutSummaryEffect {
+    data class OpenExerciseDetails(
+        val exerciseId: String,
+    ) : WorkoutSummaryEffect()
+}
+
 internal fun List<WorkoutSession>.requireCompletedSummary(
     sessionId: WorkoutSessionId,
 ): WorkoutSummaryUiState.Content =

@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.library
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +60,7 @@ fun WorkoutModule.ExerciseLibraryScreen(
     existingExerciseIds: List<String>,
     onExercisePicked: (String) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToExerciseDetails: (String) -> Unit,
 ) {
     val viewModel = retain {
         ExerciseLibraryViewModel(existingExerciseIds, workoutsRepository, it.coroutineScope)
@@ -66,6 +69,9 @@ fun WorkoutModule.ExerciseLibraryScreen(
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
             is ExerciseLibraryEffect.ExercisePicked -> onExercisePicked(effect.exerciseId)
+
+            is ExerciseLibraryEffect.OpenExerciseDetails ->
+                onNavigateToExerciseDetails(effect.exerciseId)
         }
     }
     ExerciseLibraryContent(uiState, viewModel::onAction, onNavigateBack)
@@ -240,21 +246,35 @@ private fun ExerciseLibraryCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        ExerciseArtwork(exercise)
-        Column(
-            Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Row(
+            Modifier
+                .weight(1f)
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = "Open exercise details",
+                    onClick = {
+                        onAction(ExerciseLibraryAction.OnOpenExerciseDetails(exercise.id))
+                    },
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                exercise.name,
-                fontWeight = FontWeight.Bold,
-            )
-            exercise.equipmentLabel?.let { label ->
+            ExerciseArtwork(exercise)
+            Column(
+                Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
                 Text(
-                    label,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    exercise.name,
+                    fontWeight = FontWeight.Bold,
                 )
+                exercise.equipmentLabel?.let { label ->
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
         if (exercise.selectable) {
