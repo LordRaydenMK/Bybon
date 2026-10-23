@@ -5,22 +5,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.sanastasov.bybon.workout.domain.elapsedClockContentDescription
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.sanastasov.bybon.workout.domain.elapsedSince
-import dev.sanastasov.bybon.workout.domain.formatElapsedClock
 import java.time.LocalDateTime
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 @Composable
 internal fun SessionElapsedClock(
@@ -28,44 +29,54 @@ internal fun SessionElapsedClock(
     modifier: Modifier = Modifier,
     now: () -> LocalDateTime = LocalDateTime::now,
 ) {
-    val elapsed by produceState(startedAt.clockSnapshot(now()), startedAt) {
-        while (true) {
-            val snapshot = startedAt.clockSnapshot(now())
-            value = snapshot
-            delay(snapshot.delayUntilNextSecond)
-        }
-    }
+    val elapsed by remember(startedAt, now) {
+        ticksEverySecond().map { elapsedSince(startedAt, now()) }
+    }.collectAsStateWithLifecycle(
+        initialValue = elapsedSince(startedAt, now()),
+        minActiveState = Lifecycle.State.RESUMED,
+    )
     Text(
-        elapsed.label,
+        elapsed.formatElapsedClock(),
         modifier
             .padding(end = 8.dp)
-            .clearAndSetSemantics { contentDescription = elapsed.contentDescription },
+            .clearAndSetSemantics {
+                contentDescription = elapsed.elapsedClockContentDescription()
+            },
         color = MaterialTheme.colorScheme.onSurface,
         fontFamily = FontFamily.Monospace,
         style = MaterialTheme.typography.titleMedium,
     )
 }
 
-private data class ElapsedClockSnapshot(
-    val label: String,
-    val contentDescription: String,
-    val delayUntilNextSecond: Duration,
-)
-
-private fun LocalDateTime.clockSnapshot(now: LocalDateTime): ElapsedClockSnapshot {
-    val elapsed = elapsedSince(this, now)
-    val nanosPerSecond = 1.seconds.inWholeNanoseconds
-    val nanosIntoSecond = elapsed.inWholeNanoseconds % nanosPerSecond
-    val nanosUntilNextSecond = if (nanosIntoSecond == 0L) {
-        nanosPerSecond
-    } else {
-        nanosPerSecond - nanosIntoSecond
+private fun ticksEverySecond(): Flow<Unit> = flow {
+    while (true) {
+        emit(Unit)
+        delay(1.seconds)
     }
-    return ElapsedClockSnapshot(
-        label = elapsed.formatElapsedClock(),
-        contentDescription = elapsed.elapsedClockContentDescription(),
-        delayUntilNextSecond = nanosUntilNextSecond.nanoseconds.coerceAtLeast(1.milliseconds),
-    )
+}
+
+internal fun Duration.formatElapsedClock(): String {
+    val totalSeconds = inWholeSeconds.coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+}
+
+internal fun Duration.elapsedClockContentDescription(): String {
+    val totalSeconds = inWholeSeconds.coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    val minutePart = when (minutes) {
+        0L -> null
+        1L -> "1 minute"
+        else -> "$minutes minutes"
+    }
+    val secondPart = when {
+        minutes > 0L && seconds == 0L -> null
+        seconds == 1L -> "1 second"
+        else -> "$seconds seconds"
+    }
+    return "Elapsed ${listOfNotNull(minutePart, secondPart).joinToString(" ")}"
 }
 
 @Preview
