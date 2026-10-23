@@ -10,6 +10,9 @@ appId: dev.sanastasov.bybon.debug
 - scrollUntilVisible:
     element: "Add Exercise"
     direction: DOWN
+    timeout: 60000
+    speed: 80
+    centerElement: true
 - assertVisible: "Add Exercise"
 - tapOn: "Add Exercise"
 - assertVisible: "Exercise Library"
@@ -41,6 +44,9 @@ appId: dev.sanastasov.bybon.debug
 - scrollUntilVisible:
     element: "Add Exercise"
     direction: DOWN
+    timeout: 60000
+    speed: 80
+    centerElement: true
 - assertVisible: "Add Exercise"
 - scrollUntilVisible:
     element: "3 x Incline Dumbbell Curl in 8 - 12"
