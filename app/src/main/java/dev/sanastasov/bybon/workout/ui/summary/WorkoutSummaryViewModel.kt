@@ -7,13 +7,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 class WorkoutSummaryViewModel(
     private val sessionId: WorkoutSessionId,
-    repository: WorkoutsRepository,
-    coroutineScope: CoroutineScope,
+    private val repository: WorkoutsRepository,
+    private val coroutineScope: CoroutineScope,
 ) {
 
     private val _effects = Channel<WorkoutSummaryEffect>(Channel.BUFFERED)
@@ -21,13 +22,18 @@ class WorkoutSummaryViewModel(
 
     val uiState: StateFlow<WorkoutSummaryUiState> =
         repository.workoutSessions()
-            .map { sessions -> sessions.requireCompletedSummary(sessionId) }
+            .mapNotNull { sessions -> sessions.completedSummary(sessionId) }
             .stateInWhileInForeground(coroutineScope, WorkoutSummaryUiState.Loading)
 
     fun onAction(action: WorkoutSummaryAction) {
         when (action) {
             is WorkoutSummaryAction.OnOpenExerciseDetails ->
                 _effects.trySend(WorkoutSummaryEffect.OpenExerciseDetails(action.exerciseId))
+
+            WorkoutSummaryAction.OnDeleteSession -> coroutineScope.launch {
+                repository.deleteWorkout(sessionId)
+                _effects.trySend(WorkoutSummaryEffect.NavigateBack)
+            }
         }
     }
 }

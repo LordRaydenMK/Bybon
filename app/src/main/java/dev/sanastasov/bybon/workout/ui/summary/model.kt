@@ -36,18 +36,20 @@ sealed class WorkoutSummaryAction {
     data class OnOpenExerciseDetails(
         val exerciseId: String,
     ) : WorkoutSummaryAction()
+    data object OnDeleteSession : WorkoutSummaryAction()
 }
 
 sealed class WorkoutSummaryEffect {
     data class OpenExerciseDetails(
         val exerciseId: String,
     ) : WorkoutSummaryEffect()
+    data object NavigateBack : WorkoutSummaryEffect()
 }
 
-internal fun List<WorkoutSession>.requireCompletedSummary(
+internal fun List<WorkoutSession>.completedSummary(
     sessionId: WorkoutSessionId,
-): WorkoutSummaryUiState.Content =
-    first { it.id == sessionId && it.state is WorkoutState.Completed }.toSummaryUi()
+): WorkoutSummaryUiState.Content? =
+    firstOrNull { it.id == sessionId && it.state is WorkoutState.Completed }?.toSummaryUi()
 
 internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content =
     WorkoutSummaryUiState.Content(
