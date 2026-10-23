@@ -1,8 +1,11 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
+import dev.sanastasov.bybon.domain.toShortDisplayDate
+import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.PlanedExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
@@ -12,7 +15,8 @@ data class WorkoutPlansUiState(
     val plans: List<WorkoutPlanUi> = emptyList(),
     val showArchived: Boolean = false,
 ) {
-    val unarchivedPlans: List<WorkoutPlanUi> get() = plans.filter { !it.plan.isArchived }
+    val unarchivedPlans: List<WorkoutPlanUi>
+        get() = plans.filter { !it.plan.isArchived }.sortedByDescending { it.isActive }
 
     val archivedPlans: List<WorkoutPlanUi> get() = plans.filter { it.plan.isArchived }
 
@@ -30,14 +34,30 @@ data class WorkoutPlansUiState(
 data class WorkoutPlanUi(
     val plan: WorkoutPlan,
     val isActive: Boolean,
+    val lastExecutedLabel: String? = null,
+    val activeExerciseId: String? = null,
 )
 
-fun WorkoutPlan.toUi(sessions: List<WorkoutSession>): WorkoutPlanUi = WorkoutPlanUi(
-    plan = this,
-    isActive = !isArchived && sessions.any { session ->
-        session.planId == id && session.isResumable
-    },
-)
+fun WorkoutPlan.toUi(sessions: List<WorkoutSession>): WorkoutPlanUi {
+    val forPlan = sessions.filter { it.planId == id }
+    val resumable = forPlan.firstOrNull { it.isResumable }
+    val lastCompleted = forPlan
+        .filter { it.state is WorkoutState.Completed }
+        .maxByOrNull { it.startedAt }
+    val isActive = !isArchived && resumable != null
+    return WorkoutPlanUi(
+        plan = this,
+        isActive = isActive,
+        lastExecutedLabel = lastCompleted?.startedAt?.toLocalDate()?.toShortDisplayDate(),
+        activeExerciseId = resumable?.takeIf { isActive }?.currentPlanExerciseId(this),
+    )
+}
+
+internal fun WorkoutSession.currentPlanExerciseId(plan: WorkoutPlan): String? {
+    val currentId = exercises.firstOrNull { it.state != ExerciseState.Completed }?.id
+        ?: return null
+    return currentId.takeIf { id -> plan.sets.any { it.exercise.id == id } }
+}
 
 sealed class WorkoutPlansAction {
     data class OnStartPlan(

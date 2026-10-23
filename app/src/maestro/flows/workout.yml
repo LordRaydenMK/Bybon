@@ -58,6 +58,9 @@ appId: dev.sanastasov.bybon.debug
       point: "90%, 50%" # Cursor at end so backspace clears both digits
 - eraseText: 8
 - inputText: "60"
+- assertVisible:
+      text: "60"
+      index: 0
 - tapOn:
       text: "8"
       index: 1
