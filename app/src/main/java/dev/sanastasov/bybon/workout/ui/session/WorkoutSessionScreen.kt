@@ -59,6 +59,7 @@ fun WorkoutModule.WorkoutSessionScreen(
     onBack: () -> Unit,
     onWorkoutCompleted: (WorkoutSessionId) -> Unit,
     onNavigateToExerciseLibrary: (List<String>) -> Unit,
+    onNavigateToExerciseDetails: (String) -> Unit,
 ) {
     val viewModel = retain {
         WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
@@ -77,6 +78,9 @@ fun WorkoutModule.WorkoutSessionScreen(
 
             is WorkoutSessionEffect.OpenExerciseLibrary ->
                 onNavigateToExerciseLibrary(effect.existingExerciseIds)
+
+            is WorkoutSessionEffect.OpenExerciseDetails ->
+                onNavigateToExerciseDetails(effect.exerciseId)
         }
     }
     uiState?.let {
@@ -163,6 +167,9 @@ private fun SessionExercisePager(
                         { onAction(WorkoutSessionAction.OnRemoveExercise(exercise)) }
                     } else {
                         null
+                    },
+                    onTitleClick = {
+                        onAction(WorkoutSessionAction.OnOpenExerciseDetails(exercise.id))
                     },
                 )
             }

@@ -93,10 +93,18 @@ sealed class ExerciseLibraryAction {
     data class OnToggleFilter(
         val id: ExerciseLibraryFilterId,
     ) : ExerciseLibraryAction()
+
+    data class OnOpenExerciseDetails(
+        val exerciseId: String,
+    ) : ExerciseLibraryAction()
 }
 
 sealed class ExerciseLibraryEffect {
     data class ExercisePicked(
+        val exerciseId: String,
+    ) : ExerciseLibraryEffect()
+
+    data class OpenExerciseDetails(
         val exerciseId: String,
     ) : ExerciseLibraryEffect()
 }

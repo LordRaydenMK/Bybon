@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,11 +21,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -34,17 +37,28 @@ import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.formatSetPerformance
 
 @Composable
-fun WorkoutModule.WorkoutSummaryScreen(sessionId: WorkoutSessionId, onNavigateBack: () -> Unit) {
+fun WorkoutModule.WorkoutSummaryScreen(
+    sessionId: WorkoutSessionId,
+    onNavigateBack: () -> Unit,
+    onNavigateToExerciseDetails: (String) -> Unit,
+) {
     val viewModel = retain {
         WorkoutSummaryViewModel(sessionId, workoutsRepository, it.coroutineScope)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    WorkoutSummaryContent(uiState, onNavigateBack)
+    viewModel.effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            is WorkoutSummaryEffect.OpenExerciseDetails ->
+                onNavigateToExerciseDetails(effect.exerciseId)
+        }
+    }
+    WorkoutSummaryContent(uiState, viewModel::onAction, onNavigateBack)
 }
 
 @Composable
 private fun WorkoutSummaryContent(
     uiState: WorkoutSummaryUiState,
+    onAction: (WorkoutSummaryAction) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -63,7 +77,7 @@ private fun WorkoutSummaryContent(
         ) {
             when (uiState) {
                 WorkoutSummaryUiState.Loading -> LoadingIndicator()
-                is WorkoutSummaryUiState.Content -> SummaryList(uiState)
+                is WorkoutSummaryUiState.Content -> SummaryList(uiState, onAction)
             }
         }
     }
@@ -80,7 +94,10 @@ private fun LoadingIndicator() {
 }
 
 @Composable
-private fun SummaryList(state: WorkoutSummaryUiState.Content) {
+private fun SummaryList(
+    state: WorkoutSummaryUiState.Content,
+    onAction: (WorkoutSummaryAction) -> Unit,
+) {
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -98,14 +115,17 @@ private fun SummaryList(state: WorkoutSummaryUiState.Content) {
         }
         items(state.exercises, key = { it.id }) { exercise ->
             Card(Modifier.fillMaxWidth()) {
-                ExerciseSummaryCard(exercise)
+                ExerciseSummaryCard(exercise, onAction)
             }
         }
     }
 }
 
 @Composable
-private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
+private fun ExerciseSummaryCard(
+    exercise: WorkoutSummaryExerciseUi,
+    onAction: (WorkoutSummaryAction) -> Unit,
+) {
     Column(
         Modifier
             .fillMaxWidth()
@@ -115,6 +135,15 @@ private fun ExerciseSummaryCard(exercise: WorkoutSummaryExerciseUi) {
         Spacer(Modifier.height(8.dp))
         Text(
             exercise.name,
+            Modifier
+                .fillMaxWidth()
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = "Open exercise details",
+                    onClick = {
+                        onAction(WorkoutSummaryAction.OnOpenExerciseDetails(exercise.id))
+                    },
+                ),
             fontWeight = FontWeight.Bold,
         )
         exercise.notes.forEach { note ->
@@ -180,6 +209,7 @@ private fun WorkoutSummaryContentPreview() {
                     ),
                 ),
             ),
+            onAction = {},
             onNavigateBack = {},
         )
     }

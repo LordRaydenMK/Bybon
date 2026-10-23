@@ -66,6 +66,9 @@ sealed class WorkoutSessionAction {
     data class OnRemoveExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
+    data class OnOpenExerciseDetails(
+        val exerciseId: String,
+    ) : WorkoutSessionAction()
 }
 
 sealed class WorkoutSessionEffect {
@@ -75,5 +78,8 @@ sealed class WorkoutSessionEffect {
     ) : WorkoutSessionEffect()
     data class OpenExerciseLibrary(
         val existingExerciseIds: List<String>,
+    ) : WorkoutSessionEffect()
+    data class OpenExerciseDetails(
+        val exerciseId: String,
     ) : WorkoutSessionEffect()
 }

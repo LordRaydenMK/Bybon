@@ -53,6 +53,9 @@ class ExerciseLibraryViewModel(
 
             is ExerciseLibraryAction.OnToggleFilter ->
                 filters.update { it.toggle(action.id) }
+
+            is ExerciseLibraryAction.OnOpenExerciseDetails ->
+                _effects.trySend(ExerciseLibraryEffect.OpenExerciseDetails(action.exerciseId))
         }
     }
 }

@@ -231,7 +231,7 @@ class WorkoutHistoryViewModelTest {
     }
 
     @Test
-    fun `top set is the heaviest completed set even when another set has a higher 1RM`() = runTest {
+    fun `top set is the completed set with the highest estimated 1RM`() = runTest {
         val session = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -251,9 +251,9 @@ class WorkoutHistoryViewModelTest {
             skipItems(1)
             val topSet = (awaitItem() as WorkoutHistoryUiState.History)
                 .sessions.single().exercises.single()
-            assert(topSet.weightKg == "50")
-            assert(topSet.reps == 5)
-            assert(topSet.oneRm == Weight.kilograms(estimateOneRmKg(50f, 5)))
+            assert(topSet.weightKg == "45")
+            assert(topSet.reps == 12)
+            assert(topSet.oneRm == Weight.kilograms(estimateOneRmKg(45f, 12)))
         }
     }
 

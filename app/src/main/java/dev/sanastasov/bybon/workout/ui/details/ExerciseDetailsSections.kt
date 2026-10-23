@@ -115,26 +115,17 @@ internal fun LazyListScope.detailsMuscleGroup(title: String, muscles: List<Strin
     }
 }
 
-internal fun LazyListScope.detailsNumberedList(title: String, items: List<String>) {
+internal fun LazyListScope.detailsList(
+    title: String,
+    items: List<String>,
+    formatItem: (index: Int, text: String) -> String,
+) {
     if (items.isEmpty()) return
     item(key = title) {
         DetailsSection(title) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items.forEachIndexed { index, step ->
-                    Text("${index + 1}. $step", style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        }
-    }
-}
-
-internal fun LazyListScope.detailsBulletedList(title: String, items: List<String>) {
-    if (items.isEmpty()) return
-    item(key = title) {
-        DetailsSection(title) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items.forEach { tip ->
-                    Text("• $tip", style = MaterialTheme.typography.bodyLarge)
+                items.forEachIndexed { index, text ->
+                    Text(formatItem(index, text), style = MaterialTheme.typography.bodyLarge)
                 }
             }
         }
