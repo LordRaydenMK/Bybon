@@ -16,7 +16,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.sanastasov.bybon.workout.domain.Weight
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.extensions.format
 import ir.ehsannarmani.compose_charts.models.DividerProperties
@@ -30,10 +32,12 @@ import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
 import ir.ehsannarmani.compose_charts.models.LineProperties
 import ir.ehsannarmani.compose_charts.models.PopupProperties
+import ir.ehsannarmani.compose_charts.models.StrokeStyle
 
 @Composable
 internal fun ExerciseOneRmTrendCard(
     points: List<ExerciseOneRmPointUi>,
+    personalRecordOneRm: Weight?,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth()) {
@@ -44,27 +48,44 @@ internal fun ExerciseOneRmTrendCard(
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            "Last 3 months · top-set 1RM",
+            if (personalRecordOneRm == null) {
+                "Last 3 months · top-set 1RM"
+            } else {
+                "Last 3 months · top-set 1RM · dashed line is PR"
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(12.dp))
         ExerciseOneRmChart(
             points,
+            personalRecordOneRm,
             Modifier
                 .fillMaxWidth()
-                .height(196.dp),
+                .height(220.dp),
         )
     }
 }
 
 @Composable
-private fun ExerciseOneRmChart(points: List<ExerciseOneRmPointUi>, modifier: Modifier = Modifier) {
+private fun ExerciseOneRmChart(
+    points: List<ExerciseOneRmPointUi>,
+    personalRecordOneRm: Weight?,
+    modifier: Modifier = Modifier,
+) {
     val colors = oneRmChartColors()
     val values = remember(points) { points.map { it.kilograms.toDouble() } }
-    val yRange = remember(values) { oneRmYAxisRange(values) }
-    val lines = remember(values, colors.line, colors.surface) {
-        listOf(oneRmTrendLine(values, colors.line, colors.surface))
+    val personalRecordKg = personalRecordOneRm?.kilogramsValue?.toDouble()
+    val yRange = remember(values, personalRecordKg) {
+        oneRmYAxisRange(values, personalRecordKg)
+    }
+    val lines = remember(values, personalRecordKg, colors) {
+        buildList {
+            add(oneRmTrendLine(values, colors.line, colors.surface))
+            if (personalRecordKg != null) {
+                add(personalRecordGuideline(values.size, personalRecordKg, colors.guideline))
+            }
+        }
     }
     LineChart(
         modifier = modifier.semantics { contentDescription = oneRmTrendDescription(points) },
@@ -93,21 +114,26 @@ private fun ExerciseOneRmChart(points: List<ExerciseOneRmPointUi>, modifier: Mod
         ),
         labelProperties = LabelProperties(
             enabled = true,
-            textStyle = colors.labelStyle,
-            padding = 8.dp,
+            textStyle = colors.labelStyle.copy(textAlign = TextAlign.Center),
+            padding = 12.dp,
             labels = chartDateLabels(points),
+            rotation = LabelProperties.Rotation(
+                mode = LabelProperties.Rotation.Mode.Force,
+                degree = 0f,
+            ),
         ),
         popupProperties = PopupProperties(
             textStyle = colors.popupTextStyle,
             containerColor = colors.popupContainer,
             mode = PopupProperties.Mode.PointMode(),
-            contentBuilder = { popup -> oneRmTrendPopupText(points, popup) },
+            contentBuilder = { popup -> oneRmTrendPopupText(points, popup.valueIndex) },
         ),
     )
 }
 
 private data class OneRmChartColors(
     val line: Color,
+    val guideline: Color,
     val surface: Color,
     val outline: Color,
     val labelStyle: TextStyle,
@@ -121,6 +147,7 @@ private fun oneRmChartColors(): OneRmChartColors {
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = colorScheme.onSurfaceVariant)
     return OneRmChartColors(
         line = colorScheme.primary,
+        guideline = colorScheme.tertiary,
         surface = colorScheme.surface,
         outline = colorScheme.outlineVariant,
         labelStyle = labelStyle,
@@ -152,31 +179,44 @@ private fun oneRmTrendLine(values: List<Double>, lineColor: Color, surfaceColor:
         ),
     )
 
-internal fun oneRmYAxisRange(values: List<Double>): ClosedFloatingPointRange<Double> {
-    val lowest = values.min()
-    val highest = values.max()
+private fun personalRecordGuideline(pointCount: Int, kilograms: Double, color: Color): Line = Line(
+    label = "Personal record",
+    values = List(pointCount) { kilograms },
+    color = SolidColor(color),
+    curvedEdges = false,
+    drawStyle = DrawStyle.Stroke(
+        width = 1.5.dp,
+        strokeStyle = StrokeStyle.Dashed(),
+    ),
+    strokeAnimationSpec = tween(700),
+    gradientAnimationSpec = tween(0),
+    gradientAnimationDelay = 0,
+    dotProperties = DotProperties(enabled = false),
+    popupProperties = PopupProperties(enabled = false),
+)
+
+internal fun oneRmYAxisRange(
+    values: List<Double>,
+    personalRecordKg: Double? = null,
+): ClosedFloatingPointRange<Double> {
+    val series = if (personalRecordKg == null) values else values + personalRecordKg
+    val lowest = series.min()
+    val highest = series.max()
     if (lowest == highest) return (lowest - 1.0)..(highest + 1.0)
     val padding = maxOf((highest - lowest) * 0.2, 0.4)
     return (lowest - padding)..(highest + padding)
 }
 
 internal fun chartDateLabels(points: List<ExerciseOneRmPointUi>): List<String> {
-    if (points.size <= 6) return points.map { it.dateLabel }
-    val step = ((points.size - 1) / 4).coerceAtLeast(1)
-    return points.mapIndexed { index, point ->
-        if (index == 0 || index == points.lastIndex || index % step == 0) point.dateLabel else ""
+    val labels = points.map { it.dateLabel.replace(' ', '\n') }
+    if (labels.size <= 8) return labels
+    val step = ((labels.size - 1) / 4).coerceAtLeast(1)
+    return labels.mapIndexed { index, label ->
+        if (index == 0 || index == labels.lastIndex || index % step == 0) label else ""
     }
 }
 
 private fun oneRmTrendDescription(points: List<ExerciseOneRmPointUi>): String =
     points.joinToString(prefix = "Estimated 1RM of the top set. ") {
-        "${it.dateLabel} ${it.oneRm.kilograms} kg"
+        "${it.dateLabel} ${it.weightKg} kg x ${it.reps}, ${it.oneRm.kilograms} kg"
     }
-
-private fun oneRmTrendPopupText(
-    points: List<ExerciseOneRmPointUi>,
-    popup: PopupProperties.Popup,
-): String {
-    val point = points.getOrNull(popup.valueIndex)
-    return "${point?.dateLabel.orEmpty()} · ${popup.value.format(1)} kg"
-}

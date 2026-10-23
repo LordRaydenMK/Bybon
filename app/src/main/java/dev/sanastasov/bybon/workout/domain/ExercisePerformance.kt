@@ -4,16 +4,25 @@ import java.time.LocalDateTime
 import java.time.Period
 
 data class ExercisePerformance(
-    val personalRecordOneRm: Weight?,
+    val personalRecord: PersonalRecord?,
     val recentSessions: List<ExerciseSessionLog>,
+) {
+    val personalRecordOneRm: Weight? get() = personalRecord?.oneRm
+}
+
+data class PersonalRecord(
+    val oneRm: Weight,
+    val achievedAt: LocalDateTime,
 )
 
 data class ExerciseSessionLog(
     val startedAt: LocalDateTime,
     val planName: String,
-    val topSetOneRm: Weight?,
+    val topSet: ExerciseSet,
     val workSets: List<ExerciseSet>,
-)
+) {
+    val topSetOneRm: Weight? get() = topSet.oneRm
+}
 
 fun List<WorkoutSession>.exercisePerformance(
     exerciseId: String,
@@ -29,10 +38,7 @@ fun List<WorkoutSession>.exercisePerformance(
         } ?: return@mapNotNull null
         session to exercise
     }
-    val personalRecordOneRm = matching
-        .flatMap { it.second.sets }
-        .mapNotNull { it.oneRm }
-        .maxOrNull()
+    val personalRecord = matching.personalRecord()
     val windowStart = now.minus(historyWindow)
     val recentSessions = matching
         .filter { (session, _) ->
@@ -43,9 +49,17 @@ fun List<WorkoutSession>.exercisePerformance(
             ExerciseSessionLog(
                 startedAt = session.startedAt,
                 planName = session.planName,
-                topSetOneRm = exercise.topSet.oneRm,
+                topSet = exercise.topSet,
                 workSets = exercise.sets,
             )
         }
-    return ExercisePerformance(personalRecordOneRm, recentSessions)
+    return ExercisePerformance(personalRecord, recentSessions)
+}
+
+private fun List<Pair<WorkoutSession, WorkoutExercise>>.personalRecord(): PersonalRecord? {
+    val oneRm = flatMap { it.second.sets }.mapNotNull { it.oneRm }.maxOrNull() ?: return null
+    val achievedAt = filter { (_, exercise) ->
+        exercise.sets.any { set -> set.oneRm == oneRm }
+    }.minOf { it.first.startedAt }
+    return PersonalRecord(oneRm, achievedAt)
 }

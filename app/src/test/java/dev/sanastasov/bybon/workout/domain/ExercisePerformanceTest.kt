@@ -54,6 +54,7 @@ class ExercisePerformanceTest {
         val performance = listOf(olderBetter, recent).exercisePerformance("bench-press", now)
 
         assert(performance.personalRecordOneRm == Weight.kilograms(estimateOneRmKg(80f, 8)))
+        assert(performance.personalRecord?.achievedAt == olderBetter.startedAt)
         assert(performance.recentSessions.single().startedAt == recent.startedAt)
         assert(
             performance.recentSessions.single().topSetOneRm ==
@@ -126,12 +127,34 @@ class ExercisePerformanceTest {
             .exercisePerformance("bench-press", now)
 
         assert(performance.personalRecordOneRm == Weight.kilograms(estimateOneRmKg(90f, 5)))
+        assert(performance.personalRecord?.achievedAt == excluded.startedAt)
         assert(
             performance.recentSessions.map { it.startedAt } ==
                 listOf(newest.startedAt, included.startedAt),
         )
         assert(performance.recentSessions.first().planName == "Full Body B")
         assert(performance.recentSessions.first().workSets.map { it.reps } == listOf(8, 7))
+    }
+
+    @Test
+    fun `PR date is the first session that hit the record`() {
+        val first = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 7, 1, 18, 0),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
+        )
+        val matchedLater = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 9, 1, 18, 0),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
+        )
+
+        val performance = listOf(matchedLater, first).exercisePerformance("bench-press", now)
+
+        assert(performance.personalRecord?.achievedAt == first.startedAt)
+        assert(performance.personalRecordOneRm == Weight.kilograms(estimateOneRmKg(80f, 8)))
     }
 
     @Test
