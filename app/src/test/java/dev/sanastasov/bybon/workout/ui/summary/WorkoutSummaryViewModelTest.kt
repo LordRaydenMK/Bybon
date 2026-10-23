@@ -234,6 +234,25 @@ class WorkoutSummaryViewModelTest {
         )
     }
 
+    @Test
+    fun `deleting a session removes it and navigates back`() = runTest {
+        val session = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
+        val viewModel = WorkoutSummaryViewModel(session.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            viewModel.uiState.first { it is WorkoutSummaryUiState.Content }
+            viewModel.onAction(WorkoutSummaryAction.OnDeleteSession)
+            assert(awaitItem() == WorkoutSummaryEffect.NavigateBack)
+        }
+        assert(repository.workoutSessions().first().isEmpty())
+    }
+
     private fun oneRm(kg: Float, reps: Int): Weight = Weight.kilograms(estimateOneRmKg(kg, reps))
 
     private fun TestScope.summaryViewModel(session: WorkoutSession) = WorkoutSummaryViewModel(
