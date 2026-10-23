@@ -25,11 +25,26 @@ class WorkoutSessionStateTest {
     }
 
     @Test
+    fun `startWorkout stamps startedAt when leaving the overview draft`() {
+        val draftStartedAt = LocalDateTime.of(2026, 1, 1, 12, 0)
+        val clickedAt = LocalDateTime.of(2026, 10, 23, 18, 5, 12)
+        val overview = fullBodyA.toOverviewSession().copy(startedAt = draftStartedAt)
+
+        val actual = overview.startWorkout(now = clickedAt)
+
+        assert(actual.startedAt == clickedAt)
+        assert(actual.id == WorkoutSessionId(fullBodyA.id, clickedAt))
+        assert(actual.state == WorkoutState.InProgress)
+    }
+
+    @Test
     fun `startWorkout is idempotent when a set is already in progress`() {
-        val started = fullBodyA.toOverviewSession().startWorkout()
+        val startedAt = LocalDateTime.of(2026, 10, 23, 18, 0)
+        val started = fullBodyA.toOverviewSession().startWorkout(now = startedAt)
 
-        val actual = started.startWorkout()
+        val actual = started.startWorkout(now = startedAt.plusMinutes(10))
 
+        assert(actual.startedAt == startedAt)
         assert(actual.state == WorkoutState.InProgress)
         assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
         assert(actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
@@ -59,8 +74,9 @@ class WorkoutSessionStateTest {
         )
         assert(paused.workoutSets.none { it.setState == SetState.InProgress })
 
-        val actual = paused.startWorkout()
+        val actual = paused.startWorkout(now = paused.startedAt.plusMinutes(10))
 
+        assert(actual.startedAt == paused.startedAt)
         assert(actual.state == WorkoutState.InProgress)
         assert(actual.exercises.first().warmupSets!![0].setState == SetState.Completed)
         assert(actual.exercises.first().warmupSets!![1].setState == SetState.InProgress)
