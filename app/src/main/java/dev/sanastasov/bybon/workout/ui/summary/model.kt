@@ -1,17 +1,25 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
+import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+import kotlin.time.Duration
 
 sealed class WorkoutSummaryUiState {
     data object Loading : WorkoutSummaryUiState()
     data class Content(
         val title: String,
+        val date: String,
+        val startTime: String,
+        val duration: String,
         val exercises: List<WorkoutSummaryExerciseUi>,
         val note: String? = null,
     ) : WorkoutSummaryUiState()
@@ -51,12 +59,23 @@ internal fun List<WorkoutSession>.completedSummary(
 ): WorkoutSummaryUiState.Content? =
     firstOrNull { it.id == sessionId && it.state is WorkoutState.Completed }?.toSummaryUi()
 
-internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content =
-    WorkoutSummaryUiState.Content(
+internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content {
+    val elapsed = when (val workoutState = state) {
+        is WorkoutState.Completed -> workoutState.duration
+        else -> duration ?: Duration.ZERO
+    }
+    return WorkoutSummaryUiState.Content(
         title = planName,
+        date = startedAt.toLocalDate().toDisplayDate(),
+        startTime = START_TIME_FORMAT.format(startedAt),
+        duration = elapsed.formatElapsedClock(),
         exercises = exercises.mapNotNull { it.toSummaryExerciseUi() },
         note = note,
     )
+}
+
+private val START_TIME_FORMAT: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("HH:mm", Locale.US)
 
 private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null

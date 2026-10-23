@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.sanastasov.bybon.workout.domain.elapsedSince
+import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -53,13 +54,6 @@ private fun ticksEverySecond(): Flow<Unit> = flow {
         emit(Unit)
         delay(1.seconds)
     }
-}
-
-internal fun Duration.formatElapsedClock(): String {
-    val totalSeconds = inWholeSeconds.coerceAtLeast(0)
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
 }
 
 internal fun Duration.elapsedClockContentDescription(): String {
