@@ -123,13 +123,14 @@ class ExerciseDetailsUiTest {
 
         val olderOneRm = Weight.kilograms(estimateOneRmKg(45f, 12))
         val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
-        assert(ui.personalRecordOneRm == newerOneRm)
+        assert(ui.personalRecord == PersonalRecordUi(newerOneRm, "1 Oct 2026"))
         assert(
             ui.oneRmTrend == listOf(
-                ExerciseOneRmPointUi("10 Aug", olderOneRm.kilogramsValue, olderOneRm),
-                ExerciseOneRmPointUi("1 Oct", newerOneRm.kilogramsValue, newerOneRm),
+                ExerciseOneRmPointUi("10 Aug", olderOneRm.kilogramsValue, olderOneRm, "45", 12),
+                ExerciseOneRmPointUi("1 Oct", newerOneRm.kilogramsValue, newerOneRm, "80", 8),
             ),
         )
+        assert(oneRmTrendPopupText(ui.oneRmTrend, 1) == "1 Oct  80 kg x 8")
         assert(ui.recentSessions.map { it.planName } == listOf("Full Body B", "Full Body A"))
         assert(ui.recentSessions.first().dateLabel == "1 Oct 2026")
         assert(
@@ -138,5 +139,8 @@ class ExerciseDetailsUiTest {
             ),
         )
         assert(ui.recentSessions.last().sets.size == 2)
+        val firstSet = ui.recentSessions.first().sets.single()
+        assert(historySetLoadLabel(firstSet) == "1. 80 kg x 8")
+        assert(historySetOneRmLabel(firstSet) == "${newerOneRm.kilograms} kg 1RM")
     }
 }

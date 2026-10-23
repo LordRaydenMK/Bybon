@@ -6,9 +6,11 @@ import dev.sanastasov.bybon.workout.domain.ExerciseImages
 import dev.sanastasov.bybon.workout.domain.ExercisePerformance
 import dev.sanastasov.bybon.workout.domain.ExerciseSessionLog
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.PersonalRecord
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.toCatalogLabel
+import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -19,7 +21,7 @@ sealed class ExerciseDetailsUiState {
         val name: String,
         val images: ExerciseImages? = null,
         val facts: List<String> = emptyList(),
-        val personalRecordOneRm: Weight? = null,
+        val personalRecord: PersonalRecordUi? = null,
         val oneRmTrend: List<ExerciseOneRmPointUi> = emptyList(),
         val recentSessions: List<ExerciseDetailsSessionUi> = emptyList(),
         val primaryMuscles: List<String> = emptyList(),
@@ -31,10 +33,17 @@ sealed class ExerciseDetailsUiState {
     ) : ExerciseDetailsUiState()
 }
 
+data class PersonalRecordUi(
+    val oneRm: Weight,
+    val dateLabel: String,
+)
+
 data class ExerciseOneRmPointUi(
     val dateLabel: String,
     val kilograms: Float,
     val oneRm: Weight,
+    val weightKg: String,
+    val reps: Int,
 )
 
 data class ExerciseDetailsSessionUi(
@@ -62,7 +71,7 @@ internal fun ExerciseDefinition.toDetailsUi(
         forceType?.name,
         difficulty?.name,
     ),
-    personalRecordOneRm = performance.personalRecordOneRm,
+    personalRecord = performance.personalRecord?.toUi(),
     oneRmTrend = performance.recentSessions.toOneRmTrend(),
     recentSessions = performance.recentSessions.map { it.toSessionUi() },
     primaryMuscles = primaryMuscles.map { it.toCatalogLabel() },
@@ -76,6 +85,11 @@ internal fun ExerciseDefinition.toDetailsUi(
 private val CHART_DATE_FORMAT: DateTimeFormatter =
     DateTimeFormatter.ofPattern("d MMM", Locale.US)
 
+private fun PersonalRecord.toUi(): PersonalRecordUi = PersonalRecordUi(
+    oneRm = oneRm,
+    dateLabel = achievedAt.toLocalDate().toDisplayDate(),
+)
+
 private fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi> =
     asReversed().mapNotNull { session ->
         val oneRm = session.topSetOneRm ?: return@mapNotNull null
@@ -83,8 +97,15 @@ private fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi> 
             dateLabel = CHART_DATE_FORMAT.format(session.startedAt),
             kilograms = oneRm.kilogramsValue,
             oneRm = oneRm,
+            weightKg = session.topSet.weight.toLoadLabel(),
+            reps = session.topSet.reps,
         )
     }
+
+internal fun oneRmTrendPopupText(points: List<ExerciseOneRmPointUi>, index: Int): String {
+    val point = points.getOrNull(index) ?: return ""
+    return "${point.dateLabel}  ${formatLoadedSet(point.weightKg, point.reps)}"
+}
 
 private fun ExerciseSessionLog.toSessionUi(): ExerciseDetailsSessionUi = ExerciseDetailsSessionUi(
     dateLabel = startedAt.toLocalDate().toDisplayDate(),
