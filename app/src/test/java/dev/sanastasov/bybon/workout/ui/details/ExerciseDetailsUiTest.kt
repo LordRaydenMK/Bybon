@@ -121,7 +121,7 @@ class ExerciseDetailsUiTest {
             listOf(older, newer).exercisePerformance("bench-press", now),
         )
 
-        val olderOneRm = Weight.kilograms(estimateOneRmKg(50f, 5))
+        val olderOneRm = Weight.kilograms(estimateOneRmKg(45f, 12))
         val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
         assert(ui.personalRecordOneRm == newerOneRm)
         assert(

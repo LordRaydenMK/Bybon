@@ -36,6 +36,7 @@ data class WorkoutExercise(
         get() = checkNotNull(
             sets.maxWithOrNull(
                 compareBy(
+                    { it.oneRm },
                     { it.weight },
                     { it.reps },
                 ),

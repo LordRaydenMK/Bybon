@@ -11,12 +11,12 @@ class ExercisePerformanceTest {
     private val now = LocalDateTime.of(2026, 10, 22, 18, 0)
 
     @Test
-    fun `top set is the heaviest working set even when another set has a higher 1RM`() {
+    fun `top set is the working set with the highest estimated 1RM`() {
         val exercise = completedExercise("bench-press", 50f to 5, 45f to 12)
 
-        assert(exercise.topSet.weight == Weight.kilograms(50f))
-        assert(exercise.topSet.reps == 5)
-        assert(exercise.topSet.oneRm == Weight.kilograms(estimateOneRmKg(50f, 5)))
+        assert(exercise.topSet.weight == Weight.kilograms(45f))
+        assert(exercise.topSet.reps == 12)
+        assert(exercise.topSet.oneRm == Weight.kilograms(estimateOneRmKg(45f, 12)))
     }
 
     @Test
