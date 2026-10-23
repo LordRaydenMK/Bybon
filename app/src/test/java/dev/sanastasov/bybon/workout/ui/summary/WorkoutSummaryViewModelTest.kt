@@ -11,7 +11,10 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
+import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.first
@@ -142,6 +145,16 @@ class WorkoutSummaryViewModelTest {
         assert(content.date == "13 Aug 2026")
         assert(content.startTime == "18:25")
         assert(content.duration == "47:44")
+    }
+
+    @Test
+    fun `summary rejects a session that is not completed`() {
+        val session = fullBodyA.toWorkoutSession(
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+        )
+
+        val error = assertFailsWith<IllegalStateException> { session.toSummaryUi() }
+        assert(error.message == "Summary UI requires a completed session, was ${session.state}")
     }
 
     @Test

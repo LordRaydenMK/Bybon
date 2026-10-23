@@ -11,7 +11,6 @@ import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.time.Duration
 
 sealed class WorkoutSummaryUiState {
     data object Loading : WorkoutSummaryUiState()
@@ -60,15 +59,15 @@ internal fun List<WorkoutSession>.completedSummary(
     firstOrNull { it.id == sessionId && it.state is WorkoutState.Completed }?.toSummaryUi()
 
 internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content {
-    val elapsed = when (val workoutState = state) {
-        is WorkoutState.Completed -> workoutState.duration
-        else -> duration ?: Duration.ZERO
+    val completed = state
+    check(completed is WorkoutState.Completed) {
+        "Summary UI requires a completed session, was $completed"
     }
     return WorkoutSummaryUiState.Content(
         title = planName,
         date = startedAt.toLocalDate().toDisplayDate(),
         startTime = START_TIME_FORMAT.format(startedAt),
-        duration = elapsed.formatElapsedClock(),
+        duration = completed.duration.formatElapsedClock(),
         exercises = exercises.mapNotNull { it.toSummaryExerciseUi() },
         note = note,
     )
