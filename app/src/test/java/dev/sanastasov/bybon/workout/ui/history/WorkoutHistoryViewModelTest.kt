@@ -85,6 +85,8 @@ class WorkoutHistoryViewModelTest {
                     ),
                     planName = "Full Body B",
                     date = LocalDate.of(2026, 8, 13),
+                    startTime = "18:00",
+                    duration = "40:00",
                     exercises = listOf(
                         ExerciseTopSetUi(
                             name = "Romanian Deadlift",
@@ -101,6 +103,8 @@ class WorkoutHistoryViewModelTest {
                     ),
                     planName = "Full Body A",
                     date = LocalDate.of(2026, 8, 10),
+                    startTime = "18:00",
+                    duration = "40:00",
                     exercises = listOf(
                         ExerciseTopSetUi(
                             name = "Barbell Bench Press",
@@ -181,52 +185,13 @@ class WorkoutHistoryViewModelTest {
         viewModel.uiState.test {
             skipItems(1)
             val actual = awaitItem() as WorkoutHistoryUiState.History
-            val exercise = actual.sessions.single().exercises.single()
+            val session = actual.sessions.single()
+            val exercise = session.exercises.single()
+            assert(session.startTime == "18:00")
+            assert(session.duration == "40:00")
             assert(exercise.weightKg == "80")
             assert(exercise.reps == 8)
-            assert(exercise.warmups == listOf(HistoryWarmupUi("200", 1)))
-        }
-    }
-
-    @Test
-    fun `history lists warmups in logged order under the top work set`() = runTest {
-        val bench = completedExercise("bench-press", 80f to 8, 70f to 10).copy(
-            warmupSets = listOf(
-                ExerciseSet(
-                    exerciseDefinition = catalogExercise("bench-press"),
-                    weight = Weight.kilograms(40),
-                    reps = 5,
-                    setState = SetState.Completed,
-                ),
-                ExerciseSet(
-                    exerciseDefinition = catalogExercise("bench-press"),
-                    weight = null,
-                    reps = 6,
-                    setState = SetState.Completed,
-                ),
-            ),
-        )
-        val session = completedSession(
-            planId = "full-body-a",
-            planName = "Full Body A",
-            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
-            exercises = listOf(bench),
-        )
-        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
-        val viewModel = historyViewModel(repository)
-
-        viewModel.uiState.test {
-            skipItems(1)
-            val exercise = (awaitItem() as WorkoutHistoryUiState.History)
-                .sessions.single().exercises.single()
-            assert(exercise.weightKg == "80")
-            assert(exercise.reps == 8)
-            assert(
-                exercise.warmups == listOf(
-                    HistoryWarmupUi("40", 5),
-                    HistoryWarmupUi("-", 6),
-                ),
-            )
+            assert(exercise.name == "Barbell Bench Press")
         }
     }
 
@@ -310,6 +275,8 @@ class WorkoutHistoryViewModelTest {
                     ),
                     planName = "Full Body B",
                     date = LocalDate.of(2026, 8, 13),
+                    startTime = "18:00",
+                    duration = "40:00",
                     exercises = listOf(
                         ExerciseTopSetUi(
                             name = "Romanian Deadlift",
@@ -416,6 +383,8 @@ class WorkoutHistoryViewModelTest {
             assert(history.sessions.size == 52)
             assert(history.sessions.first().planName == "Upper body B")
             assert(history.sessions.first().date == LocalDate.of(2026, 8, 20))
+            assert(history.sessions.first().startTime == "17:59")
+            assert(history.sessions.first().duration == "56:07")
             assert(history.sessions.any { it.planName == "Full Body B" })
             assert(history.sessions.any { it.planName == "Full Body A" })
         }

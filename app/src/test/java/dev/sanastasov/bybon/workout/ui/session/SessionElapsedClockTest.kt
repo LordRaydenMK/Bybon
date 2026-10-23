@@ -1,11 +1,20 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
+import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
+import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 
 class SessionElapsedClockTest {
+
+    @Test
+    fun `start time label uses 24-hour clock`() {
+        assert(LocalDateTime.of(2026, 8, 20, 17, 59, 34).toStartTimeLabel() == "17:59")
+        assert(LocalDateTime.of(2026, 8, 13, 18, 0).toStartTimeLabel() == "18:00")
+        assert(LocalDateTime.of(2026, 8, 13, 9, 5).toStartTimeLabel() == "09:05")
+    }
 
     @Test
     fun `formatElapsedClock pads minutes and seconds`() {

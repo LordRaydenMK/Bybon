@@ -4,7 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,8 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,6 +43,7 @@ import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.SessionMeta
 import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.formatSetPerformance
@@ -194,35 +192,6 @@ private fun SummaryList(
             Card(Modifier.fillMaxWidth()) {
                 ExerciseSummaryCard(exercise, onAction)
             }
-        }
-    }
-}
-
-@Composable
-private fun SessionMeta(date: String, startTime: String, duration: String) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clearAndSetSemantics {
-                contentDescription = "$date, started $startTime, duration $duration"
-            },
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Text(
-            date,
-            style = MaterialTheme.typography.titleMedium,
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(
-                "Start $startTime",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Text(
-                "Duration $duration",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyLarge,
-            )
         }
     }
 }
