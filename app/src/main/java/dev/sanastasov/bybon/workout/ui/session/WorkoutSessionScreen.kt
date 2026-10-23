@@ -67,36 +67,34 @@ fun WorkoutModule.WorkoutSessionScreen(
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resultBus = LocalResultEventBus.current
-    val pagerState = rememberPagerState(0) {
-        uiState?.exercises?.size ?: 0
-    }
     ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
         resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
     }
-    viewModel.effects.collectEffectWithLifecycle { effect ->
-        when (effect) {
-            WorkoutSessionEffect.NavigateBack -> onBack()
+    uiState?.let { session ->
+        val pagerState = rememberPagerState(0) { session.exercises.size }
+        viewModel.effects.collectEffectWithLifecycle { effect ->
+            when (effect) {
+                WorkoutSessionEffect.NavigateBack -> onBack()
 
-            is WorkoutSessionEffect.NavigateToSummary -> onWorkoutCompleted(effect.sessionId)
+                is WorkoutSessionEffect.NavigateToSummary -> onWorkoutCompleted(effect.sessionId)
 
-            is WorkoutSessionEffect.OpenExerciseLibrary ->
-                onNavigateToExerciseLibrary(effect.existingExerciseIds)
+                is WorkoutSessionEffect.OpenExerciseLibrary ->
+                    onNavigateToExerciseLibrary(effect.existingExerciseIds)
 
-            is WorkoutSessionEffect.OpenExerciseDetails ->
-                onNavigateToExerciseDetails(effect.exerciseId)
+                is WorkoutSessionEffect.OpenExerciseDetails ->
+                    onNavigateToExerciseDetails(effect.exerciseId)
 
-            is WorkoutSessionEffect.ScrollToExercise -> {
-                if (pagerState.pageCount == 0) return@collectEffectWithLifecycle
-                pagerState.animateScrollToPage(
-                    effect.page.coerceIn(0, pagerState.pageCount - 1),
-                )
+                is WorkoutSessionEffect.ScrollToExercise -> {
+                    if (pagerState.pageCount == 0) return@collectEffectWithLifecycle
+                    pagerState.animateScrollToPage(
+                        effect.page.coerceIn(0, pagerState.pageCount - 1),
+                    )
+                }
             }
         }
-    }
-    uiState?.let {
         SessionScreenContent(
-            it,
+            session,
             pagerState,
             viewModel::onAction,
             onBack,
@@ -168,9 +166,9 @@ private fun SessionExercisePager(
             pagerState,
             Modifier.weight(1f),
             verticalAlignment = Alignment.Top,
-            key = { page -> state.exercises[page].id },
+            key = { page -> state.exercises.getOrNull(page)?.id ?: "page-$page" },
         ) { page ->
-            val exercise = state.exercises[page]
+            val exercise = state.exercises.getOrNull(page) ?: return@HorizontalPager
             Card(Modifier.fillMaxWidth()) {
                 ExerciseCard(
                     exercise = exercise,
