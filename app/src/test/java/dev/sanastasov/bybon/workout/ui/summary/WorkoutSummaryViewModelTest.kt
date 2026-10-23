@@ -11,7 +11,12 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
+import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -43,6 +48,9 @@ class WorkoutSummaryViewModelTest {
 
         val expected = WorkoutSummaryUiState.Content(
             title = "Full Body B",
+            date = "13 Aug 2026",
+            startTime = "18:00",
+            duration = "40:00",
             exercises = listOf(
                 WorkoutSummaryExerciseUi(
                     id = "romanian-deadlift",
@@ -90,6 +98,9 @@ class WorkoutSummaryViewModelTest {
             skipItems(1)
             val actual = awaitItem() as WorkoutSummaryUiState.Content
             assert(actual.title == "Full Body B")
+            assert(actual.date == "13 Aug 2026")
+            assert(actual.startTime == "18:00")
+            assert(actual.duration == "40:00")
             assert(actual.exercises.single().id == "romanian-deadlift")
         }
     }
@@ -119,6 +130,31 @@ class WorkoutSummaryViewModelTest {
             assert(content.exercises.single().sets.single().weightKg == "50")
             assert(content.exercises.single().sets.single().reps == 10)
         }
+    }
+
+    @Test
+    fun `summary shows date start time and duration from the completed session`() {
+        val session = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 25, 54),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
+        ).copy(duration = 47.minutes + 44.seconds)
+
+        val content = session.toSummaryUi()
+        assert(content.date == "13 Aug 2026")
+        assert(content.startTime == "18:25")
+        assert(content.duration == "47:44")
+    }
+
+    @Test
+    fun `summary rejects a session that is not completed`() {
+        val session = fullBodyA.toWorkoutSession(
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+        )
+
+        val error = assertFailsWith<IllegalStateException> { session.toSummaryUi() }
+        assert(error.message == "Summary UI requires a completed session, was ${session.state}")
     }
 
     @Test

@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -175,6 +178,9 @@ private fun SummaryList(
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item(key = "session-meta") {
+            SessionMeta(state.date, state.startTime, state.duration)
+        }
         state.note?.let { note ->
             item(key = "session-note") {
                 Text(
@@ -188,6 +194,35 @@ private fun SummaryList(
             Card(Modifier.fillMaxWidth()) {
                 ExerciseSummaryCard(exercise, onAction)
             }
+        }
+    }
+}
+
+@Composable
+private fun SessionMeta(date: String, startTime: String, duration: String) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clearAndSetSemantics {
+                contentDescription = "$date, started $startTime, duration $duration"
+            },
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            date,
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(
+                "Start $startTime",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Text(
+                "Duration $duration",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyLarge,
+            )
         }
     }
 }
@@ -256,6 +291,9 @@ private fun WorkoutSummaryContentPreview() {
         WorkoutSummaryContent(
             uiState = WorkoutSummaryUiState.Content(
                 title = "Full Body B",
+                date = "13 Aug 2026",
+                startTime = "18:25",
+                duration = "47:44",
                 note = "Friday full body workout",
                 exercises = listOf(
                     WorkoutSummaryExerciseUi(

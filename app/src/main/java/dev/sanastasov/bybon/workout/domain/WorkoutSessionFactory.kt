@@ -48,7 +48,7 @@ fun WorkoutPlan.toWorkoutSession(
         },
         startedAt,
     )
-    return session.startWorkout()
+    return session.startWorkout(now = startedAt)
 }
 
 private fun warmupSetsFromPlan(
@@ -90,16 +90,21 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     },
 )
 
-fun WorkoutSession.startWorkout(): WorkoutSession {
+fun WorkoutSession.startWorkout(now: LocalDateTime = LocalDateTime.now()): WorkoutSession {
     val first = takeUnless {
         it.workoutSets.any { set -> set.setState == SetState.InProgress }
     }?.firstNotStartedSet()
-    return if (first == null) {
+    val started = if (first == null) {
         this
     } else {
         val exercise = exercises.first { it.id == first.exerciseId }
         updateExerciseSet(exercise, first.index, first.isWarmup) {
             it.copy(setState = SetState.InProgress)
         }
+    }
+    return if (state is WorkoutState.NotStarted) {
+        started.copy(startedAt = now)
+    } else {
+        started
     }
 }

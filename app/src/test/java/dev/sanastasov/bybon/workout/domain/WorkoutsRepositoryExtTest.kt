@@ -2,6 +2,8 @@ package dev.sanastasov.bybon.workout.domain
 
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import kotlin.test.assertFailsWith
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -24,4 +26,19 @@ class WorkoutsRepositoryExtTest {
         }
         assert(error.message == "Exercise missing is not in the repository")
     }
+
+    @Test
+    fun `updateWorkout waits for an in-progress session when the first snapshot is empty`() =
+        runTest {
+            val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+            val started = fullBodyA.toWorkoutSession()
+            val update = async {
+                repository.updateWorkout(fullBodyA.id) { it.copy(note = "edited") }
+            }
+
+            repository.emitSessions(listOf(started))
+
+            assert(update.await().note == "edited")
+            assert(repository.workoutSessions().first().single().note == "edited")
+        }
 }

@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class WorkoutSessionViewModel(
     val planId: WorkoutPlanId,
@@ -39,6 +41,7 @@ class WorkoutSessionViewModel(
 ) {
     private val _effects = Channel<WorkoutSessionEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutSessionEffect> = _effects.receiveAsFlow()
+    private val mutations = Mutex()
 
     val uiState: StateFlow<WorkoutSession?> =
         repository.workoutSessions()
@@ -52,24 +55,26 @@ class WorkoutSessionViewModel(
 
     init {
         coroutineScope.launch {
-            val sessions = repository.workoutSessions().first()
-            val existing = sessions.firstOrNull { session ->
-                session.planId == planId && session.state !is WorkoutState.Completed
-            }
-            when {
-                existing == null -> {
-                    val plan = repository.workoutPlans()
-                        .first()
-                        .first { it.id == planId }
-                    val previousSession = sessions
-                        .filter { it.planId == planId && it.state is WorkoutState.Completed }
-                        .maxByOrNull { it.startedAt }
-                    repository.updateWorkout(plan.toWorkoutSession(previousSession))
+            mutations.withLock {
+                val sessions = repository.workoutSessions().first()
+                val existing = sessions.firstOrNull { session ->
+                    session.planId == planId && session.state !is WorkoutState.Completed
                 }
+                when {
+                    existing == null -> {
+                        val plan = repository.workoutPlans()
+                            .first()
+                            .first { it.id == planId }
+                        val previousSession = sessions
+                            .filter { it.planId == planId && it.state is WorkoutState.Completed }
+                            .maxByOrNull { it.startedAt }
+                        repository.updateWorkout(plan.toWorkoutSession(previousSession))
+                    }
 
-                existing.state !is WorkoutState.InProgress ||
-                    existing.workoutSets.none { it.setState == SetState.InProgress } -> {
-                    repository.updateWorkout(existing.startWorkout())
+                    existing.state !is WorkoutState.InProgress ||
+                        existing.workoutSets.none { it.setState == SetState.InProgress } -> {
+                        repository.updateWorkout(existing.startWorkout())
+                    }
                 }
             }
         }
@@ -77,37 +82,41 @@ class WorkoutSessionViewModel(
 
     fun onAction(action: WorkoutSessionAction) {
         coroutineScope.launch {
-            when (action) {
-                WorkoutSessionAction.OnCancelWorkout -> {
-                    val session = uiState.value ?: return@launch
-                    repository.deleteWorkout(session.id)
-                    _effects.trySend(WorkoutSessionEffect.NavigateBack)
-                }
-
-                WorkoutSessionAction.OnAddExercise -> {
-                    val session = checkNotNull(uiState.value) { "No active session" }
-                    _effects.trySend(
-                        WorkoutSessionEffect.OpenExerciseLibrary(session.exercises.map { it.id }),
-                    )
-                }
-
-                is WorkoutSessionAction.OnExercisePicked -> addPickedExercise(action.exerciseId)
-
-                is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
-
-                is WorkoutSessionAction.OnOpenExerciseDetails ->
-                    _effects.trySend(
-                        WorkoutSessionEffect.OpenExerciseDetails(action.exerciseId),
-                    )
-
-                else -> {
-                    val updated = repository.updateWorkout(planId) { session ->
-                        reduce(session, action)
+            mutations.withLock {
+                when (action) {
+                    WorkoutSessionAction.OnCancelWorkout -> {
+                        val session = uiState.value ?: return@withLock
+                        repository.deleteWorkout(session.id)
+                        _effects.trySend(WorkoutSessionEffect.NavigateBack)
                     }
-                    if (action is WorkoutSessionAction.OnCompleteSet &&
-                        updated.state is WorkoutState.Completed
-                    ) {
-                        _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
+
+                    WorkoutSessionAction.OnAddExercise -> {
+                        val session = checkNotNull(uiState.value) { "No active session" }
+                        _effects.trySend(
+                            WorkoutSessionEffect.OpenExerciseLibrary(
+                                session.exercises.map { it.id },
+                            ),
+                        )
+                    }
+
+                    is WorkoutSessionAction.OnExercisePicked -> addPickedExercise(action.exerciseId)
+
+                    is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
+
+                    is WorkoutSessionAction.OnOpenExerciseDetails ->
+                        _effects.trySend(
+                            WorkoutSessionEffect.OpenExerciseDetails(action.exerciseId),
+                        )
+
+                    else -> {
+                        val updated = repository.updateWorkout(planId) { session ->
+                            reduce(session, action)
+                        }
+                        if (action is WorkoutSessionAction.OnCompleteSet &&
+                            updated.state is WorkoutState.Completed
+                        ) {
+                            _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
+                        }
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.session
 
+import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
