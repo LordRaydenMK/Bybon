@@ -64,6 +64,8 @@ class WorkoutOverviewViewModelTest {
                     increased.exercises.first().sets.first().reps,
             )
             assert(saved.exercises.first().warmupSets?.size == 3)
+            assert(draft.previousDate == null)
+            assert(increased.previousDate == null)
         }
     }
 
@@ -158,6 +160,8 @@ class WorkoutOverviewViewModelTest {
             val setReset = awaitItem()!!
             assert(setReset.exercises.first().sets.first().weight == Weight.kilograms(40))
             assert(setReset.exercises.first().sets.first().reps == 9)
+            assert(draft.previousDate == "Previous: 1 Jan 2026")
+            assert(setReset.previousDate == "Previous: 1 Jan 2026")
         }
     }
 
@@ -495,4 +499,37 @@ class WorkoutOverviewViewModelTest {
         }
         assert(error.message == "Exercise incline-db-curl is not in the session")
     }
+
+    @Test
+    fun `overview shows the last completed date for this plan`() = runTest {
+        val older = completedFullBodyA(LocalDateTime.of(2026, 1, 1, 12, 0))
+        val newer = completedFullBodyA(LocalDateTime.of(2026, 8, 13, 18, 0))
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(older, newer),
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+            assert(draft.previousDate == "Previous: 13 Aug 2026")
+        }
+    }
 }
+
+private fun completedFullBodyA(startedAt: LocalDateTime) =
+    fullBodyA.toWorkoutSession().let { session ->
+        session.copy(
+            exercises = session.exercises.map { exercise ->
+                exercise.copy(
+                    sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                    warmupSets = exercise.warmupSets?.map {
+                        it.copy(setState = SetState.Completed)
+                    },
+                )
+            },
+            startedAt = startedAt,
+            duration = Duration.ZERO,
+        )
+    }

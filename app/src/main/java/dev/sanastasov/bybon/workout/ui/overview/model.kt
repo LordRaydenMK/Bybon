@@ -1,9 +1,29 @@
 package dev.sanastasov.bybon.workout.ui.overview
 
+import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
+import java.time.LocalDateTime
+
+data class WorkoutOverviewUiState(
+    val session: WorkoutSession,
+    val previousDate: String? = null,
+) {
+    val exercises: List<WorkoutExercise> get() = session.exercises
+    val workoutSets: List<ExerciseSet> get() = session.workoutSets
+}
+
+fun List<WorkoutSession>.latestCompletedFor(planId: WorkoutPlanId): WorkoutSession? =
+    filter { it.planId == planId && it.state is WorkoutState.Completed }
+        .maxByOrNull { it.startedAt }
+
+fun previousPlanDateLabel(startedAt: LocalDateTime?): String? =
+    startedAt?.toLocalDate()?.toDisplayDate()?.let { "Previous: $it" }
 
 sealed class WorkoutOverviewAction {
     data object OnIncreaseWorkout : WorkoutOverviewAction()

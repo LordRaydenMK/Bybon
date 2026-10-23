@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.workout.ui.overview
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
@@ -45,34 +44,37 @@ class WorkoutOverviewViewModel(
     private val _effects = Channel<WorkoutOverviewEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutOverviewEffect> = _effects.receiveAsFlow()
 
-    val uiState: StateFlow<WorkoutSession?> =
+    val uiState: StateFlow<WorkoutOverviewUiState?> =
         combine(
             repository.workoutPlans(),
             repository.workoutSessions(),
         ) { plans, sessions ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
-            val previousSession = sessions
-                .filter { it.planId == planId && it.state is WorkoutState.Completed }
-                .maxByOrNull { it.startedAt }
-            plan.toOverviewSession(previousSession)
+            val previousSession = sessions.latestCompletedFor(planId)
+            WorkoutOverviewUiState(
+                session = plan.toOverviewSession(previousSession),
+                previousDate = previousPlanDateLabel(previousSession?.startedAt),
+            )
         }
             .distinctUntilChanged()
             .filterNotNull()
             .flatMapLatest { seed ->
-                actions.receiveAsFlow().scan(seed) { session, action -> reduce(session, action) }
+                actions.receiveAsFlow().scan(seed) { state, action ->
+                    state.copy(session = reduce(state.session, action))
+                }
             }
             .stateInWhileInForeground(coroutineScope, null)
 
     fun onAction(action: WorkoutOverviewAction) {
         when (action) {
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
-                val session = uiState.value ?: return@launch
+                val session = uiState.value?.session ?: return@launch
                 repository.updateWorkout(session.startWorkout())
                 _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
             }
 
             WorkoutOverviewAction.OnAddExercise -> {
-                val session = checkNotNull(uiState.value) { "No overview session" }
+                val session = checkNotNull(uiState.value?.session) { "No overview session" }
                 _effects.trySend(
                     WorkoutOverviewEffect.OpenExerciseLibrary(session.exercises.map { it.id }),
                 )
@@ -88,7 +90,7 @@ class WorkoutOverviewViewModel(
             }
 
             is WorkoutOverviewAction.OnRemoveExercise -> {
-                val session = checkNotNull(uiState.value) { "No overview session" }
+                val session = checkNotNull(uiState.value?.session) { "No overview session" }
                 session.removeExercise(action.exercise.id)
                 emitAction(action)
             }
