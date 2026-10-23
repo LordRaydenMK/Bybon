@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
@@ -112,11 +113,7 @@ class WorkoutSessionViewModel(
                         val updated = repository.updateWorkout(planId) { session ->
                             reduce(session, action)
                         }
-                        if (action is WorkoutSessionAction.OnCompleteSet &&
-                            updated.state is WorkoutState.Completed
-                        ) {
-                            _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
-                        }
+                        emitAfterSetCompleted(updated, action)
                     }
                 }
             }
@@ -131,12 +128,34 @@ class WorkoutSessionViewModel(
     }
 
     private suspend fun removeSessionExercise(action: WorkoutSessionAction.OnRemoveExercise) {
-        checkNotNull(uiState.value) { "No active session" }
+        val session = checkNotNull(uiState.value) { "No active session" }
+        val removedIndex = session.exercises.indexOfFirst { it.id == action.exercise.id }
         val updated = repository.updateWorkout(planId) {
             it.removeExercise(action.exercise.id)
         }
         if (updated.state is WorkoutState.Completed) {
             _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
+        } else if (removedIndex >= 0) {
+            _effects.trySend(
+                WorkoutSessionEffect.ScrollToExercise((removedIndex - 1).coerceAtLeast(0)),
+            )
+        }
+    }
+
+    private fun emitAfterSetCompleted(updated: WorkoutSession, action: WorkoutSessionAction) {
+        if (action is WorkoutSessionAction.OnCompleteSet) {
+            if (updated.state is WorkoutState.Completed) {
+                _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
+            } else {
+                val completedIndex = updated.exercises.indexOfFirst { it.id == action.exercise.id }
+                val nextPage = completedIndex + 1
+                val completed = updated.exercises.getOrNull(completedIndex)
+                if (completed?.state == ExerciseState.Completed &&
+                    nextPage < updated.exercises.size
+                ) {
+                    _effects.trySend(WorkoutSessionEffect.ScrollToExercise(nextPage))
+                }
+            }
         }
     }
 

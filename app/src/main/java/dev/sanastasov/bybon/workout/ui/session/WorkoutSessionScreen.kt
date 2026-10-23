@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -66,6 +67,8 @@ fun WorkoutModule.WorkoutSessionScreen(
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resultBus = LocalResultEventBus.current
+    val pageCount = uiState?.exercises?.size ?: 0
+    val pagerState = rememberPagerState(0) { pageCount }
     ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
         resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
@@ -81,11 +84,19 @@ fun WorkoutModule.WorkoutSessionScreen(
 
             is WorkoutSessionEffect.OpenExerciseDetails ->
                 onNavigateToExerciseDetails(effect.exerciseId)
+
+            is WorkoutSessionEffect.ScrollToExercise -> {
+                if (pagerState.pageCount == 0) return@collectEffectWithLifecycle
+                pagerState.animateScrollToPage(
+                    effect.page.coerceIn(0, pagerState.pageCount - 1),
+                )
+            }
         }
     }
-    uiState?.let {
+    uiState?.let { session ->
         SessionScreenContent(
-            it,
+            session,
+            pagerState,
             viewModel::onAction,
             onBack,
         )
@@ -95,6 +106,7 @@ fun WorkoutModule.WorkoutSessionScreen(
 @Composable
 private fun SessionScreenContent(
     state: WorkoutSession,
+    pagerState: PagerState,
     onAction: (WorkoutSessionAction) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -126,6 +138,7 @@ private fun SessionScreenContent(
             }
             SessionExercisePager(
                 state,
+                pagerState,
                 onAction,
                 Modifier.weight(1f),
             )
@@ -145,20 +158,18 @@ private fun SessionScreenContent(
 @Composable
 private fun SessionExercisePager(
     state: WorkoutSession,
+    pagerState: PagerState,
     onAction: (WorkoutSessionAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pagerState = rememberPagerState(0) {
-        state.exercises.size
-    }
     Column(modifier) {
         HorizontalPager(
             pagerState,
             Modifier.weight(1f),
             verticalAlignment = Alignment.Top,
-            key = { page -> state.exercises[page].id },
+            key = { page -> state.exercises.getOrNull(page)?.id ?: "page-$page" },
         ) { page ->
-            val exercise = state.exercises[page]
+            val exercise = state.exercises.getOrNull(page) ?: return@HorizontalPager
             Card(Modifier.fillMaxWidth()) {
                 ExerciseCard(
                     exercise = exercise,
@@ -260,17 +271,15 @@ private fun ExerciseCardEvent.toSessionAction(exercise: WorkoutExercise): Workou
 @Composable
 private fun SessionScreenContentPage1CompletedExercisePreview() {
     val session = fullBodyA.toWorkoutSession()
-    SessionScreenContent(
+    SessionScreenContentPreview(
         session.completeSet(session.exercises.first(), 0, isWarmup = true),
-        {},
-        {},
     )
 }
 
 @Preview
 @Composable
 private fun SessionScreenContentInitialPreview() {
-    SessionScreenContent(fullBodyA.toWorkoutSession(), {}, {})
+    SessionScreenContentPreview(fullBodyA.toWorkoutSession())
 }
 
 @Preview
@@ -300,5 +309,15 @@ private fun SessionScreenContentWithPreviousPreview() {
             duration = Duration.ZERO,
         )
     }
-    SessionScreenContent(fullBodyA.toWorkoutSession(previous), {}, {})
+    SessionScreenContentPreview(fullBodyA.toWorkoutSession(previous))
+}
+
+@Composable
+private fun SessionScreenContentPreview(state: WorkoutSession) {
+    SessionScreenContent(
+        state,
+        rememberPagerState { state.exercises.size },
+        {},
+        {},
+    )
 }
