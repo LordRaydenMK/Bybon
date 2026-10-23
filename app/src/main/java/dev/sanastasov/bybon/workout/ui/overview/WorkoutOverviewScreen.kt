@@ -116,14 +116,14 @@ private fun OverviewScreenContent(
                         onAction,
                     )
                 }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            OutlinedButton(
-                { onAction(WorkoutOverviewAction.OnAddExercise) },
-                Modifier.fillMaxWidth(),
-            ) {
-                Text("Add Exercise")
+                item(key = "add-exercise") {
+                    OutlinedButton(
+                        { onAction(WorkoutOverviewAction.OnAddExercise) },
+                        Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Add Exercise")
+                    }
+                }
             }
 
             Spacer(Modifier.height(16.dp))
