@@ -9,8 +9,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 
 sealed class WorkoutSummaryUiState {
     data object Loading : WorkoutSummaryUiState()
@@ -66,15 +65,12 @@ internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content {
     return WorkoutSummaryUiState.Content(
         title = planName,
         date = startedAt.toLocalDate().toDisplayDate(),
-        startTime = START_TIME_FORMAT.format(startedAt),
+        startTime = startedAt.toStartTimeLabel(),
         duration = completed.duration.formatElapsedClock(),
         exercises = exercises.mapNotNull { it.toSummaryExerciseUi() },
         note = note,
     )
 }
-
-private val START_TIME_FORMAT: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("HH:mm", Locale.US)
 
 private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null
