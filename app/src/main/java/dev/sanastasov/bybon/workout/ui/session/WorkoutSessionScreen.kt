@@ -21,7 +21,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,6 +68,8 @@ fun WorkoutModule.WorkoutSessionScreen(
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resultBus = LocalResultEventBus.current
+    var scrollToPage by remember { mutableStateOf<Int?>(null) }
+    var scrollRequestId by remember { mutableIntStateOf(0) }
     ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
         resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
@@ -81,6 +85,11 @@ fun WorkoutModule.WorkoutSessionScreen(
 
             is WorkoutSessionEffect.OpenExerciseDetails ->
                 onNavigateToExerciseDetails(effect.exerciseId)
+
+            is WorkoutSessionEffect.ScrollToExercise -> {
+                scrollToPage = effect.page
+                scrollRequestId++
+            }
         }
     }
     uiState?.let {
@@ -88,6 +97,8 @@ fun WorkoutModule.WorkoutSessionScreen(
             it,
             viewModel::onAction,
             onBack,
+            scrollToPage,
+            scrollRequestId,
         )
     }
 }
@@ -97,6 +108,8 @@ private fun SessionScreenContent(
     state: WorkoutSession,
     onAction: (WorkoutSessionAction) -> Unit,
     onBack: () -> Unit,
+    scrollToPage: Int? = null,
+    scrollRequestId: Int = 0,
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
     Scaffold(
@@ -128,6 +141,8 @@ private fun SessionScreenContent(
                 state,
                 onAction,
                 Modifier.weight(1f),
+                scrollToPage,
+                scrollRequestId,
             )
         }
     }
@@ -147,9 +162,16 @@ private fun SessionExercisePager(
     state: WorkoutSession,
     onAction: (WorkoutSessionAction) -> Unit,
     modifier: Modifier = Modifier,
+    scrollToPage: Int? = null,
+    scrollRequestId: Int = 0,
 ) {
     val pagerState = rememberPagerState(0) {
         state.exercises.size
+    }
+    LaunchedEffect(scrollRequestId) {
+        val page = scrollToPage ?: return@LaunchedEffect
+        if (pagerState.pageCount == 0) return@LaunchedEffect
+        pagerState.animateScrollToPage(page.coerceIn(0, pagerState.pageCount - 1))
     }
     Column(modifier) {
         HorizontalPager(

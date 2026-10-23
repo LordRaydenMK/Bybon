@@ -481,6 +481,54 @@ class WorkoutSessionViewModelTest {
     }
 
     @Test
+    fun `removing a later exercise scrolls to the previous page`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+            val removed = session.exercises.first { it.id == "seated-leg-curl" }
+            val expectedPage = session.exercises.indexOfFirst { it.id == removed.id } - 1
+
+            viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(removed))
+            assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(expectedPage))
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `removing the last exercise scrolls to the previous page`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+            val removed = session.exercises.last()
+
+            viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(removed))
+            assert(
+                awaitItem() ==
+                    WorkoutSessionEffect.ScrollToExercise(session.exercises.lastIndex - 1),
+            )
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `removing the first exercise stays on the first page`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+
+            viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(session.exercises.first()))
+            assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(0))
+            expectNoEvents()
+        }
+    }
+
+    @Test
     fun `removing the last incomplete exercise completes the workout`() = runTest {
         val session = twoExerciseSession(
             firstState = SetState.Completed,
@@ -496,6 +544,7 @@ class WorkoutSessionViewModelTest {
             val current = viewModel.uiState.first { it != null }!!
             viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(current.exercises.last()))
             assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
+            expectNoEvents()
         }
         val stored = repository.workoutSessions().first().single()
         assert(stored.state is WorkoutState.Completed)

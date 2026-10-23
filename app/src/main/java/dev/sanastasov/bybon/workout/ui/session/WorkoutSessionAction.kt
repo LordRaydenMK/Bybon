@@ -82,4 +82,7 @@ sealed class WorkoutSessionEffect {
     data class OpenExerciseDetails(
         val exerciseId: String,
     ) : WorkoutSessionEffect()
+    data class ScrollToExercise(
+        val page: Int,
+    ) : WorkoutSessionEffect()
 }
