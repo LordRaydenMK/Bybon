@@ -69,9 +69,7 @@ appId: dev.sanastasov.bybon.debug
 - inputText: "10"
 # hideKeyboard uses Back when the IME is already gone, which pops the session to Main.
 - tapOn: "Full body workout routine variant A"
-- extendedWaitUntil:
-      visible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."
-      timeout: 10000
+- assertVisible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."
 - assertVisible:
       text: "10"
       index: 0

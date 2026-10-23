@@ -16,7 +16,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -53,30 +52,15 @@ fun NumberInputField(
         TextFieldState(initialText)
     }
     var focused by remember(key) { mutableStateOf(false) }
-    var edited by remember(key) { mutableStateOf(false) }
-    val latestInitialText by rememberUpdatedState(initialText)
-    val latestOnTextChanged by rememberUpdatedState(onTextChanged)
     LaunchedEffect(key, initialText, focused) {
-        val text = state.text.toString()
-        if (text == initialText) {
-            edited = false
-        } else if (!focused && !edited) {
-            // Pull external updates (e.g. +/-) only when the user is not mid-edit.
-            // Otherwise an in-flight persist of "" would wipe a just-typed value on blur.
+        if (!focused && state.text.toString() != initialText) {
             state.setTextAndPlaceCursorAtEnd(initialText)
         }
     }
     LaunchedEffect(state, key) {
         snapshotFlow { state.text.toString() }
             .drop(1)
-            .collectLatest { text ->
-                if (text == latestInitialText) {
-                    edited = false
-                } else {
-                    edited = true
-                    latestOnTextChanged(text)
-                }
-            }
+            .collectLatest(onTextChanged)
     }
     val textStyle = MaterialTheme.typography.labelMedium.copy(textAlign = TextAlign.Center)
     val fieldWidth = rememberNumberInputWidth(state.text.toString(), minWidth, textStyle)
