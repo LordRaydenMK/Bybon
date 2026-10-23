@@ -238,10 +238,83 @@ class WorkoutSessionViewModelTest {
             val current = viewModel.uiState.first { it != null }!!
             viewModel.onAction(WorkoutSessionAction.OnCompleteSet(current.exercises.first(), 0))
             assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
+            expectNoEvents()
         }
         val stored = repository.workoutSessions().first().single()
         assert(stored.state is WorkoutState.Completed)
         assert(stored.exercises.single().state == ExerciseState.Completed)
+    }
+
+    @Test
+    fun `completing an exercise scrolls to the next page`() = runTest {
+        val session = twoExerciseSession(
+            firstState = SetState.InProgress,
+            secondState = SetState.NotStated,
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(session),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val current = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(WorkoutSessionAction.OnCompleteSet(current.exercises.first(), 0))
+            assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(1))
+            expectNoEvents()
+        }
+        val stored = repository.workoutSessions().first().single()
+        assert(stored.exercises.first().state == ExerciseState.Completed)
+        assert(stored.exercises[1].sets.first().setState == SetState.InProgress)
+    }
+
+    @Test
+    fun `completing a warmup does not scroll to the next exercise`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(
+                WorkoutSessionAction.OnCompleteSet(
+                    session.exercises.first(),
+                    0,
+                    isWarmup = true,
+                ),
+            )
+            viewModel.uiState.first { current ->
+                current?.exercises?.first()?.warmupSets?.first()?.setState == SetState.Completed
+            }
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `completing a non-last work set does not scroll to the next exercise`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            var session = viewModel.uiState.first { it != null }!!
+            checkNotNull(session.exercises.first().warmupSets).indices.forEach { index ->
+                viewModel.onAction(
+                    WorkoutSessionAction.OnCompleteSet(
+                        session.exercises.first(),
+                        index,
+                        isWarmup = true,
+                    ),
+                )
+                session = viewModel.uiState.first { current ->
+                    current?.exercises?.first()?.warmupSets?.get(index)?.setState ==
+                        SetState.Completed
+                }!!
+            }
+            viewModel.onAction(WorkoutSessionAction.OnCompleteSet(session.exercises.first(), 0))
+            viewModel.uiState.first { current ->
+                current?.exercises?.first()?.sets?.first()?.setState == SetState.Completed
+            }
+            expectNoEvents()
+        }
     }
 
     @Test
