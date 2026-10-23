@@ -122,6 +122,8 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction
             WorkoutPlanInfo(
                 plan = plan,
                 isActive = planUi.isActive,
+                lastExecutedLabel = planUi.lastExecutedLabel,
+                activeExerciseId = planUi.activeExerciseId,
                 headerTrailing = {
                     if (!plan.isArchived) {
                         PlanOverflowMenu(
@@ -192,6 +194,8 @@ internal fun WorkoutPlanInfo(
     plan: WorkoutPlan,
     modifier: Modifier = Modifier,
     isActive: Boolean = false,
+    lastExecutedLabel: String? = null,
+    activeExerciseId: String? = null,
     headerTrailing: @Composable RowScope.() -> Unit = {},
 ) {
     Column(modifier, Arrangement.spacedBy(4.dp)) {
@@ -212,18 +216,37 @@ internal fun WorkoutPlanInfo(
         }
         Spacer(Modifier.height(4.dp))
 
+        lastExecutedLabel?.let { date ->
+            Text(
+                "Last executed: $date",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+
         plan.description?.let {
             Text(it, fontSize = 14.sp)
         }
 
         plan.sets.forEach { planedSet ->
+            val highlighted = planedSet.exercise.id == activeExerciseId
+            val color = if (highlighted) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
+            val weight = if (highlighted) FontWeight.Bold else FontWeight.Normal
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     "${planedSet.sets} x ${planedSet.exercise.name}",
                     Modifier.weight(1f),
+                    color = color,
+                    fontWeight = weight,
                 )
                 Text(
                     "${planedSet.repRange.first} to ${planedSet.repRange.last} reps",
+                    color = color,
+                    fontWeight = weight,
                 )
             }
         }
@@ -252,8 +275,13 @@ private fun WorkoutPlansContentPreview() {
         WorkoutsTab(
             WorkoutPlansUiState(
                 plans = listOf(
-                    WorkoutPlanUi(fullBodyA, isActive = true),
-                    WorkoutPlanUi(fullBodyB, isActive = false),
+                    WorkoutPlanUi(fullBodyB, isActive = false, lastExecutedLabel = "1 Oct"),
+                    WorkoutPlanUi(
+                        fullBodyA,
+                        isActive = true,
+                        lastExecutedLabel = "10 Aug",
+                        activeExerciseId = fullBodyA.sets[1].exercise.id,
+                    ),
                 ),
             ),
             {},
