@@ -1,13 +1,14 @@
 package dev.sanastasov.bybon.workout.ui.history
 
 import android.net.Uri
-import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
+import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDate
 
 sealed class WorkoutHistoryUiState {
@@ -43,6 +44,8 @@ data class WorkoutSessionHistoryUi(
     val id: WorkoutSessionId,
     val planName: String,
     val date: LocalDate,
+    val startTime: String,
+    val duration: String,
     val exercises: List<ExerciseTopSetUi>,
 )
 
@@ -51,12 +54,6 @@ data class ExerciseTopSetUi(
     val weightKg: String,
     val reps: Int,
     val oneRm: Weight?,
-    val warmups: List<HistoryWarmupUi> = emptyList(),
-)
-
-data class HistoryWarmupUi(
-    val weightKg: String,
-    val reps: Int,
 )
 
 sealed class WorkoutHistoryAction {
@@ -72,13 +69,16 @@ internal fun List<WorkoutSession>.toHistoryUi(): List<WorkoutSessionHistoryUi> =
         .map { it.toHistoryUi() }
 
 internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
-    check(state is WorkoutState.Completed) {
-        "History UI requires a completed session, was $state"
+    val completed = state
+    check(completed is WorkoutState.Completed) {
+        "History UI requires a completed session, was $completed"
     }
     return WorkoutSessionHistoryUi(
         id = id,
         planName = planName,
         date = startedAt.toLocalDate(),
+        startTime = startedAt.toStartTimeLabel(),
+        duration = completed.duration.formatElapsedClock(),
         exercises = exercises.map { it.toTopSetUi() },
     )
 }
@@ -88,10 +88,4 @@ private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi = ExerciseTopSetUi(
     weightKg = topSet.weight.toLoadLabel(),
     reps = topSet.reps,
     oneRm = topSet.oneRm,
-    warmups = warmupSets.orEmpty().map { it.toHistoryWarmupUi() },
-)
-
-private fun ExerciseSet.toHistoryWarmupUi(): HistoryWarmupUi = HistoryWarmupUi(
-    weightKg = weight.toLoadLabel(),
-    reps = reps,
 )

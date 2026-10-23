@@ -14,4 +14,9 @@ fun LocalDate.isoWeekStart(): LocalDate = with(DayOfWeek.MONDAY)
 private val DISPLAY_DATE_FORMAT: DateTimeFormatter =
     DateTimeFormatter.ofPattern("d MMM yyyy", Locale.US)
 
+private val SHORT_DISPLAY_DATE_FORMAT: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("d MMM", Locale.US)
+
 fun LocalDate.toDisplayDate(): String = format(DISPLAY_DATE_FORMAT)
+
+fun LocalDate.toShortDisplayDate(): String = format(SHORT_DISPLAY_DATE_FORMAT)

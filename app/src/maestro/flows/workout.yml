@@ -58,12 +58,21 @@ appId: dev.sanastasov.bybon.debug
       point: "90%, 50%" # Cursor at end so backspace clears both digits
 - eraseText: 8
 - inputText: "60"
+- assertVisible:
+      text: "60"
+      index: 0
 - tapOn:
       text: "8"
       index: 1
       point: "90%, 50%"
 - eraseText: 8
 - inputText: "10"
+- assertVisible:
+      text: "10"
+      index: 0
+- extendedWaitUntil:
+    visible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."
+    timeout: 10000
 # hideKeyboard uses Back when the IME is already gone, which pops the session to Main.
 - tapOn: "Full body workout routine variant A"
 - assertVisible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM. Double tap to mark complete."

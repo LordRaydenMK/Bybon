@@ -126,6 +126,20 @@ class WorkoutPlansViewModelTest {
     }
 
     @Test
+    fun `an active plan is listed first among unarchived plans`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB),
+            initialSessions = listOf(fullBodyB.toWorkoutSession()),
+        )
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
+        assert(state.unarchivedPlans.map { it.plan.id } == listOf(fullBodyB.id, fullBodyA.id))
+        assert(state.unarchivedPlans.first().isActive)
+        assert(state.unarchivedPlans.first().activeExerciseId == fullBodyB.sets.first().exercise.id)
+    }
+
+    @Test
     fun `archived plans are omitted from the unarchived list`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA, fullBodyB, upperBodyA),

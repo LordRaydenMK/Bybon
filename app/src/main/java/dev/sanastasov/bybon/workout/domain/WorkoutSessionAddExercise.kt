@@ -1,10 +1,13 @@
 package dev.sanastasov.bybon.workout.domain
 
-fun WorkoutSession.addExercise(exercise: ExerciseDefinition): WorkoutSession {
+fun WorkoutSession.addExercise(
+    exercise: ExerciseDefinition,
+    previous: WorkoutExercise? = null,
+): WorkoutSession {
     check(exercises.none { it.id == exercise.id }) {
         "Exercise ${exercise.id} is already in the session"
     }
-    return copy(exercises = exercises + exercise.toAddedWorkoutExercise())
+    return copy(exercises = exercises + exercise.toAddedWorkoutExercise(previous))
 }
 
 @Suppress("ReturnCount")
@@ -33,16 +36,20 @@ fun WorkoutSession.canRemoveExercise(exercise: WorkoutExercise): Boolean = exerc
     exercise.state != ExerciseState.Completed &&
     exercises.any { it.id == exercise.id }
 
-private fun ExerciseDefinition.toAddedWorkoutExercise(): WorkoutExercise = WorkoutExercise(
+private fun ExerciseDefinition.toAddedWorkoutExercise(
+    previous: WorkoutExercise?,
+): WorkoutExercise = WorkoutExercise(
     exerciseDefinition = this,
     repRange = DEFAULT_ADDED_REP_RANGE,
     warmupSets = null,
-    sets = List(DEFAULT_ADDED_WORK_SETS) {
+    sets = List(DEFAULT_ADDED_WORK_SETS) { index ->
+        val previousSet = previous?.sets?.getOrNull(index)
         ExerciseSet(
             exerciseDefinition = this,
-            weight = equipment?.defaultWorkWeight,
-            reps = DEFAULT_ADDED_REP_RANGE.first,
+            weight = previousSet?.weight ?: equipment?.defaultWorkWeight,
+            reps = previousSet?.reps ?: DEFAULT_ADDED_REP_RANGE.first,
             setState = SetState.NotStated,
+            previous = previousSet?.let { PreviousSetPerformance(it.weight, it.reps) },
         )
     },
 )
