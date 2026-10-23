@@ -6,8 +6,14 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Full Body A"
 - tapOn: "Start Workout"
 - assertVisible: "Full body workout routine variant A"
-- assertVisible: "Add Exercise"
 - assertVisible: "Start Workout"
+- scrollUntilVisible:
+    element: "Add Exercise"
+    direction: DOWN
+    timeout: 60000
+    speed: 80
+    centerElement: true
+- assertVisible: "Add Exercise"
 - tapOn: "Add Exercise"
 - assertVisible: "Exercise Library"
 - assertVisible: "Already added"
@@ -29,13 +35,23 @@ appId: dev.sanastasov.bybon.debug
     direction: UP
 - tapOn: "Add exercise"
 - assertVisible: "Full body workout routine variant A"
-- assertVisible: "Add Exercise"
 - assertVisible: "Start Workout"
 - scrollUntilVisible:
     element: "3 x Incline Dumbbell Curl in 8 - 12"
     direction: DOWN
     centerElement: true
 - assertVisible: "3 x Incline Dumbbell Curl in 8 - 12"
+- scrollUntilVisible:
+    element: "Add Exercise"
+    direction: DOWN
+    timeout: 60000
+    speed: 80
+    centerElement: true
+- assertVisible: "Add Exercise"
+- scrollUntilVisible:
+    element: "3 x Incline Dumbbell Curl in 8 - 12"
+    direction: UP
+    centerElement: true
 - tapOn: "More options for Incline Dumbbell Curl"
 - tapOn: "Remove Exercise"
 - assertNotVisible: "3 x Incline Dumbbell Curl in 8 - 12"

@@ -1,5 +1,8 @@
 package dev.sanastasov.bybon.workout.domain
 
+import dev.sanastasov.bybon.workout.data.completedExercise
+import dev.sanastasov.bybon.workout.data.completedSession
+import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -189,7 +192,12 @@ class WorkoutSessionTest {
             session.copy(
                 exercises = session.exercises.map { exercise ->
                     if (exercise.id != "assisted-pull-ups") {
-                        exercise
+                        exercise.copy(
+                            sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                            warmupSets = exercise.warmupSets?.map {
+                                it.copy(setState = SetState.Completed)
+                            },
+                        )
                     } else {
                         exercise.copy(
                             sets = exercise.sets.map { set ->
@@ -556,6 +564,90 @@ class WorkoutSessionTest {
                 "db-skull-crusher" to 1.minutes,
             ),
         )
+    }
+
+    @Test
+    fun `toWorkoutSession takes previous performance from the last time that exercise was logged`() {
+        val olderSamePlan = completedSession(
+            planId = fullBodyA.id.id,
+            planName = fullBodyA.name,
+            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+            exercises = listOf(
+                completedExercise("bench-press", 40f to 9, 40f to 9, 40f to 9),
+            ),
+        )
+        val latestSamePlanWithoutBench = completedSession(
+            planId = fullBodyA.id.id,
+            planName = fullBodyA.name,
+            startedAt = LocalDateTime.of(2026, 8, 1, 12, 0),
+            exercises = listOf(
+                completedExercise("squat", 80f to 8, 80f to 8, 80f to 8),
+            ),
+        )
+        val otherPlanBench = completedSession(
+            planId = fullBodyB.id.id,
+            planName = fullBodyB.name,
+            startedAt = LocalDateTime.of(2026, 8, 13, 12, 0),
+            exercises = listOf(
+                completedExercise("bench-press", 55f to 7, 55f to 6, 55f to 5),
+            ),
+        )
+
+        val actual = fullBodyA.toWorkoutSession(
+            previousHistory = listOf(
+                olderSamePlan,
+                latestSamePlanWithoutBench,
+                otherPlanBench,
+            ),
+        )
+
+        val bench = actual.exercises.first { it.id == "bench-press" }
+        assert(bench.sets[0].previous == PreviousSetPerformance(Weight.kilograms(55), 7))
+        assert(bench.sets[0].weight == Weight.kilograms(55))
+        assert(bench.sets[0].reps == 7)
+        assert(bench.sets[2].previous == PreviousSetPerformance(Weight.kilograms(55), 5))
+        val squat = actual.exercises.first { it.id == "squat" }
+        assert(squat.sets.first().previous == PreviousSetPerformance(Weight.kilograms(80), 8))
+        assert(squat.sets.first().weight == Weight.kilograms(80))
+    }
+
+    @Test
+    fun `toWorkoutSession has no previous when the exercise was never logged`() {
+        val squatOnly = completedSession(
+            planId = fullBodyA.id.id,
+            planName = fullBodyA.name,
+            startedAt = LocalDateTime.of(2026, 8, 1, 12, 0),
+            exercises = listOf(
+                completedExercise("squat", 80f to 8, 80f to 8, 80f to 8),
+            ),
+        )
+
+        val actual = fullBodyA.toWorkoutSession(previousHistory = listOf(squatOnly))
+        val bench = actual.exercises.first { it.id == "bench-press" }
+
+        assert(bench.sets.all { it.previous == null })
+        assert(bench.sets.all { it.weight == Weight.kilograms(50) })
+    }
+
+    @Test
+    fun `toWorkoutSession ignores in-progress history when attaching previous`() {
+        val inProgress = fullBodyA.toWorkoutSession().let { session ->
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.map {
+                            it.copy(weight = Weight.kilograms(99), reps = 1)
+                        },
+                    )
+                },
+            )
+        }
+
+        val actual = fullBodyA.toWorkoutSession(previousHistory = listOf(inProgress))
+        val bench = actual.exercises.first { it.id == "bench-press" }
+
+        assert(bench.sets.all { it.previous == null })
+        assert(bench.sets.all { it.weight == Weight.kilograms(50) })
     }
 }
 

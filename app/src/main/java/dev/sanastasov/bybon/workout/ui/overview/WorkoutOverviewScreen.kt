@@ -39,7 +39,6 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
-import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
@@ -85,12 +84,13 @@ fun WorkoutModule.WorkoutOverviewScreen(
 
 @Composable
 private fun OverviewScreenContent(
-    state: WorkoutSession,
+    state: WorkoutOverviewUiState,
     onAction: (WorkoutOverviewAction) -> Unit,
     onBack: () -> Unit,
 ) {
+    val session = state.session
     Scaffold(
-        topBar = { BybonTopAppBar(state.planName, onBack) },
+        topBar = { BybonTopAppBar(session.planName, onBack) },
     ) { contentPadding ->
         Column(
             Modifier
@@ -107,23 +107,23 @@ private fun OverviewScreenContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 itemsIndexed(
-                    state.exercises,
+                    session.exercises,
                     key = { _, exercise -> exercise.id },
                 ) { index, exercise ->
                     OverviewExerciseCard(
                         exercise,
-                        state.exerciseOverflow(index, onAction),
+                        session.exerciseOverflow(index, onAction),
                         onAction,
                     )
                 }
-            }
-
-            Spacer(Modifier.height(16.dp))
-            OutlinedButton(
-                { onAction(WorkoutOverviewAction.OnAddExercise) },
-                Modifier.fillMaxWidth(),
-            ) {
-                Text("Add Exercise")
+                item(key = "add-exercise") {
+                    OutlinedButton(
+                        { onAction(WorkoutOverviewAction.OnAddExercise) },
+                        Modifier.fillMaxWidth(),
+                    ) {
+                        Text("Add Exercise")
+                    }
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -138,16 +138,27 @@ private fun OverviewScreenContent(
 }
 
 @Composable
-private fun OverviewHeader(state: WorkoutSession, onAction: (WorkoutOverviewAction) -> Unit) {
+private fun OverviewHeader(
+    state: WorkoutOverviewUiState,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(state.planName, fontWeight = FontWeight.Bold)
-            state.note?.let {
+            Text(state.session.planName, fontWeight = FontWeight.Bold)
+            state.session.note?.let {
                 Spacer(Modifier.height(4.dp))
                 Text(it)
+            }
+            state.previousDate?.let {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
         AdjustButtons(
@@ -262,5 +273,12 @@ private fun OverviewScreenContentPreview() {
             duration = Duration.ZERO,
         )
     }
-    OverviewScreenContent(fullBodyA.toOverviewSession(previous), {}, {})
+    OverviewScreenContent(
+        WorkoutOverviewUiState(
+            fullBodyA.toOverviewSession(previous),
+            previousDate = previousPlanDateLabel(previous.startedAt),
+        ),
+        {},
+        {},
+    )
 }
