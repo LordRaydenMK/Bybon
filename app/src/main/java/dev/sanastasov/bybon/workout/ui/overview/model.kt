@@ -75,6 +75,7 @@ sealed class WorkoutOverviewAction {
     ) : WorkoutOverviewAction()
     data class OnExerciseAdded(
         val exercise: ExerciseDefinition,
+        val previous: WorkoutExercise? = null,
     ) : WorkoutOverviewAction()
     data class OnMoveExerciseUp(
         val exercise: WorkoutExercise,

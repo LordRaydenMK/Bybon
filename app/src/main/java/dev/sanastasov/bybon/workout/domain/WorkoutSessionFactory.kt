@@ -7,15 +7,15 @@ private val defaultWarmupReps = listOf(8, 4, 3)
 fun WorkoutPlan.toWorkoutSession(
     previousSession: WorkoutSession? = null,
     startedAt: LocalDateTime = LocalDateTime.now(),
+    previousHistory: List<WorkoutSession> = emptyList(),
 ): WorkoutSession {
+    val history = previousHistory.ifEmpty { listOfNotNull(previousSession) }
     val session = WorkoutSession(
         id,
         name,
         description,
         sets.map { planedExercise ->
-            val previousExercise = previousSession?.exercises?.firstOrNull {
-                it.id == planedExercise.exercise.id
-            }
+            val previousExercise = history.latestCompletedExercise(planedExercise.exercise.id)
             WorkoutExercise(
                 exerciseDefinition = planedExercise.exercise,
                 repRange = planedExercise.repRange,
@@ -77,8 +77,22 @@ private fun warmupSetsFromPlan(
     }
 }
 
-fun WorkoutPlan.toOverviewSession(previousSession: WorkoutSession? = null): WorkoutSession =
-    toWorkoutSession(previousSession).asOverviewDraft()
+fun WorkoutPlan.toOverviewSession(
+    previousSession: WorkoutSession? = null,
+    previousHistory: List<WorkoutSession> = emptyList(),
+): WorkoutSession = toWorkoutSession(
+    previousSession = previousSession,
+    previousHistory = previousHistory,
+).asOverviewDraft()
+
+fun List<WorkoutSession>.latestCompletedExercise(exerciseId: String): WorkoutExercise? =
+    mapNotNull { session ->
+        if (session.state !is WorkoutState.Completed) {
+            null
+        } else {
+            session.exercises.firstOrNull { it.id == exerciseId }?.let { session.startedAt to it }
+        }
+    }.maxByOrNull { it.first }?.second
 
 fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     duration = null,

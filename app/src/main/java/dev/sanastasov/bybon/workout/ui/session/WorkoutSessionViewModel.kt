@@ -12,6 +12,7 @@ import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
+import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.requireExercise
@@ -65,10 +66,9 @@ class WorkoutSessionViewModel(
                         val plan = repository.workoutPlans()
                             .first()
                             .first { it.id == planId }
-                        val previousSession = sessions
-                            .filter { it.planId == planId && it.state is WorkoutState.Completed }
-                            .maxByOrNull { it.startedAt }
-                        repository.updateWorkout(plan.toWorkoutSession(previousSession))
+                        repository.updateWorkout(
+                            plan.toWorkoutSession(previousHistory = sessions),
+                        )
                     }
 
                     existing.state !is WorkoutState.InProgress ||
@@ -125,7 +125,9 @@ class WorkoutSessionViewModel(
 
     private suspend fun addPickedExercise(exerciseId: String) {
         val exercise = repository.requireExercise(exerciseId)
-        repository.updateWorkout(planId) { it.addExercise(exercise) }
+        val previous = repository.workoutSessions().first()
+            .latestCompletedExercise(exerciseId)
+        repository.updateWorkout(planId) { it.addExercise(exercise, previous) }
     }
 
     private suspend fun removeSessionExercise(action: WorkoutSessionAction.OnRemoveExercise) {

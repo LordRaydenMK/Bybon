@@ -3,6 +3,9 @@ package dev.sanastasov.bybon.workout.ui.overview
 import app.cash.turbine.test
 import dev.sanastasov.bybon.test.BackgroundFailures
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.data.completedExercise
+import dev.sanastasov.bybon.workout.data.completedSession
+import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutState
@@ -10,6 +13,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
@@ -353,6 +357,36 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
+    fun `picked exercise previous performance comes from the last time it was logged`() = runTest {
+        val previousCurl = completedSession(
+            planId = fullBodyB.id.id,
+            planName = fullBodyB.name,
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(
+                completedExercise("incline-db-curl", 12f to 10, 12f to 9, 12f to 8),
+            ),
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(previousCurl),
+            initialExercises = catalogExercises,
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            awaitItem()!!
+            viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-db-curl"))
+            val added = awaitItem()!!
+            val curl = added.exercises.last()
+            assert(curl.sets[0].previous == PreviousSetPerformance(Weight.kilograms(12), 10))
+            assert(curl.sets[0].weight == Weight.kilograms(12))
+            assert(curl.sets.map { it.reps } == listOf(10, 9, 8))
+            assert(added.previousDate == null)
+        }
+    }
+
+    @Test
     fun `picked exercise is applied even if received before the draft loads`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA),
@@ -516,6 +550,41 @@ class WorkoutOverviewViewModelTest {
             assert(draft.previousDate == "Previous: 13 Aug 2026")
         }
     }
+
+    @Test
+    fun `overview previous performance comes from the last time that exercise was logged`() =
+        runTest {
+            val lastPlanRun = completedFullBodyA(LocalDateTime.of(2026, 8, 1, 12, 0))
+                .let { session ->
+                    session.copy(
+                        exercises = session.exercises.filter { it.id != "bench-press" },
+                    )
+                }
+            val otherPlanBench = completedSession(
+                planId = fullBodyB.id.id,
+                planName = fullBodyB.name,
+                startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+                exercises = listOf(
+                    completedExercise("bench-press", 55f to 7, 55f to 6, 55f to 5),
+                ),
+            )
+            val repository = FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialSessions = listOf(lastPlanRun, otherPlanBench),
+                initialExercises = catalogExercises,
+            )
+            val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+            viewModel.uiState.test {
+                assert(awaitItem() == null)
+                val draft = awaitItem()!!
+                val bench = draft.exercises.first { it.id == "bench-press" }
+                assert(draft.previousDate == "Previous: 1 Aug 2026")
+                assert(bench.sets[0].previous == PreviousSetPerformance(Weight.kilograms(55), 7))
+                assert(bench.sets[0].weight == Weight.kilograms(55))
+                assert(bench.sets[0].reps == 7)
+            }
+        }
 }
 
 private fun completedFullBodyA(startedAt: LocalDateTime) =

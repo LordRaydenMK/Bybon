@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
+import dev.sanastasov.bybon.workout.data.completedExercise
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Test
@@ -22,7 +23,35 @@ class WorkoutSessionAddExerciseTest {
         assert(added.sets.all { it.weight == Weight.kilograms(50) })
         assert(added.sets.all { it.reps == 8 })
         assert(added.sets.all { it.setState == SetState.NotStated })
+        assert(added.sets.all { it.previous == null })
         assert(actual.exercises.dropLast(1) == session.exercises)
+    }
+
+    @Test
+    fun `addExercise attaches previous performance from the last time it was logged`() {
+        val session = fullBodyA.toOverviewSession()
+        val curl = catalogExercise("incline-db-curl")
+        val previous = completedExercise("incline-db-curl", 12f to 10, 12f to 9, 12f to 8)
+
+        val actual = session.addExercise(curl, previous)
+        val added = actual.exercises.last()
+
+        assert(
+            added.sets.map { it.previous } == listOf(
+                PreviousSetPerformance(Weight.kilograms(12), 10),
+                PreviousSetPerformance(Weight.kilograms(12), 9),
+                PreviousSetPerformance(Weight.kilograms(12), 8),
+            ),
+        )
+        assert(
+            added.sets.map { it.weight } == listOf(
+                Weight.kilograms(12),
+                Weight.kilograms(12),
+                Weight.kilograms(12),
+            ),
+        )
+        assert(added.sets.map { it.reps } == listOf(10, 9, 8))
+        assert(added.warmupSets == null)
     }
 
     @Test

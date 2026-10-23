@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
+import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
 import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeExercise
@@ -52,7 +53,7 @@ class WorkoutOverviewViewModel(
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
             val previousSession = sessions.latestCompletedFor(planId)
             WorkoutOverviewUiState(
-                session = plan.toOverviewSession(previousSession),
+                session = plan.toOverviewSession(previousHistory = sessions),
                 previousDate = previousPlanDateLabel(previousSession?.startedAt),
             )
         }
@@ -86,7 +87,9 @@ class WorkoutOverviewViewModel(
             is WorkoutOverviewAction.OnExercisePicked -> coroutineScope.launch {
                 val exercise = repository.requireExercise(action.exerciseId)
                 uiState.filterNotNull().first()
-                emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise))
+                val previous = repository.workoutSessions().first()
+                    .latestCompletedExercise(action.exerciseId)
+                emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise, previous))
             }
 
             is WorkoutOverviewAction.OnRemoveExercise -> {
@@ -113,8 +116,11 @@ class WorkoutOverviewViewModel(
         session: WorkoutSession,
         action: WorkoutOverviewAction,
     ): WorkoutSession? = when (action) {
-        is WorkoutOverviewAction.OnExerciseAdded -> session.addExercise(action.exercise)
+        is WorkoutOverviewAction.OnExerciseAdded ->
+            session.addExercise(action.exercise, action.previous)
+
         is WorkoutOverviewAction.OnRemoveExercise -> session.removeExercise(action.exercise.id)
+
         else -> null
     }
 
