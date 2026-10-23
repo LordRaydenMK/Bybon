@@ -105,6 +105,7 @@ private fun SessionScreenContent(
                 state.planName,
                 onBack,
                 actions = {
+                    SessionElapsedClock(state.startedAt)
                     SessionOverflowMenu(
                         onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
                         onCancelWorkout = { showCancelDialog = true },

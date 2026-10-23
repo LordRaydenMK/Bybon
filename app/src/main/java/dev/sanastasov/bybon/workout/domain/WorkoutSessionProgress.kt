@@ -76,9 +76,11 @@ fun WorkoutSession.withDurationIfCompleted(
     now: LocalDateTime = LocalDateTime.now(),
 ): WorkoutSession {
     if (duration != null || state !is WorkoutState.Completed) return this
-    val elapsed = java.time.Duration.between(startedAt, now).toKotlinDuration()
-    return copy(duration = elapsed.coerceAtLeast(Duration.ZERO))
+    return copy(duration = elapsedSince(startedAt, now))
 }
+
+fun elapsedSince(startedAt: LocalDateTime, now: LocalDateTime = LocalDateTime.now()): Duration =
+    java.time.Duration.between(startedAt, now).toKotlinDuration().coerceAtLeast(Duration.ZERO)
 
 fun WorkoutSession.firstNotStartedSet(): SetRef? = exercises.firstNotNullOfOrNull { exercise ->
     val warmupIndex = exercise.warmupSets?.indexOfFirst { it.setState == SetState.NotStated }

@@ -37,3 +37,27 @@ fun Duration.formatRestClock(): String {
     val seconds = totalSeconds % 60
     return "$minutes:${seconds.toString().padStart(2, '0')}"
 }
+
+fun Duration.formatElapsedClock(): String {
+    val totalSeconds = inWholeSeconds.coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+}
+
+fun Duration.elapsedClockContentDescription(): String {
+    val totalSeconds = inWholeSeconds.coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    val minutePart = when (minutes) {
+        0L -> null
+        1L -> "1 minute"
+        else -> "$minutes minutes"
+    }
+    val secondPart = when {
+        minutes > 0L && seconds == 0L -> null
+        seconds == 1L -> "1 second"
+        else -> "$seconds seconds"
+    }
+    return "Elapsed ${listOfNotNull(minutePart, secondPart).joinToString(" ")}"
+}
