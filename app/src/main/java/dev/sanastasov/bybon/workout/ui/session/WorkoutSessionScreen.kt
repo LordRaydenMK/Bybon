@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -21,9 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,8 +67,9 @@ fun WorkoutModule.WorkoutSessionScreen(
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resultBus = LocalResultEventBus.current
-    var scrollToPage by remember { mutableStateOf<Int?>(null) }
-    var scrollRequestId by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(0) {
+        uiState?.exercises?.size ?: 0
+    }
     ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
         resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
@@ -87,18 +87,19 @@ fun WorkoutModule.WorkoutSessionScreen(
                 onNavigateToExerciseDetails(effect.exerciseId)
 
             is WorkoutSessionEffect.ScrollToExercise -> {
-                scrollToPage = effect.page
-                scrollRequestId++
+                if (pagerState.pageCount == 0) return@collectEffectWithLifecycle
+                pagerState.animateScrollToPage(
+                    effect.page.coerceIn(0, pagerState.pageCount - 1),
+                )
             }
         }
     }
     uiState?.let {
         SessionScreenContent(
             it,
+            pagerState,
             viewModel::onAction,
             onBack,
-            scrollToPage,
-            scrollRequestId,
         )
     }
 }
@@ -106,10 +107,9 @@ fun WorkoutModule.WorkoutSessionScreen(
 @Composable
 private fun SessionScreenContent(
     state: WorkoutSession,
+    pagerState: PagerState,
     onAction: (WorkoutSessionAction) -> Unit,
     onBack: () -> Unit,
-    scrollToPage: Int? = null,
-    scrollRequestId: Int = 0,
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
     Scaffold(
@@ -139,10 +139,9 @@ private fun SessionScreenContent(
             }
             SessionExercisePager(
                 state,
+                pagerState,
                 onAction,
                 Modifier.weight(1f),
-                scrollToPage,
-                scrollRequestId,
             )
         }
     }
@@ -160,19 +159,10 @@ private fun SessionScreenContent(
 @Composable
 private fun SessionExercisePager(
     state: WorkoutSession,
+    pagerState: PagerState,
     onAction: (WorkoutSessionAction) -> Unit,
     modifier: Modifier = Modifier,
-    scrollToPage: Int? = null,
-    scrollRequestId: Int = 0,
 ) {
-    val pagerState = rememberPagerState(0) {
-        state.exercises.size
-    }
-    LaunchedEffect(scrollRequestId) {
-        val page = scrollToPage ?: return@LaunchedEffect
-        if (pagerState.pageCount == 0) return@LaunchedEffect
-        pagerState.animateScrollToPage(page.coerceIn(0, pagerState.pageCount - 1))
-    }
     Column(modifier) {
         HorizontalPager(
             pagerState,
@@ -282,17 +272,15 @@ private fun ExerciseCardEvent.toSessionAction(exercise: WorkoutExercise): Workou
 @Composable
 private fun SessionScreenContentPage1CompletedExercisePreview() {
     val session = fullBodyA.toWorkoutSession()
-    SessionScreenContent(
+    SessionScreenContentPreview(
         session.completeSet(session.exercises.first(), 0, isWarmup = true),
-        {},
-        {},
     )
 }
 
 @Preview
 @Composable
 private fun SessionScreenContentInitialPreview() {
-    SessionScreenContent(fullBodyA.toWorkoutSession(), {}, {})
+    SessionScreenContentPreview(fullBodyA.toWorkoutSession())
 }
 
 @Preview
@@ -322,5 +310,15 @@ private fun SessionScreenContentWithPreviousPreview() {
             duration = Duration.ZERO,
         )
     }
-    SessionScreenContent(fullBodyA.toWorkoutSession(previous), {}, {})
+    SessionScreenContentPreview(fullBodyA.toWorkoutSession(previous))
+}
+
+@Composable
+private fun SessionScreenContentPreview(state: WorkoutSession) {
+    SessionScreenContent(
+        state,
+        rememberPagerState { state.exercises.size },
+        {},
+        {},
+    )
 }
