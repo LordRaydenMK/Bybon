@@ -47,8 +47,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Mark Warmup set complete"
 - assertVisible: "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM"
 - tapOn:
-      text: "50"
-      index: 0
+      text: "Set 1 weight"
       point: "90%, 50%" # Cursor at end so backspace clears both digits
 - eraseText: 8
 - inputText: "60"
@@ -56,8 +55,7 @@ appId: dev.sanastasov.bybon.debug
       text: "60"
       index: 0
 - tapOn:
-      text: "8"
-      index: 1
+      text: "Set 1 reps"
       point: "90%, 50%"
 - eraseText: 8
 - inputText: "10"

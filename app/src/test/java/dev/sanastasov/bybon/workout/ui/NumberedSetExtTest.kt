@@ -72,6 +72,8 @@ class NumberedSetExtTest {
         assert(numbered.setTitle == "Warmup set")
         assert(numbered.sessionContentDescription == "Warmup set in progress, 20 kg by 8")
         assert(numbered.completeSetContentDescription == "Mark Warmup set complete")
+        assert(numbered.weightFieldContentDescription == "Warmup set weight")
+        assert(numbered.repsFieldContentDescription == "Warmup set reps")
         assert(numbered.overviewContentDescription == "Warmup set, 20 kg by 8")
     }
 
@@ -93,5 +95,7 @@ class NumberedSetExtTest {
                 "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM",
         )
         assert(numbered.completeSetContentDescription == "Mark Set 1 complete")
+        assert(numbered.weightFieldContentDescription == "Set 1 weight")
+        assert(numbered.repsFieldContentDescription == "Set 1 reps")
     }
 }

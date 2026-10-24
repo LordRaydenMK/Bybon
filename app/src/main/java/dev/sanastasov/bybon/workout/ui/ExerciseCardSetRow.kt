@@ -189,6 +189,7 @@ private fun WeightField(
         initialText = numbered.set.weight?.kilograms.orEmpty(),
         minWidth = NumberInputWeightMinWidth,
         onTextChanged = onWeightChanged,
+        contentDescription = numbered.weightFieldContentDescription,
     )
 }
 
@@ -204,5 +205,6 @@ private fun RepsField(
         initialText = numbered.set.reps.toString(),
         minWidth = NumberInputRepsMinWidth,
         onTextChanged = onRepsChanged,
+        contentDescription = numbered.repsFieldContentDescription,
     )
 }

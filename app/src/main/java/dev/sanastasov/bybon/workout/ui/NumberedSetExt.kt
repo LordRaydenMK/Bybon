@@ -42,6 +42,12 @@ val NumberedSet.sessionContentDescription: String
 val NumberedSet.completeSetContentDescription: String
     get() = "Mark $setTitle complete"
 
+val NumberedSet.weightFieldContentDescription: String
+    get() = "$setTitle weight"
+
+val NumberedSet.repsFieldContentDescription: String
+    get() = "$setTitle reps"
+
 val NumberedSet.completedContentDescription: String
     get() = buildString {
         if (isWarmup) {
