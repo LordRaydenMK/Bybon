@@ -37,10 +37,10 @@ val NumberedSet.sessionContentDescription: String
             append(", $oneRmLabel")
         }
         previousLabel?.let { append(". Previous: $it") }
-        if (set.setState == SetState.InProgress) {
-            append(". Double tap to mark complete.")
-        }
     }
+
+val NumberedSet.completeSetContentDescription: String
+    get() = "Mark $setTitle complete"
 
 val NumberedSet.completedContentDescription: String
     get() = buildString {
