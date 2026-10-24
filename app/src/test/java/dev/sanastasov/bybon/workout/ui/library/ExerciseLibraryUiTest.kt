@@ -347,6 +347,27 @@ class ExerciseLibraryUiTest {
     }
 
     @Test
+    fun `browse mode lists every exercise without selection chrome`() {
+        val state = listOf(curl, bench, squat).toLibraryUiState(
+            selectedExerciseId = "curl",
+            existingExerciseIds = listOf("bench"),
+            picker = false,
+        )
+
+        assert(!state.picker)
+        assert(!state.addEnabled)
+        assert(state.selectedExerciseId == null)
+        assert(state.existingHeader == null)
+        assert(state.existingExercises.isEmpty())
+        assert(
+            state.groups.flatMap { it.exercises }.map { it.id }.toSet() ==
+                setOf("curl", "bench", "squat"),
+        )
+        assert(state.groups.flatMap { it.exercises }.none { it.selectable })
+        assert(state.groups.flatMap { it.exercises }.none { it.selected })
+    }
+
+    @Test
     fun `clear all resets both categories`() {
         val filters = ExerciseLibraryFilters(
             bodyParts = setOf(BodyPart.UpperArms),

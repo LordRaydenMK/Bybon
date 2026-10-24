@@ -15,8 +15,8 @@ import androidx.navigation3.ui.NavDisplay
 import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
+import dev.sanastasov.bybon.onermcalc.OneRmCalculatorScreen
 import dev.sanastasov.bybon.workout.ui.details.ExerciseDetailsScreen
-import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryScreen
 import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import dev.sanastasov.bybon.workout.ui.library.ExerciseLibraryScreen
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewScreen
@@ -55,7 +55,13 @@ fun MainModule.BybonApp() {
                         onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
                         onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
                         onNavigateToEditPlan = { backStack.add(Screen.EditPlan(it.id)) },
-                        onNavigateToHistory = { backStack.add(Screen.WorkoutHistory) },
+                        onNavigateToSummary = { sessionId ->
+                            backStack.add(Screen.WorkoutSummary(sessionId))
+                        },
+                        onNavigateToOneRmCalculator = { backStack.add(Screen.OneRmCalculator) },
+                        onNavigateToExerciseLibrary = {
+                            backStack.add(Screen.ExerciseLibrary(picker = false))
+                        },
                     )
                 }
 
@@ -97,6 +103,7 @@ fun MainModule.BybonApp() {
                     val resultBus = LocalResultEventBus.current
                     ExerciseLibraryScreen(
                         existingExerciseIds = key.existingExerciseIds,
+                        picker = key.picker,
                         onExercisePicked = { exerciseId ->
                             resultBus.sendResult(
                                 resultKey = EXERCISE_LIBRARY_RESULT_KEY,
@@ -132,13 +139,8 @@ fun MainModule.BybonApp() {
                     WeightInputScreen { backStack.removeLastOrNull() }
                 }
 
-                Screen.WorkoutHistory -> NavEntry(key) {
-                    WorkoutHistoryScreen(
-                        onNavigateBack = { backStack.removeLastOrNull() },
-                        onNavigateToSummary = { sessionId ->
-                            backStack.add(Screen.WorkoutSummary(sessionId))
-                        },
-                    )
+                Screen.OneRmCalculator -> NavEntry(key) {
+                    OneRmCalculatorScreen { backStack.removeLastOrNull() }
                 }
 
                 is Screen.WorkoutSummary -> NavEntry(key) {

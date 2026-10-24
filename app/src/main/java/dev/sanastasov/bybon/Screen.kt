@@ -23,7 +23,8 @@ sealed interface Screen : NavKey {
 
     @Serializable
     data class ExerciseLibrary(
-        val existingExerciseIds: List<String>,
+        val existingExerciseIds: List<String> = emptyList(),
+        val picker: Boolean = true,
     ) : Screen
 
     @Serializable
@@ -40,7 +41,7 @@ sealed interface Screen : NavKey {
     data object WeightEntryScreen : Screen
 
     @Serializable
-    data object WorkoutHistory : Screen
+    data object OneRmCalculator : Screen
 
     @Serializable
     data class WorkoutSummary(
