@@ -57,12 +57,9 @@ private fun SessionSetBlock(
 ) {
     if (numbered.set.setState == SetState.InProgress) {
         Surface(
-            onClick = {
-                onEvent(ExerciseCardEvent.OnCompleteSet(numbered.index, numbered.isWarmup))
-            },
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics(mergeDescendants = true) {
+                .semantics {
                     contentDescription = numbered.sessionContentDescription
                 },
             shape = RoundedCornerShape(8.dp),
@@ -187,7 +184,9 @@ private fun InProgressSessionSetRow(
                 },
                 Modifier
                     .width(ExerciseCardTrailingColWidth)
-                    .clearAndSetSemantics { },
+                    .semantics {
+                        contentDescription = numbered.completeSetContentDescription
+                    },
             )
         },
     )

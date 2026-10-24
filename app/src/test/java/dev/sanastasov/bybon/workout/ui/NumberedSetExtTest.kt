@@ -57,7 +57,7 @@ class NumberedSetExtTest {
     }
 
     @Test
-    fun `in-progress warmup description omits 1RM and includes complete hint`() {
+    fun `in-progress warmup description omits 1RM`() {
         val numbered = NumberedSet(
             set = ExerciseSet(
                 bench,
@@ -70,10 +70,28 @@ class NumberedSetExtTest {
         )
 
         assert(numbered.setTitle == "Warmup set")
+        assert(numbered.sessionContentDescription == "Warmup set in progress, 20 kg by 8")
+        assert(numbered.completeSetContentDescription == "Mark Warmup set complete")
+        assert(numbered.overviewContentDescription == "Warmup set, 20 kg by 8")
+    }
+
+    @Test
+    fun `in-progress work set complete action names the set number`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                bench,
+                Weight.kilograms(50),
+                8,
+                SetState.InProgress,
+            ),
+            isWarmup = false,
+            index = 0,
+        )
+
         assert(
             numbered.sessionContentDescription ==
-                "Warmup set in progress, 20 kg by 8. Double tap to mark complete.",
+                "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM",
         )
-        assert(numbered.overviewContentDescription == "Warmup set, 20 kg by 8")
+        assert(numbered.completeSetContentDescription == "Mark Set 1 complete")
     }
 }
