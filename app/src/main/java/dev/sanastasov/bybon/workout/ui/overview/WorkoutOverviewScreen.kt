@@ -260,12 +260,12 @@ private fun OverviewScreenContentPreview() {
                         set.copy(
                             weight = Weight.kilograms(45),
                             reps = 9,
-                            setState = SetState.Completed,
+                            setState = SetState.Completed(),
                             previous = PreviousSetPerformance(Weight.kilograms(45), 9),
                         )
                     },
                     warmupSets = exercise.warmupSets?.map { set ->
-                        set.copy(setState = SetState.Completed)
+                        set.copy(setState = SetState.Completed())
                     },
                 )
             },

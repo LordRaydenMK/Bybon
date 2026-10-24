@@ -72,7 +72,7 @@ private fun SessionSetBlock(
             Modifier
                 .fillMaxWidth()
                 .semantics(mergeDescendants = true) {
-                    contentDescription = if (numbered.set.setState == SetState.Completed) {
+                    contentDescription = if (numbered.set.setState is SetState.Completed) {
                         numbered.completedContentDescription
                     } else {
                         numbered.sessionContentDescription
@@ -121,7 +121,7 @@ private fun SessionSetValuesRow(
     rest: Duration?,
 ) {
     when (numbered.set.setState) {
-        SetState.Completed -> CompletedSessionSetRow(numbered, onEvent, onBadgeClick)
+        is SetState.Completed -> CompletedSessionSetRow(numbered, onEvent, onBadgeClick)
         SetState.InProgress -> InProgressSessionSetRow(exercise, numbered, onEvent, onBadgeClick)
         SetState.NotStated -> PendingSessionSetRow(exercise, numbered, onEvent, onBadgeClick, rest)
     }

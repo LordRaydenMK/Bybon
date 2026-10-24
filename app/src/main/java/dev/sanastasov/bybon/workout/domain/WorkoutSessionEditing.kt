@@ -5,8 +5,8 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
         val lastWorkSet = current.sets.lastOrNull()
         val template =
             lastWorkSet ?: current.warmupSets?.lastOrNull() ?: return@updateExercise current
-        val newSetState = if (lastWorkSet?.setState == SetState.Completed ||
-            (lastWorkSet == null && template.setState == SetState.Completed)
+        val newSetState = if (lastWorkSet?.setState is SetState.Completed ||
+            (lastWorkSet == null && template.setState is SetState.Completed)
         ) {
             SetState.InProgress
         } else {
@@ -24,12 +24,12 @@ fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
         val lastWork = current.sets.last()
         val lastWarmup = current.warmupSets?.lastOrNull()
         when {
-            current.sets.size > 1 && lastWork.setState != SetState.Completed ->
+            current.sets.size > 1 && lastWork.setState !is SetState.Completed ->
                 current.copy(sets = current.sets.dropLast(1))
 
-            lastWork.setState == SetState.Completed &&
+            lastWork.setState is SetState.Completed &&
                 lastWarmup != null &&
-                lastWarmup.setState != SetState.Completed ->
+                lastWarmup.setState !is SetState.Completed ->
                 current.copy(
                     warmupSets = current.warmupSets.orEmpty().dropLast(1).nullIfEmpty(),
                 )

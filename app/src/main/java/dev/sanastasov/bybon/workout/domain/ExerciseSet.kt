@@ -1,5 +1,7 @@
 package dev.sanastasov.bybon.workout.domain
 
+import java.time.LocalDateTime
+
 data class PreviousSetPerformance(
     val weight: Weight?,
     val reps: Int,
@@ -22,6 +24,9 @@ data class ExerciseSet(
     init {
         require(reps > 0) { "reps must be positive" }
     }
+
+    val completedAt: LocalDateTime?
+        get() = (setState as? SetState.Completed)?.at
 
     val oneRm: Weight?
         get() = weight?.let { estimatedOneRm(it, reps) }

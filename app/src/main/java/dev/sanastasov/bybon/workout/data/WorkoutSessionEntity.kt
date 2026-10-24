@@ -107,6 +107,7 @@ data class WorkoutSetEntity(
     @ColumnInfo(name = "set_state") val setState: String,
     @ColumnInfo(name = "previous_weight") val previousWeight: Int?,
     @ColumnInfo(name = "previous_reps") val previousReps: Int?,
+    @ColumnInfo(name = "completed_at") val completedAt: LocalDateTime? = null,
 )
 
 data class WorkoutSessionIdentity(

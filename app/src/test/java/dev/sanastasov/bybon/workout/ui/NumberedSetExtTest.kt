@@ -44,7 +44,7 @@ class NumberedSetExtTest {
                 catalogExercise("assisted-pull-ups"),
                 null,
                 8,
-                SetState.Completed,
+                SetState.Completed(),
             ),
             isWarmup = false,
             index = 0,

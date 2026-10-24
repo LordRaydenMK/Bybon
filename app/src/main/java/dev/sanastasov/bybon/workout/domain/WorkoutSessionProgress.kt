@@ -12,7 +12,7 @@ fun WorkoutSession.completeSet(
 ): WorkoutSession {
     val next = nextSetAfter(exercise.id, setIndex, isWarmup)
     val updated = updateExerciseSet(exercise, setIndex, isWarmup) {
-        it.copy(setState = SetState.Completed)
+        it.copy(setState = SetState.Completed(now))
     }
     val target = next ?: updated.firstNotStartedSet()
         ?: return updated.withDurationIfCompleted(now)

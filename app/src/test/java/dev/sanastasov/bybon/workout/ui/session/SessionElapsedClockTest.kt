@@ -41,4 +41,15 @@ class SessionElapsedClockTest {
                 "Elapsed 50 minutes 20 seconds",
         )
     }
+
+    @Test
+    fun `restRemainingContentDescription names remaining minutes and seconds`() {
+        assert(0.seconds.restRemainingContentDescription() == "Rest remaining 0 seconds")
+        assert(1.seconds.restRemainingContentDescription() == "Rest remaining 1 second")
+        assert(1.minutes.restRemainingContentDescription() == "Rest remaining 1 minute")
+        assert(
+            (1.minutes + 23.seconds).restRemainingContentDescription() ==
+                "Rest remaining 1 minute 23 seconds",
+        )
+    }
 }

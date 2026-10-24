@@ -169,7 +169,7 @@ class WorkoutHistoryViewModelTest {
                     exerciseDefinition = catalogExercise("bench-press"),
                     weight = Weight.kilograms(200),
                     reps = 1,
-                    setState = SetState.Completed,
+                    setState = SetState.Completed(),
                 ),
             ),
         )
@@ -237,7 +237,7 @@ class WorkoutHistoryViewModelTest {
                             catalogExercise("assisted-pull-ups"),
                             null,
                             8,
-                            SetState.Completed,
+                            SetState.Completed(),
                         ),
                     ),
                 ),

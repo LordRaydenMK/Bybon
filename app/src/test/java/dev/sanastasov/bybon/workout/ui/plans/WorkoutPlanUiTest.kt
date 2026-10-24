@@ -112,8 +112,8 @@ private fun WorkoutSession.withExerciseCompleted(index: Int) = copy(
             exercise
         } else {
             exercise.copy(
-                warmupSets = exercise.warmupSets?.map { it.copy(setState = SetState.Completed) },
-                sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                warmupSets = exercise.warmupSets?.map { it.copy(setState = SetState.Completed()) },
+                sets = exercise.sets.map { it.copy(setState = SetState.Completed()) },
             )
         }
     },

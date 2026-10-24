@@ -39,7 +39,7 @@ fun completedExercise(
                 exerciseDefinition = definition,
                 weight = Weight.kilograms(kg),
                 reps = reps,
-                setState = SetState.Completed,
+                setState = SetState.Completed(),
             )
         },
         notes = notes,

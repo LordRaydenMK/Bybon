@@ -46,9 +46,9 @@ data class WorkoutExercise(
     val canRemoveSet: Boolean
         get() {
             val lastWork = sets.last()
-            if (sets.size > 1 && lastWork.setState != SetState.Completed) return true
-            if (lastWork.setState != SetState.Completed) return false
-            return warmupSets?.lastOrNull()?.setState?.let { it != SetState.Completed } == true
+            if (sets.size > 1 && lastWork.setState !is SetState.Completed) return true
+            if (lastWork.setState !is SetState.Completed) return false
+            return warmupSets?.lastOrNull()?.setState?.let { it !is SetState.Completed } == true
         }
 
     val hasPreviousPerformance: Boolean
@@ -58,7 +58,7 @@ data class WorkoutExercise(
         get() {
             val allSets = orderedSets
             return when {
-                allSets.all { it.setState == SetState.Completed } ->
+                allSets.all { it.setState is SetState.Completed } ->
                     ExerciseState.Completed
 
                 allSets.all { it.setState == SetState.NotStated } ->

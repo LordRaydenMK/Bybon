@@ -542,7 +542,7 @@ private fun StrongCsvRow.toCompletedSet(definition: ExerciseDefinition): Exercis
         exerciseDefinition = definition,
         weight = weight,
         reps = reps,
-        setState = SetState.Completed,
+        setState = SetState.Completed(),
     )
 }
 

@@ -149,7 +149,7 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `removeExercise throws when the exercise is completed`() {
         val session = twoExerciseSession(
-            firstState = SetState.Completed,
+            firstState = SetState.Completed(),
             secondState = SetState.InProgress,
         )
 
@@ -162,7 +162,7 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `removeExercise completes the session when remaining exercises are done`() {
         val session = twoExerciseSession(
-            firstState = SetState.Completed,
+            firstState = SetState.Completed(),
             secondState = SetState.InProgress,
         )
 
@@ -183,9 +183,9 @@ class WorkoutSessionAddExerciseTest {
                     exercises = session.exercises.map { exercise ->
                         exercise.copy(
                             warmupSets = exercise.warmupSets?.map {
-                                it.copy(setState = SetState.Completed)
+                                it.copy(setState = SetState.Completed())
                             },
-                            sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                            sets = exercise.sets.map { it.copy(setState = SetState.Completed()) },
                         )
                     },
                     duration = kotlin.time.Duration.ZERO,
@@ -203,7 +203,7 @@ class WorkoutSessionAddExerciseTest {
     @Test
     fun `canRemoveExercise is false for completed or last remaining exercises`() {
         val session = twoExerciseSession(
-            firstState = SetState.Completed,
+            firstState = SetState.Completed(),
             secondState = SetState.InProgress,
         )
         val completed = session.exercises.first()

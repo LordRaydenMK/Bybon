@@ -119,11 +119,11 @@ class WorkoutOverviewViewModelTest {
                             set.copy(
                                 weight = Weight.kilograms(40),
                                 reps = 9,
-                                setState = SetState.Completed,
+                                setState = SetState.Completed(),
                             )
                         },
                         warmupSets = exercise.warmupSets?.map { set ->
-                            set.copy(setState = SetState.Completed)
+                            set.copy(setState = SetState.Completed())
                         },
                     )
                 },
@@ -179,11 +179,11 @@ class WorkoutOverviewViewModelTest {
                             set.copy(
                                 weight = Weight.kilograms(40),
                                 reps = 9,
-                                setState = SetState.Completed,
+                                setState = SetState.Completed(),
                             )
                         },
                         warmupSets = exercise.warmupSets?.map { set ->
-                            set.copy(setState = SetState.Completed)
+                            set.copy(setState = SetState.Completed())
                         },
                     )
                 },
@@ -592,9 +592,9 @@ private fun completedFullBodyA(startedAt: LocalDateTime) =
         session.copy(
             exercises = session.exercises.map { exercise ->
                 exercise.copy(
-                    sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                    sets = exercise.sets.map { it.copy(setState = SetState.Completed()) },
                     warmupSets = exercise.warmupSets?.map {
-                        it.copy(setState = SetState.Completed)
+                        it.copy(setState = SetState.Completed())
                     },
                 )
             },
