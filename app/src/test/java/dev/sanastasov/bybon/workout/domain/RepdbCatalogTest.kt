@@ -170,4 +170,14 @@ class RepdbCatalogTest {
         assert(catalogExercise("iso-lat-row").images == null)
         assert(catalogExercise("squat-machine").images == null)
     }
+
+    @Test
+    fun `seed plans only use RepDB catalog exercises`() {
+        val repdbIds = repdbCatalogExercises.map { it.id }.toSet()
+        val planExerciseIds = listOf(fullBodyA, fullBodyB, upperBodyA)
+            .flatMap { plan -> plan.sets.map { it.exercise.id } }
+        assert(planExerciseIds.isNotEmpty())
+        assert(planExerciseIds.all { it in repdbIds })
+        assert(planExerciseIds.none { it in bybonCatalogExercises.map { exercise -> exercise.id } })
+    }
 }

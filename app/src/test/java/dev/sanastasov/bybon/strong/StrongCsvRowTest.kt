@@ -248,7 +248,7 @@ class StrongCsvRowTest {
             name = "Upper body A",
             exercises = listOf(
                 "Chest Fly (Band)",
-                "Cable Pushdown (rope)",
+                "Triceps Extension (Cable)",
                 "Some New Lift",
                 "Incline Press (Dumbbell)",
             ),
@@ -261,9 +261,9 @@ class StrongCsvRowTest {
         assert(byId.getValue("chest-fly-band").bodyPart == BodyPart.Chest)
         assert(byId.getValue("chest-fly-band").equipment == null)
         assert(byId.getValue("chest-fly-band").equipmentSlug == null)
-        assert(byId.getValue("cable-pushdown-rope").mechanic == Mechanic.Isolation)
-        assert(byId.getValue("cable-pushdown-rope").equipment == Equipment.Machine)
-        assert(byId.getValue("cable-pushdown-rope").equipmentSlug == "cable")
+        assert(byId.getValue("triceps-extension-cable").mechanic == Mechanic.Isolation)
+        assert(byId.getValue("triceps-extension-cable").equipment == Equipment.Machine)
+        assert(byId.getValue("triceps-extension-cable").equipmentSlug == "cable")
         assert(byId.getValue("some-new-lift").mechanic == null)
         assert(byId.getValue("some-new-lift").bodyPart == null)
         assert(byId.getValue("some-new-lift").equipment == null)
@@ -273,7 +273,7 @@ class StrongCsvRowTest {
         assert(
             result.sessionHistory.single().exercises.map { it.id } == listOf(
                 "chest-fly-band",
-                "cable-pushdown-rope",
+                "triceps-extension-cable",
                 "some-new-lift",
                 "incline-press-dumbbell",
             ),

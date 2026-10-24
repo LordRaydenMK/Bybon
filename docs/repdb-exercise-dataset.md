@@ -291,7 +291,7 @@ Bybon-shipped, not a RepDB id:
 
 Strong bare `Chest Fly` aliases to `pec-deck`. Strong `Bicep Curl (Machine)` aliases to `machine-bicep-curl`. Strong `Lateral Raise (Machine)` aliases to `lateral-raise-machine`. Strong `Squat (Machine)` aliases to `squat-machine`. Strong `Triceps Press` aliases to `triceps-press-machine`. Strong `Reverse Lunges` aliases to `reverse-lunge` (Reverse Lunge, dumbbells). Strong `Crunch (Machine)` aliases to `machine-seated-crunch` (Machine Seated Crunch).
 
-`Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` have no alias. They follow the import rule. Five or more workouts become an active exercise. Fewer stay in history as an archived exercise. `Chest Fly (Band)` is in 11 workouts in the full backup, so it becomes active. There is no shipped band fly to attach it to.
+`Chest Fly (Band)` and `Triceps Extension (Cable)` have no alias. They follow the import rule. Five or more workouts become an active exercise. Fewer stay in history as an archived exercise. `Chest Fly (Band)` is in 11 workouts in the full backup, so it becomes active. There is no shipped band fly to attach it to. `Cable Pushdown (rope)` aliases to `tricep-pushdown` (Cable Tricep Pushdown). `Cable Crossover` aliases to `cable-fly`. `Incline Dumbbell Overhead Extension` aliases to `overhead-tricep-extension`. Seed plans use only RepDB ids.
 
 ## Left as they are
 
