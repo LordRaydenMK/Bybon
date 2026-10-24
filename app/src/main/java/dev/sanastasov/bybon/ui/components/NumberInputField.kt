@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -34,7 +36,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 
 val NumberInputWeightMinWidth = 56.dp
-val NumberInputRepsMinWidth = 36.dp
+val NumberInputRepsMinWidth = 56.dp
 
 /**
  * [key] should be an identity that does not change when the parsed value changes.
@@ -47,6 +49,7 @@ fun NumberInputField(
     initialText: String,
     minWidth: Dp,
     onTextChanged: (String) -> Unit,
+    contentDescription: String? = null,
 ) {
     val state = rememberSaveable(key, saver = TextFieldState.Saver) {
         TextFieldState(initialText)
@@ -70,7 +73,14 @@ fun NumberInputField(
             .width(fieldWidth)
             .height(NumberInputHeight)
             .defaultMinSize(minWidth = minWidth, minHeight = NumberInputHeight)
-            .onFocusChanged { focused = it.isFocused },
+            .onFocusChanged { focused = it.isFocused }
+            .then(
+                if (contentDescription != null) {
+                    Modifier.semantics { this.contentDescription = contentDescription }
+                } else {
+                    Modifier
+                },
+            ),
         textStyle = textStyle,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         lineLimits = TextFieldLineLimits.SingleLine,
