@@ -30,4 +30,18 @@ class WorkoutPlanMappingTest {
         assert(lines.first().notes == "[]")
         assert(fullBodyA.sets.first().restAfterWorkSet == 120.seconds)
     }
+
+    @Test
+    fun `incomplete plan snapshots are omitted until children exist`() {
+        val entity = fullBodyA.toEntity()
+        val exercises = fullBodyA.sets.map {
+            it.exercise.toEntity(source = ExerciseSource.SHIPPED)
+        }
+
+        assert(listOf(entity).toDomainPlans(lines = emptyList(), exercises = exercises).isEmpty())
+        assert(
+            listOf(entity).toDomainPlans(fullBodyA.toExerciseEntities(), exercises).single() ==
+                fullBodyA,
+        )
+    }
 }

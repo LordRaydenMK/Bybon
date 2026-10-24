@@ -3,14 +3,23 @@ appId: dev.sanastasov.bybon.debug
 - launchApp:
     clearState: true
 - assertVisible: "Bybon"
+- assertVisible: "Workout Plans"
+- assertVisible: "History"
+- assertVisible: "Weight Tracking"
 - assertVisible: "Full Body A"
-- tapOn: "1 RM Calc"
+- tapOn: "Overflow menu"
+- tapOn: "1RM calculator"
 - assertVisible: "Estimated 1RM"
 - tapOn: "+1 Rep"
 - assertVisible: "68.33"
-- tapOn:
-      text: "Weight"
-      below: "Estimated 1RM"
+- back
+- assertVisible: "Full Body A"
+- tapOn: "Overflow menu"
+- tapOn: "Exercise library"
+- assertVisible: "Exercise Library"
+- assertNotVisible: "Add exercise"
+- back
+- tapOn: "Weight Tracking"
 - assertVisible: "Log Weight"
 - tapOn: "Log Weight"
 - assertVisible: "Enter Weight"

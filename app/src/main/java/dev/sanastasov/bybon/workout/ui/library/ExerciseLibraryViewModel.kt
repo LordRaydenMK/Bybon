@@ -15,6 +15,7 @@ class ExerciseLibraryViewModel(
     private val existingExerciseIds: List<String>,
     private val repository: WorkoutsRepository,
     private val coroutineScope: CoroutineScope,
+    private val picker: Boolean = true,
 ) {
 
     private val _effects = Channel<ExerciseLibraryEffect>(Channel.BUFFERED)
@@ -32,19 +33,21 @@ class ExerciseLibraryViewModel(
             selectedExerciseId = selectedId,
             filters = currentFilters,
             existingExerciseIds = existingExerciseIds,
+            picker = picker,
         )
     }.stateInWhileInForeground(coroutineScope, ExerciseLibraryUiState())
 
     fun onAction(action: ExerciseLibraryAction) {
         when (action) {
             is ExerciseLibraryAction.OnToggleExercise -> {
-                if (uiState.value.isExisting(action.exerciseId)) return
+                if (!picker || uiState.value.isExisting(action.exerciseId)) return
                 selectedExerciseId.update { current ->
                     if (current == action.exerciseId) null else action.exerciseId
                 }
             }
 
             is ExerciseLibraryAction.OnAddExercise -> {
+                check(picker) { "Exercise library is browse-only" }
                 check(action.exerciseId !in existingExerciseIds) {
                     "Exercise ${action.exerciseId} is already added"
                 }

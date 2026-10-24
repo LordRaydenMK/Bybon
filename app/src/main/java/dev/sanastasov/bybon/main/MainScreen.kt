@@ -2,11 +2,16 @@
 
 package dev.sanastasov.bybon.main
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,9 +23,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
@@ -31,18 +39,18 @@ import dev.sanastasov.bybon.bodyweight.dashboard.WeeklyAverageEntryUi
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardTab
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardUiState
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardViewModel
-import dev.sanastasov.bybon.onermcalc.OneRmCalcAction
-import dev.sanastasov.bybon.onermcalc.OneRmCalculatorTab
-import dev.sanastasov.bybon.onermcalc.OneRmCalculatorViewModel
-import dev.sanastasov.bybon.onermcalc.OneRmEntry
-import dev.sanastasov.bybon.onermcalc.OneRmUiState
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.MaterialSymbolsExercise
-import dev.sanastasov.bybon.ui.icons.TablerBarbell
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.ui.history.AndroidContentResolverReader
+import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryAction
+import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryTab
+import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryUiState
+import dev.sanastasov.bybon.workout.ui.history.WorkoutHistoryViewModel
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlanEffect
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlanUi
 import dev.sanastasov.bybon.workout.ui.plans.WorkoutPlansAction
@@ -57,14 +65,11 @@ fun MainModule.MainScreen(
     onNavigateToStartSession: (WorkoutPlan) -> Unit,
     onNavigateToOverview: (WorkoutPlan) -> Unit,
     onNavigateToEditPlan: (WorkoutPlan) -> Unit,
-    onNavigateToHistory: () -> Unit,
+    onNavigateToSummary: (WorkoutSessionId) -> Unit,
+    onNavigateToOneRmCalculator: () -> Unit,
+    onNavigateToExerciseLibrary: () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
-
-    val oneRmViewModel = retain { OneRmCalculatorViewModel() }
-    val weight by oneRmViewModel.weight
-    val reps by oneRmViewModel.reps
-    val oneRmUiState by oneRmViewModel.uiState.collectAsStateWithLifecycle()
 
     val weightViewModel = retain {
         WeightDashboardViewModel(bodyWeightRepository, it.coroutineScope)
@@ -83,18 +88,45 @@ fun MainModule.MainScreen(
         }
     }
 
+    val contentResolver = LocalContext.current.contentResolver
+    val historyViewModel = retain {
+        WorkoutHistoryViewModel(
+            workoutsRepository,
+            it.coroutineScope,
+            AndroidContentResolverReader(contentResolver),
+        )
+    }
+    val historyState by historyViewModel.uiState.collectAsStateWithLifecycle()
+    val documentPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        historyViewModel.onAction(WorkoutHistoryAction.OnCsvSelected(uri))
+    }
+
     MainScreenContent(
         selectedIndex,
         { selectedIndex = it },
-        weight,
-        reps,
-        oneRmUiState,
-        oneRmViewModel::onAction,
         weightState,
         onNavigateToWeightEntry,
         plansState,
         workoutPlansViewModel::onAction,
-        onNavigateToHistory,
+        historyState,
+        {
+            documentPicker.launch(
+                arrayOf(
+                    "*/*",
+                    "text/*",
+                    "text/csv",
+                    "text/comma-separated-values",
+                    "application/csv",
+                ),
+            )
+        },
+        { historyViewModel.onAction(WorkoutHistoryAction.OnImportDone) },
+        onNavigateToSummary,
+        onNavigateToOneRmCalculator,
+        onNavigateToExerciseLibrary,
     )
 }
 
@@ -103,15 +135,16 @@ fun MainModule.MainScreen(
 private fun MainScreenContent(
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit,
-    weight: String,
-    reps: String,
-    oneRmUiState: OneRmUiState,
-    onOneRmAction: (OneRmCalcAction) -> Unit,
     weightState: WeightDashboardUiState,
     onLogWeightClicked: () -> Unit,
     plans: WorkoutPlansUiState,
     onWorkoutPlansAction: (WorkoutPlansAction) -> Unit,
-    onHistoryClicked: () -> Unit,
+    historyState: WorkoutHistoryUiState,
+    onImportHistoryClick: () -> Unit,
+    onImportDone: () -> Unit,
+    onSessionClick: (WorkoutSessionId) -> Unit,
+    onNavigateToOneRmCalculator: () -> Unit,
+    onNavigateToExerciseLibrary: () -> Unit,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -119,11 +152,10 @@ private fun MainScreenContent(
             TopAppBar(
                 title = { Text("Bybon") },
                 actions = {
-                    if (selectedIndex == 0) {
-                        IconButton(onHistoryClicked) {
-                            Icon(Icons.Filled.DateRange, contentDescription = "History")
-                        }
-                    }
+                    MainOverflowMenu(
+                        onNavigateToOneRmCalculator,
+                        onNavigateToExerciseLibrary,
+                    )
                 },
             )
         },
@@ -133,25 +165,25 @@ private fun MainScreenContent(
                     selectedIndex == 0,
                     { onTabSelected(0) },
                     icon = {
-                        Icon(MaterialSymbolsExercise, "Workouts tab")
+                        Icon(MaterialSymbolsExercise, "Workout Plans tab")
                     },
-                    label = { Text("Workouts") },
+                    label = { Text("Workout Plans") },
                 )
                 NavigationBarItem(
                     selectedIndex == 1,
                     { onTabSelected(1) },
                     icon = {
-                        Icon(TablerBarbell, "One RM calculator tab")
+                        Icon(Icons.Filled.DateRange, "History tab")
                     },
-                    label = { Text("1 RM Calc") },
+                    label = { Text("History") },
                 )
                 NavigationBarItem(
                     selectedIndex == 2,
                     { onTabSelected(2) },
                     icon = {
-                        Icon(FontAwesomeWeight, "Body Weight tab")
+                        Icon(FontAwesomeWeight, "Weight Tracking tab")
                     },
-                    label = { Text("Weight") },
+                    label = { Text("Weight Tracking") },
                 )
             }
         },
@@ -164,11 +196,11 @@ private fun MainScreenContent(
             when (selectedIndex) {
                 0 -> WorkoutsTab(plans, onWorkoutPlansAction, Modifier.fillMaxSize())
 
-                1 -> OneRmCalculatorTab(
-                    weight,
-                    reps,
-                    oneRmUiState,
-                    onOneRmAction,
+                1 -> WorkoutHistoryTab(
+                    historyState,
+                    onSessionClick,
+                    onImportHistoryClick,
+                    onImportDone,
                     Modifier.fillMaxSize(),
                 )
 
@@ -180,15 +212,43 @@ private fun MainScreenContent(
     }
 }
 
+@Composable
+private fun MainOverflowMenu(
+    onNavigateToOneRmCalculator: () -> Unit,
+    onNavigateToExerciseLibrary: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        IconButton({ expanded = true }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = "Overflow menu")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text("1RM calculator") },
+                onClick = {
+                    expanded = false
+                    onNavigateToOneRmCalculator()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Exercise library") },
+                onClick = {
+                    expanded = false
+                    onNavigateToExerciseLibrary()
+                },
+            )
+        }
+    }
+}
+
 @Preview
 @Composable
 private fun MainScreenContentWorkoutsPreview() {
     MainScreenContent(
         0,
-        {},
-        "50",
-        "10",
-        OneRmUiState(null, emptyList()),
         {},
         WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
         {},
@@ -198,6 +258,11 @@ private fun MainScreenContentWorkoutsPreview() {
                 WorkoutPlanUi(fullBodyB, isActive = false),
             ),
         ),
+        {},
+        WorkoutHistoryUiState.Empty,
+        {},
+        {},
+        {},
         {},
         {},
     )
@@ -205,16 +270,9 @@ private fun MainScreenContentWorkoutsPreview() {
 
 @Preview
 @Composable
-private fun MainScreenContentOneRmCalcPreview() {
+private fun MainScreenContentHistoryPreview() {
     MainScreenContent(
         1,
-        {},
-        "50",
-        "10",
-        OneRmUiState(
-            OneRmEntry(50f, 10),
-            emptyList(),
-        ),
         {},
         WeightDashboardUiState(LogWeightPrompt.Prominent, null, emptyList(), emptyList()),
         {},
@@ -224,6 +282,11 @@ private fun MainScreenContentOneRmCalcPreview() {
                 WorkoutPlanUi(fullBodyB, isActive = false),
             ),
         ),
+        {},
+        WorkoutHistoryUiState.Empty,
+        {},
+        {},
+        {},
         {},
         {},
     )
@@ -234,13 +297,6 @@ private fun MainScreenContentOneRmCalcPreview() {
 private fun MainScreenContentWeightTrackPreview() {
     MainScreenContent(
         2,
-        {},
-        "50",
-        "10",
-        OneRmUiState(
-            OneRmEntry(50f, 10),
-            emptyList(),
-        ),
         {},
         WeightDashboardUiState(
             LogWeightPrompt.Prominent,
@@ -261,6 +317,11 @@ private fun MainScreenContentWeightTrackPreview() {
                 WorkoutPlanUi(fullBodyB, isActive = false),
             ),
         ),
+        {},
+        WorkoutHistoryUiState.Empty,
+        {},
+        {},
+        {},
         {},
         {},
     )

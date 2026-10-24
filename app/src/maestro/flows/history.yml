@@ -37,7 +37,9 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "1. 20 kg x 14 @ 29.33 kg 1RM"
 - back
 - assertVisible: "History"
-- back
+- tapOn: "Workout Plans"
 - assertVisible: "Full Body A"
-- tapOn: "1 RM Calc"
+- tapOn: "Overflow menu"
+- tapOn: "1RM calculator"
+- assertVisible: "Estimated 1RM"
 - assertNotVisible: "History"

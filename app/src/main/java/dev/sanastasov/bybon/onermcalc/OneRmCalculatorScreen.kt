@@ -13,6 +13,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,19 +28,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 
 @Composable
-fun OneRmCalculatorScreen() {
+fun OneRmCalculatorScreen(onNavigateBack: () -> Unit) {
     val viewModel = retain { OneRmCalculatorViewModel() }
     val weight by viewModel.weight
     val reps by viewModel.reps
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    OneRmCalculatorTab(
-        weight,
-        reps,
-        uiState,
-        viewModel::onAction,
-    )
+    Scaffold(
+        Modifier.fillMaxSize(),
+        topBar = { BybonTopAppBar("1RM calculator", onNavigateBack) },
+    ) { contentPadding ->
+        OneRmCalculatorTab(
+            weight,
+            reps,
+            uiState,
+            viewModel::onAction,
+            Modifier
+                .fillMaxSize()
+                .padding(contentPadding),
+        )
+    }
 }
 
 @Composable

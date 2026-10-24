@@ -16,8 +16,9 @@ data class ExerciseLibraryUiState(
     val groups: List<ExerciseLibraryGroup> = emptyList(),
     val filterChips: List<ExerciseLibraryFilterChipUi> = emptyList(),
     val selectedExerciseId: String? = null,
+    val picker: Boolean = true,
 ) {
-    val addEnabled: Boolean get() = selectedExerciseId != null
+    val addEnabled: Boolean get() = picker && selectedExerciseId != null
 
     val showEmptyState: Boolean get() = groups.isEmpty() && filterChips.any { it.selected }
 
@@ -113,7 +114,17 @@ fun List<ExerciseDefinition>.toLibraryUiState(
     selectedExerciseId: String? = null,
     filters: ExerciseLibraryFilters = ExerciseLibraryFilters(),
     existingExerciseIds: List<String> = emptyList(),
+    picker: Boolean = true,
 ): ExerciseLibraryUiState {
+    if (!picker) {
+        return ExerciseLibraryUiState(
+            groups = matching(filters).groupedByBodyPart().map { group ->
+                group.copy(exercises = group.exercises.map { it.copy(selectable = false) })
+            },
+            filterChips = filters.toChips(),
+            picker = false,
+        )
+    }
     val existingIdSet = existingExerciseIds.toSet()
     val pendingId = selectedExerciseId.takeUnless { it in existingIdSet }
     return ExerciseLibraryUiState(
@@ -123,6 +134,7 @@ fun List<ExerciseDefinition>.toLibraryUiState(
             .groupedByBodyPart(pendingId),
         filterChips = filters.toChips(),
         selectedExerciseId = pendingId,
+        picker = true,
     )
 }
 

@@ -58,12 +58,18 @@ import dev.sanastasov.bybon.workout.domain.label
 @Composable
 fun WorkoutModule.ExerciseLibraryScreen(
     existingExerciseIds: List<String>,
+    picker: Boolean,
     onExercisePicked: (String) -> Unit,
     onNavigateBack: () -> Unit,
     onNavigateToExerciseDetails: (String) -> Unit,
 ) {
     val viewModel = retain {
-        ExerciseLibraryViewModel(existingExerciseIds, workoutsRepository, it.coroutineScope)
+        ExerciseLibraryViewModel(
+            existingExerciseIds,
+            workoutsRepository,
+            it.coroutineScope,
+            picker,
+        )
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     viewModel.effects.collectEffectWithLifecycle { effect ->
@@ -87,8 +93,12 @@ private fun ExerciseLibraryContent(
         Modifier.fillMaxSize(),
         topBar = { BybonTopAppBar("Exercise Library", onNavigateBack) },
         bottomBar = {
-            AddExerciseBar(state.addEnabled) {
-                state.selectedExerciseId?.let { onAction(ExerciseLibraryAction.OnAddExercise(it)) }
+            if (state.picker) {
+                AddExerciseBar(state.addEnabled) {
+                    state.selectedExerciseId?.let {
+                        onAction(ExerciseLibraryAction.OnAddExercise(it))
+                    }
+                }
             }
         },
     ) { contentPadding ->

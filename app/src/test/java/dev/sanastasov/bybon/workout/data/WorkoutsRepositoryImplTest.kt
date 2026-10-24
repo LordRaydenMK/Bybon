@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.data
 
+import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
@@ -265,6 +266,22 @@ class WorkoutsRepositoryImplTest {
         assert(result.sessions == listOf(upperBody))
         assert(result.sessionsSkipped == 0)
         assert(repository.workoutSessions().first() == listOf(fullBody, upperBody))
+    }
+
+    @Test
+    fun `importHistory does not crash collectors that see a plan before its exercises`() = runTest {
+        val repository: WorkoutsRepository = repository()
+        val extra = fullBodyA.copy(id = WorkoutPlanId("extra"), name = "Extra")
+        repository.workoutPlans(WorkoutPlansFilter.AllPlans).test {
+            awaitItem()
+            repository.importHistory(
+                plans = listOf(extra),
+                sessions = emptyList(),
+                exercises = emptyList(),
+            )
+            assert(expectMostRecentItem().last() == extra)
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     @Test

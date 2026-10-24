@@ -2,8 +2,6 @@
 
 package dev.sanastasov.bybon.workout.ui.history
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,14 +20,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -38,11 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.domain.toDisplayDate
-import dev.sanastasov.bybon.ui.components.BybonTopAppBar
-import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
@@ -55,71 +46,20 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 @Composable
-fun WorkoutModule.WorkoutHistoryScreen(
-    onNavigateBack: () -> Unit,
-    onNavigateToSummary: (WorkoutSessionId) -> Unit,
-) {
-    val contentResolver = LocalContext.current.contentResolver
-    val viewModel = retain {
-        WorkoutHistoryViewModel(
-            workoutsRepository,
-            it.coroutineScope,
-            AndroidContentResolverReader(contentResolver),
-        )
-    }
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val documentPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
-        viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(uri))
-    }
-
-    WorkoutHistoryContent(
-        uiState = uiState,
-        onNavigateBack = onNavigateBack,
-        onSessionClick = onNavigateToSummary,
-        onImportHistoryClick = {
-            documentPicker.launch(
-                arrayOf(
-                    "*/*",
-                    "text/*",
-                    "text/csv",
-                    "text/comma-separated-values",
-                    "application/csv",
-                ),
-            )
-        },
-        onImportDone = { viewModel.onAction(WorkoutHistoryAction.OnImportDone) },
-    )
-}
-
-@Composable
-private fun WorkoutHistoryContent(
+fun WorkoutHistoryTab(
     uiState: WorkoutHistoryUiState,
-    onNavigateBack: () -> Unit,
     onSessionClick: (WorkoutSessionId) -> Unit,
     onImportHistoryClick: () -> Unit,
     onImportDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val title = if (uiState is WorkoutHistoryUiState.Summary) "Import summary" else "History"
-    Scaffold(
-        modifier.fillMaxSize(),
-        topBar = { BybonTopAppBar(title, onNavigateBack) },
-    ) { contentPadding ->
-        Box(
-            Modifier
-                .fillMaxSize()
-                .padding(contentPadding),
-        ) {
-            when (uiState) {
-                WorkoutHistoryUiState.Loading -> LoadingIndicator()
-                WorkoutHistoryUiState.Empty -> EmptyHistory(onImportHistoryClick)
-                WorkoutHistoryUiState.Importing -> ImportingIndicator()
-                is WorkoutHistoryUiState.Summary -> ImportSummary(uiState.summary, onImportDone)
-                is WorkoutHistoryUiState.History -> HistoryList(uiState.sessions, onSessionClick)
-            }
+    Box(modifier.fillMaxSize()) {
+        when (uiState) {
+            WorkoutHistoryUiState.Loading -> LoadingIndicator()
+            WorkoutHistoryUiState.Empty -> EmptyHistory(onImportHistoryClick)
+            WorkoutHistoryUiState.Importing -> ImportingIndicator()
+            is WorkoutHistoryUiState.Summary -> ImportSummary(uiState.summary, onImportDone)
+            is WorkoutHistoryUiState.History -> HistoryList(uiState.sessions, onSessionClick)
         }
     }
 }
@@ -172,6 +112,11 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        Text(
+            "Import summary",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
         Text(
             "${summary.sessionCount} ${sessionsLabel(summary.sessionCount)} imported",
             style = MaterialTheme.typography.titleMedium,
@@ -351,7 +296,7 @@ internal fun ExerciseTopSetUi.contentDescription(): String {
 @Composable
 private fun WorkoutHistoryContentPreview() {
     Surface {
-        WorkoutHistoryContent(
+        WorkoutHistoryTab(
             uiState = WorkoutHistoryUiState.History(
                 listOf(
                     WorkoutSessionHistoryUi(
@@ -380,7 +325,6 @@ private fun WorkoutHistoryContentPreview() {
                     ),
                 ),
             ),
-            onNavigateBack = {},
             onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
@@ -392,9 +336,8 @@ private fun WorkoutHistoryContentPreview() {
 @Composable
 private fun WorkoutHistoryEmptyPreview() {
     Surface {
-        WorkoutHistoryContent(
+        WorkoutHistoryTab(
             uiState = WorkoutHistoryUiState.Empty,
-            onNavigateBack = {},
             onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},
@@ -406,7 +349,7 @@ private fun WorkoutHistoryEmptyPreview() {
 @Composable
 private fun WorkoutHistoryImportSummaryPreview() {
     Surface {
-        WorkoutHistoryContent(
+        WorkoutHistoryTab(
             uiState = WorkoutHistoryUiState.Summary(
                 ImportSummaryUi(
                     sessionCount = 52,
@@ -425,7 +368,6 @@ private fun WorkoutHistoryImportSummaryPreview() {
                     sessionsSkipped = 0,
                 ),
             ),
-            onNavigateBack = {},
             onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},

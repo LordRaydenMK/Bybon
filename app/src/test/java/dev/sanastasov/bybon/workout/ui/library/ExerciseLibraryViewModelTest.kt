@@ -316,6 +316,34 @@ class ExerciseLibraryViewModelTest {
     }
 
     @Test
+    fun `browse mode ignores selection and add`() = runTest {
+        val viewModel = ExerciseLibraryViewModel(
+            existingExerciseIds = fullBodyA.sets.map { it.exercise.id },
+            repository = FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialExercises = catalogExercises,
+            ),
+            coroutineScope = backgroundScope,
+            picker = false,
+        )
+        val state = viewModel.uiState.first { it.groups.isNotEmpty() }
+
+        assert(!state.picker)
+        assert(state.existingHeader == null)
+        assert(state.groups.flatMap { it.exercises }.any { it.id == "bench-press" })
+        assert(state.groups.flatMap { it.exercises }.none { it.selectable })
+
+        viewModel.onAction(ExerciseLibraryAction.OnToggleExercise("incline-db-curl"))
+        assert(!viewModel.uiState.value.addEnabled)
+        assert(viewModel.uiState.value.selectedExerciseId == null)
+
+        val error = assertFailsWith<IllegalStateException> {
+            viewModel.onAction(ExerciseLibraryAction.OnAddExercise("incline-db-curl"))
+        }
+        assert(error.message == "Exercise library is browse-only")
+    }
+
+    @Test
     fun `selected exercise stays enabled after it is filtered out`() = runTest {
         val viewModel = viewModel()
         viewModel.uiState.first { it.groups.isNotEmpty() }
