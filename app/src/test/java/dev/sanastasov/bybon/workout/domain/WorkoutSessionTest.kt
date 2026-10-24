@@ -48,6 +48,17 @@ class WorkoutSessionTest {
         assert(actual.exercises.first().sets.all { it.setState == SetState.Completed })
         assert(checkNotNull(squat.warmupSets).first().setState == SetState.InProgress)
         assert(squat.sets.all { it.setState == SetState.NotStated })
+        assert(actual.currentExerciseIndex == 1)
+    }
+
+    @Test
+    fun `currentExerciseIndex is the first exercise that is not completed`() {
+        val started = fullBodyA.toWorkoutSession()
+        assert(started.currentExerciseIndex == 0)
+
+        val firstDone = started.completeWarmups(0).completeWorkSets(0, count = 3)
+        assert(firstDone.exercises.first().state == ExerciseState.Completed)
+        assert(firstDone.currentExerciseIndex == 1)
     }
 
     @Test
