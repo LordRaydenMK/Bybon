@@ -103,4 +103,16 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Open Workout"
 - assertVisible: "3 x Barbell Bench Press in 8 - 10"
 - assertVisible: "1. 60 kg x 10 @ 80 kg 1RM"
+- assertVisible: "Exercise 1 / 6"
+- assertNotVisible: "Start Workout"
+- tapOn:
+    text: "Set 3 in progress, 50 kg by 8, @ 62.07 kg 1RM. Double tap to mark complete."
+    point: "90%, 50%"
+- assertVisible: "3 x Barbell Back Squat in 8 - 10"
+- assertVisible: "Exercise 2 / 6"
+- back
+- tapOn: "Open Workout"
+- assertVisible: "3 x Barbell Back Squat in 8 - 10"
+- assertVisible: "Exercise 2 / 6"
+- assertNotVisible: "3 x Barbell Bench Press in 8 - 10"
 - assertNotVisible: "Start Workout"
