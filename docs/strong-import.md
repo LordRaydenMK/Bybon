@@ -127,9 +127,10 @@ Resolve each Strong `Exercise Name`:
    images stay null. Strong does not record them.
 
 The sample’s `Crunch (Machine)` aliases to shipped `machine-seated-crunch`, so that file inserts no
-new exercises. `Chest Fly (Band)`, `Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are not
-shipped exercises; they are created with the mapped mechanic. `Hip Thrust (Barbell)`,
-`Standing Calf Raise (Barbell)`, and `Skullcrusher (Barbell)` resolve to the catalog rows.
+new exercises. `Chest Fly (Band)` and `Triceps Extension (Cable)` are not shipped exercises; they
+are created with the mapped mechanic. `Cable Pushdown (rope)` aliases to `tricep-pushdown`.
+`Hip Thrust (Barbell)`, `Standing Calf Raise (Barbell)`, and `Skullcrusher (Barbell)` resolve to the
+catalog rows.
 
 ### 2. Plans
 
@@ -220,7 +221,10 @@ Description, instructions, tips, and images stay null.
 
 Bybon catalog exercises **not** in the 52-session sample include overhead press, lat pulldown, chest
 fly variants, dips, calf raise, face pull, lying leg curl, etc. Several of those **do** appear in
-the full backup and now match (lat pulldown, both leg curls, leg press and chest fly via alias).
+the full backup and now match (lat pulldown, both leg curls, leg press, chest fly, deadlift,
+overhead press, cable lateral raise, machine chest press, standing calf raise, face pull, rope
+pushdown, cable crossover, and incline dumbbell overhead extension via alias). Seed Full Body A/B
+and Upper Body (legacy) use only RepDB ids.
 
 ---
 
@@ -319,8 +323,15 @@ aliases to `machine-seated-crunch`. `Reverse Lunges` aliases to `reverse-lunge`.
 matches the shipped name. Created names are trimmed.
 
 `Hip Thrust (Barbell)` resolves to `hip-thrust`. `Standing Calf Raise (Barbell)` resolves to
-`barbell-calf-raise`. `Skullcrusher (Barbell)` resolves to `skull-crusher`. `Chest Fly (Band)`,
-`Cable Pushdown (rope)`, and `Triceps Extension (Cable)` are created with the mapped mechanic.
+`barbell-calf-raise`. `Skullcrusher (Barbell)` resolves to `skull-crusher`. `Deadlift (Barbell)`
+resolves to `deadlift`. `Overhead Press (Barbell)` resolves to `ohp`. `Lateral Raise (Cable)`
+resolves to `cable-lateral-raise`. `Chest Press (Machine)` resolves to `chest-press-machine`.
+`Standing Calf Raise (Machine)` resolves to `standing-calf-raise`. `Face Pull (Cable)` resolves to
+`face-pull`. `Cable Pushdown (rope)` resolves to `tricep-pushdown`. `Cable Crossover` resolves to
+`cable-fly`. `Incline Dumbbell Overhead Extension` resolves to `overhead-tricep-extension`.
+`Chest Fly (Band)` and `Triceps Extension (Cable)` are created with the mapped mechanic.
+`Iso-Lateral Chest Press (Machine)` is created: RepDB has a linked machine chest press, not an
+iso-lateral one.
 
 Catalog rows that **never appear** in this export: `db-bench-press`, `assisted-dips`,
 `incline-bench-press`.
