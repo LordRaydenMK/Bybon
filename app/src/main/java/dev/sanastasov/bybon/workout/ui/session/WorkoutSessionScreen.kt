@@ -46,6 +46,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.canRemoveExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.restTimer
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
 import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
@@ -114,17 +115,22 @@ private fun SessionScreenContent(
     var showCancelDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
-            BybonTopAppBar(
-                state.planName,
-                onBack,
-                actions = {
-                    SessionElapsedClock(state.startedAt)
-                    SessionOverflowMenu(
-                        onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
-                        onCancelWorkout = { showCancelDialog = true },
-                    )
-                },
-            )
+            Column {
+                BybonTopAppBar(
+                    state.planName,
+                    onBack,
+                    actions = {
+                        SessionElapsedClock(state.startedAt)
+                        SessionOverflowMenu(
+                            onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
+                            onCancelWorkout = { showCancelDialog = true },
+                        )
+                    },
+                )
+                state.restTimer()?.let { rest ->
+                    SessionRestProgress(rest)
+                }
+            }
         },
     ) { contentPadding ->
         Column(
@@ -275,6 +281,17 @@ private fun SessionScreenContentPage1CompletedExercisePreview() {
     SessionScreenContentPreview(
         session.completeSet(session.exercises.first(), 0, isWarmup = true),
     )
+}
+
+@Preview
+@Composable
+private fun SessionScreenContentRestAfterLastWarmupPreview() {
+    val startedAt = LocalDateTime.of(2026, 10, 24, 12, 0)
+    val completedAt = startedAt.plusMinutes(3)
+    val session = (0..2).fold(fullBodyA.toWorkoutSession(startedAt = startedAt)) { current, index ->
+        current.completeSet(current.exercises.first(), index, isWarmup = true, now = completedAt)
+    }
+    SessionScreenContentPreview(session)
 }
 
 @Preview

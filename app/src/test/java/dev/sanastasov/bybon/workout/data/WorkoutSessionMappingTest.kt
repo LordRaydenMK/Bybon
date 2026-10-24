@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.data
 
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
@@ -41,6 +42,34 @@ class WorkoutSessionMappingTest {
         assert(firstSets.drop(3).none { it.isWarmup })
         assert(firstSets.first().setState == SetState.InProgress.name)
         assert(Weight.kilograms(32.5f).toHundredths() == 3250)
+        assert(firstSets.all { it.completedAt == null })
+    }
+
+    @Test
+    fun `round trip keeps completedAt on completed sets`() {
+        val startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34)
+        val completedAt = startedAt.plusMinutes(4)
+        val original = fullBodyA.toWorkoutSession(startedAt = startedAt).let { session ->
+            session.completeSet(session.exercises.first(), 0, isWarmup = true, now = completedAt)
+        }
+        val write = original.toWrite(sessionId = 7)
+        val lines = write.exercises.mapIndexed { index, exercise ->
+            exercise.entity.copy(id = index + 1L, sessionId = 7)
+        }
+        val sets = write.exercises.flatMapIndexed { index, exercise ->
+            exercise.sets.map { it.copy(sessionExerciseId = index + 1L) }
+        }
+        val catalog = original.exercises.map {
+            it.exerciseDefinition.toEntity(source = ExerciseSource.SHIPPED)
+        }
+
+        val restored = listOf(write.header.copy(id = 7))
+            .toDomainSessions(lines, sets, catalog)
+            .single()
+
+        assert(restored == original)
+        assert(write.exercises.first().sets.first().completedAt == completedAt)
+        assert(write.exercises.first().sets.drop(1).all { it.completedAt == null })
     }
 
     @Test

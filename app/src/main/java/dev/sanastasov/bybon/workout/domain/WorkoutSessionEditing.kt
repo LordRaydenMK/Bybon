@@ -13,7 +13,11 @@ fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
             SetState.NotStated
         }
         current.copy(
-            sets = current.sets + template.copy(setState = newSetState, previous = null),
+            sets = current.sets + template.copy(
+                setState = newSetState,
+                previous = null,
+                completedAt = null,
+            ),
         )
     }
 

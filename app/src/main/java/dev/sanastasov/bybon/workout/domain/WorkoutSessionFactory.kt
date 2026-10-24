@@ -98,8 +98,10 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     duration = null,
     exercises = exercises.map { exercise ->
         exercise.copy(
-            sets = exercise.sets.map { it.copy(setState = SetState.NotStated) },
-            warmupSets = exercise.warmupSets?.map { it.copy(setState = SetState.NotStated) },
+            sets = exercise.sets.map { it.copy(setState = SetState.NotStated, completedAt = null) },
+            warmupSets = exercise.warmupSets?.map {
+                it.copy(setState = SetState.NotStated, completedAt = null)
+            },
         )
     },
 )

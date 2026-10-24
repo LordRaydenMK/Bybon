@@ -18,10 +18,6 @@ import dev.sanastasov.bybon.workout.domain.elapsedSince
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import java.time.LocalDateTime
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 
 @Composable
@@ -47,13 +43,6 @@ internal fun SessionElapsedClock(
         fontFamily = FontFamily.Monospace,
         style = MaterialTheme.typography.titleMedium,
     )
-}
-
-private fun ticksEverySecond(): Flow<Unit> = flow {
-    while (true) {
-        emit(Unit)
-        delay(1.seconds)
-    }
 }
 
 internal fun Duration.elapsedClockContentDescription(): String {

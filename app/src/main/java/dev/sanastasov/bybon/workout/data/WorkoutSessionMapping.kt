@@ -63,6 +63,7 @@ internal fun WorkoutSession.toWrite(sessionId: Long): WorkoutSessionWrite {
                 setState = set.setState.name,
                 previousWeight = previousWeight,
                 previousReps = previousReps,
+                completedAt = set.completedAt,
             )
         }
         WorkoutSessionExerciseWrite(entity, sets)
@@ -144,6 +145,7 @@ internal fun WorkoutSetEntity.toExerciseSet(definition: ExerciseDefinition): Exe
         previous = previousReps?.let { repsLogged ->
             PreviousSetPerformance(previousWeight?.toWeightOrNull(), repsLogged)
         },
+        completedAt = completedAt,
     )
 }
 
