@@ -22,7 +22,7 @@ roomCommon = "2.8.5"
 detekt = "2.0.0-alpha.6"
 composeCharts = "1.0.0"
 coil3 = "3.6.3"
-okhttp = "5.5.0"
+okhttp = "5.5.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
