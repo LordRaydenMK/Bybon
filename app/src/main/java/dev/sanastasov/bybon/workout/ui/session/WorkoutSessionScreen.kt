@@ -72,7 +72,9 @@ fun WorkoutModule.WorkoutSessionScreen(
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
     }
     uiState?.let { session ->
-        val pagerState = rememberPagerState(session.currentExerciseIndex) { session.exercises.size }
+        val pagerState = rememberPagerState(
+            session.currentExerciseIndex ?: 0,
+        ) { session.exercises.size }
         viewModel.effects.collectEffectWithLifecycle { effect ->
             when (effect) {
                 WorkoutSessionEffect.NavigateBack -> onBack()
@@ -315,7 +317,7 @@ private fun SessionScreenContentWithPreviousPreview() {
 private fun SessionScreenContentPreview(state: WorkoutSession) {
     SessionScreenContent(
         state,
-        rememberPagerState(state.currentExerciseIndex) { state.exercises.size },
+        rememberPagerState(state.currentExerciseIndex ?: 0) { state.exercises.size },
         {},
         {},
     )

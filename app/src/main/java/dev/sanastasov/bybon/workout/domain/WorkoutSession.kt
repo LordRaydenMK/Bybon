@@ -30,8 +30,8 @@ data class WorkoutSession(
     val isResumable: Boolean
         get() = state is WorkoutState.InProgress
 
-    val currentExerciseIndex: Int
-        get() = exercises.indexOfFirst { it.state != ExerciseState.Completed }.coerceAtLeast(0)
+    val currentExerciseIndex: Int?
+        get() = exercises.indexOfFirst { it.state != ExerciseState.Completed }.takeIf { it >= 0 }
 
     init {
         require(exercises.isNotEmpty()) { "Session must contain at least one exercise" }
