@@ -1,28 +1,12 @@
 package dev.sanastasov.bybon.workout.domain
 
 import java.time.LocalDateTime
-import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Test
 
 class RestTimerTest {
 
     private val startedAt = LocalDateTime.of(2026, 10, 24, 12, 0, 0)
-
-    @Test
-    fun `completedAt is rejected on a set that is not completed`() {
-        val definition = catalogExercise("bench-press")
-        val error = assertFailsWith<IllegalArgumentException> {
-            ExerciseSet(
-                definition,
-                Weight.kilograms(50),
-                8,
-                SetState.InProgress,
-                completedAt = startedAt,
-            )
-        }
-        assert(error.message == "completedAt requires a completed set")
-    }
 
     @Test
     fun `completeSet writes completedAt`() {
@@ -34,8 +18,8 @@ class RestTimerTest {
             now = startedAt,
         )
 
-        assert(actual.exercises.first().warmupSets!![0].completedAt == startedAt)
-        assert(actual.exercises.first().warmupSets!![1].completedAt == null)
+        assert(actual.exercises.first().warmupSets!![0].setState == SetState.Completed(startedAt))
+        assert(actual.exercises.first().warmupSets!![1].setState == SetState.InProgress)
     }
 
     @Test
@@ -98,12 +82,14 @@ class RestTimerTest {
         val session = completeWarmups(now = startedAt).let { current ->
             current.updateExercise(current.exercises.first().id) { exercise ->
                 exercise.copy(
-                    warmupSets = exercise.warmupSets?.map { it.copy(completedAt = null) },
+                    warmupSets = exercise.warmupSets?.map {
+                        it.copy(setState = SetState.Completed())
+                    },
                 )
             }
         }
 
-        assert(session.exercises.first().warmupSets!!.all { it.setState == SetState.Completed })
+        assert(session.exercises.first().warmupSets!!.all { it.setState is SetState.Completed })
         assert(session.restTimer() == null)
     }
 

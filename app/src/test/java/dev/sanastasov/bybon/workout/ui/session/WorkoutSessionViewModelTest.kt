@@ -119,7 +119,7 @@ class WorkoutSessionViewModelTest {
                 )
                 session = awaitItem()!!
             }
-            assert(session.exercises.first().warmupSets!!.all { it.setState == SetState.Completed })
+            assert(session.exercises.first().warmupSets!!.all { it.setState is SetState.Completed })
             assert(session.exercises.first().sets.first().setState == SetState.InProgress)
 
             session.exercises.first().sets.indices.forEach { index ->
@@ -128,7 +128,7 @@ class WorkoutSessionViewModelTest {
                 )
                 session = awaitItem()!!
             }
-            assert(session.exercises.first().sets.all { it.setState == SetState.Completed })
+            assert(session.exercises.first().sets.all { it.setState is SetState.Completed })
             assert(session.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
         }
     }
@@ -170,7 +170,7 @@ class WorkoutSessionViewModelTest {
                         warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
                             set.copy(
                                 setState = if (index == 0) {
-                                    SetState.Completed
+                                    SetState.Completed()
                                 } else {
                                     SetState.NotStated
                                 },
@@ -190,7 +190,7 @@ class WorkoutSessionViewModelTest {
             assert(awaitItem() == null)
             val session = awaitItem()!!
             assert(session.startedAt == paused.startedAt)
-            assert(session.exercises.first().warmupSets!![0].setState == SetState.Completed)
+            assert(session.exercises.first().warmupSets!![0].setState is SetState.Completed)
             assert(session.exercises.first().warmupSets!![1].setState == SetState.InProgress)
             assert(session.state == WorkoutState.InProgress)
         }
@@ -283,7 +283,7 @@ class WorkoutSessionViewModelTest {
                 ),
             )
             viewModel.uiState.first { current ->
-                current?.exercises?.first()?.warmupSets?.first()?.setState == SetState.Completed
+                current?.exercises?.first()?.warmupSets?.first()?.setState is SetState.Completed
             }
             expectNoEvents()
         }
@@ -305,13 +305,13 @@ class WorkoutSessionViewModelTest {
                     ),
                 )
                 session = viewModel.uiState.first { current ->
-                    current?.exercises?.first()?.warmupSets?.get(index)?.setState ==
-                        SetState.Completed
+                    val setState = current?.exercises?.first()?.warmupSets?.get(index)?.setState
+                    setState is SetState.Completed
                 }!!
             }
             viewModel.onAction(WorkoutSessionAction.OnCompleteSet(session.exercises.first(), 0))
             viewModel.uiState.first { current ->
-                current?.exercises?.first()?.sets?.first()?.setState == SetState.Completed
+                current?.exercises?.first()?.sets?.first()?.setState is SetState.Completed
             }
             expectNoEvents()
         }
@@ -485,7 +485,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `removing a completed exercise is rejected`() = runTest {
         val session = twoExerciseSession(
-            firstState = SetState.Completed,
+            firstState = SetState.Completed(),
             secondState = SetState.InProgress,
         )
         val failures = BackgroundFailures(this)
@@ -604,7 +604,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `removing the last incomplete exercise completes the workout`() = runTest {
         val session = twoExerciseSession(
-            firstState = SetState.Completed,
+            firstState = SetState.Completed(),
             secondState = SetState.InProgress,
         )
         val repository = FakeWorkoutsRepository(
@@ -649,9 +649,9 @@ class WorkoutSessionViewModelTest {
                     exercises = edited.exercises.map { exercise ->
                         exercise.copy(
                             warmupSets = exercise.warmupSets?.map {
-                                it.copy(setState = SetState.Completed)
+                                it.copy(setState = SetState.Completed())
                             },
-                            sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                            sets = exercise.sets.map { it.copy(setState = SetState.Completed()) },
                         )
                     },
                     duration = kotlin.time.Duration.ZERO,

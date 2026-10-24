@@ -19,7 +19,7 @@ class WorkoutSessionTest {
         val actualBench = actual.exercises.first()
         val warmupSets = checkNotNull(actualBench.warmupSets)
 
-        assert(warmupSets[0].setState == SetState.Completed)
+        assert(warmupSets[0].setState is SetState.Completed)
         assert(warmupSets[1].setState == SetState.InProgress)
         assert(warmupSets[2].setState == SetState.NotStated)
         assert(actualBench.sets.all { it.setState == SetState.NotStated })
@@ -32,7 +32,7 @@ class WorkoutSessionTest {
         val actual = session.completeSet(session.exercises.first(), 2, isWarmup = true)
         val bench = actual.exercises.first()
 
-        assert(checkNotNull(bench.warmupSets).all { it.setState == SetState.Completed })
+        assert(checkNotNull(bench.warmupSets).all { it.setState is SetState.Completed })
         assert(bench.sets.first().setState == SetState.InProgress)
     }
 
@@ -45,7 +45,7 @@ class WorkoutSessionTest {
         val actual = session.completeSet(session.exercises.first(), 2)
         val squat = actual.exercises[1]
 
-        assert(actual.exercises.first().sets.all { it.setState == SetState.Completed })
+        assert(actual.exercises.first().sets.all { it.setState is SetState.Completed })
         assert(checkNotNull(squat.warmupSets).first().setState == SetState.InProgress)
         assert(squat.sets.all { it.setState == SetState.NotStated })
         assert(actual.currentExerciseIndex == 1)
@@ -170,14 +170,14 @@ class WorkoutSessionTest {
                             set.copy(
                                 weight = Weight.kilograms(40 + index),
                                 reps = 9,
-                                setState = SetState.Completed,
+                                setState = SetState.Completed(),
                             )
                         },
                         warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
                             set.copy(
                                 weight = Weight.kilograms(22 + index),
                                 reps = 6,
-                                setState = SetState.Completed,
+                                setState = SetState.Completed(),
                             )
                         },
                     )
@@ -212,9 +212,9 @@ class WorkoutSessionTest {
                 exercises = session.exercises.map { exercise ->
                     if (exercise.id != "assisted-pull-ups") {
                         exercise.copy(
-                            sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                            sets = exercise.sets.map { it.copy(setState = SetState.Completed()) },
                             warmupSets = exercise.warmupSets?.map {
-                                it.copy(setState = SetState.Completed)
+                                it.copy(setState = SetState.Completed())
                             },
                         )
                     } else {
@@ -223,14 +223,14 @@ class WorkoutSessionTest {
                                 set.copy(
                                     weight = null,
                                     reps = 8,
-                                    setState = SetState.Completed,
+                                    setState = SetState.Completed(),
                                 )
                             },
                             warmupSets = exercise.warmupSets?.map { set ->
                                 set.copy(
                                     weight = null,
                                     reps = 6,
-                                    setState = SetState.Completed,
+                                    setState = SetState.Completed(),
                                 )
                             },
                         )
@@ -298,11 +298,11 @@ class WorkoutSessionTest {
                             set.copy(
                                 weight = Weight.kilograms(40),
                                 reps = 9,
-                                setState = SetState.Completed,
+                                setState = SetState.Completed(),
                             )
                         },
                         warmupSets = exercise.warmupSets?.map { set ->
-                            set.copy(setState = SetState.Completed)
+                            set.copy(setState = SetState.Completed())
                         },
                     )
                 },
@@ -432,7 +432,7 @@ class WorkoutSessionTest {
             catalogExercise("bench-press"),
             Weight.kilograms(60),
             8,
-            SetState.Completed,
+            SetState.Completed(),
         )
         assert(set.oneRm == Weight.kilograms(estimateOneRmKg(60f, 8)))
         assert(set.oneRm?.kilograms == "74.48")
@@ -444,7 +444,7 @@ class WorkoutSessionTest {
             catalogExercise("assisted-pull-ups"),
             null,
             8,
-            SetState.Completed,
+            SetState.Completed(),
         )
         assert(set.oneRm == null)
     }

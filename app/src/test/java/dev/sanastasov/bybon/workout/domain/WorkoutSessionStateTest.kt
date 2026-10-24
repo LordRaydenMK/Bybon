@@ -62,7 +62,7 @@ class WorkoutSessionStateTest {
                         warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
                             set.copy(
                                 setState = if (index == 0) {
-                                    SetState.Completed
+                                    SetState.Completed()
                                 } else {
                                     SetState.NotStated
                                 },
@@ -78,7 +78,7 @@ class WorkoutSessionStateTest {
 
         assert(actual.startedAt == paused.startedAt)
         assert(actual.state == WorkoutState.InProgress)
-        assert(actual.exercises.first().warmupSets!![0].setState == SetState.Completed)
+        assert(actual.exercises.first().warmupSets!![0].setState is SetState.Completed)
         assert(actual.exercises.first().warmupSets!![1].setState == SetState.InProgress)
         assert(actual.isResumable)
     }
@@ -95,9 +95,9 @@ class WorkoutSessionStateTest {
         val completed = inProgress.copy(
             exercises = inProgress.exercises.map { exercise ->
                 exercise.copy(
-                    sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                    sets = exercise.sets.map { it.copy(setState = SetState.Completed()) },
                     warmupSets = exercise.warmupSets?.map {
-                        it.copy(setState = SetState.Completed)
+                        it.copy(setState = SetState.Completed())
                     },
                 )
             },
@@ -125,9 +125,9 @@ class WorkoutSessionStateTest {
                 } else {
                     exercise.copy(
                         warmupSets = exercise.warmupSets?.map {
-                            it.copy(setState = SetState.Completed)
+                            it.copy(setState = SetState.Completed())
                         },
-                        sets = exercise.sets.map { it.copy(setState = SetState.Completed) },
+                        sets = exercise.sets.map { it.copy(setState = SetState.Completed()) },
                     )
                 }
             },
@@ -224,7 +224,7 @@ class WorkoutSessionStateTest {
         }
 
         assert(session.exercises.all { it.state == ExerciseState.Completed })
-        assert(session.workoutSets.all { it.setState == SetState.Completed })
+        assert(session.workoutSets.all { it.setState is SetState.Completed })
         assert(session.state == WorkoutState.Completed(47.minutes))
     }
 }

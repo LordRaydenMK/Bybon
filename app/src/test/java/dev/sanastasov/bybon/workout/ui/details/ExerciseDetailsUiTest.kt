@@ -110,7 +110,7 @@ class ExerciseDetailsUiTest {
                             exerciseDefinition = catalogExercise("bench-press"),
                             weight = Weight.kilograms(40),
                             reps = 5,
-                            setState = SetState.Completed,
+                            setState = SetState.Completed(),
                         ),
                     ),
                 ),

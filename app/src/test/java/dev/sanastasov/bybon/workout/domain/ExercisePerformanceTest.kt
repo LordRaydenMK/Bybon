@@ -27,7 +27,7 @@ class ExercisePerformanceTest {
                     exerciseDefinition = catalogExercise("bench-press"),
                     weight = Weight.kilograms(200),
                     reps = 1,
-                    setState = SetState.Completed,
+                    setState = SetState.Completed(),
                 ),
             ),
         )
@@ -70,7 +70,7 @@ class ExercisePerformanceTest {
                     exerciseDefinition = catalogExercise("bench-press"),
                     weight = Weight.kilograms(200),
                     reps = 1,
-                    setState = SetState.Completed,
+                    setState = SetState.Completed(),
                 ),
             ),
         )
@@ -82,7 +82,7 @@ class ExercisePerformanceTest {
                     exerciseDefinition = catalogExercise("assisted-pull-ups"),
                     weight = null,
                     reps = 8,
-                    setState = SetState.Completed,
+                    setState = SetState.Completed(),
                 ),
             ),
         )

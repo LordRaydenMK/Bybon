@@ -23,14 +23,14 @@ private fun previewSessionWithPrevious(): WorkoutSession {
                         set.copy(
                             weight = Weight.kilograms(40 + index),
                             reps = 9,
-                            setState = SetState.Completed,
+                            setState = SetState.Completed(),
                         )
                     },
                     warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
                         set.copy(
                             weight = Weight.kilograms(22 + index),
                             reps = 6,
-                            setState = SetState.Completed,
+                            setState = SetState.Completed(),
                         )
                     },
                 )

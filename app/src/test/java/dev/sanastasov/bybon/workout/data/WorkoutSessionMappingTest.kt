@@ -1,6 +1,5 @@
 package dev.sanastasov.bybon.workout.data
 
-import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
@@ -40,7 +39,7 @@ class WorkoutSessionMappingTest {
         val firstSets = write.exercises.first().sets
         assert(firstSets.take(3).all { it.isWarmup })
         assert(firstSets.drop(3).none { it.isWarmup })
-        assert(firstSets.first().setState == SetState.InProgress.name)
+        assert(firstSets.first().setState == "InProgress")
         assert(Weight.kilograms(32.5f).toHundredths() == 3250)
         assert(firstSets.all { it.completedAt == null })
     }
@@ -94,7 +93,7 @@ class WorkoutSessionMappingTest {
         assert(restored == session)
         assert(write.header.durationSeconds == 40.minutes.inWholeSeconds.toInt())
         assert(sets.none { it.isWarmup })
-        assert(sets.all { it.setState == SetState.Completed.name })
+        assert(sets.all { it.setState == "Completed" })
         assert(sets.first().weight == 8000)
         assert(sets.last().weight == 8250)
     }

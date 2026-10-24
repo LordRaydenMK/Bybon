@@ -15,9 +15,7 @@ import dev.sanastasov.bybon.workout.domain.RestTimer
 import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 
 @Composable
 internal fun SessionRestProgress(
@@ -26,14 +24,9 @@ internal fun SessionRestProgress(
     now: () -> LocalDateTime = LocalDateTime::now,
 ) {
     val progress by remember(rest, now) {
-        flow {
-            while (true) {
-                val snapshot = rest.progressUi(now())
-                emit(snapshot)
-                if (snapshot == null) return@flow
-                delay(1.seconds)
-            }
-        }
+        ticksEverySecond()
+            .map { rest.progressUi(now()) }
+            .takeUntil { it == null }
     }.collectAsStateWithLifecycle(
         initialValue = rest.progressUi(now()),
         minActiveState = Lifecycle.State.RESUMED,

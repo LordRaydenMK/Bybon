@@ -51,7 +51,7 @@ class WorkoutPlansViewModelTest {
                         warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
                             set.copy(
                                 setState = if (index == 0) {
-                                    SetState.Completed
+                                    SetState.Completed()
                                 } else {
                                     SetState.NotStated
                                 },
@@ -90,7 +90,7 @@ class WorkoutPlansViewModelTest {
         sessionVm.onAction(WorkoutSessionAction.OnCompleteSet(bench, 0, isWarmup = true))
         sessionVm.onAction(WorkoutSessionAction.OnCompleteSet(bench, 1, isWarmup = true))
         sessionVm.uiState.first { current ->
-            current?.exercises?.first()?.warmupSets?.get(1)?.setState == SetState.Completed
+            current?.exercises?.first()?.warmupSets?.get(1)?.setState is SetState.Completed
         }
 
         val state = plans.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }

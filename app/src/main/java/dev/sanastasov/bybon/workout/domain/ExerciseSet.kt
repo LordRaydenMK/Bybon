@@ -20,14 +20,13 @@ data class ExerciseSet(
     val reps: Int,
     val setState: SetState,
     val previous: PreviousSetPerformance? = null,
-    val completedAt: LocalDateTime? = null,
 ) {
     init {
         require(reps > 0) { "reps must be positive" }
-        require(setState == SetState.Completed || completedAt == null) {
-            "completedAt requires a completed set"
-        }
     }
+
+    val completedAt: LocalDateTime?
+        get() = (setState as? SetState.Completed)?.at
 
     val oneRm: Weight?
         get() = weight?.let { estimatedOneRm(it, reps) }

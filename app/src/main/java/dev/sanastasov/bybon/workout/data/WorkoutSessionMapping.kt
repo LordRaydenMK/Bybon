@@ -9,6 +9,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.storedName
 import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
 
@@ -60,7 +61,7 @@ internal fun WorkoutSession.toWrite(sessionId: Long): WorkoutSessionWrite {
                 isWarmup = setPosition < warmupCount,
                 weight = set.weight?.toHundredths(),
                 reps = set.reps,
-                setState = set.setState.name,
+                setState = set.setState.storedName,
                 previousWeight = previousWeight,
                 previousReps = previousReps,
                 completedAt = set.completedAt,
@@ -141,11 +142,10 @@ internal fun WorkoutSetEntity.toExerciseSet(definition: ExerciseDefinition): Exe
         exerciseDefinition = definition,
         weight = weight?.toWeightOrNull(),
         reps = reps,
-        setState = SetState.valueOf(setState),
+        setState = SetState.fromStored(setState, completedAt),
         previous = previousReps?.let { repsLogged ->
             PreviousSetPerformance(previousWeight?.toWeightOrNull(), repsLogged)
         },
-        completedAt = completedAt,
     )
 }
 
