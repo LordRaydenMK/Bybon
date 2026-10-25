@@ -204,6 +204,8 @@ class WorkoutSessionViewModel(
         is WorkoutSessionAction.OnCompleteSet ->
             session.completeSet(action.exercise, action.index, action.isWarmup)
 
+        WorkoutSessionAction.OnRestElapsed -> session.startWorkout()
+
         is WorkoutSessionAction.OnIncreaseExercise ->
             session.adjustExercise(action.exercise, increase = true)
 

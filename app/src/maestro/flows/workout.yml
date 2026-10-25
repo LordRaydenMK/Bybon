@@ -45,7 +45,10 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Mark Warmup set complete"
 - tapOn: "Mark Warmup set complete"
 - tapOn: "Mark Warmup set complete"
-- assertVisible: "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM"
+# Last warmup starts a 2:00 rest; the next set stays waiting until remaining is 0.
+- extendedWaitUntil:
+    visible: "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM"
+    timeout: 130000
 # hideKeyboard uses Back when the IME is already gone, which pops the session to Main.
 # Wait on the unique set description before unfocusing: erase+input is flaky,
 # and leaving the field while it is empty commits a blank weight.
@@ -74,8 +77,13 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM"
 - tapOn: "Mark Set 1 complete"
 - assertVisible: "1. 60 kg x 10 @ 80 kg 1RM"
-- assertVisible: "Set 2 in progress, 50 kg by 8, @ 62.07 kg 1RM"
+- extendedWaitUntil:
+    visible: "Set 2 in progress, 50 kg by 8, @ 62.07 kg 1RM"
+    timeout: 130000
 - tapOn: "Mark Set 2 complete"
+- extendedWaitUntil:
+    visible: "Set 3 in progress, 50 kg by 8, @ 62.07 kg 1RM"
+    timeout: 130000
 - tapOn: "Add set"
 - assertVisible: "4 x Barbell Bench Press in 8 - 10"
 - tapOn: "Remove last set"
