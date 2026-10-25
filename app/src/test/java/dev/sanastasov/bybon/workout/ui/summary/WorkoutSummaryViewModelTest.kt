@@ -50,7 +50,7 @@ class WorkoutSummaryViewModelTest {
             title = "Full Body B",
             date = "13 Aug 2026",
             startTime = "18:00",
-            duration = "40:00",
+            duration = "00:40",
             exercises = listOf(
                 WorkoutSummaryExerciseUi(
                     id = "romanian-deadlift",
@@ -100,7 +100,7 @@ class WorkoutSummaryViewModelTest {
             assert(actual.title == "Full Body B")
             assert(actual.date == "13 Aug 2026")
             assert(actual.startTime == "18:00")
-            assert(actual.duration == "40:00")
+            assert(actual.duration == "00:40")
             assert(actual.exercises.single().id == "romanian-deadlift")
         }
     }
@@ -144,7 +144,7 @@ class WorkoutSummaryViewModelTest {
         val content = session.toSummaryUi()
         assert(content.date == "13 Aug 2026")
         assert(content.startTime == "18:25")
-        assert(content.duration == "47:44")
+        assert(content.duration == "00:47")
     }
 
     @Test

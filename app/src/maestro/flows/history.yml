@@ -27,7 +27,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Done"
 - assertVisible: "History"
 - assertVisible: "Upper body B"
-- assertVisible: "20 Aug 2026, started 17:59, duration 56:07"
+- assertVisible: "20 Aug 2026, started 17:59, duration 00:56"
 - assertVisible: "Exercise"
 - assertVisible: "kg x reps"
 - assertVisible: "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM"

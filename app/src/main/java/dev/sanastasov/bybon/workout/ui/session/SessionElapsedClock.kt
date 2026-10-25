@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.sanastasov.bybon.workout.domain.elapsedSince
-import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlinx.coroutines.flow.map
@@ -33,7 +32,7 @@ internal fun SessionElapsedClock(
         minActiveState = Lifecycle.State.RESUMED,
     )
     Text(
-        elapsed.formatElapsedClock(),
+        elapsed.formatSessionElapsedClock(),
         modifier
             .padding(end = 8.dp)
             .clearAndSetSemantics {
@@ -43,6 +42,13 @@ internal fun SessionElapsedClock(
         fontFamily = FontFamily.Monospace,
         style = MaterialTheme.typography.titleMedium,
     )
+}
+
+internal fun Duration.formatSessionElapsedClock(): String {
+    val totalSeconds = inWholeSeconds.coerceAtLeast(0)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
 }
 
 internal fun Duration.elapsedClockContentDescription(): String {

@@ -273,7 +273,7 @@ private fun WorkoutSummaryContentPreview() {
                 title = "Full Body B",
                 date = "13 Aug 2026",
                 startTime = "18:25",
-                duration = "47:44",
+                duration = "00:47",
                 note = "Friday full body workout",
                 exercises = listOf(
                     WorkoutSummaryExerciseUi(
