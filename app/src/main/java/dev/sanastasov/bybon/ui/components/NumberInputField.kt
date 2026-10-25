@@ -1,9 +1,5 @@
 package dev.sanastasov.bybon.ui.components
 
-import androidx.compose.foundation.interaction.FocusInteraction
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
@@ -11,7 +7,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextField
@@ -19,10 +14,13 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -56,18 +54,10 @@ fun NumberInputField(
     val state = rememberSaveable(key, saver = TextFieldState.Saver) {
         TextFieldState(initialText)
     }
-    val interactionSource = remember(key) { MutableInteractionSource() }
-    val focused by interactionSource.collectIsFocusedAsState()
+    var focused by remember(key) { mutableStateOf(false) }
     LaunchedEffect(key, initialText, focused) {
         if (!focused && state.text.toString() != initialText) {
             state.setTextAndPlaceCursorAtEnd(initialText)
-        }
-    }
-    LaunchedEffect(interactionSource, key) {
-        interactionSource.interactions.collect { interaction ->
-            if (interaction is FocusInteraction.Focus || interaction is PressInteraction.Release) {
-                state.edit { selectAll() }
-            }
         }
     }
     LaunchedEffect(state, key) {
@@ -83,13 +73,10 @@ fun NumberInputField(
             .width(fieldWidth)
             .height(NumberInputHeight)
             .defaultMinSize(minWidth = minWidth, minHeight = NumberInputHeight)
+            .onFocusChanged { focused = it.isFocused }
             .then(
                 if (contentDescription != null) {
-                    // Merge so Maestro/UiAutomator tap the clickable EditText, not a
-                    // non-clickable child node whose 90% point can miss the field.
-                    Modifier.semantics(mergeDescendants = true) {
-                        this.contentDescription = contentDescription
-                    }
+                    Modifier.semantics { this.contentDescription = contentDescription }
                 } else {
                     Modifier
                 },
@@ -104,7 +91,6 @@ fun NumberInputField(
             errorContainerColor = Color.Transparent,
         ),
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
-        interactionSource = interactionSource,
     )
 }
 

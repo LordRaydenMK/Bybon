@@ -46,14 +46,15 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Mark Warmup set complete"
 - tapOn: "Mark Warmup set complete"
 - assertVisible: "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM"
-# Tap the field center (select-all on focus) and wait on the unique set
-# description before leaving. erase+input while the IME is up is flaky;
-# unfocusing before the value lands commits an empty weight.
 # hideKeyboard uses Back when the IME is already gone, which pops the session to Main.
+# Wait on the unique set description before unfocusing: erase+input is flaky,
+# and leaving the field while it is empty commits a blank weight.
 - retry:
     maxRetries: 3
     commands:
-      - tapOn: "Set 1 weight"
+      - tapOn:
+            text: "Set 1 weight"
+            point: "90%, 50%" # Cursor at end so backspace clears both digits
       - eraseText: 8
       - inputText: "60"
       - extendedWaitUntil:
@@ -62,6 +63,7 @@ appId: dev.sanastasov.bybon.debug
 - retry:
     maxRetries: 3
     commands:
+      # Center tap: 90% of the reps a11y node sits on the 1RM cell.
       - tapOn: "Set 1 reps"
       - eraseText: 8
       - inputText: "10"
