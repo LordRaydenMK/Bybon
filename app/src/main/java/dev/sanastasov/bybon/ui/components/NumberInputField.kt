@@ -76,7 +76,11 @@ fun NumberInputField(
             .onFocusChanged { focused = it.isFocused }
             .then(
                 if (contentDescription != null) {
-                    Modifier.semantics { this.contentDescription = contentDescription }
+                    // Merge so Maestro/UiAutomator tap the clickable EditText, not a
+                    // non-clickable child node whose 90% point can miss the field.
+                    Modifier.semantics(mergeDescendants = true) {
+                        this.contentDescription = contentDescription
+                    }
                 } else {
                     Modifier
                 },
