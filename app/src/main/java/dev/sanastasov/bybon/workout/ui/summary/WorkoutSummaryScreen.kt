@@ -44,9 +44,11 @@ import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.ui.SessionMeta
+import dev.sanastasov.bybon.workout.ui.SetLoadOneRmHeader
+import dev.sanastasov.bybon.workout.ui.SetLoadOneRmRow
 import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
-import dev.sanastasov.bybon.workout.ui.formatSetPerformance
+import dev.sanastasov.bybon.workout.ui.setLoadOneRmDescription
 
 @Composable
 fun WorkoutModule.WorkoutSummaryScreen(
@@ -229,13 +231,16 @@ private fun ExerciseSummaryCard(
             )
         }
         Spacer(Modifier.height(4.dp))
-        exercise.sets.forEach { set ->
-            if (set.isWarmup) {
-                WarmupLoadRow(
-                    formatLoadedSet(set.weightKg, set.reps),
-                    Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                )
-            } else {
+        val workSets = exercise.sets.filterNot { it.isWarmup }
+        exercise.sets.filter { it.isWarmup }.forEach { set ->
+            WarmupLoadRow(
+                formatLoadedSet(set.weightKg, set.reps),
+                Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
+        if (workSets.isNotEmpty()) {
+            SetLoadOneRmHeader("")
+            workSets.forEach { set ->
                 WorkSetRow(set)
             }
         }
@@ -245,12 +250,18 @@ private fun ExerciseSummaryCard(
 @Composable
 private fun WorkSetRow(set: WorkoutSummarySetUi) {
     val number = checkNotNull(set.number)
-    Text(
-        "$number. ${formatSetPerformance(set.weightKg, set.reps, set.oneRm)}",
-        Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
+    SetLoadOneRmRow(
+        leading = "$number.",
+        weightKg = set.weightKg,
+        reps = set.reps,
+        oneRm = set.oneRm,
+        rowDescription = set.contentDescription(),
     )
+}
+
+internal fun WorkoutSummarySetUi.contentDescription(): String {
+    val number = checkNotNull(number)
+    return "$number. ${setLoadOneRmDescription(weightKg, reps, oneRm)}"
 }
 
 @Preview

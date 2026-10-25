@@ -5,13 +5,11 @@ package dev.sanastasov.bybon.workout.ui.history
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -25,22 +23,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
-import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.SessionMeta
-import dev.sanastasov.bybon.workout.ui.formatLoadedSet
-import dev.sanastasov.bybon.workout.ui.toOneRmColumnLabel
+import dev.sanastasov.bybon.workout.ui.SetLoadOneRmHeader
+import dev.sanastasov.bybon.workout.ui.SetLoadOneRmRow
+import dev.sanastasov.bybon.workout.ui.setLoadOneRmDescription
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -201,7 +196,7 @@ private fun WorkoutSessionHistoryCard(
                 duration = session.duration,
             )
             Spacer(Modifier.height(4.dp))
-            TopSetTableHeader()
+            SetLoadOneRmHeader("Exercise")
             session.exercises.forEach { exercise ->
                 TopSetRow(exercise)
             }
@@ -218,79 +213,19 @@ private fun plansLabel(count: Int): String = if (count == 1) "plan" else "plans"
 
 private fun exercisesLabel(count: Int): String = if (count == 1) "exercise" else "exercises"
 
-private val LoadColumnMinWidth = 96.dp
-private val OneRmColumnMinWidth = 48.dp
-
-@Composable
-private fun TopSetTableHeader() {
-    Row(
-        Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            "Exercise",
-            Modifier.weight(1f),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
-        )
-        Text(
-            "kg x reps",
-            Modifier.widthIn(min = LoadColumnMinWidth),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.End,
-        )
-        Text(
-            "1RM",
-            Modifier.widthIn(min = OneRmColumnMinWidth),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.End,
-        )
-    }
-}
-
 @Composable
 private fun TopSetRow(exercise: ExerciseTopSetUi) {
-    val load = formatLoadedSet(exercise.weightKg, exercise.reps)
-    val oneRm = exercise.oneRm.toOneRmColumnLabel()
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = exercise.contentDescription() },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(
-            exercise.name,
-            Modifier.weight(1f),
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            load,
-            Modifier.widthIn(min = LoadColumnMinWidth),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
-        )
-        Text(
-            oneRm,
-            Modifier.widthIn(min = OneRmColumnMinWidth),
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
-        )
-    }
+    SetLoadOneRmRow(
+        leading = exercise.name,
+        weightKg = exercise.weightKg,
+        reps = exercise.reps,
+        oneRm = exercise.oneRm,
+        rowDescription = exercise.contentDescription(),
+    )
 }
 
-internal fun ExerciseTopSetUi.contentDescription(): String {
-    val load = formatLoadedSet(weightKg, reps)
-    val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
-    return "$name, $load, $rm"
-}
+internal fun ExerciseTopSetUi.contentDescription(): String =
+    "$name, ${setLoadOneRmDescription(weightKg, reps, oneRm)}"
 
 @Preview
 @Composable
