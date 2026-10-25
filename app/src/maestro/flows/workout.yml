@@ -46,27 +46,29 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Mark Warmup set complete"
 - tapOn: "Mark Warmup set complete"
 - assertVisible: "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM"
-- tapOn:
-      text: "Set 1 weight"
-      point: "90%, 50%" # Cursor at end so backspace clears both digits
-- eraseText: 8
-- inputText: "60"
+# Tap the field center (select-all on focus) and wait on the unique set
+# description before leaving. erase+input while the IME is up is flaky;
+# unfocusing before the value lands commits an empty weight.
 # hideKeyboard uses Back when the IME is already gone, which pops the session to Main.
-# Dismiss the weight IME before tapping reps: a 90% tap while the keyboard is up
-# often misses the field, so erase/input no-op and "10" never appears.
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn: "Set 1 weight"
+      - eraseText: 8
+      - inputText: "60"
+      - extendedWaitUntil:
+            visible: "Set 1 in progress, 60 kg by 8, @ 74.48 kg 1RM"
+            timeout: 5000
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn: "Set 1 reps"
+      - eraseText: 8
+      - inputText: "10"
+      - extendedWaitUntil:
+            visible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM"
+            timeout: 5000
 - tapOn: "Full body workout routine variant A"
-- extendedWaitUntil:
-    visible: "Set 1 in progress, 60 kg by 8, @ 74.48 kg 1RM"
-    timeout: 10000
-- tapOn:
-      text: "Set 1 reps"
-      point: "90%, 50%"
-- eraseText: 8
-- inputText: "10"
-- tapOn: "Full body workout routine variant A"
-- extendedWaitUntil:
-    visible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM"
-    timeout: 10000
 - assertVisible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM"
 - tapOn: "Mark Set 1 complete"
 - assertVisible: "1. 60 kg x 10 @ 80 kg 1RM"
