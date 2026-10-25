@@ -1,6 +1,5 @@
 package dev.sanastasov.bybon.workout.ui.session
 
-import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
@@ -17,13 +16,13 @@ class SessionElapsedClockTest {
     }
 
     @Test
-    fun `formatElapsedClock pads minutes and seconds`() {
-        assert(10.seconds.formatElapsedClock() == "00:10")
-        assert((50.minutes + 20.seconds).formatElapsedClock() == "50:20")
-        assert(0.seconds.formatElapsedClock() == "00:00")
-        assert(1.seconds.formatElapsedClock() == "00:01")
-        assert(1.minutes.formatElapsedClock() == "01:00")
-        assert(125.minutes.formatElapsedClock() == "125:00")
+    fun `formatSessionElapsedClock pads minutes and seconds`() {
+        assert(10.seconds.formatSessionElapsedClock() == "00:10")
+        assert((50.minutes + 20.seconds).formatSessionElapsedClock() == "50:20")
+        assert(0.seconds.formatSessionElapsedClock() == "00:00")
+        assert(1.seconds.formatSessionElapsedClock() == "00:01")
+        assert(1.minutes.formatSessionElapsedClock() == "01:00")
+        assert(125.minutes.formatSessionElapsedClock() == "125:00")
     }
 
     @Test

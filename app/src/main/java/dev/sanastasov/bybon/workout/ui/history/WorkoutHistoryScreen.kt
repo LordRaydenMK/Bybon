@@ -307,7 +307,7 @@ private fun WorkoutHistoryContentPreview() {
                         planName = "Full Body B",
                         date = LocalDate.of(2026, 8, 13),
                         startTime = "18:00",
-                        duration = "47:44",
+                        duration = "00:47",
                         exercises = listOf(
                             ExerciseTopSetUi(
                                 name = "Romanian Deadlift",
