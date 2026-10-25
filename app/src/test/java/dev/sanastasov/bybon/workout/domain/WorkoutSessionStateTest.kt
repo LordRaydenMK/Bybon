@@ -20,7 +20,7 @@ class WorkoutSessionStateTest {
         assert(warmupSets.drop(1).all { it.setState == SetState.NotStated })
         assert(bench.sets.all { it.setState == SetState.NotStated })
         assert(actual.workoutSets.drop(1).all { it.setState == SetState.NotStated })
-        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.state is WorkoutState.InProgress)
         assert(actual.isResumable)
     }
 
@@ -34,7 +34,7 @@ class WorkoutSessionStateTest {
 
         assert(actual.startedAt == clickedAt)
         assert(actual.id == WorkoutSessionId(fullBodyA.id, clickedAt))
-        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.state is WorkoutState.InProgress)
     }
 
     @Test
@@ -45,9 +45,59 @@ class WorkoutSessionStateTest {
         val actual = started.startWorkout(now = startedAt.plusMinutes(10))
 
         assert(actual.startedAt == startedAt)
-        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.state is WorkoutState.InProgress)
         assert(actual.workoutSets.count { it.setState == SetState.InProgress } == 1)
         assert(actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+    }
+
+    @Test
+    fun `startWorkout is a no-op while rest remaining is greater than zero`() {
+        val startedAt = LocalDateTime.of(2026, 10, 23, 18, 0)
+        val completedAt = startedAt.plusMinutes(4)
+        val resting = fullBodyA.toWorkoutSession(startedAt = startedAt).let { session ->
+            val warmupCount = session.exercises.first().warmupSets!!.size
+            (0 until warmupCount).fold(session) { current, index ->
+                current.completeSet(
+                    current.exercises.first(),
+                    index,
+                    isWarmup = true,
+                    now = completedAt,
+                )
+            }
+        }
+        val nextSet = resting.exercises.first().sets.first()
+        assert(resting.state is WorkoutState.Resting)
+        assert(nextSet.setState == SetState.NotStated)
+
+        val actual = resting.startWorkout(now = completedAt.plusMinutes(1))
+
+        assert(actual === resting)
+        assert(actual.state is WorkoutState.Resting)
+        assert(actual.exercises.first().sets.first().setState == SetState.NotStated)
+    }
+
+    @Test
+    fun `startWorkout activates the next set after rest has elapsed`() {
+        val startedAt = LocalDateTime.of(2026, 10, 23, 18, 0)
+        val completedAt = startedAt.plusMinutes(4)
+        val resting = fullBodyA.toWorkoutSession(startedAt = startedAt).let { session ->
+            val warmupCount = session.exercises.first().warmupSets!!.size
+            (0 until warmupCount).fold(session) { current, index ->
+                current.completeSet(
+                    current.exercises.first(),
+                    index,
+                    isWarmup = true,
+                    now = completedAt,
+                )
+            }
+        }
+
+        val actual = resting.startWorkout(now = completedAt.plusMinutes(2))
+
+        assert(actual.startedAt == startedAt)
+        assert(actual.state is WorkoutState.InProgress)
+        assert(actual.exercises.first().sets.first().setState == SetState.InProgress)
+        assert(actual.isResumable)
     }
 
     @Test
@@ -77,7 +127,7 @@ class WorkoutSessionStateTest {
         val actual = paused.startWorkout(now = paused.startedAt.plusMinutes(10))
 
         assert(actual.startedAt == paused.startedAt)
-        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.state is WorkoutState.InProgress)
         assert(actual.exercises.first().warmupSets!![0].setState is SetState.Completed)
         assert(actual.exercises.first().warmupSets!![1].setState == SetState.InProgress)
         assert(actual.isResumable)
@@ -116,7 +166,7 @@ class WorkoutSessionStateTest {
         val started = overview.startWorkout()
         assert(started.exercises.first().state == ExerciseState.InProgress)
         assert(started.exercises.drop(1).all { it.state == ExerciseState.NotStarted })
-        assert(started.state == WorkoutState.InProgress)
+        assert(started.state is WorkoutState.InProgress)
 
         val firstCompleted = started.copy(
             exercises = started.exercises.mapIndexed { index, exercise ->
@@ -134,7 +184,7 @@ class WorkoutSessionStateTest {
         )
         assert(firstCompleted.exercises.first().state == ExerciseState.Completed)
         assert(firstCompleted.exercises[1].state == ExerciseState.NotStarted)
-        assert(firstCompleted.state == WorkoutState.InProgress)
+        assert(firstCompleted.state is WorkoutState.InProgress)
     }
 
     @Test

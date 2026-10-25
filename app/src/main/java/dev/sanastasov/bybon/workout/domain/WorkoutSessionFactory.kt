@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.domain
 
 import java.time.LocalDateTime
+import kotlin.time.Duration
 
 private val defaultWarmupReps = listOf(8, 4, 3)
 
@@ -105,6 +106,10 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
 )
 
 fun WorkoutSession.startWorkout(now: LocalDateTime = LocalDateTime.now()): WorkoutSession {
+    val resting = state as? WorkoutState.Resting
+    if (resting != null && resting.timer.remaining(now) > Duration.ZERO) {
+        return this
+    }
     val first = takeUnless {
         it.workoutSets.any { set -> set.setState == SetState.InProgress }
     }?.firstNotStartedSet()

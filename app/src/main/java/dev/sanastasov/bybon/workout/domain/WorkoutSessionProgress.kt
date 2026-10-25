@@ -10,23 +10,20 @@ fun WorkoutSession.completeSet(
     isWarmup: Boolean = false,
     now: LocalDateTime = LocalDateTime.now(),
 ): WorkoutSession {
-    val next = nextSetAfter(exercise.id, setIndex, isWarmup)
     val updated = updateExerciseSet(exercise, setIndex, isWarmup) {
         it.copy(setState = SetState.Completed(now))
     }
-    val target = next ?: updated.firstNotStartedSet()
+    val target = nextSetAfter(exercise.id, setIndex, isWarmup) ?: updated.firstNotStartedSet()
         ?: return updated.withDurationIfCompleted(now)
-    val nextExercise = updated.exercises.first { it.id == target.exerciseId }
-    return updated.updateExerciseSet(nextExercise, target.index, target.isWarmup) {
-        it.copy(setState = SetState.InProgress)
+    return if (updated.restFromLastCompleted() != null) {
+        updated
+    } else {
+        val nextExercise = updated.exercises.first { it.id == target.exerciseId }
+        updated.updateExerciseSet(nextExercise, target.index, target.isWarmup) {
+            it.copy(setState = SetState.InProgress)
+        }
     }
 }
-
-data class SetRef(
-    val exerciseId: String,
-    val index: Int,
-    val isWarmup: Boolean,
-)
 
 private fun WorkoutSession.nextSetAfter(
     exerciseId: String,
@@ -82,15 +79,20 @@ fun WorkoutSession.withDurationIfCompleted(
 fun elapsedSince(startedAt: LocalDateTime, now: LocalDateTime = LocalDateTime.now()): Duration =
     java.time.Duration.between(startedAt, now).toKotlinDuration().coerceAtLeast(Duration.ZERO)
 
-fun WorkoutSession.firstNotStartedSet(): SetRef? = exercises.firstNotNullOfOrNull { exercise ->
-    val warmupIndex = exercise.warmupSets?.indexOfFirst { it.setState == SetState.NotStated }
-    when {
-        warmupIndex != null && warmupIndex >= 0 ->
-            SetRef(exercise.id, warmupIndex, isWarmup = true)
+fun WorkoutSession.firstNotStartedSet(): SetRef? = firstSetRef { it == SetState.NotStated }
 
-        else -> {
-            val workIndex = exercise.sets.indexOfFirst { it.setState == SetState.NotStated }
-            if (workIndex >= 0) SetRef(exercise.id, workIndex, isWarmup = false) else null
+fun WorkoutSession.inProgressSet(): SetRef? = firstSetRef { it == SetState.InProgress }
+
+private fun WorkoutSession.firstSetRef(predicate: (SetState) -> Boolean): SetRef? =
+    exercises.firstNotNullOfOrNull { exercise ->
+        val warmupIndex = exercise.warmupSets?.indexOfFirst { predicate(it.setState) }
+        when {
+            warmupIndex != null && warmupIndex >= 0 ->
+                SetRef(exercise.id, warmupIndex, isWarmup = true)
+
+            else -> {
+                val workIndex = exercise.sets.indexOfFirst { predicate(it.setState) }
+                if (workIndex >= 0) SetRef(exercise.id, workIndex, isWarmup = false) else null
+            }
         }
     }
-}

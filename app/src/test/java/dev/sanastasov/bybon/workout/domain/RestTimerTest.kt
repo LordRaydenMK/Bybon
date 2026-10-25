@@ -40,12 +40,19 @@ class RestTimerTest {
         val completedAt = startedAt.plusMinutes(4)
         val session = completeWarmups(now = completedAt)
 
+        assert(session.state is WorkoutState.Resting)
+        assert(session.exercises.first().sets.first().setState == SetState.NotStated)
         assert(session.restTimer() == RestTimer(completedAt, 2.minutes))
         assert(session.restTimer()!!.progress(completedAt) == 0f)
         assert(session.restTimer()!!.remaining(completedAt) == 2.minutes)
         assert(session.restTimer()!!.progress(completedAt.plusMinutes(1)) == 0.5f)
         assert(session.restTimer()!!.remaining(completedAt.plusMinutes(1)) == 1.minutes)
         assert(session.restTimer()!!.progress(completedAt.plusMinutes(2)) == null)
+
+        val afterRest = session.startWorkout(now = completedAt.plusMinutes(2))
+        assert(afterRest.state is WorkoutState.InProgress)
+        assert(afterRest.exercises.first().sets.first().setState == SetState.InProgress)
+        assert(afterRest.restTimer() == null)
     }
 
     @Test
@@ -56,13 +63,22 @@ class RestTimerTest {
             .let { session ->
                 session.completeSet(session.exercises.first(), 0, now = workAt)
             }
+        assert(afterFirstWork.state is WorkoutState.Resting)
+        assert(afterFirstWork.exercises.first().sets[1].setState == SetState.NotStated)
         assert(afterFirstWork.restTimer() == RestTimer(workAt, 2.minutes))
 
         val afterLastWork = (0..2).fold(completeWarmups(now = warmupAt)) { session, index ->
             session.completeSet(session.exercises.first(), index, now = workAt)
         }
         assert(afterLastWork.exercises.first().state == ExerciseState.Completed)
+        assert(afterLastWork.state is WorkoutState.Resting)
+        assert(afterLastWork.exercises[1].warmupSets!!.first().setState == SetState.NotStated)
         assert(afterLastWork.restTimer() == RestTimer(workAt, 2.minutes))
+
+        val afterRest = afterLastWork.startWorkout(now = workAt.plusMinutes(2))
+        assert(afterRest.state is WorkoutState.InProgress)
+        assert(afterRest.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
+        assert(afterRest.restTimer() == null)
     }
 
     @Test

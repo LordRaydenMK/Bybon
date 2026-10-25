@@ -26,18 +26,19 @@ class WorkoutSessionTest {
     }
 
     @Test
-    fun `completing last warmup starts the first work set`() {
+    fun `completing last warmup starts rest with the first work set waiting`() {
         val session = fullBodyA.toWorkoutSession().completeWarmups(0)
 
         val actual = session.completeSet(session.exercises.first(), 2, isWarmup = true)
         val bench = actual.exercises.first()
 
         assert(checkNotNull(bench.warmupSets).all { it.setState is SetState.Completed })
-        assert(bench.sets.first().setState == SetState.InProgress)
+        assert(bench.sets.first().setState == SetState.NotStated)
+        assert(actual.state is WorkoutState.Resting)
     }
 
     @Test
-    fun `completing last work set starts the next exercise warmup`() {
+    fun `completing last work set starts rest with the next exercise warmup waiting`() {
         val session = fullBodyA.toWorkoutSession()
             .completeWarmups(0)
             .completeWorkSets(0, count = 2)
@@ -46,8 +47,9 @@ class WorkoutSessionTest {
         val squat = actual.exercises[1]
 
         assert(actual.exercises.first().sets.all { it.setState is SetState.Completed })
-        assert(checkNotNull(squat.warmupSets).first().setState == SetState.InProgress)
+        assert(checkNotNull(squat.warmupSets).first().setState == SetState.NotStated)
         assert(squat.sets.all { it.setState == SetState.NotStated })
+        assert(actual.state is WorkoutState.Resting)
         assert(actual.currentExerciseIndex == 1)
     }
 
@@ -151,6 +153,7 @@ class WorkoutSessionTest {
         val session = fullBodyA.toWorkoutSession()
             .completeWarmups(0)
             .completeWorkSets(0, count = 2)
+            .startWorkout(now = LocalDateTime.now().plusHours(1))
         // Bench work sets: [Completed, Completed, InProgress]
 
         val actual = session.removeLastSet(session.exercises.first())

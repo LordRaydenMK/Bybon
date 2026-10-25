@@ -92,9 +92,7 @@ class WorkoutsRepositoryImpl internal constructor(
             val existing = workoutSessionDao.openSessionForPlan(session.planId.id)
             if (existing != null) {
                 val current = existing.toDomainSession()
-                if (session.state is WorkoutState.NotStarted &&
-                    current.state is WorkoutState.InProgress
-                ) {
+                if (session.state is WorkoutState.NotStarted && current.isResumable) {
                     return
                 }
                 workoutSessionDao.replaceSessionTree(existing.id, session.toWrite(existing.id))

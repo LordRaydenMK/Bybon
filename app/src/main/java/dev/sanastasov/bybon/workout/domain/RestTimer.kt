@@ -19,7 +19,9 @@ data class RestTimer(
     }
 }
 
-fun WorkoutSession.restTimer(): RestTimer? {
+fun WorkoutSession.restTimer(): RestTimer? = (state as? WorkoutState.Resting)?.timer
+
+fun WorkoutSession.restFromLastCompleted(): RestTimer? {
     val sets = setsInOrder()
     val lastCompletedIndex = sets.indexOfLast { it.set.setState is SetState.Completed }
     val completed = sets.getOrNull(lastCompletedIndex)

@@ -60,9 +60,7 @@ class FakeWorkoutsRepository(
             }
             if (index >= 0) {
                 val existing = list[index]
-                if (session.state is WorkoutState.NotStarted &&
-                    existing.state is WorkoutState.InProgress
-                ) {
+                if (session.state is WorkoutState.NotStarted && existing.isResumable) {
                     list
                 } else {
                     list.toMutableList().apply { set(index, session) }

@@ -49,7 +49,7 @@ class WorkoutSessionViewModelTest {
             assert(bench.sets.size == 3)
             assert(warmupSets.first().setState == SetState.InProgress)
             assert(bench.sets.all { it.setState == SetState.NotStated })
-            assert(session.state == WorkoutState.InProgress)
+            assert(session.state is WorkoutState.InProgress)
         }
     }
 
@@ -120,7 +120,8 @@ class WorkoutSessionViewModelTest {
                 session = awaitItem()!!
             }
             assert(session.exercises.first().warmupSets!!.all { it.setState is SetState.Completed })
-            assert(session.exercises.first().sets.first().setState == SetState.InProgress)
+            assert(session.exercises.first().sets.first().setState == SetState.NotStated)
+            assert(session.state is WorkoutState.Resting)
 
             session.exercises.first().sets.indices.forEach { index ->
                 viewModel.onAction(
@@ -129,7 +130,8 @@ class WorkoutSessionViewModelTest {
                 session = awaitItem()!!
             }
             assert(session.exercises.first().sets.all { it.setState is SetState.Completed })
-            assert(session.exercises[1].warmupSets!!.first().setState == SetState.InProgress)
+            assert(session.exercises[1].warmupSets!!.first().setState == SetState.NotStated)
+            assert(session.state is WorkoutState.Resting)
         }
     }
 
@@ -192,7 +194,7 @@ class WorkoutSessionViewModelTest {
             assert(session.startedAt == paused.startedAt)
             assert(session.exercises.first().warmupSets!![0].setState is SetState.Completed)
             assert(session.exercises.first().warmupSets!![1].setState == SetState.InProgress)
-            assert(session.state == WorkoutState.InProgress)
+            assert(session.state is WorkoutState.InProgress)
         }
     }
 
@@ -265,7 +267,8 @@ class WorkoutSessionViewModelTest {
         }
         val stored = repository.workoutSessions().first().single()
         assert(stored.exercises.first().state == ExerciseState.Completed)
-        assert(stored.exercises[1].sets.first().setState == SetState.InProgress)
+        assert(stored.exercises[1].sets.first().setState == SetState.NotStated)
+        assert(stored.state is WorkoutState.Resting)
     }
 
     @Test

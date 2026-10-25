@@ -68,6 +68,6 @@ class WorkoutSessionReorderTest {
                 .warmupSets!!
                 .all { it.setState == SetState.NotStated },
         )
-        assert(actual.state == WorkoutState.InProgress)
+        assert(actual.state is WorkoutState.InProgress)
     }
 }

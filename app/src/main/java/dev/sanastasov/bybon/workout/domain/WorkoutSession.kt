@@ -24,11 +24,21 @@ data class WorkoutSession(
             exercises.all { it.state == ExerciseState.Completed } ->
                 WorkoutState.Completed(duration ?: Duration.ZERO)
 
-            else -> WorkoutState.InProgress
+            else -> {
+                val inProgress = inProgressSet()
+                val timer = restFromLastCompleted()
+                val next = firstNotStartedSet()
+                when {
+                    inProgress != null -> WorkoutState.InProgress(inProgress)
+                    timer != null && next != null -> WorkoutState.Resting(timer, next)
+                    next != null -> WorkoutState.InProgress(next)
+                    else -> WorkoutState.Completed(duration ?: Duration.ZERO)
+                }
+            }
         }
 
     val isResumable: Boolean
-        get() = state is WorkoutState.InProgress
+        get() = state is WorkoutState.InProgress || state is WorkoutState.Resting
 
     val currentExerciseIndex: Int?
         get() = exercises.indexOfFirst { it.state != ExerciseState.Completed }.takeIf { it >= 0 }

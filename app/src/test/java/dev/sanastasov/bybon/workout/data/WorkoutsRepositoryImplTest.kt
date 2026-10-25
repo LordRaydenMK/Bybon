@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.catalogExercises
+import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
@@ -144,6 +145,27 @@ class WorkoutsRepositoryImplTest {
         repository.updateWorkout(fullBodyA.toOverviewSession())
 
         assert(repository.workoutSessions().first().single() == started)
+    }
+
+    @Test
+    fun `updateWorkout does not replace a resting session with an overview draft`() = runTest {
+        val repository: WorkoutsRepository = repository()
+        val startedAt = LocalDateTime.of(2026, 10, 24, 12, 0)
+        val started = fullBodyA.toWorkoutSession(startedAt = startedAt)
+        val warmupIndices = started.exercises.first().warmupSets!!.indices
+        val resting = warmupIndices.fold(started) { session, index ->
+            session.completeSet(
+                session.exercises.first(),
+                index,
+                isWarmup = true,
+                now = startedAt.plusMinutes(4),
+            )
+        }
+        repository.updateWorkout(resting)
+
+        repository.updateWorkout(fullBodyA.toOverviewSession())
+
+        assert(repository.workoutSessions().first().single() == resting)
     }
 
     @Test
