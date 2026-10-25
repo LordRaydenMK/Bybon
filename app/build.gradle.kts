@@ -1,14 +1,15 @@
 import bybon.repdb.GenerateRepdbCatalogTask
 import dev.detekt.gradle.Detekt
+import java.util.*
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.powerassert.gradle.PowerAssertCompilationFilter
-import java.io.File
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.ksp)
+    alias(libs.plugins.google.google.services)
+    alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.power.assert)
     alias(libs.plugins.androidx.room3)
@@ -164,6 +165,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.androidx.room.common)
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytcs)
 
     implementation(libs.androidx.room3.runtime)
     ksp(libs.androidx.room3.compiler)
