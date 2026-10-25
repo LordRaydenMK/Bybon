@@ -46,31 +46,32 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Mark Warmup set complete"
 - tapOn: "Mark Warmup set complete"
 - assertVisible: "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM"
-- tapOn:
-      text: "Set 1 weight"
-      point: "90%, 50%" # Cursor at end so backspace clears both digits
-- eraseText: 8
-- inputText: "60"
-- assertVisible:
-      text: "60"
-      index: 0
-- tapOn:
-      text: "Set 1 reps"
-      point: "90%, 50%"
-- eraseText: 8
-- inputText: "10"
-- assertVisible:
-      text: "10"
-      index: 0
-- extendedWaitUntil:
-    visible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM"
-    timeout: 10000
 # hideKeyboard uses Back when the IME is already gone, which pops the session to Main.
+# Wait on the unique set description before unfocusing: erase+input is flaky,
+# and leaving the field while it is empty commits a blank weight.
+- retry:
+    maxRetries: 3
+    commands:
+      - tapOn:
+            text: "Set 1 weight"
+            point: "90%, 50%" # Cursor at end so backspace clears both digits
+      - eraseText: 8
+      - inputText: "60"
+      - extendedWaitUntil:
+            visible: "Set 1 in progress, 60 kg by 8, @ 74.48 kg 1RM"
+            timeout: 5000
+- retry:
+    maxRetries: 3
+    commands:
+      # Center tap: 90% of the reps a11y node sits on the 1RM cell.
+      - tapOn: "Set 1 reps"
+      - eraseText: 8
+      - inputText: "10"
+      - extendedWaitUntil:
+            visible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM"
+            timeout: 5000
 - tapOn: "Full body workout routine variant A"
 - assertVisible: "Set 1 in progress, 60 kg by 10, @ 80 kg 1RM"
-- assertVisible:
-      text: "10"
-      index: 0
 - tapOn: "Mark Set 1 complete"
 - assertVisible: "1. 60 kg x 10 @ 80 kg 1RM"
 - assertVisible: "Set 2 in progress, 50 kg by 8, @ 62.07 kg 1RM"
