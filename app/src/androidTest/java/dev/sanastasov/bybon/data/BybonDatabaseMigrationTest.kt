@@ -249,8 +249,14 @@ class BybonDatabaseMigrationTest {
                 ) VALUES (1, 0, 0, 8000, 8, 'Completed', NULL, NULL)
                 """.trimIndent(),
             )
+            connection.execSQL(
+                """
+                CREATE UNIQUE INDEX IF NOT EXISTS `idx_one_open_session_per_plan`
+                ON `workout_session`(`plan_id`) WHERE `duration_seconds` IS NULL
+                """.trimIndent(),
+            )
         }
-        helper.runMigrationsAndValidate(6).close()
+        helper.runMigrationsAndValidate(6, listOf(Migration5To6)).close()
 
         val db = openMigratedDatabase()
         try {
@@ -265,6 +271,7 @@ class BybonDatabaseMigrationTest {
     private fun openMigratedDatabase(): BybonDatabase =
         Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
             .setDriver(AndroidSQLiteDriver())
+            .addMigrations(Migration5To6)
             .addCallback(OpenSessionIndexCallback())
             .build()
 
