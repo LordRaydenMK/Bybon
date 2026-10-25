@@ -1,4 +1,4 @@
-package dev.sanastasov.bybon.workout.ui.session
+package dev.sanastasov.bybon.workout.ui
 
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay

@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
-import kotlin.time.Duration
 
 @Composable
 internal fun ExerciseSetBlock(
@@ -26,7 +25,6 @@ internal fun ExerciseSetBlock(
     mode: ExerciseCardMode,
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
-    rest: Duration? = null,
 ) {
     when (mode) {
         ExerciseCardMode.Overview -> OverviewSetValuesRow(
@@ -34,7 +32,6 @@ internal fun ExerciseSetBlock(
             numbered,
             onEvent,
             onBadgeClick,
-            rest,
         )
 
         ExerciseCardMode.Session -> SessionSetBlock(
@@ -42,7 +39,6 @@ internal fun ExerciseSetBlock(
             numbered,
             onEvent,
             onBadgeClick,
-            rest,
         )
     }
 }
@@ -53,7 +49,6 @@ private fun SessionSetBlock(
     numbered: NumberedSet,
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
-    rest: Duration?,
 ) {
     if (numbered.set.setState == SetState.InProgress) {
         Surface(
@@ -65,7 +60,7 @@ private fun SessionSetBlock(
             shape = RoundedCornerShape(8.dp),
             color = MaterialTheme.colorScheme.tertiaryContainer,
         ) {
-            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick, rest)
+            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick)
         }
     } else {
         Box(
@@ -79,7 +74,7 @@ private fun SessionSetBlock(
                     }
                 },
         ) {
-            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick, rest)
+            SessionSetValuesRow(exercise, numbered, onEvent, onBadgeClick)
         }
     }
 }
@@ -90,7 +85,6 @@ private fun OverviewSetValuesRow(
     numbered: NumberedSet,
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
-    rest: Duration?,
 ) {
     Box(
         Modifier
@@ -107,7 +101,7 @@ private fun OverviewSetValuesRow(
             },
             weight = { EditableWeight(exercise, numbered, onEvent) },
             reps = { EditableReps(exercise, numbered, onEvent) },
-            trailing = { RestOrSpacer(rest) },
+            trailing = { RestOrSpacer(null) },
         )
     }
 }
@@ -118,12 +112,11 @@ private fun SessionSetValuesRow(
     numbered: NumberedSet,
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
-    rest: Duration?,
 ) {
     when (numbered.set.setState) {
         is SetState.Completed -> CompletedSessionSetRow(numbered, onEvent, onBadgeClick)
         SetState.InProgress -> InProgressSessionSetRow(exercise, numbered, onEvent, onBadgeClick)
-        SetState.NotStated -> PendingSessionSetRow(exercise, numbered, onEvent, onBadgeClick, rest)
+        SetState.NotStated -> PendingSessionSetRow(exercise, numbered, onEvent, onBadgeClick)
     }
 }
 
@@ -198,7 +191,6 @@ private fun PendingSessionSetRow(
     numbered: NumberedSet,
     onEvent: (ExerciseCardEvent) -> Unit,
     onBadgeClick: (() -> Unit)?,
-    rest: Duration?,
 ) {
     SetValuesRow(
         numbered = numbered,
@@ -208,6 +200,6 @@ private fun PendingSessionSetRow(
         },
         weight = { EditableWeight(exercise, numbered, onEvent) },
         reps = { EditableReps(exercise, numbered, onEvent) },
-        trailing = { RestOrSpacer(rest) },
+        trailing = { RestOrSpacer(null) },
     )
 }

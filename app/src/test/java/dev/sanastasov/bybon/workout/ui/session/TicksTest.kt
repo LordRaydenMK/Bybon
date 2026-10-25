@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.session
 
+import dev.sanastasov.bybon.workout.ui.takeUntil
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest

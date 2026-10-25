@@ -94,6 +94,41 @@ class RestTimerTest {
     }
 
     @Test
+    fun `rest sits after last warmup work sets and between exercises`() {
+        val bench = fullBodyA.sets.first()
+        val last = fullBodyA.sets.last()
+
+        assert(!bench.startsRestAfter(isWarmup = true, index = 0, isLastExercise = false))
+        assert(bench.startsRestAfter(isWarmup = true, index = 2, isLastExercise = false))
+        assert(bench.startsRestAfter(isWarmup = false, index = 0, isLastExercise = false))
+        assert(bench.startsRestAfter(isWarmup = false, index = 2, isLastExercise = false))
+        assert(bench.restAfter(isWarmup = true, index = 2, isLastExercise = false) == 2.minutes)
+        assert(bench.restAfter(isWarmup = true, index = 0, isLastExercise = false) == null)
+
+        assert(
+            last.startsRestAfter(
+                isWarmup = false,
+                index = 0,
+                isLastExercise = true,
+            ),
+        )
+        assert(
+            !last.startsRestAfter(
+                isWarmup = false,
+                index = last.sets - 1,
+                isLastExercise = true,
+            ),
+        )
+        assert(
+            last.restAfter(
+                isWarmup = false,
+                index = last.sets - 1,
+                isLastExercise = true,
+            ) == null,
+        )
+    }
+
+    @Test
     fun `asOverviewDraft clears completedAt`() {
         val session = completeWarmups(now = startedAt)
         val draft = session.asOverviewDraft()

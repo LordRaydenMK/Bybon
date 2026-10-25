@@ -29,7 +29,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.ui.components.NumberInputRepsMinWidth
 import dev.sanastasov.bybon.ui.components.NumberInputWeightMinWidth
+import dev.sanastasov.bybon.workout.domain.RestTimer
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.restAfter
 
 internal val ExerciseCardSetColWidth = 28.dp
 internal val ExerciseCardPreviousColWidth = 64.dp
@@ -48,6 +50,8 @@ fun ExerciseCard(
     overflow: ExerciseOverflow? = null,
     onRemoveExercise: (() -> Unit)? = null,
     onTitleClick: (() -> Unit)? = null,
+    isLastExercise: Boolean = false,
+    activeRest: RestTimer? = null,
 ) {
     val scrollable = if (mode == ExerciseCardMode.Session) {
         modifier.verticalScroll(rememberScrollState())
@@ -78,6 +82,7 @@ fun ExerciseCard(
                     null
                 },
             )
+            ExerciseRestGap(exercise, numbered.isWarmup, numbered.index, isLastExercise, activeRest)
         }
         exercise.numberedWorkSets.forEach { numbered ->
             ExerciseSetBlock(
@@ -90,11 +95,31 @@ fun ExerciseCard(
                 } else {
                     null
                 },
-                rest = exercise.restAfterWorkSet,
             )
+            ExerciseRestGap(exercise, numbered.isWarmup, numbered.index, isLastExercise, activeRest)
         }
         ExerciseSetActions(exercise, mode, onEvent)
     }
+}
+
+@Composable
+private fun ExerciseRestGap(
+    exercise: WorkoutExercise,
+    isWarmup: Boolean,
+    index: Int,
+    isLastExercise: Boolean,
+    activeRest: RestTimer?,
+) {
+    val planned = exercise.restAfter(isWarmup, index, isLastExercise) ?: return
+    val set = if (isWarmup) {
+        checkNotNull(exercise.warmupSets)[index]
+    } else {
+        exercise.sets[index]
+    }
+    RestGapRow(
+        planned = planned,
+        activeRest = activeRest?.takeIf { it.startedAt == set.completedAt },
+    )
 }
 
 @Composable

@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.label
+import dev.sanastasov.bybon.workout.domain.restAfter
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 import kotlin.time.Duration
 
@@ -135,13 +136,13 @@ fun PlanedExercise.subtitle(): String = listOfNotNull(
     exercise.equipment?.label,
 ).joinToString(" · ")
 
-fun PlanedExercise.toPlannedSets(): List<PlannedSetUi> {
-    val warmup = List(warmupSets) {
+fun PlanedExercise.toPlannedSets(isLastExercise: Boolean = false): List<PlannedSetUi> {
+    val warmup = List(warmupSets) { index ->
         PlannedSetUi(
             isWarmup = true,
             workSetNumber = null,
             repsLabel = "—",
-            rest = null,
+            rest = restAfter(isWarmup = true, index = index, isLastExercise = isLastExercise),
         )
     }
     val work = (1..sets).map { number ->
@@ -149,7 +150,11 @@ fun PlanedExercise.toPlannedSets(): List<PlannedSetUi> {
             isWarmup = false,
             workSetNumber = number,
             repsLabel = "${repRange.first}–${repRange.last}",
-            rest = restAfterWorkSet,
+            rest = restAfter(
+                isWarmup = false,
+                index = number - 1,
+                isLastExercise = isLastExercise,
+            ),
         )
     }
     return warmup + work
@@ -169,9 +174,11 @@ fun WorkoutPlan.exerciseOverflow(
     )
 }
 
-fun PlannedSetUi.contentDescription(exerciseName: String): String = if (isWarmup) {
-    "$exerciseName warmup set"
-} else {
+fun PlannedSetUi.contentDescription(exerciseName: String): String {
     val restLabel = rest?.let { ", rest ${it.formatRestClock()}" }.orEmpty()
-    "$exerciseName set $workSetNumber, $repsLabel reps$restLabel"
+    return if (isWarmup) {
+        "$exerciseName warmup set$restLabel"
+    } else {
+        "$exerciseName set $workSetNumber, $repsLabel reps$restLabel"
+    }
 }

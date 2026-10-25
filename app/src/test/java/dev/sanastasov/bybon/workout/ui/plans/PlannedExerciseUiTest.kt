@@ -15,7 +15,8 @@ class PlannedExerciseUiTest {
         val rows = bench.toPlannedSets()
 
         assert(rows.size == 6)
-        assert(rows.take(3).all { it.isWarmup && it.repsLabel == "—" && it.rest == null })
+        assert(rows.take(2).all { it.isWarmup && it.repsLabel == "—" && it.rest == null })
+        assert(rows[2].isWarmup && rows[2].rest == 2.minutes)
         assert(rows.drop(3).map { it.workSetNumber } == listOf(1, 2, 3))
         assert(rows.drop(3).all { it.repsLabel == "8–10" && it.rest == 2.minutes })
         assert(bench.subtitle() == "Chest · Barbell")
@@ -24,8 +25,26 @@ class PlannedExerciseUiTest {
                 "Barbell Bench Press warmup set",
         )
         assert(
+            rows[2].contentDescription(bench.exercise.name) ==
+                "Barbell Bench Press warmup set, rest 2:00",
+        )
+        assert(
             rows[3].contentDescription(bench.exercise.name) ==
                 "Barbell Bench Press set 1, 8–10 reps, rest 2:00",
+        )
+    }
+
+    @Test
+    fun `last exercise has no rest after its last work set`() {
+        val last = fullBodyA.sets.last()
+        val rows = last.toPlannedSets(isLastExercise = true)
+
+        assert(rows.dropLast(1).all { it.rest == last.restAfterWorkSet })
+        assert(rows.last().rest == null)
+        assert(
+            rows.last().contentDescription(last.exercise.name) ==
+                "${last.exercise.name} set ${last.sets}, " +
+                "${last.repRange.first}–${last.repRange.last} reps",
         )
     }
 

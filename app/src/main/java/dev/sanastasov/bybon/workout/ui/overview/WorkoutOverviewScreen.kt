@@ -114,6 +114,7 @@ private fun OverviewScreenContent(
                         exercise,
                         session.exerciseOverflow(index, onAction),
                         onAction,
+                        isLastExercise = index == session.exercises.lastIndex,
                     )
                 }
                 item(key = "add-exercise") {
@@ -175,6 +176,7 @@ private fun LazyItemScope.OverviewExerciseCard(
     exercise: WorkoutExercise,
     overflow: ExerciseOverflow?,
     onAction: (WorkoutOverviewAction) -> Unit,
+    isLastExercise: Boolean,
 ) {
     Card(
         Modifier
@@ -194,6 +196,7 @@ private fun LazyItemScope.OverviewExerciseCard(
             onTitleClick = {
                 onAction(WorkoutOverviewAction.OnOpenExerciseDetails(exercise.id))
             },
+            isLastExercise = isLastExercise,
         )
     }
 }

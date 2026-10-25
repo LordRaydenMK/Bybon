@@ -16,6 +16,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.sanastasov.bybon.workout.domain.elapsedSince
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
+import dev.sanastasov.bybon.workout.ui.ticksEverySecond
 import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlinx.coroutines.flow.map

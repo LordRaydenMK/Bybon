@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
+import dev.sanastasov.bybon.workout.ui.restRemainingContentDescription
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes

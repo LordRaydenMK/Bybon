@@ -29,7 +29,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.ui.ExerciseCardSetColWidth
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflowMenu
-import dev.sanastasov.bybon.workout.ui.RestOrSpacer
+import dev.sanastasov.bybon.workout.ui.RestGapRow
 import dev.sanastasov.bybon.workout.ui.SetNumberBadge
 
 @Composable
@@ -41,6 +41,7 @@ fun PlannedExerciseCard(
     onRemoveExercise: () -> Unit,
     modifier: Modifier = Modifier,
     canRemoveExercise: Boolean = true,
+    isLastExercise: Boolean = false,
 ) {
     Column(
         modifier
@@ -50,9 +51,10 @@ fun PlannedExerciseCard(
     ) {
         PlannedExerciseHeader(exercise, overflow, onRemoveExercise)
         PlannedSetColumnsHeader()
-        exercise.toPlannedSets().forEachIndexed { index, plannedSet ->
+        exercise.toPlannedSets(isLastExercise).forEachIndexed { index, plannedSet ->
             key(index) {
                 PlannedSetRow(exercise.exercise.name, plannedSet)
+                plannedSet.rest?.let { RestGapRow(it) }
             }
         }
         PlannedExerciseActions(
@@ -120,7 +122,6 @@ private fun PlannedSetColumnsHeader() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium,
         )
-        RestOrSpacer(null)
     }
 }
 
@@ -167,7 +168,6 @@ private fun PlannedSetRow(exerciseName: String, plannedSet: PlannedSetUi) {
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.labelMedium,
             )
-            RestOrSpacer(plannedSet.rest)
         }
     }
 }
@@ -260,6 +260,13 @@ private fun PlannedExerciseCardSingleSetPreview() {
 @Composable
 private fun PlannedExerciseCardLastExercisePreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first(), null, {}, {}, {})
+        PlannedExerciseCard(
+            fullBodyA.sets.last(),
+            null,
+            {},
+            {},
+            {},
+            isLastExercise = true,
+        )
     }
 }

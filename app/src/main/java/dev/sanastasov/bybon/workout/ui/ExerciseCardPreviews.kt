@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.restTimer
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import kotlin.time.Duration
@@ -83,6 +84,7 @@ private fun SessionExerciseCardWarmupsCompletedPreview() {
             progressed.exercises.first(),
             ExerciseCardMode.Session,
             {},
+            activeRest = progressed.restTimer(),
         )
     }
 }

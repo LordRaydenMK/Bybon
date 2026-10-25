@@ -92,6 +92,7 @@ private fun EditPlanContent(
                         currentPlan.exerciseOverflow(index, onAction),
                         onAction,
                         canRemoveExercise = currentPlan.sets.size > 1,
+                        isLastExercise = index == currentPlan.sets.lastIndex,
                     )
                 }
                 item(key = "add-exercise") {
@@ -125,6 +126,7 @@ private fun LazyItemScope.EditPlanExerciseCard(
     overflow: ExerciseOverflow?,
     onAction: (EditPlanAction) -> Unit,
     canRemoveExercise: Boolean,
+    isLastExercise: Boolean,
 ) {
     Card(
         Modifier
@@ -142,6 +144,7 @@ private fun LazyItemScope.EditPlanExerciseCard(
                 onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
             },
             canRemoveExercise = canRemoveExercise,
+            isLastExercise = isLastExercise,
         )
     }
 }

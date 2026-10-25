@@ -14,6 +14,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.startsRestAfter
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
@@ -217,7 +218,7 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
-    fun `overview session exposes rest timers on work sets only`() = runTest {
+    fun `overview session exposes rest after last warmup and work sets`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
 
@@ -239,6 +240,17 @@ class WorkoutOverviewViewModelTest {
                     "1:00",
             )
             assert(draft.exercises.first().warmupSets != null)
+            val first = draft.exercises.first()
+            val last = draft.exercises.last()
+            assert(!first.startsRestAfter(isWarmup = true, index = 0, isLastExercise = false))
+            assert(first.startsRestAfter(isWarmup = true, index = 2, isLastExercise = false))
+            assert(
+                !last.startsRestAfter(
+                    isWarmup = false,
+                    index = last.sets.lastIndex,
+                    isLastExercise = true,
+                ),
+            )
         }
     }
 

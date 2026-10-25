@@ -115,22 +115,17 @@ private fun SessionScreenContent(
     var showCancelDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
-            Column {
-                BybonTopAppBar(
-                    state.planName,
-                    onBack,
-                    actions = {
-                        SessionElapsedClock(state.startedAt)
-                        SessionOverflowMenu(
-                            onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
-                            onCancelWorkout = { showCancelDialog = true },
-                        )
-                    },
-                )
-                state.restTimer()?.let { rest ->
-                    SessionRestProgress(rest)
-                }
-            }
+            BybonTopAppBar(
+                state.planName,
+                onBack,
+                actions = {
+                    SessionElapsedClock(state.startedAt)
+                    SessionOverflowMenu(
+                        onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
+                        onCancelWorkout = { showCancelDialog = true },
+                    )
+                },
+            )
         },
     ) { contentPadding ->
         Column(
@@ -190,6 +185,8 @@ private fun SessionExercisePager(
                     onTitleClick = {
                         onAction(WorkoutSessionAction.OnOpenExerciseDetails(exercise.id))
                     },
+                    isLastExercise = page == state.exercises.lastIndex,
+                    activeRest = state.restTimer(),
                 )
             }
         }
