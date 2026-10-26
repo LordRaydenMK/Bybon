@@ -54,6 +54,9 @@ fun WorkoutSession.convertFirstWorkSetToWarmup(exercise: WorkoutExercise): Worko
         current.copy(
             warmupSets = current.warmupSets.orEmpty() + firstWorkSet,
             sets = current.sets.drop(1),
+        ).withPreviousMatchedTo(
+            previousWarmups = current.warmupSets.orEmpty().previousPerformances(),
+            previousWork = current.sets.previousPerformances(),
         )
     }
 
@@ -64,6 +67,9 @@ fun WorkoutSession.convertLastWarmupToWorkSet(exercise: WorkoutExercise): Workou
         current.copy(
             warmupSets = warmupSets.dropLast(1).nullIfEmpty(),
             sets = listOf(lastWarmup) + current.sets,
+        ).withPreviousMatchedTo(
+            previousWarmups = warmupSets.previousPerformances(),
+            previousWork = current.sets.previousPerformances(),
         )
     }
 
@@ -110,4 +116,19 @@ private fun WorkoutSession.requireExercise(exerciseId: String): WorkoutExercise 
     exercises.firstOrNull { it.id == exerciseId }
         ?: error("Exercise $exerciseId is not in the session")
 
-private fun List<ExerciseSet>.nullIfEmpty(): List<ExerciseSet>? = takeIf { isNotEmpty() }
+private fun List<ExerciseSet>.nullIfEmpty(): List<ExerciseSet>? = takeIf { it.isNotEmpty() }
+
+private fun List<ExerciseSet>.previousPerformances(): List<PreviousSetPerformance?> =
+    map { it.previous }
+
+private fun WorkoutExercise.withPreviousMatchedTo(
+    previousWarmups: List<PreviousSetPerformance?>,
+    previousWork: List<PreviousSetPerformance?>,
+): WorkoutExercise = copy(
+    warmupSets = warmupSets?.mapIndexed { index, set ->
+        set.copy(previous = previousWarmups.getOrNull(index))
+    },
+    sets = sets.mapIndexed { index, set ->
+        set.copy(previous = previousWork.getOrNull(index))
+    },
+)
