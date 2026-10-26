@@ -58,7 +58,6 @@ sealed class WorkoutSessionAction {
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
 
-    data object OnRestElapsed : WorkoutSessionAction()
     data object OnCancelWorkout : WorkoutSessionAction()
     data object OnAddExercise : WorkoutSessionAction()
     data class OnExercisePicked(

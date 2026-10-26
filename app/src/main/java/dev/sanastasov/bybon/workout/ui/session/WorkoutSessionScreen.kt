@@ -129,9 +129,6 @@ private fun SessionScreenContent(
                 )
                 state.restTimer()?.let { rest ->
                     SessionRestProgress(rest)
-                    ActivateNextSetWhenRestElapsed(rest, onElapsed = {
-                        onAction(WorkoutSessionAction.OnRestElapsed)
-                    })
                 }
             }
         },

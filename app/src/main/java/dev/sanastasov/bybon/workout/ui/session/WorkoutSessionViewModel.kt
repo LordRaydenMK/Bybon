@@ -20,14 +20,19 @@ import dev.sanastasov.bybon.workout.domain.requireExercise
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
 import dev.sanastasov.bybon.workout.domain.startWorkout
+import dev.sanastasov.bybon.workout.domain.toOpenSnapshot
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeightFromField
 import dev.sanastasov.bybon.workout.domain.updateWorkout
+import java.time.LocalDateTime
+import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -77,6 +82,31 @@ class WorkoutSessionViewModel(
                         repository.updateWorkout(existing.startWorkout())
                     }
                 }
+            }
+        }
+        coroutineScope.launch {
+            repository.workoutSessions()
+                .map { sessions ->
+                    sessions.firstOrNull { session ->
+                        session.planId == planId && session.state !is WorkoutState.Completed
+                    }
+                }
+                .distinctUntilChanged()
+                .collectLatest(::activateNextSetWhenRestElapsed)
+        }
+    }
+
+    private suspend fun activateNextSetWhenRestElapsed(session: WorkoutSession?) {
+        val remaining = session?.toOpenSnapshot(LocalDateTime.now())?.restRemaining ?: return
+        if (remaining > Duration.ZERO) {
+            delay(remaining.inWholeMilliseconds)
+        }
+        mutations.withLock {
+            val current = repository.workoutSessions().first()
+                .firstOrNull { it.planId == planId && it.state !is WorkoutState.Completed }
+                ?: return@withLock
+            if (current.toOpenSnapshot(LocalDateTime.now())?.shouldActivateNextSet == true) {
+                repository.updateWorkout(current.startWorkout())
             }
         }
     }
@@ -203,8 +233,6 @@ class WorkoutSessionViewModel(
     ): WorkoutSession = when (action) {
         is WorkoutSessionAction.OnCompleteSet ->
             session.completeSet(action.exercise, action.index, action.isWarmup)
-
-        WorkoutSessionAction.OnRestElapsed -> session.startWorkout()
 
         is WorkoutSessionAction.OnIncreaseExercise ->
             session.adjustExercise(action.exercise, increase = true)

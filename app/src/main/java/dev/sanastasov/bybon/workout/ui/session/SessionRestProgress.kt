@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.workout.ui.session
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -47,23 +46,6 @@ internal data class RestProgressUi(
     val fraction: Float,
     val remaining: Duration,
 )
-
-@Composable
-internal fun ActivateNextSetWhenRestElapsed(
-    rest: RestTimer,
-    onElapsed: () -> Unit,
-    now: () -> LocalDateTime = LocalDateTime::now,
-) {
-    val remaining by remember(rest, now) {
-        ticksEverySecond().map { rest.remaining(now()) }
-    }.collectAsStateWithLifecycle(
-        initialValue = rest.remaining(now()),
-        minActiveState = Lifecycle.State.RESUMED,
-    )
-    LaunchedEffect(remaining) {
-        if (remaining == Duration.ZERO) onElapsed()
-    }
-}
 
 internal fun RestTimer.progressUi(now: LocalDateTime): RestProgressUi? {
     val fraction = progress(now) ?: return null
