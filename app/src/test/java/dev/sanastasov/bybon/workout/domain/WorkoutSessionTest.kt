@@ -133,20 +133,6 @@ class WorkoutSessionTest {
     }
 
     @Test
-    fun `converting the last remaining work set to warmup is a no-op`() {
-        val session = fullBodyA.toOverviewSession().let { draft ->
-            draft.updateExercise(draft.exercises.first().id) { exercise ->
-                exercise.copy(sets = listOf(exercise.sets.first()))
-            }
-        }
-
-        val actual = session.convertFirstWorkSetToWarmup(session.exercises.first())
-
-        assert(actual.exercises.first().sets.size == 1)
-        assert(actual.exercises.first().warmupSets?.size == 3)
-    }
-
-    @Test
     fun `remove last not completed work set promotes the next exercise warmup`() {
         val session = fullBodyA.toWorkoutSession()
             .completeWarmups(0)
@@ -473,32 +459,6 @@ class WorkoutSessionTest {
         val pullUp = session.exercises.first { it.id == "assisted-pull-ups" }
         assert(pullUp.warmupSets!!.all { it.weight == null })
         assert(pullUp.sets.all { it.weight == null })
-    }
-
-    @Test
-    fun `converting last warmup restores it as work set one`() {
-        val session = fullBodyA.toOverviewSession()
-        val converted = session.convertFirstWorkSetToWarmup(session.exercises.first())
-
-        val actual = converted.convertLastWarmupToWorkSet(converted.exercises.first())
-        val bench = actual.exercises.first()
-
-        assert(bench.warmupSets?.size == 3)
-        assert(bench.sets.size == 3)
-        assert(bench.sets.first() == session.exercises.first().sets.first())
-    }
-
-    @Test
-    fun `converting the last remaining warmup leaves warmup sets null`() {
-        val session = fullBodyB.toOverviewSession()
-        val splitSquat = session.exercises.first { it.id == "bulgarian-split-squat" }
-        assert(splitSquat.warmupSets?.size == 1)
-
-        val actual = session.convertLastWarmupToWorkSet(splitSquat)
-        val updated = actual.exercises.first { it.id == "bulgarian-split-squat" }
-
-        assert(updated.warmupSets == null)
-        assert(updated.sets.size == 4)
     }
 
     @Test

@@ -47,26 +47,6 @@ fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
     }
 }
 
-fun WorkoutSession.convertFirstWorkSetToWarmup(exercise: WorkoutExercise): WorkoutSession =
-    updateExercise(exercise.id) { current ->
-        if (current.sets.size <= 1) return@updateExercise current
-        val firstWorkSet = current.sets.first()
-        current.copy(
-            warmupSets = current.warmupSets.orEmpty() + firstWorkSet,
-            sets = current.sets.drop(1),
-        )
-    }
-
-fun WorkoutSession.convertLastWarmupToWorkSet(exercise: WorkoutExercise): WorkoutSession =
-    updateExercise(exercise.id) { current ->
-        val warmupSets = current.warmupSets ?: return@updateExercise current
-        val lastWarmup = warmupSets.last()
-        current.copy(
-            warmupSets = warmupSets.dropLast(1).nullIfEmpty(),
-            sets = listOf(lastWarmup) + current.sets,
-        )
-    }
-
 fun WorkoutSession.updateWeight(
     exercise: WorkoutExercise,
     setIndex: Int,
@@ -110,4 +90,4 @@ private fun WorkoutSession.requireExercise(exerciseId: String): WorkoutExercise 
     exercises.firstOrNull { it.id == exerciseId }
         ?: error("Exercise $exerciseId is not in the session")
 
-private fun List<ExerciseSet>.nullIfEmpty(): List<ExerciseSet>? = takeIf { isNotEmpty() }
+private fun List<ExerciseSet>.nullIfEmpty(): List<ExerciseSet>? = takeIf { it.isNotEmpty() }

@@ -110,6 +110,63 @@ class WorkoutOverviewViewModelTest {
     }
 
     @Test
+    fun `overview work previous stays aligned after dropping a warmup`() = runTest {
+        val previous = fullBodyA.toWorkoutSession().let { session ->
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.mapIndexed { index, set ->
+                            set.copy(
+                                weight = Weight.kilograms(80 + index),
+                                reps = 8 + index,
+                                setState = SetState.Completed(),
+                            )
+                        },
+                        warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
+                            set.copy(
+                                weight = Weight.kilograms(20 + index),
+                                reps = 8,
+                                setState = SetState.Completed(),
+                            )
+                        },
+                    )
+                },
+                startedAt = LocalDateTime.of(2026, 10, 1, 12, 0),
+                duration = Duration.ZERO,
+            )
+        }
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(previous),
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val draft = awaitItem()!!
+            val bench = draft.exercises.first()
+            assert(bench.warmupSets?.size == 3)
+            assert(bench.sets.size == 3)
+
+            viewModel.onAction(WorkoutOverviewAction.OnConvertToWorkSet(bench))
+            val converted = awaitItem()!!
+            viewModel.onAction(WorkoutOverviewAction.RemoveLastSet(converted.exercises.first()))
+            val reduced = awaitItem()!!
+            val updated = reduced.exercises.first()
+
+            assert(updated.warmupSets?.size == 2)
+            assert(updated.sets.size == 3)
+            assert(
+                updated.sets.map { it.previous } == listOf(
+                    PreviousSetPerformance(Weight.kilograms(80), 8),
+                    PreviousSetPerformance(Weight.kilograms(81), 9),
+                    PreviousSetPerformance(Weight.kilograms(82), 10),
+                ),
+            )
+        }
+    }
+
+    @Test
     fun `reset restores previous performance at exercise and set level`() = runTest {
         val previous = fullBodyA.toWorkoutSession().let { session ->
             session.copy(
