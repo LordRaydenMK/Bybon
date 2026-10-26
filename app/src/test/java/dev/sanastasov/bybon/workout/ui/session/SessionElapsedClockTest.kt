@@ -1,7 +1,9 @@
 package dev.sanastasov.bybon.workout.ui.session
 
+import dev.sanastasov.bybon.workout.domain.RestTimer
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDateTime
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
@@ -39,6 +41,13 @@ class SessionElapsedClockTest {
             (50.minutes + 20.seconds).elapsedClockContentDescription() ==
                 "Elapsed 50 minutes 20 seconds",
         )
+    }
+
+    @Test
+    fun `rest progress omits the bar when remaining is zero`() {
+        val timer = RestTimer(LocalDateTime.of(2026, 10, 24, 12, 0), 2.minutes)
+        assert(timer.progressUi(Duration.ZERO) == null)
+        assert(timer.progressUi(75.seconds) == RestProgressUi(0.375f, 75.seconds))
     }
 
     @Test

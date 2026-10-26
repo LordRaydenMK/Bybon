@@ -4,33 +4,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dev.sanastasov.bybon.workout.domain.elapsedSince
-import java.time.LocalDateTime
 import kotlin.time.Duration
-import kotlinx.coroutines.flow.map
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
-internal fun SessionElapsedClock(
-    startedAt: LocalDateTime,
-    modifier: Modifier = Modifier,
-    now: () -> LocalDateTime = LocalDateTime::now,
-) {
-    val elapsed by remember(startedAt, now) {
-        ticksEverySecond().map { elapsedSince(startedAt, now()) }
-    }.collectAsStateWithLifecycle(
-        initialValue = elapsedSince(startedAt, now()),
-        minActiveState = Lifecycle.State.RESUMED,
-    )
+internal fun SessionElapsedClock(elapsed: Duration, modifier: Modifier = Modifier) {
     Text(
         elapsed.formatSessionElapsedClock(),
         modifier
@@ -71,9 +56,5 @@ internal fun Duration.elapsedClockContentDescription(): String {
 @Preview
 @Composable
 private fun SessionElapsedClockPreview() {
-    val startedAt = LocalDateTime.of(2026, 10, 23, 12, 0, 0)
-    SessionElapsedClock(
-        startedAt,
-        now = { startedAt.plusMinutes(50).plusSeconds(20) },
-    )
+    SessionElapsedClock(50.minutes + 20.seconds)
 }

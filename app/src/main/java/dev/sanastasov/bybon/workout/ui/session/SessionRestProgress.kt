@@ -3,41 +3,25 @@ package dev.sanastasov.bybon.workout.ui.session
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.sanastasov.bybon.workout.domain.OpenWorkoutSnapshot
 import dev.sanastasov.bybon.workout.domain.RestTimer
-import java.time.LocalDateTime
+import dev.sanastasov.bybon.workout.domain.restTimer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlinx.coroutines.flow.map
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
-internal fun SessionRestProgress(
-    rest: RestTimer,
-    modifier: Modifier = Modifier,
-    now: () -> LocalDateTime = LocalDateTime::now,
-) {
-    val progress by remember(rest, now) {
-        ticksEverySecond()
-            .map { rest.progressUi(now()) }
-            .takeUntil { it == null }
-    }.collectAsStateWithLifecycle(
-        initialValue = rest.progressUi(now()),
-        minActiveState = Lifecycle.State.RESUMED,
-    )
-    val snapshot = progress ?: return
+internal fun SessionRestProgress(progress: RestProgressUi, modifier: Modifier = Modifier) {
     LinearProgressIndicator(
-        progress = { snapshot.fraction },
+        progress = { progress.fraction },
         modifier = modifier
             .fillMaxWidth()
             .clearAndSetSemantics {
-                contentDescription = snapshot.remaining.restRemainingContentDescription()
+                contentDescription = progress.remaining.restRemainingContentDescription()
             },
     )
 }
@@ -47,9 +31,16 @@ internal data class RestProgressUi(
     val remaining: Duration,
 )
 
-internal fun RestTimer.progressUi(now: LocalDateTime): RestProgressUi? {
-    val fraction = progress(now) ?: return null
-    return RestProgressUi(fraction, remaining(now))
+internal fun OpenWorkoutSnapshot.restProgressUi(): RestProgressUi? {
+    val remaining = restRemaining
+    val timer = session.restTimer()
+    return if (remaining == null || timer == null) null else timer.progressUi(remaining)
+}
+
+internal fun RestTimer.progressUi(remaining: Duration): RestProgressUi? {
+    if (remaining <= Duration.ZERO || duration <= Duration.ZERO) return null
+    val elapsed = duration - remaining
+    return RestProgressUi((elapsed / duration).toFloat(), remaining)
 }
 
 internal fun Duration.restRemainingContentDescription(): String {
@@ -72,9 +63,7 @@ internal fun Duration.restRemainingContentDescription(): String {
 @Preview
 @Composable
 private fun SessionRestProgressPreview() {
-    val startedAt = LocalDateTime.of(2026, 10, 24, 12, 0, 0)
     SessionRestProgress(
-        RestTimer(startedAt, 2.minutes),
-        now = { startedAt.plusSeconds(45) },
+        RestProgressUi(fraction = 0.375f, remaining = 2.minutes - 45.seconds),
     )
 }

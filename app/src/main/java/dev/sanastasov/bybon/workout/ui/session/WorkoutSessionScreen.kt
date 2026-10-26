@@ -22,6 +22,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.result.LocalResultEventBus
 import androidx.navigation3.runtime.result.ResultEffect
@@ -37,6 +39,7 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.OpenWorkoutSnapshot
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -46,7 +49,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.canRemoveExercise
 import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.fullBodyA
-import dev.sanastasov.bybon.workout.domain.restTimer
+import dev.sanastasov.bybon.workout.domain.toOpenSnapshot
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.ui.ExerciseCard
 import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
@@ -54,7 +57,11 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import java.time.LocalDateTime
 import kotlin.time.Duration
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(
     planId: WorkoutPlanId,
@@ -63,16 +70,29 @@ fun WorkoutModule.WorkoutSessionScreen(
     onNavigateToExerciseLibrary: (List<String>) -> Unit,
     onNavigateToExerciseDetails: (String) -> Unit,
 ) {
+    val requestPostNotifications = rememberPostNotificationsPermissionRequest()
+    LaunchedEffect(Unit) {
+        requestPostNotifications()
+    }
     val viewModel = retain {
         WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
     }
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val runtimeSnapshot by remember(sessionRuntime) {
+        sessionRuntime.flatMapLatest { runtime -> runtime?.state ?: flowOf(null) }
+    }.collectAsStateWithLifecycle(
+        initialValue = sessionRuntime.value?.state?.value,
+        minActiveState = Lifecycle.State.RESUMED,
+    )
+    val vmSession by viewModel.uiState.collectAsStateWithLifecycle()
+    val snapshot = runtimeSnapshot?.takeIf { it.session.planId == planId }
+        ?: vmSession?.takeIf { it.planId == planId }?.toOpenSnapshot(LocalDateTime.now())
     val resultBus = LocalResultEventBus.current
     ResultEffect<String>(resultKey = EXERCISE_LIBRARY_RESULT_KEY) { exerciseId ->
         resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
     }
-    uiState?.let { session ->
+    snapshot?.let { open ->
+        val session = open.session
         val pagerState = rememberPagerState(
             session.currentExerciseIndex ?: 0,
         ) { session.exercises.size }
@@ -97,7 +117,7 @@ fun WorkoutModule.WorkoutSessionScreen(
             }
         }
         SessionScreenContent(
-            session,
+            open,
             pagerState,
             viewModel::onAction,
             onBack,
@@ -107,11 +127,12 @@ fun WorkoutModule.WorkoutSessionScreen(
 
 @Composable
 private fun SessionScreenContent(
-    state: WorkoutSession,
+    snapshot: OpenWorkoutSnapshot,
     pagerState: PagerState,
     onAction: (WorkoutSessionAction) -> Unit,
     onBack: () -> Unit,
 ) {
+    val state = snapshot.session
     var showCancelDialog by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -120,14 +141,14 @@ private fun SessionScreenContent(
                     state.planName,
                     onBack,
                     actions = {
-                        SessionElapsedClock(state.startedAt)
+                        SessionElapsedClock(snapshot.elapsed)
                         SessionOverflowMenu(
                             onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
                             onCancelWorkout = { showCancelDialog = true },
                         )
                     },
                 )
-                state.restTimer()?.let { rest ->
+                snapshot.restProgressUi()?.let { rest ->
                     SessionRestProgress(rest)
                 }
             }
@@ -331,9 +352,13 @@ private fun SessionScreenContentWithPreviousPreview() {
 }
 
 @Composable
-private fun SessionScreenContentPreview(state: WorkoutSession) {
+private fun SessionScreenContentPreview(
+    state: WorkoutSession,
+    now: LocalDateTime = state.startedAt,
+) {
+    val snapshot = checkNotNull(state.toOpenSnapshot(now))
     SessionScreenContent(
-        state,
+        snapshot,
         rememberPagerState(state.currentExerciseIndex ?: 0) { state.exercises.size },
         {},
         {},

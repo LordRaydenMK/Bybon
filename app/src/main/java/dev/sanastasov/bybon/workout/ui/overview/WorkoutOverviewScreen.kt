@@ -46,6 +46,7 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
+import dev.sanastasov.bybon.workout.ui.session.rememberPostNotificationsPermissionRequest
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
@@ -57,6 +58,7 @@ fun WorkoutModule.WorkoutOverviewScreen(
     onNavigateToExerciseLibrary: (List<String>) -> Unit,
     onNavigateToExerciseDetails: (String) -> Unit,
 ) {
+    val requestPostNotifications = rememberPostNotificationsPermissionRequest()
     val viewModel = retain {
         WorkoutOverviewViewModel(planId, workoutsRepository, it.coroutineScope)
     }
@@ -78,7 +80,7 @@ fun WorkoutModule.WorkoutOverviewScreen(
         }
     }
     uiState?.let {
-        OverviewScreenContent(it, viewModel::onAction, onBack)
+        OverviewScreenContent(it, viewModel::onAction, onBack, requestPostNotifications)
     }
 }
 
@@ -87,6 +89,7 @@ private fun OverviewScreenContent(
     state: WorkoutOverviewUiState,
     onAction: (WorkoutOverviewAction) -> Unit,
     onBack: () -> Unit,
+    onStartWorkout: () -> Unit = {},
 ) {
     val session = state.session
     Scaffold(
@@ -128,7 +131,10 @@ private fun OverviewScreenContent(
 
             Spacer(Modifier.height(16.dp))
             Button(
-                { onAction(WorkoutOverviewAction.OnStartWorkout) },
+                {
+                    onStartWorkout()
+                    onAction(WorkoutOverviewAction.OnStartWorkout)
+                },
                 Modifier.fillMaxWidth(),
             ) {
                 Text("Start Workout")
