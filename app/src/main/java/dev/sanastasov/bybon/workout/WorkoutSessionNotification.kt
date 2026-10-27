@@ -10,6 +10,12 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.time.toJavaDuration
 
+enum class WorkoutSessionNotificationMetric {
+    Elapsed,
+    Rest,
+    Set,
+}
+
 data class WorkoutSessionNotification(
     val planName: String,
     val contentText: String,
@@ -23,6 +29,16 @@ data class WorkoutSessionNotification(
 ) {
     val whenTime: Instant
         get() = restEnd ?: elapsedStart
+
+    val metrics: List<WorkoutSessionNotificationMetric>
+        get() = if (restEnd != null) {
+            listOf(WorkoutSessionNotificationMetric.Rest, WorkoutSessionNotificationMetric.Set)
+        } else {
+            listOf(WorkoutSessionNotificationMetric.Elapsed, WorkoutSessionNotificationMetric.Set)
+        }
+
+    val criticalMetricIndex: Int
+        get() = 0
 }
 
 fun WorkoutSession.toNotificationContent(
