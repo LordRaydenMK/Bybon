@@ -32,6 +32,13 @@ class WorkoutSessionNotificationTest {
         assert(content.currentSetNumber == 1)
         assert(content.currentSetTotal == 3)
         assert(content.currentSetValue == inProgress.weightRepsLabel)
+        assert(
+            content.metrics == listOf(
+                WorkoutSessionNotificationMetric.Elapsed,
+                WorkoutSessionNotificationMetric.Set,
+            ),
+        )
+        assert(content.criticalMetricIndex == 0)
     }
 
     @Test
@@ -54,6 +61,12 @@ class WorkoutSessionNotificationTest {
         assert(content.currentSetNumber == 2)
         assert(content.currentSetTotal == 3)
         assert(content.currentSetValue == inProgress.weightRepsLabel)
+        assert(
+            content.metrics == listOf(
+                WorkoutSessionNotificationMetric.Elapsed,
+                WorkoutSessionNotificationMetric.Set,
+            ),
+        )
     }
 
     @Test
@@ -75,6 +88,13 @@ class WorkoutSessionNotificationTest {
         assert(content.currentSetTotal == 3)
         assert(content.currentSetValue == inProgress.weightRepsLabel)
         assert(content.contentText == "1/3 Barbell Bench Press ${inProgress.weightRepsLabel}")
+        assert(
+            content.metrics == listOf(
+                WorkoutSessionNotificationMetric.Rest,
+                WorkoutSessionNotificationMetric.Set,
+            ),
+        )
+        assert(content.criticalMetricIndex == 0)
     }
 
     @Test
@@ -90,6 +110,12 @@ class WorkoutSessionNotificationTest {
         assert(content.currentSetIsWarmup == false)
         assert(content.currentSetNumber == 1)
         assert(content.currentSetTotal == 3)
+        assert(
+            content.metrics == listOf(
+                WorkoutSessionNotificationMetric.Elapsed,
+                WorkoutSessionNotificationMetric.Set,
+            ),
+        )
     }
 }
 

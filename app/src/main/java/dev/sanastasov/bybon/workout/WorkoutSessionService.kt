@@ -118,34 +118,36 @@ class WorkoutSessionService : LifecycleService() {
     @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
     private fun sessionMetricStyle(content: WorkoutSessionNotification): NotificationCompat.Style {
         val style = NotificationCompat.MetricStyle()
-            .addMetric(
-                NotificationCompat.Metric(
-                    NotificationCompat.Metric.TimeDifference.forStopwatch(
-                        content.elapsedStart,
-                        NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
-                    ),
-                    getString(R.string.workout_session_notification_elapsed),
-                ),
-            )
-        if (content.restEnd != null) {
-            style.addMetric(
-                NotificationCompat.Metric(
-                    NotificationCompat.Metric.TimeDifference.forTimer(
-                        content.restEnd,
-                        NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
-                    ),
-                    getString(R.string.workout_session_notification_rest),
-                ),
-            )
+        content.metrics.forEach { metric ->
+            style.addMetric(metric.toCompatMetric(content))
         }
-        style.addMetric(
-            NotificationCompat.Metric(
-                NotificationCompat.Metric.FixedText(content.currentSetValue),
-                currentSetMetricLabel(content),
+        return style.setCriticalMetric(content.criticalMetricIndex)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
+    private fun WorkoutSessionNotificationMetric.toCompatMetric(
+        content: WorkoutSessionNotification,
+    ): NotificationCompat.Metric = when (this) {
+        WorkoutSessionNotificationMetric.Elapsed -> NotificationCompat.Metric(
+            NotificationCompat.Metric.TimeDifference.forStopwatch(
+                content.elapsedStart,
+                NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
             ),
+            getString(R.string.workout_session_notification_elapsed),
         )
-        val criticalIndex = if (content.restEnd != null) REST_METRIC_INDEX else ELAPSED_METRIC_INDEX
-        return style.setCriticalMetric(criticalIndex)
+
+        WorkoutSessionNotificationMetric.Rest -> NotificationCompat.Metric(
+            NotificationCompat.Metric.TimeDifference.forTimer(
+                checkNotNull(content.restEnd),
+                NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
+            ),
+            getString(R.string.workout_session_notification_rest),
+        )
+
+        WorkoutSessionNotificationMetric.Set -> NotificationCompat.Metric(
+            NotificationCompat.Metric.FixedText(content.currentSetValue),
+            currentSetMetricLabel(content),
+        )
     }
 
     private fun currentSetMetricLabel(content: WorkoutSessionNotification): String {
@@ -160,8 +162,6 @@ class WorkoutSessionService : LifecycleService() {
     companion object {
         private const val CHANNEL_ID = "workout_session"
         private const val NOTIFICATION_ID = 1001
-        private const val ELAPSED_METRIC_INDEX = 0
-        private const val REST_METRIC_INDEX = 1
 
         fun start(context: Context) {
             context.startService(Intent(context, WorkoutSessionService::class.java))
