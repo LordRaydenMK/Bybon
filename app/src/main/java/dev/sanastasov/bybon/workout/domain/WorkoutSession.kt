@@ -33,6 +33,12 @@ data class WorkoutSession(
     val currentExerciseIndex: Int?
         get() = exercises.indexOfFirst { it.state != ExerciseState.Completed }.takeIf { it >= 0 }
 
+    val inProgressSet: NumberedSet?
+        get() = exercises.firstNotNullOfOrNull { exercise ->
+            exercise.numberedWarmupSets?.firstOrNull { it.set.setState == SetState.InProgress }
+                ?: exercise.numberedWorkSets.firstOrNull { it.set.setState == SetState.InProgress }
+        }
+
     init {
         require(exercises.isNotEmpty()) { "Session must contain at least one exercise" }
         require(workoutSets.map { it.setState }.filter { it == SetState.InProgress }.size <= 1) {

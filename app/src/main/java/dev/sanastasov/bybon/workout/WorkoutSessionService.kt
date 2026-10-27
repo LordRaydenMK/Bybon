@@ -19,6 +19,7 @@ import dev.sanastasov.bybon.R
 import dev.sanastasov.bybon.mainModule
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.activeSession
+import dev.sanastasov.bybon.workout.ui.notificationText
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
@@ -65,7 +66,11 @@ class WorkoutSessionService : LifecycleService() {
             .setContentTitle(
                 getString(R.string.workout_session_notification_title, session.planName),
             )
-            .setContentText(getString(R.string.workout_session_notification_text))
+            .setContentText(
+                checkNotNull(session.inProgressSet) {
+                    "Active session must have an in-progress set"
+                }.notificationText,
+            )
             .setContentIntent(contentIntent)
             .setOngoing(true)
             .setSilent(true)

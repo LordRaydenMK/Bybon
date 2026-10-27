@@ -70,6 +70,22 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `inProgressSet is the first warmup after start`() {
+        val started = fullBodyA.toWorkoutSession()
+        val bench = started.exercises.first()
+
+        assert(started.inProgressSet == checkNotNull(bench.numberedWarmupSets).first())
+    }
+
+    @Test
+    fun `inProgressSet is the first work set after completing warmups`() {
+        val afterWarmups = fullBodyA.toWorkoutSession().completeWarmups(0)
+        val bench = afterWarmups.exercises.first()
+
+        assert(afterWarmups.inProgressSet == bench.numberedWorkSets.first())
+    }
+
+    @Test
     fun `update first work set weight - first set weight updated`() {
         val session = fullBodyA.toWorkoutSession()
 
