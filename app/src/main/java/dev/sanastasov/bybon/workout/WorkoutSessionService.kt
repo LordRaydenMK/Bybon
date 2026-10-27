@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -13,6 +14,7 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import dev.sanastasov.bybon.MainActivity
 import dev.sanastasov.bybon.R
 import dev.sanastasov.bybon.mainModule
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
@@ -52,12 +54,19 @@ class WorkoutSessionService : LifecycleService() {
             NotificationManager.IMPORTANCE_LOW,
         )
         manager.createNotificationChannel(channel)
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            NOTIFICATION_ID,
+            MainActivity.create(this, session.planId),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_workout_notification)
             .setContentTitle(
                 getString(R.string.workout_session_notification_title, session.planName),
             )
             .setContentText(getString(R.string.workout_session_notification_text))
+            .setContentIntent(contentIntent)
             .setOngoing(true)
             .setSilent(true)
             .build()
