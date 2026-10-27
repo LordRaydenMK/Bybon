@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -13,8 +14,10 @@ import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
+import dev.sanastasov.bybon.MainActivity
 import dev.sanastasov.bybon.R
 import dev.sanastasov.bybon.mainModule
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.activeSession
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -52,12 +55,24 @@ class WorkoutSessionService : LifecycleService() {
             NotificationManager.IMPORTANCE_LOW,
         )
         manager.createNotificationChannel(channel)
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            NOTIFICATION_ID,
+            Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(EXTRA_PLAN_ID, session.planId.id)
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_workout_notification)
             .setContentTitle(
                 getString(R.string.workout_session_notification_title, session.planName),
             )
             .setContentText(getString(R.string.workout_session_notification_text))
+            .setContentIntent(contentIntent)
             .setOngoing(true)
             .setSilent(true)
             .build()
@@ -79,6 +94,7 @@ class WorkoutSessionService : LifecycleService() {
     }
 
     companion object {
+        const val EXTRA_PLAN_ID = "dev.sanastasov.bybon.extra.PLAN_ID"
         private const val CHANNEL_ID = "workout_session"
         private const val NOTIFICATION_ID = 1001
 
@@ -91,3 +107,8 @@ class WorkoutSessionService : LifecycleService() {
         }
     }
 }
+
+fun Intent.workoutSessionPlanId(): WorkoutPlanId? =
+    getStringExtra(WorkoutSessionService.EXTRA_PLAN_ID)
+        ?.takeUnless(String::isBlank)
+        ?.let(::WorkoutPlanId)

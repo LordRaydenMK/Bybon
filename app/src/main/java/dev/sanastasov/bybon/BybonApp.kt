@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSerializable
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
@@ -16,6 +17,7 @@ import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorScreen
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.ui.details.ExerciseDetailsScreen
 import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import dev.sanastasov.bybon.workout.ui.library.ExerciseLibraryScreen
@@ -37,8 +39,12 @@ fun <T : NavKey> rememberNavBackStack(vararg elements: NavKey): NavBackStack<T> 
 
 @Suppress("LongMethod")
 @Composable
-fun MainModule.BybonApp() {
+fun MainModule.BybonApp(openSessionPlanId: WorkoutPlanId? = null, openSessionNonce: Int = 0) {
     val backStack: BackStack = rememberNavBackStack(Screen.MainScreen)
+    LaunchedEffect(openSessionPlanId, openSessionNonce) {
+        val planId = openSessionPlanId ?: return@LaunchedEffect
+        openWorkoutSessionIfMissing(backStack, planId)
+    }
     NavDisplay(
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
@@ -156,3 +162,12 @@ fun MainModule.BybonApp() {
         },
     )
 }
+
+internal fun openWorkoutSessionIfMissing(backStack: BackStack, planId: WorkoutPlanId) {
+    if (!backStack.containsWorkoutSession(planId)) {
+        backStack.add(Screen.WorkoutSession(planId))
+    }
+}
+
+internal fun Iterable<Screen>.containsWorkoutSession(planId: WorkoutPlanId): Boolean =
+    any { it == Screen.WorkoutSession(planId) }
