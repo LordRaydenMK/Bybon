@@ -13,7 +13,7 @@ import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
 import dev.sanastasov.bybon.R
 
-class WorkoutService : LifecycleService() {
+class WorkoutSessionService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
@@ -62,11 +62,11 @@ class WorkoutService : LifecycleService() {
         private const val NOTIFICATION_ID = 1001
 
         fun start(context: Context) {
-            context.startService(Intent(context, WorkoutService::class.java))
+            context.startService(Intent(context, WorkoutSessionService::class.java))
         }
 
         fun stop(context: Context) {
-            context.stopService(Intent(context, WorkoutService::class.java))
+            context.stopService(Intent(context, WorkoutSessionService::class.java))
         }
     }
 }

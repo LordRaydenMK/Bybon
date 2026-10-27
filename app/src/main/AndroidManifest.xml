@@ -29,7 +29,7 @@
         </activity>
 
         <service
-            android:name=".workout.WorkoutService"
+            android:name=".workout.WorkoutSessionService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property

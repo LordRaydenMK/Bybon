@@ -39,7 +39,7 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
-import dev.sanastasov.bybon.workout.WorkoutService
+import dev.sanastasov.bybon.workout.WorkoutSessionService
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -78,7 +78,7 @@ fun WorkoutModule.WorkoutSessionScreen(
     val context = LocalContext.current
     uiState?.let { session ->
         LaunchedEffect(session.id) {
-            WorkoutService.start(context)
+            WorkoutSessionService.start(context)
         }
         val pagerState = rememberPagerState(
             session.currentExerciseIndex ?: 0,
@@ -102,7 +102,7 @@ fun WorkoutModule.WorkoutSessionScreen(
                     )
                 }
 
-                WorkoutSessionEffect.StopService -> WorkoutService.stop(context)
+                WorkoutSessionEffect.StopService -> WorkoutSessionService.stop(context)
             }
         }
         SessionScreenContent(
