@@ -19,6 +19,9 @@ data class RestTimer(
     }
 }
 
+fun WorkoutSession.activeRestTimer(now: LocalDateTime): RestTimer? =
+    restTimer()?.takeIf { it.remaining(now) > Duration.ZERO }
+
 fun WorkoutSession.restTimer(): RestTimer? {
     val sets = setsInOrder()
     val lastCompletedIndex = sets.indexOfLast { it.set.setState is SetState.Completed }

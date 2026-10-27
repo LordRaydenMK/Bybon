@@ -14,11 +14,10 @@ val NumberedSet.previousLabel: String?
 val NumberedSet.weightRepsLabel: String
     get() = formatLoadedSet(set.weight, set.reps)
 
-val NumberedSet.notificationText: String
-    get() = buildString {
-        if (isWarmup) append("[w] ")
-        append("${set.exerciseDefinition.name} $weightRepsLabel")
-    }
+fun NumberedSet.notificationText(totalInGroup: Int): String = buildString {
+    if (isWarmup) append("[w] ")
+    append("$setNumber/$totalInGroup ${set.exerciseDefinition.name} $weightRepsLabel")
+}
 
 val NumberedSet.setTitle: String
     get() = if (isWarmup) "Warmup set" else "Set $workSetNumber"

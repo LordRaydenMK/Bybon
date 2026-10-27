@@ -27,6 +27,8 @@ class NumberedSetExtTest {
         )
 
         assert(numbered.workSetNumber == 1)
+        assert(numbered.warmupSetNumber == null)
+        assert(numbered.setNumber == 1)
         assert(numbered.setTitle == "Set 1")
         assert(numbered.oneRmLabel == "@ 62.07 kg 1RM")
         assert(numbered.previousLabel == "45 x 9")
@@ -69,6 +71,9 @@ class NumberedSetExtTest {
             index = 0,
         )
 
+        assert(numbered.warmupSetNumber == 1)
+        assert(numbered.workSetNumber == null)
+        assert(numbered.setNumber == 1)
         assert(numbered.setTitle == "Warmup set")
         assert(numbered.sessionContentDescription == "Warmup set in progress, 20 kg by 8")
         assert(numbered.completeSetContentDescription == "Mark Warmup set complete")
@@ -112,7 +117,24 @@ class NumberedSetExtTest {
             index = 0,
         )
 
-        assert(numbered.notificationText == "[w] Barbell Bench Press 40 kg x 8")
+        assert(numbered.notificationText(2) == "[w] 1/2 Barbell Bench Press 40 kg x 8")
+    }
+
+    @Test
+    fun `second warmup notification text uses warmup index over warmup count`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                bench,
+                Weight.kilograms(40),
+                4,
+                SetState.InProgress,
+            ),
+            isWarmup = true,
+            index = 1,
+        )
+
+        assert(numbered.setNumber == 2)
+        assert(numbered.notificationText(3) == "[w] 2/3 Barbell Bench Press 40 kg x 4")
     }
 
     @Test
@@ -128,7 +150,24 @@ class NumberedSetExtTest {
             index = 0,
         )
 
-        assert(numbered.notificationText == "Barbell Bench Press 50 kg x 9")
+        assert(numbered.notificationText(3) == "1/3 Barbell Bench Press 50 kg x 9")
+    }
+
+    @Test
+    fun `second work notification text uses set index over work count`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                bench,
+                Weight.kilograms(50),
+                9,
+                SetState.InProgress,
+            ),
+            isWarmup = false,
+            index = 1,
+        )
+
+        assert(numbered.setNumber == 2)
+        assert(numbered.notificationText(3) == "2/3 Barbell Bench Press 50 kg x 9")
     }
 
     @Test
@@ -145,6 +184,6 @@ class NumberedSetExtTest {
             index = 0,
         )
 
-        assert(numbered.notificationText == "${pullUp.name} - x 8")
+        assert(numbered.notificationText(3) == "1/3 ${pullUp.name} - x 8")
     }
 }

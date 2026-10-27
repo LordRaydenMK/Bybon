@@ -46,6 +46,9 @@ class RestTimerTest {
         assert(session.restTimer()!!.progress(completedAt.plusMinutes(1)) == 0.5f)
         assert(session.restTimer()!!.remaining(completedAt.plusMinutes(1)) == 1.minutes)
         assert(session.restTimer()!!.progress(completedAt.plusMinutes(2)) == null)
+        assert(session.activeRestTimer(completedAt) == session.restTimer())
+        assert(session.activeRestTimer(completedAt.plusMinutes(1)) == session.restTimer())
+        assert(session.activeRestTimer(completedAt.plusMinutes(2)) == null)
     }
 
     @Test
