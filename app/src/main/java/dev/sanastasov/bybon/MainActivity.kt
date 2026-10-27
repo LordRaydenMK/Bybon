@@ -10,7 +10,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val module = (application as BybonApplication).mainModule
+        val module = mainModule
         setContent {
             BybonTheme {
                 with(module) {

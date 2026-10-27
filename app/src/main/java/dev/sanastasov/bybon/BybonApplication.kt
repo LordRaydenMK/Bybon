@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon
 
 import android.app.Application
+import android.content.Context
 import dev.sanastasov.bybon.bodyweight.BodyWeightModule
 import dev.sanastasov.bybon.data.DbModule
 import dev.sanastasov.bybon.main.MainModule
@@ -16,3 +17,6 @@ class BybonApplication : Application() {
         )
     }
 }
+
+val Context.mainModule: MainModule
+    get() = (applicationContext as BybonApplication).mainModule

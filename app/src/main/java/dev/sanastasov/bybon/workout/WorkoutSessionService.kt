@@ -7,25 +7,42 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
 import androidx.lifecycle.LifecycleService
+import androidx.lifecycle.lifecycleScope
 import dev.sanastasov.bybon.R
+import dev.sanastasov.bybon.mainModule
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.activeSession
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapLatest
 
+private const val TAG = "WorkoutSessionService"
+
+@OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutSessionService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.d(TAG, "onCreate() called")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        startPlaceholderForeground()
+        with(mainModule) {
+            workoutsRepository.activeSession().mapLatest { session ->
+                Log.d(TAG, "activeSession mapLatest session: $session")
+                session?.let { displayNotification(session) }
+            }.launchIn(lifecycleScope)
+        }
         return START_NOT_STICKY
     }
 
-    private fun startPlaceholderForeground() {
+    private fun displayNotification(session: WorkoutSession) {
         val manager = getSystemService<NotificationManager>() ?: error("Failed to get NotificationManager")
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -35,7 +52,7 @@ class WorkoutSessionService : LifecycleService() {
         manager.createNotificationChannel(channel)
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_workout_notification)
-            .setContentTitle(getString(R.string.workout_session_notification_title))
+            .setContentTitle(getString(R.string.workout_session_notification_title, session.planName))
             .setContentText(getString(R.string.workout_session_notification_text))
             .setOngoing(true)
             .setSilent(true)
