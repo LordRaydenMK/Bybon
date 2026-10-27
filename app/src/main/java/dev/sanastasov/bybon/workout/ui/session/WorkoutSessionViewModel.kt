@@ -67,9 +67,8 @@ class WorkoutSessionViewModel(
                         val plan = repository.workoutPlans()
                             .first()
                             .first { it.id == planId }
-                        repository.updateWorkout(
-                            plan.toWorkoutSession(previousHistory = sessions),
-                        )
+                        val session = plan.toWorkoutSession(previousHistory = sessions)
+                        repository.updateWorkout(session)
                     }
 
                     existing.state !is WorkoutState.InProgress ||
@@ -88,6 +87,7 @@ class WorkoutSessionViewModel(
                     WorkoutSessionAction.OnCancelWorkout -> {
                         val session = uiState.value ?: return@withLock
                         repository.deleteWorkout(session.id)
+                        _effects.trySend(WorkoutSessionEffect.StopService)
                         _effects.trySend(WorkoutSessionEffect.NavigateBack)
                     }
 
@@ -145,6 +145,7 @@ class WorkoutSessionViewModel(
     private fun emitAfterSetCompleted(updated: WorkoutSession, action: WorkoutSessionAction) {
         if (action is WorkoutSessionAction.OnCompleteSet) {
             if (updated.state is WorkoutState.Completed) {
+                _effects.trySend(WorkoutSessionEffect.StopService)
                 _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
             } else {
                 val completedIndex = updated.exercises.indexOfFirst { it.id == action.exercise.id }

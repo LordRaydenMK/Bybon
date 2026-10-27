@@ -63,9 +63,11 @@ sealed class WorkoutSessionAction {
     data class OnExercisePicked(
         val exerciseId: String,
     ) : WorkoutSessionAction()
+
     data class OnRemoveExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
+
     data class OnOpenExerciseDetails(
         val exerciseId: String,
     ) : WorkoutSessionAction()
@@ -76,13 +78,18 @@ sealed class WorkoutSessionEffect {
     data class NavigateToSummary(
         val sessionId: WorkoutSessionId,
     ) : WorkoutSessionEffect()
+
     data class OpenExerciseLibrary(
         val existingExerciseIds: List<String>,
     ) : WorkoutSessionEffect()
+
     data class OpenExerciseDetails(
         val exerciseId: String,
     ) : WorkoutSessionEffect()
+
     data class ScrollToExercise(
         val page: Int,
     ) : WorkoutSessionEffect()
+
+    data object StopService : WorkoutSessionEffect()
 }

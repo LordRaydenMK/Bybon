@@ -22,12 +22,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,6 +39,7 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.WorkoutService
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -72,7 +75,11 @@ fun WorkoutModule.WorkoutSessionScreen(
         resultBus.removeResult(resultKey = EXERCISE_LIBRARY_RESULT_KEY)
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
     }
+    val context = LocalContext.current
     uiState?.let { session ->
+        LaunchedEffect(session.id) {
+            WorkoutService.start(context)
+        }
         val pagerState = rememberPagerState(
             session.currentExerciseIndex ?: 0,
         ) { session.exercises.size }
@@ -94,6 +101,8 @@ fun WorkoutModule.WorkoutSessionScreen(
                         effect.page.coerceIn(0, pagerState.pageCount - 1),
                     )
                 }
+
+                WorkoutSessionEffect.StopService -> WorkoutService.stop(context)
             }
         }
         SessionScreenContent(
