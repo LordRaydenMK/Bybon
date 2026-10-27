@@ -9,30 +9,43 @@ class OpenWorkoutSessionNavigationTest {
     private val otherPlanId = WorkoutPlanId("full-body-b")
 
     @Test
-    fun `missing session should be opened`() {
-        val screens = listOf(Screen.MainScreen)
+    fun `missing session is pushed`() {
+        val backStack = mutableListOf<Screen>(Screen.MainScreen)
 
-        assert(!screens.containsWorkoutSession(planId))
+        openWorkoutSessionIfMissing(backStack, planId)
+
+        assert(backStack == listOf(Screen.MainScreen, Screen.WorkoutSession(planId)))
     }
 
     @Test
-    fun `session already on the stack should not be opened again`() {
-        val screens = listOf(
+    fun `existing session is not pushed again`() {
+        val session = Screen.WorkoutSession(planId)
+        val backStack = mutableListOf(
             Screen.MainScreen,
-            Screen.WorkoutSession(planId),
+            session,
             Screen.ExerciseDetails("bench-press"),
         )
 
-        assert(screens.containsWorkoutSession(planId))
+        openWorkoutSessionIfMissing(backStack, planId)
+
+        assert(
+            backStack == listOf(
+                Screen.MainScreen,
+                session,
+                Screen.ExerciseDetails("bench-press"),
+            ),
+        )
     }
 
     @Test
-    fun `a session for a different plan does not count`() {
-        val screens = listOf(
+    fun `session for another plan is still pushed`() {
+        val backStack = mutableListOf<Screen>(
             Screen.MainScreen,
             Screen.WorkoutSession(otherPlanId),
         )
 
-        assert(!screens.containsWorkoutSession(planId))
+        openWorkoutSessionIfMissing(backStack, planId)
+
+        assert(backStack.last() == Screen.WorkoutSession(planId))
     }
 }

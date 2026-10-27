@@ -39,11 +39,13 @@ fun <T : NavKey> rememberNavBackStack(vararg elements: NavKey): NavBackStack<T> 
 
 @Suppress("LongMethod")
 @Composable
-fun MainModule.BybonApp(openSessionPlanId: WorkoutPlanId? = null, openSessionNonce: Int = 0) {
+fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.None) {
     val backStack: BackStack = rememberNavBackStack(Screen.MainScreen)
-    LaunchedEffect(openSessionPlanId, openSessionNonce) {
-        val planId = openSessionPlanId ?: return@LaunchedEffect
-        openWorkoutSessionIfMissing(backStack, planId)
+    LaunchedEffect(openSession) {
+        when (openSession) {
+            OpenSessionRequest.None -> Unit
+            is OpenSessionRequest.Open -> openWorkoutSessionIfMissing(backStack, openSession.planId)
+        }
     }
     NavDisplay(
         entryDecorators = listOf(
@@ -163,11 +165,9 @@ fun MainModule.BybonApp(openSessionPlanId: WorkoutPlanId? = null, openSessionNon
     )
 }
 
-internal fun openWorkoutSessionIfMissing(backStack: BackStack, planId: WorkoutPlanId) {
-    if (!backStack.containsWorkoutSession(planId)) {
-        backStack.add(Screen.WorkoutSession(planId))
+internal fun openWorkoutSessionIfMissing(backStack: MutableList<Screen>, planId: WorkoutPlanId) {
+    val target = Screen.WorkoutSession(planId)
+    if (target !in backStack) {
+        backStack.add(target)
     }
 }
-
-internal fun Iterable<Screen>.containsWorkoutSession(planId: WorkoutPlanId): Boolean =
-    any { it == Screen.WorkoutSession(planId) }

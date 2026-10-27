@@ -17,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import dev.sanastasov.bybon.MainActivity
 import dev.sanastasov.bybon.R
 import dev.sanastasov.bybon.mainModule
-import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.activeSession
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,12 +57,7 @@ class WorkoutSessionService : LifecycleService() {
         val contentIntent = PendingIntent.getActivity(
             this,
             NOTIFICATION_ID,
-            Intent(this, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP
-                putExtra(EXTRA_PLAN_ID, session.planId.id)
-            },
+            MainActivity.create(this, session.planId),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -94,7 +88,6 @@ class WorkoutSessionService : LifecycleService() {
     }
 
     companion object {
-        const val EXTRA_PLAN_ID = "dev.sanastasov.bybon.extra.PLAN_ID"
         private const val CHANNEL_ID = "workout_session"
         private const val NOTIFICATION_ID = 1001
 
@@ -107,8 +100,3 @@ class WorkoutSessionService : LifecycleService() {
         }
     }
 }
-
-fun Intent.workoutSessionPlanId(): WorkoutPlanId? =
-    getStringExtra(WorkoutSessionService.EXTRA_PLAN_ID)
-        ?.takeUnless(String::isBlank)
-        ?.let(::WorkoutPlanId)
