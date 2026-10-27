@@ -86,6 +86,19 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `inProgressSetGroup uses warmup count then work set count`() {
+        val started = fullBodyA.toWorkoutSession()
+        val warmupGroup = checkNotNull(started.inProgressSetGroup())
+        assert(warmupGroup.set == started.inProgressSet)
+        assert(warmupGroup.totalInGroup == 3)
+
+        val afterWarmups = started.completeWarmups(0)
+        val workGroup = checkNotNull(afterWarmups.inProgressSetGroup())
+        assert(workGroup.set == afterWarmups.inProgressSet)
+        assert(workGroup.totalInGroup == 3)
+    }
+
+    @Test
     fun `update first work set weight - first set weight updated`() {
         val session = fullBodyA.toWorkoutSession()
 

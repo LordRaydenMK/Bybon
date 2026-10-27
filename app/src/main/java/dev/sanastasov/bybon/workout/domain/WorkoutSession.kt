@@ -34,10 +34,7 @@ data class WorkoutSession(
         get() = exercises.indexOfFirst { it.state != ExerciseState.Completed }.takeIf { it >= 0 }
 
     val inProgressSet: NumberedSet?
-        get() = exercises.firstNotNullOfOrNull { exercise ->
-            exercise.numberedWarmupSets?.firstOrNull { it.set.setState == SetState.InProgress }
-                ?: exercise.numberedWorkSets.firstOrNull { it.set.setState == SetState.InProgress }
-        }
+        get() = inProgressSetGroup()?.set
 
     init {
         require(exercises.isNotEmpty()) { "Session must contain at least one exercise" }
@@ -48,3 +45,18 @@ data class WorkoutSession(
         }
     }
 }
+
+data class InProgressSetGroup(
+    val set: NumberedSet,
+    val totalInGroup: Int,
+)
+
+fun WorkoutSession.inProgressSetGroup(): InProgressSetGroup? =
+    exercises.firstNotNullOfOrNull { exercise ->
+        exercise.numberedWarmupSets
+            ?.firstOrNull { it.set.setState == SetState.InProgress }
+            ?.let { InProgressSetGroup(it, checkNotNull(exercise.warmupSets).size) }
+            ?: exercise.numberedWorkSets
+                .firstOrNull { it.set.setState == SetState.InProgress }
+                ?.let { InProgressSetGroup(it, exercise.sets.size) }
+    }

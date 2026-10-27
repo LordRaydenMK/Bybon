@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
@@ -18,9 +19,11 @@ import dev.sanastasov.bybon.MainActivity
 import dev.sanastasov.bybon.R
 import dev.sanastasov.bybon.mainModule
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.activeRestTimer
 import dev.sanastasov.bybon.workout.domain.activeSession
-import dev.sanastasov.bybon.workout.ui.notificationText
+import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 
@@ -39,13 +42,20 @@ class WorkoutSessionService : LifecycleService() {
         with(mainModule) {
             workoutsRepository.activeSession().mapLatest { session ->
                 Log.d(TAG, "activeSession mapLatest session: $session")
-                session?.let { displayNotification(session) }
+                session ?: return@mapLatest
+                displayNotification(session)
+                val rest = session.activeRestTimer(LocalDateTime.now()) ?: return@mapLatest
+                delay(rest.remaining(LocalDateTime.now()).inWholeMilliseconds)
+                displayNotification(session)
             }.launchIn(lifecycleScope)
         }
         return START_NOT_STICKY
     }
 
-    private fun displayNotification(session: WorkoutSession) {
+    private fun displayNotification(
+        session: WorkoutSession,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
         val manager = getSystemService<NotificationManager>() ?: error(
             "Failed to get NotificationManager",
         )
@@ -61,20 +71,7 @@ class WorkoutSessionService : LifecycleService() {
             MainActivity.create(this, session.planId),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_workout_notification)
-            .setContentTitle(
-                getString(R.string.workout_session_notification_title, session.planName),
-            )
-            .setContentText(
-                checkNotNull(session.inProgressSet) {
-                    "Active session must have an in-progress set"
-                }.notificationText,
-            )
-            .setContentIntent(contentIntent)
-            .setOngoing(true)
-            .setSilent(true)
-            .build()
+        val notification = sessionNotification(session, contentIntent, now)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceCompat.startForeground(
                 this,
@@ -92,9 +89,79 @@ class WorkoutSessionService : LifecycleService() {
         }
     }
 
+    private fun sessionNotification(
+        session: WorkoutSession,
+        contentIntent: PendingIntent,
+        now: LocalDateTime,
+    ): Notification {
+        val content = session.toNotificationContent(now)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_workout_notification)
+            .setContentTitle(
+                getString(R.string.workout_session_notification_title, content.planName),
+            )
+            .setContentText(content.contentText)
+            .setContentIntent(contentIntent)
+            .setOngoing(true)
+            .setSilent(true)
+            .setRequestPromotedOngoing(true)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(content.chronometerCountDown)
+            .setWhen(content.whenMillis)
+            .setShowWhen(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
+            builder.setStyle(sessionMetricStyle(content))
+        }
+        return builder.build()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.CINNAMON_BUN)
+    private fun sessionMetricStyle(content: WorkoutSessionNotification): NotificationCompat.Style {
+        val style = NotificationCompat.MetricStyle()
+            .addMetric(
+                NotificationCompat.Metric(
+                    NotificationCompat.Metric.TimeDifference.forStopwatch(
+                        content.elapsedStart,
+                        NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
+                    ),
+                    getString(R.string.workout_session_notification_elapsed),
+                ),
+            )
+        if (content.restEnd != null) {
+            style.addMetric(
+                NotificationCompat.Metric(
+                    NotificationCompat.Metric.TimeDifference.forTimer(
+                        content.restEnd,
+                        NotificationCompat.Metric.TimeDifference.FORMAT_CHRONOMETER,
+                    ),
+                    getString(R.string.workout_session_notification_rest),
+                ),
+            )
+        }
+        style.addMetric(
+            NotificationCompat.Metric(
+                NotificationCompat.Metric.FixedText(content.currentSetValue),
+                currentSetMetricLabel(content),
+            ),
+        )
+        val criticalIndex = if (content.restEnd != null) REST_METRIC_INDEX else ELAPSED_METRIC_INDEX
+        return style.setCriticalMetric(criticalIndex)
+    }
+
+    private fun currentSetMetricLabel(content: WorkoutSessionNotification): String {
+        val labelRes = if (content.currentSetIsWarmup) {
+            R.string.workout_session_notification_warmup_set
+        } else {
+            R.string.workout_session_notification_work_set
+        }
+        return getString(labelRes, content.currentSetNumber, content.currentSetTotal)
+    }
+
     companion object {
         private const val CHANNEL_ID = "workout_session"
         private const val NOTIFICATION_ID = 1001
+        private const val ELAPSED_METRIC_INDEX = 0
+        private const val REST_METRIC_INDEX = 1
 
         fun start(context: Context) {
             context.startService(Intent(context, WorkoutSessionService::class.java))
