@@ -107,7 +107,7 @@ class WorkoutSessionService : LifecycleService() {
             .setRequestPromotedOngoing(true)
             .setUsesChronometer(true)
             .setChronometerCountDown(content.chronometerCountDown)
-            .setWhen(content.whenMillis)
+            .setWhen(content.whenTime.toEpochMilli())
             .setShowWhen(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
             builder.setStyle(sessionMetricStyle(content))

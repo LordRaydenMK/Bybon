@@ -13,7 +13,6 @@ import kotlin.time.toJavaDuration
 data class WorkoutSessionNotification(
     val planName: String,
     val contentText: String,
-    val whenMillis: Long,
     val chronometerCountDown: Boolean,
     val elapsedStart: Instant,
     val restEnd: Instant?,
@@ -21,7 +20,10 @@ data class WorkoutSessionNotification(
     val currentSetTotal: Int,
     val currentSetIsWarmup: Boolean,
     val currentSetValue: String,
-)
+) {
+    val whenTime: Instant
+        get() = restEnd ?: elapsedStart
+}
 
 fun WorkoutSession.toNotificationContent(
     now: LocalDateTime,
@@ -34,11 +36,9 @@ fun WorkoutSession.toNotificationContent(
     val restEnd = activeRestTimer(now)?.let { timer ->
         timer.startedAt.plus(timer.duration.toJavaDuration()).atZone(zone).toInstant()
     }
-    val whenInstant = restEnd ?: elapsedStart
     return WorkoutSessionNotification(
         planName = planName,
         contentText = group.set.notificationText(group.totalInGroup),
-        whenMillis = whenInstant.toEpochMilli(),
         chronometerCountDown = restEnd != null,
         elapsedStart = elapsedStart,
         restEnd = restEnd,

@@ -25,7 +25,7 @@ class WorkoutSessionNotificationTest {
         assert(content.planName == session.planName)
         assert(content.contentText == "[w] 1/3 Barbell Bench Press ${inProgress.weightRepsLabel}")
         assert(content.chronometerCountDown == false)
-        assert(content.whenMillis == startedAt.atZone(zone).toInstant().toEpochMilli())
+        assert(content.whenTime == startedAt.atZone(zone).toInstant())
         assert(content.elapsedStart == startedAt.atZone(zone).toInstant())
         assert(content.restEnd == null)
         assert(content.currentSetIsWarmup)
@@ -48,7 +48,7 @@ class WorkoutSessionNotificationTest {
 
         assert(content.contentText == "[w] 2/3 Barbell Bench Press ${inProgress.weightRepsLabel}")
         assert(content.chronometerCountDown == false)
-        assert(content.whenMillis == startedAt.atZone(zone).toInstant().toEpochMilli())
+        assert(content.whenTime == startedAt.atZone(zone).toInstant())
         assert(content.restEnd == null)
         assert(content.currentSetIsWarmup)
         assert(content.currentSetNumber == 2)
@@ -67,7 +67,7 @@ class WorkoutSessionNotificationTest {
         val content = session.toNotificationContent(completedAt.plusMinutes(1), zone)
 
         assert(content.chronometerCountDown)
-        assert(content.whenMillis == restEnd.atZone(zone).toInstant().toEpochMilli())
+        assert(content.whenTime == restEnd.atZone(zone).toInstant())
         assert(content.restEnd == restEnd.atZone(zone).toInstant())
         assert(content.elapsedStart == startedAt.atZone(zone).toInstant())
         assert(content.currentSetIsWarmup == false)
@@ -85,7 +85,7 @@ class WorkoutSessionNotificationTest {
         val content = session.toNotificationContent(completedAt.plusMinutes(2), zone)
 
         assert(content.chronometerCountDown == false)
-        assert(content.whenMillis == startedAt.atZone(zone).toInstant().toEpochMilli())
+        assert(content.whenTime == startedAt.atZone(zone).toInstant())
         assert(content.restEnd == null)
         assert(content.currentSetIsWarmup == false)
         assert(content.currentSetNumber == 1)
