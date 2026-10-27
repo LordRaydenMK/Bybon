@@ -98,4 +98,53 @@ class NumberedSetExtTest {
         assert(numbered.weightFieldContentDescription == "Set 1 weight")
         assert(numbered.repsFieldContentDescription == "Set 1 reps")
     }
+
+    @Test
+    fun `warmup notification text prefixes w and uses weight times reps`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                bench,
+                Weight.kilograms(40),
+                8,
+                SetState.InProgress,
+            ),
+            isWarmup = true,
+            index = 0,
+        )
+
+        assert(numbered.notificationText == "[w] Barbell Bench Press 40 kg x 8")
+    }
+
+    @Test
+    fun `work notification text uses exercise name and weight times reps`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                bench,
+                Weight.kilograms(50),
+                9,
+                SetState.InProgress,
+            ),
+            isWarmup = false,
+            index = 0,
+        )
+
+        assert(numbered.notificationText == "Barbell Bench Press 50 kg x 9")
+    }
+
+    @Test
+    fun `notification text uses dash when load is missing`() {
+        val pullUp = catalogExercise("assisted-pull-ups")
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                pullUp,
+                null,
+                8,
+                SetState.InProgress,
+            ),
+            isWarmup = false,
+            index = 0,
+        )
+
+        assert(numbered.notificationText == "${pullUp.name} - x 8")
+    }
 }

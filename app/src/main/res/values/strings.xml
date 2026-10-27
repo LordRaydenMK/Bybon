@@ -2,5 +2,4 @@
     <string name="app_name">Bybon</string>
     <string name="workout_session_notification_channel_name">Active Workouts</string>
     <string name="workout_session_notification_title">In Progress: %1$s</string>
-    <string name="workout_session_notification_text">There is an active workout session in progress</string>
 </resources>
