@@ -43,7 +43,9 @@ class WorkoutSessionService : LifecycleService() {
     }
 
     private fun displayNotification(session: WorkoutSession) {
-        val manager = getSystemService<NotificationManager>() ?: error("Failed to get NotificationManager")
+        val manager = getSystemService<NotificationManager>() ?: error(
+            "Failed to get NotificationManager",
+        )
         val channel = NotificationChannel(
             CHANNEL_ID,
             getString(R.string.workout_session_notification_channel_name),
@@ -52,7 +54,9 @@ class WorkoutSessionService : LifecycleService() {
         manager.createNotificationChannel(channel)
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_workout_notification)
-            .setContentTitle(getString(R.string.workout_session_notification_title, session.planName))
+            .setContentTitle(
+                getString(R.string.workout_session_notification_title, session.planName),
+            )
             .setContentText(getString(R.string.workout_session_notification_text))
             .setOngoing(true)
             .setSilent(true)
