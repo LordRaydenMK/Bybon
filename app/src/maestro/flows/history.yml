@@ -30,11 +30,11 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "20 Aug 2026, started 17:59, duration 00:56"
 - assertVisible: "Exercise"
 - assertVisible: "kg x reps"
-- assertVisible: "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM"
+- assertVisible: "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM, +0.66kg"
 - tapOn: "Upper body B"
 - assertVisible: "Full body B without legs"
 - assertVisible: "Rep range 11-15"
-- assertVisible: "1. 20 kg x 14, 29.33 kg 1RM"
+- assertVisible: "1. 20 kg x 14, 29.33 kg 1RM, +0.66kg"
 - back
 - assertVisible: "History"
 - tapOn: "Workout Plans"
