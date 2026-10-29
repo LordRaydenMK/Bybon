@@ -421,6 +421,10 @@ class WorkoutHistoryViewModelTest {
             assert(history.sessions.first().date == LocalDate.of(2026, 8, 20))
             assert(history.sessions.first().startTime == "17:59")
             assert(history.sessions.first().duration == "00:56")
+            assert(
+                history.sessions.first().exercises.first().contentDescription() ==
+                    "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM, -",
+            )
             assert(history.sessions.any { it.planName == "Full Body B" })
             assert(history.sessions.any { it.planName == "Full Body A" })
         }
