@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -69,15 +70,22 @@ internal fun SetValuesRow(
         Box(Modifier.width(ExerciseCardRepsColWidth), contentAlignment = Alignment.Center) {
             reps()
         }
-        Text(
-            oneRm.orEmpty(),
+        Column(
             Modifier.width(ExerciseCardOneRmColWidth),
-            color = color,
-            fontWeight = valueFontWeight,
-            style = MaterialTheme.typography.labelMedium,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-        )
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                oneRm.orEmpty(),
+                color = color,
+                fontWeight = valueFontWeight,
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            if (oneRm != null) {
+                SecondarySetLabel(numbered.oneRmDeltaLabel)
+            }
+        }
         Spacer(Modifier.weight(1f))
         Box(
             Modifier.width(ExerciseCardTrailingColWidth),
@@ -109,8 +117,7 @@ private fun SetBadgeColumn(
 @Composable
 private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
     val previous = numbered.set.previous
-    Text(
-        previous?.let { "${it.weight.toLoadLabel()} x ${it.reps}" }.orEmpty(),
+    Column(
         Modifier
             .width(ExerciseCardPreviousColWidth)
             .then(
@@ -124,6 +131,26 @@ private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
                     Modifier
                 },
             ),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            previous?.let { "${it.weight.toLoadLabel()} x ${it.reps}" }.orEmpty(),
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (!numbered.isWarmup && previous != null) {
+            SecondarySetLabel(previous.oneRm.toOneRmColumnLabel())
+        }
+    }
+}
+
+@Composable
+private fun SecondarySetLabel(text: String) {
+    Text(
+        text,
         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,

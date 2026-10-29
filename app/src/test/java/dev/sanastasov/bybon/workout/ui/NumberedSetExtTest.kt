@@ -31,10 +31,11 @@ class NumberedSetExtTest {
         assert(numbered.setNumber == 1)
         assert(numbered.setTitle == "Set 1")
         assert(numbered.oneRmLabel == "@ 62.07 kg 1RM")
-        assert(numbered.previousLabel == "45 x 9")
+        assert(numbered.oneRmDeltaLabel == "+4.21kg")
+        assert(numbered.previousLabel == "45 x 9, @ 57.86 kg 1RM")
         assert(
             numbered.overviewContentDescription ==
-                "Set 1, 50 kg by 8, @ 62.07 kg 1RM. Previous: 45 x 9",
+                "Set 1, 50 kg by 8, @ 62.07 kg 1RM, +4.21kg. Previous: 45 x 9, @ 57.86 kg 1RM",
         )
         assert(numbered.completedContentDescription == "1. 50 kg x 8 @ 62.07 kg 1RM")
     }
@@ -54,7 +55,8 @@ class NumberedSetExtTest {
 
         assert(numbered.oneRmLabel == "-")
         assert(numbered.weightRepsLabel == "- x 8")
-        assert(numbered.overviewContentDescription == "Set 1, - by 8, -")
+        assert(numbered.oneRmDeltaLabel == "-")
+        assert(numbered.overviewContentDescription == "Set 1, - by 8, -, -")
         assert(numbered.completedContentDescription == "1. - x 8 @ -")
     }
 
@@ -97,7 +99,7 @@ class NumberedSetExtTest {
 
         assert(
             numbered.sessionContentDescription ==
-                "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM",
+                "Set 1 in progress, 50 kg by 8, @ 62.07 kg 1RM, -",
         )
         assert(numbered.completeSetContentDescription == "Mark Set 1 complete")
         assert(numbered.weightFieldContentDescription == "Set 1 weight")

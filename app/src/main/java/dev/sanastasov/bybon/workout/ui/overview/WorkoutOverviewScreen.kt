@@ -273,9 +273,16 @@ private fun OverviewScreenContentPreview() {
             duration = Duration.ZERO,
         )
     }
+    val session = fullBodyA.toOverviewSession(previous)
     OverviewScreenContent(
         WorkoutOverviewUiState(
-            fullBodyA.toOverviewSession(previous),
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.map { set -> set.copy(reps = set.reps + 1) },
+                    )
+                },
+            ),
             previousDate = previousPlanDateLabel(previous.startedAt),
         ),
         {},

@@ -39,7 +39,12 @@ private fun previewSessionWithPrevious(): WorkoutSession {
             duration = Duration.ZERO,
         )
     }
-    return fullBodyA.toWorkoutSession(previous)
+    val session = fullBodyA.toWorkoutSession(previous)
+    return session.copy(
+        exercises = session.exercises.map { exercise ->
+            exercise.copy(sets = exercise.sets.map { set -> set.copy(reps = set.reps + 1) })
+        },
+    )
 }
 
 @Preview(showBackground = true, name = "Overview card")

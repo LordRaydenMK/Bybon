@@ -8,8 +8,16 @@ val NumberedSet.oneRmLabel: String
 
 val NumberedSet.previousLabel: String?
     get() = set.previous?.let { previous ->
-        "${previous.weight.toLoadLabel()} x ${previous.reps}"
+        buildString {
+            append("${previous.weight.toLoadLabel()} x ${previous.reps}")
+            if (!isWarmup) {
+                append(", ${previous.oneRm.toOneRmLabel()}")
+            }
+        }
     }
+
+val NumberedSet.oneRmDeltaLabel: String
+    get() = formatOneRmDelta(set.oneRm, set.previous?.oneRm)
 
 val NumberedSet.weightRepsLabel: String
     get() = formatLoadedSet(set.weight, set.reps)
@@ -26,7 +34,7 @@ val NumberedSet.overviewContentDescription: String
     get() = buildString {
         append("$setTitle, ${set.weight.toContentLoadLabel()} by ${set.reps}")
         if (!isWarmup) {
-            append(", $oneRmLabel")
+            append(", $oneRmLabel, $oneRmDeltaLabel")
         }
         previousLabel?.let { append(". Previous: $it") }
     }
@@ -39,7 +47,7 @@ val NumberedSet.sessionContentDescription: String
         }
         append(", ${set.weight.toContentLoadLabel()} by ${set.reps}")
         if (!isWarmup) {
-            append(", $oneRmLabel")
+            append(", $oneRmLabel, $oneRmDeltaLabel")
         }
         previousLabel?.let { append(". Previous: $it") }
     }

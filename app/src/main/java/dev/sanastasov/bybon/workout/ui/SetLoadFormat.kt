@@ -1,7 +1,9 @@
 package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.Weight
-import java.util.Locale
+import java.util.*
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 const val MISSING_LOAD_LABEL = "-"
 
@@ -16,6 +18,15 @@ fun Weight?.toOneRmColumnLabel(): String =
 
 fun Weight?.toOneRmLabel(): String =
     this?.let { "@ ${formatOneRmKg(it.kilogramsValue)} kg 1RM" } ?: MISSING_LOAD_LABEL
+
+fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
+    if (current == null || previous == null) return MISSING_LOAD_LABEL
+    val deltaHundredths =
+        (current.kilogramsValue * 100f).roundToInt() - (previous.kilogramsValue * 100f).roundToInt()
+    if (deltaHundredths == 0) return MISSING_LOAD_LABEL
+    val amount = formatOneRmKg(abs(deltaHundredths) / 100f)
+    return if (deltaHundredths > 0) "+${amount}kg" else "-${amount}kg"
+}
 
 fun formatLoadedSet(weight: Weight?, reps: Int): String = "${weight.toContentLoadLabel()} x $reps"
 
