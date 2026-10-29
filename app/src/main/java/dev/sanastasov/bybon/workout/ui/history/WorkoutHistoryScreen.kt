@@ -32,13 +32,20 @@ import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.catalogExercise
+import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.ui.SessionMeta
 import dev.sanastasov.bybon.workout.ui.SetLoadOneRmHeader
 import dev.sanastasov.bybon.workout.ui.SetLoadOneRmRow
+import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.setLoadOneRmDescription
+import dev.sanastasov.bybon.workout.ui.toLoadLabel
+import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun WorkoutHistoryTab(
@@ -234,29 +241,49 @@ private fun WorkoutHistoryContentPreview() {
         WorkoutHistoryTab(
             uiState = WorkoutHistoryUiState.History(
                 listOf(
-                    WorkoutSessionHistoryUi(
-                        id = WorkoutSessionId(
-                            WorkoutPlanId("full-body-b"),
-                            LocalDate.of(2026, 8, 13).atTime(18, 0),
-                        ),
+                    previewHistorySession(
+                        planId = "upper-body-b",
+                        planName = "Upper body B",
+                        startedAt = LocalDateTime.of(2026, 8, 20, 17, 59),
+                        durationSeconds = 3367,
+                        previewTopSet("incline-db-press", 20f, 14),
+                        previewTopSet("chest-supported-db-row", 22f, 15),
+                        previewTopSet("incline-db-curl", 9f, 15),
+                        previewTopSet("lateral-raise-machine", 32.5f, 12),
+                        previewTopSet("machine-seated-crunch", 35f, 15),
+                    ),
+                    previewHistorySession(
+                        planId = "upper-body-a",
+                        planName = "Upper body A",
+                        startedAt = LocalDateTime.of(2026, 8, 18, 18, 12),
+                        durationSeconds = 3313,
+                        previewTopSet("bench-press", 60f, 8),
+                        previewTopSet("assisted-pull-ups", 12.5f, 8),
+                        previewTopSet("dumbbell-upright-row", 16f, 11),
+                        previewTopSet("db-skull-crusher", 9f, 16),
+                        previewTopSet("machine-seated-crunch", 35f, 15),
+                    ),
+                    previewHistorySession(
+                        planId = "full-body-b",
                         planName = "Full Body B",
-                        date = LocalDate.of(2026, 8, 13),
-                        startTime = "18:00",
-                        duration = "00:47",
-                        exercises = listOf(
-                            ExerciseTopSetUi(
-                                name = "Romanian Deadlift",
-                                weightKg = "45",
-                                reps = 12,
-                                oneRm = Weight.kilograms(63f),
-                            ),
-                            ExerciseTopSetUi(
-                                name = "Incline Dumbbell Press",
-                                weightKg = "20",
-                                reps = 13,
-                                oneRm = Weight.kilograms(28.67f),
-                            ),
-                        ),
+                        startedAt = LocalDateTime.of(2026, 8, 13, 18, 25),
+                        durationSeconds = 2864,
+                        previewTopSet("romanian-deadlift", 45f, 12),
+                        previewTopSet("incline-db-press", 20f, 13),
+                        previewTopSet("bulgarian-split-squat", 14f, 10),
+                        previewTopSet("chest-supported-db-row", 22f, 14),
+                    ),
+                    previewHistorySession(
+                        planId = "full-body-a",
+                        planName = "Full Body A",
+                        startedAt = LocalDateTime.of(2026, 8, 10, 11, 54),
+                        durationSeconds = 3877,
+                        previewTopSet("bench-press", 57.5f, 10),
+                        previewTopSet("squat", 45f, 12),
+                        previewTopSet("assisted-pull-ups", 12.5f, 10),
+                        previewTopSet("seated-leg-curl", 32.5f, 16),
+                        previewTopSet("dumbbell-upright-row", 16f, 10),
+                        previewTopSet("triceps-press-machine", 57.5f, 15),
                     ),
                 ),
             ),
@@ -265,6 +292,31 @@ private fun WorkoutHistoryContentPreview() {
             onImportDone = {},
         )
     }
+}
+
+private fun previewHistorySession(
+    planId: String,
+    planName: String,
+    startedAt: LocalDateTime,
+    durationSeconds: Int,
+    vararg exercises: ExerciseTopSetUi,
+) = WorkoutSessionHistoryUi(
+    id = WorkoutSessionId(WorkoutPlanId(planId), startedAt),
+    planName = planName,
+    date = startedAt.toLocalDate(),
+    startTime = startedAt.toStartTimeLabel(),
+    duration = durationSeconds.seconds.formatElapsedClock(),
+    exercises = exercises.toList(),
+)
+
+private fun previewTopSet(exerciseId: String, kg: Float, reps: Int): ExerciseTopSetUi {
+    val weight = Weight.kilograms(kg)
+    return ExerciseTopSetUi(
+        name = catalogExercise(exerciseId).name,
+        weightKg = weight.toLoadLabel(),
+        reps = reps,
+        oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
+    )
 }
 
 @Preview
