@@ -54,6 +54,7 @@ data class ExerciseTopSetUi(
     val weightKg: String,
     val reps: Int,
     val oneRm: Weight?,
+    val previousOneRm: Weight? = null,
 )
 
 sealed class WorkoutHistoryAction {
@@ -88,4 +89,5 @@ private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi = ExerciseTopSetUi(
     weightKg = topSet.weight.toLoadLabel(),
     reps = topSet.reps,
     oneRm = topSet.oneRm,
+    previousOneRm = topSet.previous?.oneRm,
 )

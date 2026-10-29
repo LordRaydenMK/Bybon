@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -183,6 +184,35 @@ class WorkoutSummaryViewModelTest {
         assert(content.exercises.single().sets.single().weightKg == "-")
         assert(content.exercises.single().sets.single().reps == 8)
         assert(content.exercises.single().sets.single().oneRm == null)
+        assert(content.exercises.single().sets.single().previousOneRm == null)
+    }
+
+    @Test
+    fun `summary work sets include previous 1RM`() {
+        val session = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(
+                WorkoutExercise(
+                    exerciseDefinition = catalogExercise("romanian-deadlift"),
+                    repRange = 8..10,
+                    sets = listOf(
+                        ExerciseSet(
+                            catalogExercise("romanian-deadlift"),
+                            Weight.kilograms(45),
+                            12,
+                            SetState.Completed(),
+                            PreviousSetPerformance(Weight.kilograms(45), 9),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val set = session.toSummaryUi().exercises.single().sets.single()
+        assert(set.oneRm == oneRm(45f, 12))
+        assert(set.previousOneRm == oneRm(45f, 9))
     }
 
     @Test

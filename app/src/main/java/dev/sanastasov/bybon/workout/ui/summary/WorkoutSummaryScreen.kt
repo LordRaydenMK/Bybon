@@ -257,12 +257,13 @@ private fun WorkSetRow(set: WorkoutSummarySetUi) {
         oneRm = set.oneRm,
         rowDescription = set.contentDescription(),
         expandLeading = false,
+        previousOneRm = set.previousOneRm,
     )
 }
 
 internal fun WorkoutSummarySetUi.contentDescription(): String {
     val number = checkNotNull(number)
-    return "$number. ${setLoadOneRmDescription(weightKg, reps, oneRm)}"
+    return "$number. ${setLoadOneRmDescription(weightKg, reps, oneRm, previousOneRm)}"
 }
 
 @Preview
@@ -283,8 +284,20 @@ private fun WorkoutSummaryContentPreview() {
                         sets = listOf(
                             WorkoutSummarySetUi(null, "20", 8, null, isWarmup = true),
                             WorkoutSummarySetUi(null, "35", 4, null, isWarmup = true),
-                            WorkoutSummarySetUi(1, "45", 12, Weight.kilograms(63f)),
-                            WorkoutSummarySetUi(2, "45", 12, Weight.kilograms(63f)),
+                            WorkoutSummarySetUi(
+                                1,
+                                "45",
+                                12,
+                                Weight.kilograms(63f),
+                                previousOneRm = Weight.kilograms(57.86f),
+                            ),
+                            WorkoutSummarySetUi(
+                                2,
+                                "45",
+                                12,
+                                Weight.kilograms(63f),
+                                previousOneRm = Weight.kilograms(57.86f),
+                            ),
                         ),
                     ),
                     WorkoutSummaryExerciseUi(
@@ -292,9 +305,27 @@ private fun WorkoutSummaryContentPreview() {
                         name = "Incline Dumbbell Press",
                         notes = listOf("Rep range 11-15"),
                         sets = listOf(
-                            WorkoutSummarySetUi(1, "20", 13, Weight.kilograms(28.67f)),
-                            WorkoutSummarySetUi(2, "20", 11, Weight.kilograms(27.33f)),
-                            WorkoutSummarySetUi(3, "20", 8, Weight.kilograms(24.83f)),
+                            WorkoutSummarySetUi(
+                                1,
+                                "20",
+                                13,
+                                Weight.kilograms(28.67f),
+                                previousOneRm = Weight.kilograms(22.93f),
+                            ),
+                            WorkoutSummarySetUi(
+                                2,
+                                "20",
+                                11,
+                                Weight.kilograms(27.33f),
+                                previousOneRm = Weight.kilograms(21.33f),
+                            ),
+                            WorkoutSummarySetUi(
+                                3,
+                                "20",
+                                8,
+                                Weight.kilograms(24.83f),
+                                previousOneRm = Weight.kilograms(19.86f),
+                            ),
                         ),
                     ),
                 ),

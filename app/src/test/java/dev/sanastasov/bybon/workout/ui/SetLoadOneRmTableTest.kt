@@ -9,12 +9,24 @@ class SetLoadOneRmTableTest {
     fun `load and 1RM description has no at-sign`() {
         assert(
             setLoadOneRmDescription("20", 14, Weight.kilograms(29.33f)) ==
-                "20 kg x 14, 29.33 kg 1RM",
+                "20 kg x 14, 29.33 kg 1RM, -",
         )
     }
 
     @Test
     fun `missing load description uses dashes`() {
-        assert(setLoadOneRmDescription("-", 8, null) == "- x 8, -")
+        assert(setLoadOneRmDescription("-", 8, null) == "- x 8, -, -")
+    }
+
+    @Test
+    fun `description includes signed 1RM delta vs previous`() {
+        assert(
+            setLoadOneRmDescription(
+                "45",
+                12,
+                Weight.kilograms(63f),
+                Weight.kilograms(57.86f),
+            ) == "45 kg x 12, 63 kg 1RM, +5.14kg",
+        )
     }
 }

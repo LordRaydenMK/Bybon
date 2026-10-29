@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
@@ -20,7 +21,8 @@ import dev.sanastasov.bybon.workout.domain.Weight
 
 private val CompactLeadingMinWidth = 24.dp
 private val LoadColumnMinWidth = 96.dp
-private val OneRmColumnMinWidth = 48.dp
+private val OneRmColumnMinWidth = 72.dp
+private val OneRmDeltaColumnMinWidth = 56.dp
 
 @Composable
 fun SetLoadOneRmHeader(
@@ -43,9 +45,17 @@ fun SetLoadOneRmHeader(
             loadModifier(expandLeading),
             textAlign = if (expandLeading) TextAlign.End else TextAlign.Start,
         )
+        if (!expandLeading) {
+            Spacer(Modifier.weight(1f))
+        }
         HeaderCell(
             "1RM",
-            oneRmModifier(expandLeading),
+            oneRmModifier(),
+            textAlign = TextAlign.End,
+        )
+        HeaderCell(
+            "",
+            oneRmDeltaModifier(),
             textAlign = TextAlign.End,
         )
     }
@@ -60,9 +70,11 @@ fun SetLoadOneRmRow(
     rowDescription: String,
     modifier: Modifier = Modifier,
     expandLeading: Boolean = true,
+    previousOneRm: Weight? = null,
 ) {
     val load = formatLoadedSet(weightKg, reps)
-    val oneRmLabel = oneRm.toOneRmColumnLabel()
+    val oneRmLabel = oneRm.toContentLoadLabel()
+    val oneRmDelta = formatOneRmDelta(oneRm, previousOneRm)
     Row(
         modifier
             .fillMaxWidth()
@@ -82,11 +94,21 @@ fun SetLoadOneRmRow(
             textAlign = if (expandLeading) TextAlign.End else TextAlign.Start,
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
         )
+        if (!expandLeading) {
+            Spacer(Modifier.weight(1f))
+        }
         Text(
             oneRmLabel,
-            oneRmModifier(expandLeading),
+            oneRmModifier(),
             textAlign = TextAlign.End,
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
+        )
+        Text(
+            oneRmDelta,
+            oneRmDeltaModifier(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
         )
     }
 }
@@ -97,13 +119,19 @@ private fun RowScope.leadingModifier(expandLeading: Boolean): Modifier =
 private fun loadModifier(expandLeading: Boolean): Modifier =
     if (expandLeading) Modifier.widthIn(min = LoadColumnMinWidth) else Modifier
 
-private fun RowScope.oneRmModifier(expandLeading: Boolean): Modifier =
-    if (expandLeading) Modifier.widthIn(min = OneRmColumnMinWidth) else Modifier.weight(1f)
+private fun oneRmModifier(): Modifier = Modifier.widthIn(min = OneRmColumnMinWidth)
 
-fun setLoadOneRmDescription(weightKg: String, reps: Int, oneRm: Weight?): String {
+private fun oneRmDeltaModifier(): Modifier = Modifier.widthIn(min = OneRmDeltaColumnMinWidth)
+
+fun setLoadOneRmDescription(
+    weightKg: String,
+    reps: Int,
+    oneRm: Weight?,
+    previousOneRm: Weight? = null,
+): String {
     val load = formatLoadedSet(weightKg, reps)
     val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
-    return "$load, $rm"
+    return "$load, $rm, ${formatOneRmDelta(oneRm, previousOneRm)}"
 }
 
 @Composable

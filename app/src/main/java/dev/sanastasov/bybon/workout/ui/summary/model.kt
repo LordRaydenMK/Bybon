@@ -36,6 +36,7 @@ data class WorkoutSummarySetUi(
     val reps: Int,
     val oneRm: Weight?,
     val isWarmup: Boolean = false,
+    val previousOneRm: Weight? = null,
 )
 
 sealed class WorkoutSummaryAction {
@@ -97,4 +98,5 @@ private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = Work
     weightKg = weight.toLoadLabel(),
     reps = reps,
     oneRm = oneRm,
+    previousOneRm = previous?.oneRm,
 )

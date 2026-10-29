@@ -228,11 +228,12 @@ private fun TopSetRow(exercise: ExerciseTopSetUi) {
         reps = exercise.reps,
         oneRm = exercise.oneRm,
         rowDescription = exercise.contentDescription(),
+        previousOneRm = exercise.previousOneRm,
     )
 }
 
 internal fun ExerciseTopSetUi.contentDescription(): String =
-    "$name, ${setLoadOneRmDescription(weightKg, reps, oneRm)}"
+    "$name, ${setLoadOneRmDescription(weightKg, reps, oneRm, previousOneRm)}"
 
 @Preview
 @Composable
@@ -309,13 +310,20 @@ private fun previewHistorySession(
     exercises = exercises.toList(),
 )
 
-private fun previewTopSet(exerciseId: String, kg: Float, reps: Int): ExerciseTopSetUi {
+private fun previewTopSet(
+    exerciseId: String,
+    kg: Float,
+    reps: Int,
+    previousKg: Float = kg,
+    previousReps: Int = reps - 1,
+): ExerciseTopSetUi {
     val weight = Weight.kilograms(kg)
     return ExerciseTopSetUi(
         name = catalogExercise(exerciseId).name,
         weightKg = weight.toLoadLabel(),
         reps = reps,
         oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
+        previousOneRm = Weight.kilograms(estimateOneRmKg(previousKg, previousReps)),
     )
 }
 
