@@ -327,7 +327,7 @@ class WorkoutSummaryViewModelTest {
     }
 
     @Test
-    fun `summary uses all-time PR and the same 1RM trend as exercise details`() = runTest {
+    fun `summary shows all-time 1RM and last 3 months top-set 1RM trend`() = runTest {
         val now = LocalDateTime.of(2026, 10, 22, 18, 0)
         val olderPr = completedSession(
             planId = "full-body-a",
