@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.summary
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
@@ -14,12 +15,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import dev.sanastasov.bybon.workout.ui.OneRmColumnMinWidth
+import dev.sanastasov.bybon.workout.ui.OneRmDeltaColumnMinWidth
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
-import dev.sanastasov.bybon.workout.ui.toOneRmColumnLabel
+import dev.sanastasov.bybon.workout.ui.toContentLoadLabel
 
 @Composable
 internal fun AllTimeOneRmRow(personalRecord: PersonalRecordUi) {
-    val oneRmLabel = personalRecord.oneRm.toOneRmColumnLabel()
     Row(
         Modifier
             .fillMaxWidth()
@@ -29,22 +31,21 @@ internal fun AllTimeOneRmRow(personalRecord: PersonalRecordUi) {
     ) {
         Text(
             "All-time 1RM",
-            Modifier.weight(1f),
-            maxLines = 2,
+            maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
             personalRecord.dateLabel,
-            Modifier.widthIn(min = 96.dp),
-            textAlign = TextAlign.End,
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
         )
+        Spacer(Modifier.weight(1f))
         Text(
-            oneRmLabel,
-            Modifier.widthIn(min = 48.dp),
+            personalRecord.oneRm.toContentLoadLabel(),
+            Modifier.widthIn(min = OneRmColumnMinWidth),
             textAlign = TextAlign.End,
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
         )
+        Spacer(Modifier.widthIn(min = OneRmDeltaColumnMinWidth))
     }
 }
 
