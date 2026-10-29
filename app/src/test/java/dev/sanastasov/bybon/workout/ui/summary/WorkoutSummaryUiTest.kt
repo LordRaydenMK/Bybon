@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import org.junit.Test
 
 class WorkoutSummaryUiTest {
@@ -27,5 +28,11 @@ class WorkoutSummaryUiTest {
             previousOneRm = Weight.kilograms(57.86f),
         )
         assert(set.contentDescription() == "1. 45 kg x 12, 63 kg 1RM, +5.14kg")
+    }
+
+    @Test
+    fun `all-time 1RM content description includes weight and date`() {
+        val record = PersonalRecordUi(Weight.kilograms(78f), "20 Sep 2026")
+        assert(record.contentDescription() == "All-time 1RM 78 kg, 20 Sep 2026")
     }
 }

@@ -21,8 +21,8 @@ import dev.sanastasov.bybon.workout.domain.Weight
 
 private val CompactLeadingMinWidth = 24.dp
 private val LoadColumnMinWidth = 96.dp
-private val OneRmColumnMinWidth = 72.dp
-private val OneRmDeltaColumnMinWidth = 56.dp
+internal val OneRmColumnMinWidth = 72.dp
+internal val OneRmDeltaColumnMinWidth = 56.dp
 
 @Composable
 fun SetLoadOneRmHeader(

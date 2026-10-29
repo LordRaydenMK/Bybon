@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
@@ -47,6 +46,9 @@ import dev.sanastasov.bybon.workout.ui.SessionMeta
 import dev.sanastasov.bybon.workout.ui.SetLoadOneRmHeader
 import dev.sanastasov.bybon.workout.ui.SetLoadOneRmRow
 import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
+import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
+import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmTrendCard
+import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.setLoadOneRmDescription
 
@@ -190,9 +192,19 @@ private fun SummaryList(
                 )
             }
         }
-        items(state.exercises, key = { it.id }) { exercise ->
-            Card(Modifier.fillMaxWidth()) {
-                ExerciseSummaryCard(exercise, onAction)
+        state.exercises.forEach { exercise ->
+            item(key = exercise.id) {
+                Card(Modifier.fillMaxWidth()) {
+                    ExerciseSummaryCard(exercise, onAction)
+                }
+            }
+            if (exercise.oneRmTrend.isNotEmpty()) {
+                item(key = "${exercise.id}-trend") {
+                    ExerciseOneRmTrendCard(
+                        exercise.oneRmTrend,
+                        exercise.personalRecord?.oneRm,
+                    )
+                }
             }
         }
     }
@@ -244,6 +256,10 @@ private fun ExerciseSummaryCard(
                 WorkSetRow(set)
             }
         }
+        exercise.personalRecord?.let { personalRecord ->
+            if (workSets.isEmpty()) SetLoadOneRmHeader("", expandLeading = false)
+            AllTimeOneRmRow(personalRecord)
+        }
     }
 }
 
@@ -270,68 +286,78 @@ internal fun WorkoutSummarySetUi.contentDescription(): String {
 @Composable
 private fun WorkoutSummaryContentPreview() {
     Surface {
-        WorkoutSummaryContent(
-            uiState = WorkoutSummaryUiState.Content(
-                title = "Full Body B",
-                date = "13 Aug 2026",
-                startTime = "18:25",
-                duration = "00:47",
-                note = "Friday full body workout",
-                exercises = listOf(
-                    WorkoutSummaryExerciseUi(
-                        id = "romanian-deadlift",
-                        name = "Romanian Deadlift",
-                        sets = listOf(
-                            WorkoutSummarySetUi(null, "20", 8, null, isWarmup = true),
-                            WorkoutSummarySetUi(null, "35", 4, null, isWarmup = true),
-                            WorkoutSummarySetUi(
-                                1,
-                                "45",
-                                12,
-                                Weight.kilograms(63f),
-                                previousOneRm = Weight.kilograms(57.86f),
-                            ),
-                            WorkoutSummarySetUi(
-                                2,
-                                "45",
-                                12,
-                                Weight.kilograms(63f),
-                                previousOneRm = Weight.kilograms(57.86f),
-                            ),
-                        ),
-                    ),
-                    WorkoutSummaryExerciseUi(
-                        id = "incline-db-press",
-                        name = "Incline Dumbbell Press",
-                        notes = listOf("Rep range 11-15"),
-                        sets = listOf(
-                            WorkoutSummarySetUi(
-                                1,
-                                "20",
-                                13,
-                                Weight.kilograms(28.67f),
-                                previousOneRm = Weight.kilograms(22.93f),
-                            ),
-                            WorkoutSummarySetUi(
-                                2,
-                                "20",
-                                11,
-                                Weight.kilograms(27.33f),
-                                previousOneRm = Weight.kilograms(21.33f),
-                            ),
-                            WorkoutSummarySetUi(
-                                3,
-                                "20",
-                                8,
-                                Weight.kilograms(24.83f),
-                                previousOneRm = Weight.kilograms(19.86f),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-            onAction = {},
-            onNavigateBack = {},
-        )
+        WorkoutSummaryContent(PreviewSummaryUiState, onAction = {}, onNavigateBack = {})
     }
 }
+
+private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
+    title = "Full Body B",
+    date = "13 Aug 2026",
+    startTime = "18:25",
+    duration = "00:47",
+    note = "Friday full body workout",
+    exercises = listOf(
+        WorkoutSummaryExerciseUi(
+            id = "romanian-deadlift",
+            name = "Romanian Deadlift",
+            sets = listOf(
+                WorkoutSummarySetUi(null, "20", 8, null, isWarmup = true),
+                WorkoutSummarySetUi(null, "35", 4, null, isWarmup = true),
+                WorkoutSummarySetUi(
+                    1,
+                    "45",
+                    12,
+                    Weight.kilograms(63f),
+                    previousOneRm = Weight.kilograms(57.86f),
+                ),
+                WorkoutSummarySetUi(
+                    2,
+                    "45",
+                    12,
+                    Weight.kilograms(63f),
+                    previousOneRm = Weight.kilograms(57.86f),
+                ),
+            ),
+            personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026"),
+            oneRmTrend = listOf(
+                ExerciseOneRmPointUi("12 Jul", 55f, Weight.kilograms(55f), "40", 10),
+                ExerciseOneRmPointUi("2 Aug", 58f, Weight.kilograms(58f), "42", 10),
+                ExerciseOneRmPointUi("13 Aug", 63f, Weight.kilograms(63f), "45", 12),
+            ),
+        ),
+        WorkoutSummaryExerciseUi(
+            id = "incline-db-press",
+            name = "Incline Dumbbell Press",
+            notes = listOf("Rep range 11-15"),
+            sets = listOf(
+                WorkoutSummarySetUi(
+                    1,
+                    "20",
+                    13,
+                    Weight.kilograms(28.67f),
+                    previousOneRm = Weight.kilograms(22.93f),
+                ),
+                WorkoutSummarySetUi(
+                    2,
+                    "20",
+                    11,
+                    Weight.kilograms(27.33f),
+                    previousOneRm = Weight.kilograms(21.33f),
+                ),
+                WorkoutSummarySetUi(
+                    3,
+                    "20",
+                    8,
+                    Weight.kilograms(24.83f),
+                    previousOneRm = Weight.kilograms(19.86f),
+                ),
+            ),
+            personalRecord = PersonalRecordUi(Weight.kilograms(28.67f), "13 Aug 2026"),
+            oneRmTrend = listOf(
+                ExerciseOneRmPointUi("12 Jul", 22.93f, Weight.kilograms(22.93f), "16", 12),
+                ExerciseOneRmPointUi("2 Aug", 24.83f, Weight.kilograms(24.83f), "18", 11),
+                ExerciseOneRmPointUi("13 Aug", 28.67f, Weight.kilograms(28.67f), "20", 13),
+            ),
+        ),
+    ),
+)
