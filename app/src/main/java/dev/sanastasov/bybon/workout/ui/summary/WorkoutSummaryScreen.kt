@@ -320,6 +320,8 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
             ),
             personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026"),
             oneRmTrend = listOf(
+                ExerciseOneRmPointUi("12 Jul", 55f, Weight.kilograms(55f), "40", 10),
+                ExerciseOneRmPointUi("2 Aug", 58f, Weight.kilograms(58f), "42", 10),
                 ExerciseOneRmPointUi("13 Aug", 63f, Weight.kilograms(63f), "45", 12),
             ),
         ),
@@ -352,6 +354,8 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
             ),
             personalRecord = PersonalRecordUi(Weight.kilograms(28.67f), "13 Aug 2026"),
             oneRmTrend = listOf(
+                ExerciseOneRmPointUi("12 Jul", 22.93f, Weight.kilograms(22.93f), "16", 12),
+                ExerciseOneRmPointUi("2 Aug", 24.83f, Weight.kilograms(24.83f), "18", 11),
                 ExerciseOneRmPointUi("13 Aug", 28.67f, Weight.kilograms(28.67f), "20", 13),
             ),
         ),
