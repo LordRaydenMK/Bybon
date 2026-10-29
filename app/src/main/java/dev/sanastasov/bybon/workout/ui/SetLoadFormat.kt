@@ -23,9 +23,12 @@ fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
     if (current == null || previous == null) return MISSING_LOAD_LABEL
     val deltaHundredths =
         (current.kilogramsValue * 100f).roundToInt() - (previous.kilogramsValue * 100f).roundToInt()
-    if (deltaHundredths == 0) return MISSING_LOAD_LABEL
     val amount = formatOneRmKg(abs(deltaHundredths) / 100f)
-    return if (deltaHundredths > 0) "+${amount}kg" else "-${amount}kg"
+    return when {
+        deltaHundredths > 0 -> "+${amount}kg"
+        deltaHundredths < 0 -> "-${amount}kg"
+        else -> MISSING_LOAD_LABEL
+    }
 }
 
 fun formatLoadedSet(weight: Weight?, reps: Int): String = "${weight.toContentLoadLabel()} x $reps"
