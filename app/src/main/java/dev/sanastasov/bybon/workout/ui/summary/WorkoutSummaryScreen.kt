@@ -239,7 +239,7 @@ private fun ExerciseSummaryCard(
             )
         }
         if (workSets.isNotEmpty()) {
-            SetLoadOneRmHeader("")
+            SetLoadOneRmHeader("", expandLeading = false)
             workSets.forEach { set ->
                 WorkSetRow(set)
             }
@@ -256,6 +256,7 @@ private fun WorkSetRow(set: WorkoutSummarySetUi) {
         reps = set.reps,
         oneRm = set.oneRm,
         rowDescription = set.contentDescription(),
+        expandLeading = false,
     )
 }
 
