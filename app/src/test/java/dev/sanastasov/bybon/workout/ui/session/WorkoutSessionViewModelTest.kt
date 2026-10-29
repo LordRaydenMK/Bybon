@@ -204,6 +204,7 @@ class WorkoutSessionViewModelTest {
         viewModel.effects.test {
             viewModel.uiState.first { it != null }
             viewModel.onAction(WorkoutSessionAction.OnCancelWorkout)
+            assert(awaitItem() == WorkoutSessionEffect.StopService)
             assert(awaitItem() == WorkoutSessionEffect.NavigateBack)
         }
         assert(repository.workoutSessions().first().isEmpty())
@@ -237,6 +238,7 @@ class WorkoutSessionViewModelTest {
         viewModel.effects.test {
             val current = viewModel.uiState.first { it != null }!!
             viewModel.onAction(WorkoutSessionAction.OnCompleteSet(current.exercises.first(), 0))
+            assert(awaitItem() == WorkoutSessionEffect.StopService)
             assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
             expectNoEvents()
         }
@@ -668,6 +670,102 @@ class WorkoutSessionViewModelTest {
         assert(created.exercises.none { it.id == "incline-db-curl" })
         assert(created.exercises.any { it.id == "seated-leg-curl" })
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `keeps the live session when a snapshot omits it`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            repository.emitSessions(emptyList())
+            expectNoEvents()
+            repository.emitSessions(
+                listOf(
+                    completedSession(
+                        planId = fullBodyA.id.id,
+                        planName = fullBodyA.name,
+                        startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+                        exercises = listOf(completedExercise("bench-press", 50f to 8)),
+                    ),
+                ),
+            )
+            expectNoEvents()
+            repository.emitSessions(listOf(session.copy(note = "updated")))
+            assert(awaitItem()!!.note == "updated")
+        }
+    }
+
+    @Test
+    fun `clears uiState when the same session is completed`() = runTest {
+        val live = twoExerciseSession(SetState.InProgress, SetState.NotStated)
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(live),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            assert(awaitItem()!!.id == live.id)
+            repository.emitSessions(
+                listOf(
+                    completedSession(
+                        planId = live.planId.id,
+                        planName = live.planName,
+                        startedAt = live.startedAt,
+                        exercises = listOf(completedExercise("bench-press", 50f to 8)),
+                    ),
+                ),
+            )
+            assert(awaitItem() == null)
+        }
+    }
+}
+
+class LiveSessionOrLastTest {
+
+    @Test
+    fun `prefers the live session in the snapshot`() {
+        val live = fullBodyA.toWorkoutSession()
+        val previous = live.copy(note = "stale")
+        assert(liveSessionOrLast(fullBodyA.id, previous, listOf(live)) == live)
+    }
+
+    @Test
+    fun `keeps the last live session when it is omitted`() {
+        val live = fullBodyA.toWorkoutSession()
+        assert(liveSessionOrLast(fullBodyA.id, live, emptyList()) == live)
+        assert(
+            liveSessionOrLast(
+                fullBodyA.id,
+                live,
+                listOf(
+                    completedSession(
+                        planId = fullBodyA.id.id,
+                        planName = fullBodyA.name,
+                        startedAt = LocalDateTime.of(2025, 1, 1, 12, 0),
+                        exercises = listOf(completedExercise("bench-press", 50f to 8)),
+                    ),
+                ),
+            ) == live,
+        )
+    }
+
+    @Test
+    fun `clears when the same session id is completed`() {
+        val live = fullBodyA.toWorkoutSession(
+            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+        )
+        val done = completedSession(
+            planId = live.planId.id,
+            planName = live.planName,
+            startedAt = live.startedAt,
+            exercises = listOf(completedExercise("bench-press", 50f to 8)),
+        )
+        assert(liveSessionOrLast(fullBodyA.id, live, listOf(done)) == null)
     }
 }
 

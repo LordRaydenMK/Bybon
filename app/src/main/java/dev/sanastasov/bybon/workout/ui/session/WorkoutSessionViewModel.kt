@@ -30,8 +30,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,10 +47,8 @@ class WorkoutSessionViewModel(
 
     val uiState: StateFlow<WorkoutSession?> =
         repository.workoutSessions()
-            .map { sessions ->
-                sessions.firstOrNull { session ->
-                    session.planId == planId && session.state !is WorkoutState.Completed
-                }
+            .runningFold(null as WorkoutSession?) { last, sessions ->
+                liveSessionOrLast(planId, last, sessions)
             }
             .distinctUntilChanged()
             .stateInWhileInForeground(coroutineScope, null)
@@ -218,5 +216,18 @@ class WorkoutSessionViewModel(
             session.resetExerciseToPrevious(action.exercise)
 
         else -> session
+    }
+}
+
+internal fun liveSessionOrLast(
+    planId: WorkoutPlanId,
+    last: WorkoutSession?,
+    sessions: List<WorkoutSession>,
+): WorkoutSession? {
+    val live = sessions.firstOrNull { session ->
+        session.planId == planId && session.state !is WorkoutState.Completed
+    }
+    return live ?: last?.takeUnless { previous ->
+        sessions.any { it.id == previous.id && it.state is WorkoutState.Completed }
     }
 }
