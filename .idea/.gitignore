@@ -5,3 +5,4 @@
 /httpRequests/
 /detekt.xml
 /kotlinc.xml
+/appInsightsSettings.xml
