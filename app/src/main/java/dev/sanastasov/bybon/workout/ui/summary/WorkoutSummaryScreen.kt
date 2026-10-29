@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
@@ -47,6 +46,9 @@ import dev.sanastasov.bybon.workout.ui.SessionMeta
 import dev.sanastasov.bybon.workout.ui.SetLoadOneRmHeader
 import dev.sanastasov.bybon.workout.ui.SetLoadOneRmRow
 import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
+import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
+import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmTrendCard
+import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.setLoadOneRmDescription
 
@@ -190,9 +192,19 @@ private fun SummaryList(
                 )
             }
         }
-        items(state.exercises, key = { it.id }) { exercise ->
-            Card(Modifier.fillMaxWidth()) {
-                ExerciseSummaryCard(exercise, onAction)
+        state.exercises.forEach { exercise ->
+            item(key = exercise.id) {
+                Card(Modifier.fillMaxWidth()) {
+                    ExerciseSummaryCard(exercise, onAction)
+                }
+            }
+            if (exercise.oneRmTrend.isNotEmpty()) {
+                item(key = "${exercise.id}-trend") {
+                    ExerciseOneRmTrendCard(
+                        exercise.oneRmTrend,
+                        exercise.personalRecord?.oneRm,
+                    )
+                }
             }
         }
     }
@@ -243,6 +255,10 @@ private fun ExerciseSummaryCard(
             workSets.forEach { set ->
                 WorkSetRow(set)
             }
+        }
+        exercise.personalRecord?.let { personalRecord ->
+            if (workSets.isEmpty()) SetLoadOneRmHeader("")
+            AllTimeOneRmRow(personalRecord)
         }
     }
 }
@@ -299,6 +315,10 @@ private fun WorkoutSummaryContentPreview() {
                                 previousOneRm = Weight.kilograms(57.86f),
                             ),
                         ),
+                        personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026"),
+                        oneRmTrend = listOf(
+                            ExerciseOneRmPointUi("13 Aug", 63f, Weight.kilograms(63f), "45", 12),
+                        ),
                     ),
                     WorkoutSummaryExerciseUi(
                         id = "incline-db-press",
@@ -325,6 +345,19 @@ private fun WorkoutSummaryContentPreview() {
                                 8,
                                 Weight.kilograms(24.83f),
                                 previousOneRm = Weight.kilograms(19.86f),
+                            ),
+                        ),
+                        personalRecord = PersonalRecordUi(
+                            Weight.kilograms(28.67f),
+                            "13 Aug 2026",
+                        ),
+                        oneRmTrend = listOf(
+                            ExerciseOneRmPointUi(
+                                "13 Aug",
+                                28.67f,
+                                Weight.kilograms(28.67f),
+                                "20",
+                                13,
                             ),
                         ),
                     ),

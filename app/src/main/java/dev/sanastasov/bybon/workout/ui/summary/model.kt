@@ -7,9 +7,15 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.exercisePerformance
+import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
+import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
+import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
+import dev.sanastasov.bybon.workout.ui.details.toPersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
+import java.time.LocalDateTime
 
 sealed class WorkoutSummaryUiState {
     data object Loading : WorkoutSummaryUiState()
@@ -28,6 +34,8 @@ data class WorkoutSummaryExerciseUi(
     val name: String,
     val sets: List<WorkoutSummarySetUi>,
     val notes: List<String> = emptyList(),
+    val personalRecord: PersonalRecordUi? = null,
+    val oneRmTrend: List<ExerciseOneRmPointUi> = emptyList(),
 )
 
 data class WorkoutSummarySetUi(
@@ -55,10 +63,18 @@ sealed class WorkoutSummaryEffect {
 
 internal fun List<WorkoutSession>.completedSummary(
     sessionId: WorkoutSessionId,
-): WorkoutSummaryUiState.Content? =
-    firstOrNull { it.id == sessionId && it.state is WorkoutState.Completed }?.toSummaryUi()
+    now: LocalDateTime,
+): WorkoutSummaryUiState.Content? {
+    val session = firstOrNull { it.id == sessionId && it.state is WorkoutState.Completed }
+        ?: return null
+    val completed = filter { it.state is WorkoutState.Completed }
+    return session.toSummaryUi(completed, now)
+}
 
-internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content {
+internal fun WorkoutSession.toSummaryUi(
+    completedSessions: List<WorkoutSession> = listOf(this),
+    now: LocalDateTime = startedAt,
+): WorkoutSummaryUiState.Content {
     val completed = state
     check(completed is WorkoutState.Completed) {
         "Summary UI requires a completed session, was $completed"
@@ -68,20 +84,26 @@ internal fun WorkoutSession.toSummaryUi(): WorkoutSummaryUiState.Content {
         date = startedAt.toLocalDate().toDisplayDate(),
         startTime = startedAt.toStartTimeLabel(),
         duration = completed.duration.formatElapsedClock(),
-        exercises = exercises.mapNotNull { it.toSummaryExerciseUi() },
+        exercises = exercises.mapNotNull { it.toSummaryExerciseUi(completedSessions, now) },
         note = note,
     )
 }
 
-private fun WorkoutExercise.toSummaryExerciseUi(): WorkoutSummaryExerciseUi? {
+private fun WorkoutExercise.toSummaryExerciseUi(
+    completedSessions: List<WorkoutSession>,
+    now: LocalDateTime,
+): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null
     val warmups = warmupSets.orEmpty().map { it.toWarmupSummaryUi() }
     val work = sets.mapIndexed { index, set -> set.toWorkSummaryUi(index + 1) }
+    val performance = completedSessions.exercisePerformance(id, now)
     return WorkoutSummaryExerciseUi(
         id = id,
         name = exerciseDefinition.name,
         sets = warmups + work,
         notes = notes,
+        personalRecord = performance.personalRecord?.toPersonalRecordUi(),
+        oneRmTrend = performance.recentSessions.toOneRmTrend(),
     )
 }
 

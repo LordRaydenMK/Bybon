@@ -12,8 +12,11 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
+import dev.sanastasov.bybon.workout.domain.exercisePerformance
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
+import dev.sanastasov.bybon.workout.ui.details.toPersonalRecordUi
 import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
@@ -60,6 +63,8 @@ class WorkoutSummaryViewModelTest {
                         WorkoutSummarySetUi(1, "45", 12, oneRm(45f, 12)),
                         WorkoutSummarySetUi(2, "45", 11, oneRm(45f, 11)),
                     ),
+                    personalRecord = session.personalRecordUi("romanian-deadlift"),
+                    oneRmTrend = session.oneRmTrend("romanian-deadlift"),
                 ),
                 WorkoutSummaryExerciseUi(
                     id = "incline-db-press",
@@ -69,6 +74,8 @@ class WorkoutSummaryViewModelTest {
                         WorkoutSummarySetUi(2, "20", 11, oneRm(20f, 11)),
                         WorkoutSummarySetUi(3, "20", 8, oneRm(20f, 8)),
                     ),
+                    personalRecord = session.personalRecordUi("incline-db-press"),
+                    oneRmTrend = session.oneRmTrend("incline-db-press"),
                 ),
             ),
         )
@@ -319,11 +326,77 @@ class WorkoutSummaryViewModelTest {
         assert(repository.workoutSessions().first().isEmpty())
     }
 
+    @Test
+    fun `summary uses all-time PR and the same 1RM trend as exercise details`() = runTest {
+        val now = LocalDateTime.of(2026, 10, 22, 18, 0)
+        val olderPr = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 6, 1, 18, 0),
+            exercises = listOf(completedExercise("bench-press", 90f to 5)),
+        )
+        val earlierRecent = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(completedExercise("bench-press", 70f to 8)),
+        )
+        val summarySession = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 10, 1, 18, 0),
+            exercises = listOf(
+                completedExercise("bench-press", 80f to 8),
+                WorkoutExercise(
+                    exerciseDefinition = catalogExercise("assisted-pull-ups"),
+                    repRange = 6..10,
+                    sets = listOf(
+                        ExerciseSet(
+                            catalogExercise("assisted-pull-ups"),
+                            null,
+                            8,
+                            SetState.Completed(),
+                        ),
+                    ),
+                ),
+            ),
+        )
+        val inProgress = fullBodyA.toWorkoutSession(startedAt = now.minusDays(1))
+        val completed = listOf(olderPr, earlierRecent, summarySession)
+        val viewModel = WorkoutSummaryViewModel(
+            summarySession.id,
+            FakeWorkoutsRepository(initialSessions = completed + inProgress),
+            backgroundScope,
+            now = { now },
+        )
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val actual = awaitItem() as WorkoutSummaryUiState.Content
+            val bench = actual.exercises.first()
+            val pullUp = actual.exercises.last()
+            val expectedPerformance = completed.exercisePerformance("bench-press", now)
+            assert(bench.personalRecord == expectedPerformance.personalRecord?.toPersonalRecordUi())
+            assert(bench.personalRecord?.dateLabel == "1 Jun 2026")
+            assert(bench.oneRmTrend == expectedPerformance.recentSessions.toOneRmTrend())
+            assert(bench.oneRmTrend.map { it.dateLabel } == listOf("10 Aug", "1 Oct"))
+            assert(pullUp.personalRecord == null)
+            assert(pullUp.oneRmTrend.isEmpty())
+        }
+    }
+
     private fun oneRm(kg: Float, reps: Int): Weight = Weight.kilograms(estimateOneRmKg(kg, reps))
+
+    private fun WorkoutSession.personalRecordUi(exerciseId: String) =
+        listOf(this).exercisePerformance(exerciseId, startedAt).personalRecord?.toPersonalRecordUi()
+
+    private fun WorkoutSession.oneRmTrend(exerciseId: String) =
+        listOf(this).exercisePerformance(exerciseId, startedAt).recentSessions.toOneRmTrend()
 
     private fun TestScope.summaryViewModel(session: WorkoutSession) = WorkoutSummaryViewModel(
         session.id,
         FakeWorkoutsRepository(initialSessions = listOf(session)),
         backgroundScope,
+        now = { session.startedAt },
     )
 }

@@ -71,7 +71,7 @@ internal fun ExerciseDefinition.toDetailsUi(
         forceType?.name,
         difficulty?.name,
     ),
-    personalRecord = performance.personalRecord?.toUi(),
+    personalRecord = performance.personalRecord?.toPersonalRecordUi(),
     oneRmTrend = performance.recentSessions.toOneRmTrend(),
     recentSessions = performance.recentSessions.map { it.toSessionUi() },
     primaryMuscles = primaryMuscles.map { it.toCatalogLabel() },
@@ -85,12 +85,12 @@ internal fun ExerciseDefinition.toDetailsUi(
 private val CHART_DATE_FORMAT: DateTimeFormatter =
     DateTimeFormatter.ofPattern("d MMM", Locale.US)
 
-private fun PersonalRecord.toUi(): PersonalRecordUi = PersonalRecordUi(
+internal fun PersonalRecord.toPersonalRecordUi(): PersonalRecordUi = PersonalRecordUi(
     oneRm = oneRm,
     dateLabel = achievedAt.toLocalDate().toDisplayDate(),
 )
 
-private fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi> =
+internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi> =
     asReversed().mapNotNull { session ->
         val oneRm = session.topSetOneRm ?: return@mapNotNull null
         ExerciseOneRmPointUi(
