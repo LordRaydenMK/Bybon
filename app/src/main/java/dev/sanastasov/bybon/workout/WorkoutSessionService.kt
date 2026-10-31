@@ -22,8 +22,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.activeRestTimer
 import dev.sanastasov.bybon.workout.domain.activeSession
 import java.time.LocalDateTime
+import kotlin.time.Duration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 
@@ -32,24 +32,37 @@ private const val TAG = "WorkoutSessionService"
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutSessionService : LifecycleService() {
 
+    private val restAlarm = WorkoutSessionRestAlarm(this)
+
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "onCreate() called")
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
         with(mainModule) {
             workoutsRepository.activeSession().mapLatest { session ->
                 Log.d(TAG, "activeSession mapLatest session: $session")
                 session ?: return@mapLatest
                 displayNotification(session, WorkoutSessionNotificationKind.Ongoing)
                 val rest = session.activeRestTimer(LocalDateTime.now()) ?: return@mapLatest
-                delay(rest.remaining(LocalDateTime.now()).inWholeMilliseconds)
+                restAlarm.await(restPromoteWait(rest.remaining(LocalDateTime.now())))
                 displayNotification(session, WorkoutSessionNotificationKind.RestComplete)
+                val remainingAfterPromote = session.activeRestTimer(LocalDateTime.now())
+                    ?.remaining(LocalDateTime.now())
+                    ?: Duration.ZERO
+                restAlarm.await(remainingAfterPromote)
+                displayNotification(session, WorkoutSessionNotificationKind.Ongoing)
             }.launchIn(lifecycleScope)
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        restAlarm.completeFrom(intent)
         return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        restAlarm.cancel()
+        super.onDestroy()
     }
 
     private fun displayNotification(
