@@ -22,6 +22,7 @@ import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeightFromField
+import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -55,13 +56,14 @@ class WorkoutOverviewViewModel(
             WorkoutOverviewUiState(
                 session = plan.toOverviewSession(previousHistory = sessions),
                 previousDate = previousPlanDateLabel(previousSession?.startedAt),
+                history = sessions,
             )
         }
             .distinctUntilChanged()
             .filterNotNull()
             .flatMapLatest { seed ->
                 actions.receiveAsFlow().scan(seed) { state, action ->
-                    state.copy(session = reduce(state.session, action))
+                    state.copy(session = reduce(state.session, action, state.history))
                 }
             }
             .stateInWhileInForeground(coroutineScope, null)
@@ -106,11 +108,21 @@ class WorkoutOverviewViewModel(
         actions.trySend(action)
     }
 
-    private fun reduce(session: WorkoutSession, action: WorkoutOverviewAction): WorkoutSession =
-        reduceProgression(session, action)
+    private fun reduce(
+        session: WorkoutSession,
+        action: WorkoutOverviewAction,
+        history: List<WorkoutSession>,
+    ): WorkoutSession {
+        val reduced = reduceProgression(session, action)
             ?: reduceReorder(session, action)
             ?: reduceExerciseList(session, action)
             ?: reduceEdits(session, action)
+        return if (action.rematchPrevious()) {
+            reduced.withPreviousFromHistory(history)
+        } else {
+            reduced
+        }
+    }
 
     private fun reduceExerciseList(
         session: WorkoutSession,
@@ -189,4 +201,14 @@ class WorkoutOverviewViewModel(
 
         else -> session
     }
+}
+
+private fun WorkoutOverviewAction.rematchPrevious(): Boolean = when (this) {
+    is WorkoutOverviewAction.OnAddSet,
+    is WorkoutOverviewAction.RemoveLastSet,
+    is WorkoutOverviewAction.OnConvertToWarmup,
+    is WorkoutOverviewAction.OnConvertToWorkSet,
+    -> true
+
+    else -> false
 }

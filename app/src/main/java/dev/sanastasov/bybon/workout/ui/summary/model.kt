@@ -8,6 +8,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
+import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
+import dev.sanastasov.bybon.workout.domain.withPreviousFrom
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
@@ -84,7 +86,9 @@ internal fun WorkoutSession.toSummaryUi(
         date = startedAt.toLocalDate().toDisplayDate(),
         startTime = startedAt.toStartTimeLabel(),
         duration = completed.duration.formatElapsedClock(),
-        exercises = exercises.mapNotNull { it.toSummaryExerciseUi(completedSessions, now) },
+        exercises = exercises.mapNotNull {
+            it.toSummaryExerciseUi(completedSessions, now, startedAt)
+        },
         note = note,
     )
 }
@@ -92,10 +96,14 @@ internal fun WorkoutSession.toSummaryUi(
 private fun WorkoutExercise.toSummaryExerciseUi(
     completedSessions: List<WorkoutSession>,
     now: LocalDateTime,
+    sessionStartedAt: LocalDateTime,
 ): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null
-    val warmups = warmupSets.orEmpty().map { it.toWarmupSummaryUi() }
-    val work = sets.mapIndexed { index, set -> set.toWorkSummaryUi(index + 1) }
+    val matched = withPreviousFrom(
+        completedSessions.latestCompletedExercise(id, before = sessionStartedAt),
+    )
+    val warmups = matched.warmupSets.orEmpty().map { it.toWarmupSummaryUi() }
+    val work = matched.sets.mapIndexed { index, set -> set.toWorkSummaryUi(index + 1) }
     val performance = completedSessions.exercisePerformance(id, now)
     return WorkoutSummaryExerciseUi(
         id = id,
