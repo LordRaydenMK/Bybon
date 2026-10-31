@@ -1,7 +1,9 @@
 <resources>
     <string name="app_name">Bybon</string>
     <string name="workout_session_notification_channel_name">Active Workouts</string>
+    <string name="workout_rest_complete_notification_channel_name">Rest complete</string>
     <string name="workout_session_notification_title">In Progress: %1$s</string>
+    <string name="workout_session_notification_rest_over_title">Rest over</string>
     <string name="workout_session_notification_elapsed">Elapsed</string>
     <string name="workout_session_notification_rest">Rest</string>
     <string name="workout_session_notification_work_set">%1$d/%2$d</string>
