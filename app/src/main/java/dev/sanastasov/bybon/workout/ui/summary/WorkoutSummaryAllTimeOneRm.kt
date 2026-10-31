@@ -15,8 +15,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import dev.sanastasov.bybon.workout.ui.OneRmColumnMinWidth
-import dev.sanastasov.bybon.workout.ui.OneRmDeltaColumnMinWidth
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.toContentLoadLabel
 

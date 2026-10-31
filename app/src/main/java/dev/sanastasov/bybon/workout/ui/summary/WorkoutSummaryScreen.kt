@@ -42,15 +42,14 @@ import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.SessionMeta
-import dev.sanastasov.bybon.workout.ui.SetLoadOneRmHeader
-import dev.sanastasov.bybon.workout.ui.SetLoadOneRmRow
 import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmTrendCard
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
-import dev.sanastasov.bybon.workout.ui.setLoadOneRmDescription
+import dev.sanastasov.bybon.workout.ui.formatOneRmDelta
 
 @Composable
 fun WorkoutModule.WorkoutSummaryScreen(
@@ -251,13 +250,13 @@ private fun ExerciseSummaryCard(
             )
         }
         if (workSets.isNotEmpty()) {
-            SetLoadOneRmHeader("", expandLeading = false)
+            SetLoadOneRmHeader()
             workSets.forEach { set ->
                 WorkSetRow(set)
             }
         }
         exercise.personalRecord?.let { personalRecord ->
-            if (workSets.isEmpty()) SetLoadOneRmHeader("", expandLeading = false)
+            if (workSets.isEmpty()) SetLoadOneRmHeader()
             AllTimeOneRmRow(personalRecord)
         }
     }
@@ -272,14 +271,15 @@ private fun WorkSetRow(set: WorkoutSummarySetUi) {
         reps = set.reps,
         oneRm = set.oneRm,
         rowDescription = set.contentDescription(),
-        expandLeading = false,
         previousOneRm = set.previousOneRm,
     )
 }
 
 internal fun WorkoutSummarySetUi.contentDescription(): String {
     val number = checkNotNull(number)
-    return "$number. ${setLoadOneRmDescription(weightKg, reps, oneRm, previousOneRm)}"
+    val load = formatLoadedSet(weightKg, reps)
+    val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
+    return "$number. $load, $rm, ${formatOneRmDelta(oneRm, previousOneRm)}"
 }
 
 @Preview
