@@ -43,10 +43,10 @@ class WorkoutSessionService : LifecycleService() {
             workoutsRepository.activeSession().mapLatest { session ->
                 Log.d(TAG, "activeSession mapLatest session: $session")
                 session ?: return@mapLatest
-                displayNotification(session)
+                displayNotification(session, WorkoutSessionNotificationKind.Ongoing)
                 val rest = session.activeRestTimer(LocalDateTime.now()) ?: return@mapLatest
                 delay(rest.remaining(LocalDateTime.now()).inWholeMilliseconds)
-                displayNotification(session)
+                displayNotification(session, WorkoutSessionNotificationKind.RestComplete)
             }.launchIn(lifecycleScope)
         }
         return START_NOT_STICKY
@@ -54,61 +54,87 @@ class WorkoutSessionService : LifecycleService() {
 
     private fun displayNotification(
         session: WorkoutSession,
+        kind: WorkoutSessionNotificationKind,
         now: LocalDateTime = LocalDateTime.now(),
     ) {
         val manager = getSystemService<NotificationManager>() ?: error(
             "Failed to get NotificationManager",
         )
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            getString(R.string.workout_session_notification_channel_name),
-            NotificationManager.IMPORTANCE_LOW,
-        )
-        manager.createNotificationChannel(channel)
+        ensureChannels(manager)
         val contentIntent = PendingIntent.getActivity(
             this,
-            NOTIFICATION_ID,
+            WORKOUT_SESSION_NOTIFICATION_ID,
             MainActivity.create(this, session.planId),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val notification = sessionNotification(session, contentIntent, now)
+        val notification = sessionNotification(session, contentIntent, now, kind.toPresentation())
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceCompat.startForeground(
                 this,
-                NOTIFICATION_ID,
+                WORKOUT_SESSION_NOTIFICATION_ID,
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
             )
         } else {
             ServiceCompat.startForeground(
                 this,
-                NOTIFICATION_ID,
+                WORKOUT_SESSION_NOTIFICATION_ID,
                 notification,
                 0,
             )
         }
     }
 
+    private fun ensureChannels(manager: NotificationManager) {
+        val workoutChannel = NotificationChannel(
+            WORKOUT_SESSION_CHANNEL_ID,
+            getString(R.string.workout_session_notification_channel_name),
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        }
+        val restChannel = NotificationChannel(
+            REST_COMPLETE_CHANNEL_ID,
+            getString(R.string.workout_rest_complete_notification_channel_name),
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            enableVibration(true)
+            setSound(null, null)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        }
+        manager.createNotificationChannel(workoutChannel)
+        manager.createNotificationChannel(restChannel)
+        manager.deleteNotificationChannel(LEGACY_WORKOUT_SESSION_CHANNEL_ID)
+    }
+
     private fun sessionNotification(
         session: WorkoutSession,
         contentIntent: PendingIntent,
         now: LocalDateTime,
+        presentation: WorkoutSessionNotificationPresentation,
     ): Notification {
         val content = session.toNotificationContent(now)
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+        val title = if (presentation.restOverTitle) {
+            getString(R.string.workout_session_notification_rest_over_title)
+        } else {
+            getString(R.string.workout_session_notification_title, content.planName)
+        }
+        val builder = NotificationCompat.Builder(this, presentation.channelId)
             .setSmallIcon(R.drawable.ic_workout_notification)
-            .setContentTitle(
-                getString(R.string.workout_session_notification_title, content.planName),
-            )
+            .setContentTitle(title)
             .setContentText(content.contentText)
             .setContentIntent(contentIntent)
             .setOngoing(true)
-            .setSilent(true)
+            .setOnlyAlertOnce(presentation.onlyAlertOnce)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setRequestPromotedOngoing(true)
             .setUsesChronometer(true)
             .setChronometerCountDown(content.chronometerCountDown)
             .setWhen(content.whenTime.toEpochMilli())
             .setShowWhen(true)
+        if (presentation.silent) {
+            builder.setSilent(true)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
             builder.setStyle(sessionMetricStyle(content))
         }
@@ -160,9 +186,6 @@ class WorkoutSessionService : LifecycleService() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "workout_session"
-        private const val NOTIFICATION_ID = 1001
-
         fun start(context: Context) {
             context.startService(Intent(context, WorkoutSessionService::class.java))
         }

@@ -10,11 +10,45 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlin.time.toJavaDuration
 
+internal const val WORKOUT_SESSION_CHANNEL_ID = "workout_session_v2"
+internal const val REST_COMPLETE_CHANNEL_ID = "rest_complete"
+internal const val LEGACY_WORKOUT_SESSION_CHANNEL_ID = "workout_session"
+internal const val WORKOUT_SESSION_NOTIFICATION_ID = 1001
+
 enum class WorkoutSessionNotificationMetric {
     Elapsed,
     Rest,
     Set,
 }
+
+enum class WorkoutSessionNotificationKind {
+    Ongoing,
+    RestComplete,
+}
+
+data class WorkoutSessionNotificationPresentation(
+    val channelId: String,
+    val silent: Boolean,
+    val onlyAlertOnce: Boolean,
+    val restOverTitle: Boolean,
+)
+
+fun WorkoutSessionNotificationKind.toPresentation(): WorkoutSessionNotificationPresentation =
+    when (this) {
+        WorkoutSessionNotificationKind.Ongoing -> WorkoutSessionNotificationPresentation(
+            channelId = WORKOUT_SESSION_CHANNEL_ID,
+            silent = true,
+            onlyAlertOnce = true,
+            restOverTitle = false,
+        )
+
+        WorkoutSessionNotificationKind.RestComplete -> WorkoutSessionNotificationPresentation(
+            channelId = REST_COMPLETE_CHANNEL_ID,
+            silent = false,
+            onlyAlertOnce = false,
+            restOverTitle = true,
+        )
+    }
 
 data class WorkoutSessionNotification(
     val planName: String,
