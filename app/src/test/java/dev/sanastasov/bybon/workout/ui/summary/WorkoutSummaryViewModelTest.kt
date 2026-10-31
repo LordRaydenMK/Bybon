@@ -282,6 +282,25 @@ class WorkoutSummaryViewModelTest {
     }
 
     @Test
+    fun `summary incline set from the import sample has a signed delta`() {
+        val previous = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 25),
+            exercises = listOf(completedExercise("incline-db-press", 20f to 13)),
+        )
+        val session = completedSession(
+            planId = "upper-body-b",
+            planName = "Upper body B",
+            startedAt = LocalDateTime.of(2026, 8, 20, 17, 59),
+            exercises = listOf(completedExercise("incline-db-press", 20f to 14)),
+        )
+
+        val set = listOf(previous, session).toSummarySets(session).single()
+        assert(set.contentDescription() == "1. 20 kg x 14, 29.33 kg 1RM, +0.66kg")
+    }
+
+    @Test
     fun `summary rematches imported sessions that stored no previous`() {
         val previous = completedSession(
             planId = "full-body-b",
