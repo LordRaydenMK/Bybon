@@ -8,12 +8,18 @@ import dev.sanastasov.bybon.workout.ui.weightRepsLabel
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
 internal const val WORKOUT_SESSION_CHANNEL_ID = "workout_session_v2"
 internal const val REST_COMPLETE_CHANNEL_ID = "rest_complete"
 internal const val LEGACY_WORKOUT_SESSION_CHANNEL_ID = "workout_session"
 internal const val WORKOUT_SESSION_NOTIFICATION_ID = 1001
+internal val REST_PROMOTE_LEAD = 3.seconds
+
+fun restPromoteWait(remaining: Duration, lead: Duration = REST_PROMOTE_LEAD): Duration =
+    (remaining - lead).coerceAtLeast(Duration.ZERO)
 
 enum class WorkoutSessionNotificationMetric {
     Elapsed,

@@ -22,10 +22,13 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.activeRestTimer
 import dev.sanastasov.bybon.workout.domain.activeSession
 import java.time.LocalDateTime
+import kotlin.time.Duration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 
 private const val TAG = "WorkoutSessionService"
 
@@ -35,21 +38,55 @@ class WorkoutSessionService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         Log.d(TAG, "onCreate() called")
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
         with(mainModule) {
             workoutsRepository.activeSession().mapLatest { session ->
                 Log.d(TAG, "activeSession mapLatest session: $session")
                 session ?: return@mapLatest
                 displayNotification(session, WorkoutSessionNotificationKind.Ongoing)
-                val rest = session.activeRestTimer(LocalDateTime.now()) ?: return@mapLatest
-                delay(rest.remaining(LocalDateTime.now()).inWholeMilliseconds)
-                displayNotification(session, WorkoutSessionNotificationKind.RestComplete)
+                val rest = session.activeRestTimer(LocalDateTime.now())
+                if (rest == null) {
+                    restPromoteScheduler.cancel()
+                    return@mapLatest
+                }
+                val wait = restPromoteWait(rest.remaining(LocalDateTime.now()))
+                if (wait > Duration.ZERO) {
+                    restPromoteScheduler.schedule(wait)
+                } else {
+                    displayNotification(session, WorkoutSessionNotificationKind.RestComplete)
+                    delay(rest.remaining(LocalDateTime.now()))
+                    displayNotification(session, WorkoutSessionNotificationKind.Ongoing)
+                }
             }.launchIn(lifecycleScope)
         }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        if (intent != null && intent.action == REST_PROMOTE_ALARM_ACTION) {
+            onRestPromoteAlarm()
+        }
         return START_NOT_STICKY
+    }
+
+    override fun onDestroy() {
+        mainModule.restPromoteScheduler.cancel()
+        super.onDestroy()
+    }
+
+    private fun onRestPromoteAlarm() {
+        lifecycleScope.launch {
+            val session = checkNotNull(mainModule.workoutsRepository.activeSession().first()) {
+                "Rest promote alarm requires an active workout session"
+            }
+            displayNotification(session, WorkoutSessionNotificationKind.RestComplete)
+            val remaining = session.activeRestTimer(LocalDateTime.now())
+                ?.remaining(LocalDateTime.now())
+                ?: Duration.ZERO
+            if (remaining > Duration.ZERO) {
+                delay(remaining)
+            }
+            displayNotification(session, WorkoutSessionNotificationKind.Ongoing)
+        }
     }
 
     private fun displayNotification(

@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout
 
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 
 class WorkoutSessionNotificationPresentationTest {
@@ -25,5 +26,13 @@ class WorkoutSessionNotificationPresentationTest {
         assert(WORKOUT_SESSION_CHANNEL_ID != REST_COMPLETE_CHANNEL_ID)
         assert(WORKOUT_SESSION_NOTIFICATION_ID == 1001)
         assert(LEGACY_WORKOUT_SESSION_CHANNEL_ID == "workout_session")
+    }
+
+    @Test
+    fun `rest promote waits until 3 seconds before rest end`() {
+        assert(restPromoteWait(90.seconds) == 87.seconds)
+        assert(restPromoteWait(3.seconds) == 0.seconds)
+        assert(restPromoteWait(1.seconds) == 0.seconds)
+        assert(REST_PROMOTE_LEAD == 3.seconds)
     }
 }

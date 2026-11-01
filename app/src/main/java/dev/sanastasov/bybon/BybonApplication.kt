@@ -13,7 +13,7 @@ class BybonApplication : Application() {
         val dbModule = DbModule.create(this)
         MainModule.create(
             BodyWeightModule.create(dbModule),
-            WorkoutModule.create(dbModule),
+            WorkoutModule.create(dbModule, this),
         )
     }
 }

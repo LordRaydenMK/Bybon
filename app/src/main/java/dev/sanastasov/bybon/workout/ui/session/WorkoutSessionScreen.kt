@@ -67,7 +67,12 @@ fun WorkoutModule.WorkoutSessionScreen(
     onNavigateToExerciseDetails: (String) -> Unit,
 ) {
     val viewModel = retain {
-        WorkoutSessionViewModel(planId, workoutsRepository, it.coroutineScope)
+        WorkoutSessionViewModel(
+            planId,
+            workoutsRepository,
+            it.coroutineScope,
+            restPromoteScheduler,
+        )
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resultBus = LocalResultEventBus.current

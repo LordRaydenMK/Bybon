@@ -1,12 +1,14 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.RestPromoteScheduler
 import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.activeRestTimer
 import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustExercise
@@ -25,6 +27,9 @@ import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeightFromField
 import dev.sanastasov.bybon.workout.domain.updateWorkout
 import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
+import dev.sanastasov.bybon.workout.restPromoteWait
+import java.time.LocalDateTime
+import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +46,7 @@ class WorkoutSessionViewModel(
     val planId: WorkoutPlanId,
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
+    private val restPromoteScheduler: RestPromoteScheduler = RestPromoteScheduler.NoOp,
 ) {
     private val _effects = Channel<WorkoutSessionEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutSessionEffect> = _effects.receiveAsFlow()
@@ -85,6 +91,7 @@ class WorkoutSessionViewModel(
                 when (action) {
                     WorkoutSessionAction.OnCancelWorkout -> {
                         val session = uiState.value ?: return@withLock
+                        restPromoteScheduler.cancel()
                         repository.deleteWorkout(session.id)
                         _effects.trySend(WorkoutSessionEffect.StopService)
                         _effects.trySend(WorkoutSessionEffect.NavigateBack)
@@ -144,6 +151,7 @@ class WorkoutSessionViewModel(
 
     private fun emitAfterSetCompleted(updated: WorkoutSession, action: WorkoutSessionAction) {
         if (action is WorkoutSessionAction.OnCompleteSet) {
+            syncRestPromoteAlarm(updated)
             if (updated.state is WorkoutState.Completed) {
                 _effects.trySend(WorkoutSessionEffect.StopService)
                 _effects.trySend(WorkoutSessionEffect.NavigateToSummary(updated.id))
@@ -157,6 +165,23 @@ class WorkoutSessionViewModel(
                     _effects.trySend(WorkoutSessionEffect.ScrollToExercise(nextPage))
                 }
             }
+        }
+    }
+
+    private fun syncRestPromoteAlarm(
+        session: WorkoutSession,
+        now: LocalDateTime = LocalDateTime.now(),
+    ) {
+        val rest = session.activeRestTimer(now)
+        if (rest == null) {
+            restPromoteScheduler.cancel()
+            return
+        }
+        val wait = restPromoteWait(rest.remaining(now))
+        if (wait > Duration.ZERO) {
+            restPromoteScheduler.schedule(wait)
+        } else {
+            restPromoteScheduler.cancel()
         }
     }
 
