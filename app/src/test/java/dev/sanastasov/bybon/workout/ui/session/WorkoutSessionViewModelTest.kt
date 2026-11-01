@@ -1,6 +1,8 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import app.cash.turbine.test
+import dev.sanastasov.bybon.workout.REST_PROMOTE_LEAD
+import dev.sanastasov.bybon.workout.RestPromoteScheduler
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
@@ -15,9 +17,11 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.restTimer
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateExercise
 import java.time.LocalDateTime
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -265,7 +269,13 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `canceling a workout deletes it and navigates back`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val scheduler = RecordingRestPromoteScheduler()
+        val viewModel = WorkoutSessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            scheduler,
+        )
 
         viewModel.effects.test {
             viewModel.uiState.first { it != null }
@@ -274,6 +284,7 @@ class WorkoutSessionViewModelTest {
             assert(awaitItem() == WorkoutSessionEffect.NavigateBack)
         }
         assert(repository.workoutSessions().first().isEmpty())
+        assert(scheduler.cancelCount == 1)
     }
 
     @Test
@@ -299,7 +310,13 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(session),
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val scheduler = RecordingRestPromoteScheduler()
+        val viewModel = WorkoutSessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            scheduler,
+        )
 
         viewModel.effects.test {
             val current = viewModel.uiState.first { it != null }!!
@@ -308,6 +325,7 @@ class WorkoutSessionViewModelTest {
             assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
             expectNoEvents()
         }
+        assert(scheduler.cancelCount == 1)
         val stored = repository.workoutSessions().first().single()
         assert(stored.state is WorkoutState.Completed)
         assert(stored.exercises.single().state == ExerciseState.Completed)
@@ -479,6 +497,49 @@ class LiveSessionOrLastTest {
             exercises = listOf(completedExercise("bench-press", 50f to 8)),
         )
         assert(liveSessionOrLast(fullBodyA.id, live, listOf(done)) == null)
+    }
+
+    @Test
+    fun `completing a rest-starting set schedules rest promote 3s early`() = runTest {
+        val scheduler = RecordingRestPromoteScheduler()
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            scheduler,
+        )
+
+        viewModel.uiState.test {
+            skipItems(1)
+            var session = awaitItem()!!
+            val warmupCount = session.exercises.first().warmupSets!!.size
+            repeat(warmupCount) { index ->
+                viewModel.onAction(
+                    WorkoutSessionAction.OnCompleteSet(
+                        session.exercises.first(),
+                        index,
+                        isWarmup = true,
+                    ),
+                )
+                session = awaitItem()!!
+            }
+            val rest = checkNotNull(session.restTimer())
+            assert(scheduler.scheduled.last() == rest.duration - REST_PROMOTE_LEAD)
+        }
+    }
+}
+
+private class RecordingRestPromoteScheduler : RestPromoteScheduler {
+    val scheduled = mutableListOf<Duration>()
+    var cancelCount = 0
+
+    override fun schedule(wait: Duration) {
+        scheduled += wait
+    }
+
+    override fun cancel() {
+        cancelCount++
     }
 }
 

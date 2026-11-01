@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
-import androidx.core.content.getSystemService
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
 import kotlin.time.Duration
@@ -15,7 +14,8 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 internal class WorkoutSessionRestAlarm(
     private val context: Context,
-) {
+    private val alarmManager: AlarmManager,
+) : RestPromoteScheduler {
     private val continuation = AtomicReference<CancellableContinuation<Unit>?>(null)
 
     fun completeFrom(intent: Intent?) {
@@ -23,11 +23,20 @@ internal class WorkoutSessionRestAlarm(
         continuation.getAndSet(null)?.takeIf { it.isActive }?.resume(Unit)
     }
 
+    override fun schedule(wait: Duration) {
+        val waitMs = wait.inWholeMilliseconds.coerceAtLeast(0L)
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            SystemClock.elapsedRealtime() + waitMs,
+            pendingIntent(),
+        )
+    }
+
     suspend fun await(wait: Duration) {
         val waitMs = wait.inWholeMilliseconds
         if (waitMs <= 0L) return
         val targetElapsedRealtime = SystemClock.elapsedRealtime() + waitMs
-        if (!canScheduleExact()) {
+        if (!alarmManager.canScheduleExactAlarms()) {
             delay(waitMs)
             return
         }
@@ -38,11 +47,7 @@ internal class WorkoutSessionRestAlarm(
                     continuation.compareAndSet(cont, null)
                     cancel()
                 }
-                alarmManager().setExactAndAllowWhileIdle(
-                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    targetElapsedRealtime,
-                    pendingIntent(),
-                )
+                schedule(wait)
             }
         } catch (_: SecurityException) {
             delay((targetElapsedRealtime - SystemClock.elapsedRealtime()).coerceAtLeast(0L))
@@ -52,14 +57,9 @@ internal class WorkoutSessionRestAlarm(
         }
     }
 
-    fun cancel() {
-        context.getSystemService<AlarmManager>()?.cancel(pendingIntent())
+    override fun cancel() {
+        alarmManager.cancel(pendingIntent())
     }
-
-    private fun canScheduleExact(): Boolean = alarmManager().canScheduleExactAlarms()
-
-    private fun alarmManager(): AlarmManager = context.getSystemService()
-        ?: error("Failed to get AlarmManager")
 
     private fun pendingIntent(): PendingIntent {
         val intent = Intent(context, WorkoutSessionService::class.java).setAction(ACTION)

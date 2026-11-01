@@ -32,7 +32,9 @@ private const val TAG = "WorkoutSessionService"
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutSessionService : LifecycleService() {
 
-    private val restAlarm = WorkoutSessionRestAlarm(this)
+    private val restAlarm by lazy {
+        WorkoutSessionRestAlarm(this, mainModule.alarmManager)
+    }
 
     override fun onCreate() {
         super.onCreate()
