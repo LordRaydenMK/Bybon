@@ -36,7 +36,7 @@ internal fun SetLoadOneRmHeader(modifier: Modifier = Modifier) {
         HeaderCell("kg x reps", Modifier, TextAlign.Start)
         Spacer(Modifier.weight(1f))
         HeaderCell("1RM", Modifier.widthIn(min = OneRmColumnMinWidth), TextAlign.End)
-        HeaderCell("", Modifier.widthIn(min = OneRmDeltaColumnMinWidth), TextAlign.End)
+        HeaderCell("vs prev", Modifier.widthIn(min = OneRmDeltaColumnMinWidth), TextAlign.End)
     }
 }
 

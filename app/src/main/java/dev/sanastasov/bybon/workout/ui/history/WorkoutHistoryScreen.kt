@@ -208,7 +208,7 @@ private fun WorkoutSessionHistoryCard(
                 duration = session.duration,
             )
             Spacer(Modifier.height(4.dp))
-            SetLoadOneRmHeader("Exercise")
+            SetLoadOneRmHeader()
             session.exercises.forEach { exercise ->
                 TopSetRow(exercise)
             }
@@ -246,13 +246,13 @@ private val LoadColumnMinWidth = 96.dp
 private val OneRmColumnMinWidth = 72.dp
 
 @Composable
-private fun SetLoadOneRmHeader(leadingLabel: String, modifier: Modifier = Modifier) {
+private fun SetLoadOneRmHeader(modifier: Modifier = Modifier) {
     Row(
         modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        HeaderCell(leadingLabel, Modifier.weight(1f), TextAlign.Start)
+        HeaderCell("Exercise", Modifier.weight(1f), TextAlign.Start)
         HeaderCell("kg x reps", Modifier.widthIn(min = LoadColumnMinWidth), TextAlign.End)
         HeaderCell("1RM", Modifier.widthIn(min = OneRmColumnMinWidth), TextAlign.End)
     }

@@ -51,4 +51,6 @@ private fun ExerciseDefinition.toAddedWorkoutExercise(
             setState = SetState.NotStated,
         )
     },
-).withPreviousFrom(previous)
+).let { exercise ->
+    if (previous != null) exercise.withPreviousFrom(previous) else exercise
+}

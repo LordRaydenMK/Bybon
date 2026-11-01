@@ -99,9 +99,8 @@ private fun WorkoutExercise.toSummaryExerciseUi(
     sessionStartedAt: LocalDateTime,
 ): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null
-    val matched = withPreviousFrom(
-        completedSessions.latestCompletedExercise(id, before = sessionStartedAt),
-    )
+    val previous = completedSessions.latestCompletedExercise(id, before = sessionStartedAt)
+    val matched = if (previous != null) withPreviousFrom(previous) else this
     val warmups = matched.warmupSets.orEmpty().map { it.toWarmupSummaryUi() }
     val work = matched.sets.mapIndexed { index, set -> set.toWorkSummaryUi(index + 1) }
     val performance = completedSessions.exercisePerformance(id, now)

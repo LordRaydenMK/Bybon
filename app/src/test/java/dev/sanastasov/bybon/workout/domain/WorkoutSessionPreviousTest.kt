@@ -82,7 +82,7 @@ class WorkoutSessionPreviousTest {
     }
 
     @Test
-    fun `withPreviousFrom clears previous when there is no prior exercise`() {
+    fun `withPreviousFromHistory clears previous when there is no prior exercise`() {
         val current = benchExercise(
             work = listOf(85f to 8),
             warmups = listOf(25f to 6),
@@ -97,8 +97,10 @@ class WorkoutSessionPreviousTest {
                 ),
             ),
         )
+        val session = completedBenchSession(LocalDateTime.of(2026, 10, 1, 12, 0), 85f)
+            .copy(exercises = listOf(current))
 
-        val actual = current.withPreviousFrom(null)
+        val actual = session.withPreviousFromHistory(emptyList()).exercises.single()
 
         assert(actual.sets.single().previous == null)
         assert(checkNotNull(actual.warmupSets).single().previous == null)

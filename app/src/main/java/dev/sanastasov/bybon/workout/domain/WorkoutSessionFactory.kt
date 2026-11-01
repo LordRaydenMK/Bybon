@@ -41,7 +41,13 @@ fun WorkoutPlan.toWorkoutSession(
                 restAfterWorkSet = previousExercise?.restAfterWorkSet
                     ?: planedExercise.restAfterWorkSet,
                 notes = planedExercise.notes,
-            ).withPreviousFrom(previousExercise)
+            ).let { exercise ->
+                if (previousExercise != null) {
+                    exercise.withPreviousFrom(previousExercise)
+                } else {
+                    exercise
+                }
+            }
         },
         startedAt,
     )
