@@ -35,9 +35,12 @@ class WorkoutSessionConvertTest {
     @Test
     fun `converting last warmup keeps work set previous by work index`() {
         val previous = completedBenchWithDistinctSets()
+        val previousBench = previous.exercises.first()
         val overview = fullBodyA.toOverviewSession(previous)
         val converted = overview.convertLastWarmupToWorkSet(overview.exercises.first())
+            .updateExercise(previousBench.id) { it.withPreviousFrom(previousBench) }
         val actual = converted.removeLastSet(converted.exercises.first())
+            .updateExercise(previousBench.id) { it.withPreviousFrom(previousBench) }
         val bench = actual.exercises.first()
 
         assert(bench.warmupSets?.size == 2)
@@ -52,9 +55,11 @@ class WorkoutSessionConvertTest {
     @Test
     fun `converting first work set to warmup keeps work previous by work index`() {
         val previous = completedBenchWithDistinctSets()
+        val previousBench = previous.exercises.first()
         val overview = fullBodyA.toOverviewSession(previous)
 
         val actual = overview.convertFirstWorkSetToWarmup(overview.exercises.first())
+            .updateExercise(previousBench.id) { it.withPreviousFrom(previousBench) }
         val bench = actual.exercises.first()
 
         assert(bench.warmupSets?.size == 4)
@@ -64,6 +69,34 @@ class WorkoutSessionConvertTest {
         assert(
             checkNotNull(bench.warmupSets).dropLast(1).map { it.previous } ==
                 previousWarmupPerformance(),
+        )
+    }
+
+    @Test
+    fun `converting last warmup pairs a fourth previous work set`() {
+        val previous = completedBenchWithDistinctSets().let { session ->
+            session.updateExercise(session.exercises.first().id) { bench ->
+                bench.copy(
+                    sets = bench.sets + ExerciseSet(
+                        bench.exerciseDefinition,
+                        Weight.kilograms(83),
+                        11,
+                        SetState.Completed(),
+                    ),
+                )
+            }
+        }
+        val previousBench = previous.exercises.first()
+        val overview = fullBodyA.toOverviewSession(previous)
+        val actual = overview.convertLastWarmupToWorkSet(overview.exercises.first())
+            .updateExercise(previousBench.id) { it.withPreviousFrom(previousBench) }
+        val bench = actual.exercises.first()
+
+        assert(bench.warmupSets?.size == 2)
+        assert(bench.sets.size == 4)
+        assert(
+            bench.sets.map { it.previous } == previousWorkPerformance() +
+                PreviousSetPerformance(Weight.kilograms(83), 11),
         )
     }
 

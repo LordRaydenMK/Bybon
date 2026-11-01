@@ -49,7 +49,8 @@ private fun ExerciseDefinition.toAddedWorkoutExercise(
             weight = previousSet?.weight ?: equipment?.defaultWorkWeight,
             reps = previousSet?.reps ?: DEFAULT_ADDED_REP_RANGE.first,
             setState = SetState.NotStated,
-            previous = previousSet?.let { PreviousSetPerformance(it.weight, it.reps) },
         )
     },
-)
+).let { exercise ->
+    if (previous != null) exercise.withPreviousFrom(previous) else exercise
+}

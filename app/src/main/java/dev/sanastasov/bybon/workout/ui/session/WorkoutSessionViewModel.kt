@@ -24,6 +24,7 @@ import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeightFromField
 import dev.sanastasov.bybon.workout.domain.updateWorkout
+import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -108,8 +109,9 @@ class WorkoutSessionViewModel(
                         )
 
                     else -> {
+                        val history = repository.workoutSessions().first()
                         val updated = repository.updateWorkout(planId) { session ->
-                            reduce(session, action)
+                            reduce(session, action, history)
                         }
                         emitAfterSetCompleted(updated, action)
                     }
@@ -158,8 +160,18 @@ class WorkoutSessionViewModel(
         }
     }
 
-    private fun reduce(session: WorkoutSession, action: WorkoutSessionAction): WorkoutSession =
-        reduceEdits(session, action) ?: reduceProgression(session, action)
+    private fun reduce(
+        session: WorkoutSession,
+        action: WorkoutSessionAction,
+        history: List<WorkoutSession>,
+    ): WorkoutSession {
+        val reduced = reduceEdits(session, action) ?: reduceProgression(session, action)
+        return if (action.rematchPrevious()) {
+            reduced.withPreviousFromHistory(history)
+        } else {
+            reduced
+        }
+    }
 
     private fun reduceEdits(
         session: WorkoutSession,
@@ -230,4 +242,14 @@ internal fun liveSessionOrLast(
     return live ?: last?.takeUnless { previous ->
         sessions.any { it.id == previous.id && it.state is WorkoutState.Completed }
     }
+}
+
+private fun WorkoutSessionAction.rematchPrevious(): Boolean = when (this) {
+    is WorkoutSessionAction.OnAddSet,
+    is WorkoutSessionAction.RemoveLastSet,
+    is WorkoutSessionAction.OnConvertToWarmup,
+    is WorkoutSessionAction.OnConvertToWorkSet,
+    -> true
+
+    else -> false
 }

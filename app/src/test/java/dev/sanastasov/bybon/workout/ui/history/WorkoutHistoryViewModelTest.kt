@@ -6,7 +6,6 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
-import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -220,41 +219,6 @@ class WorkoutHistoryViewModelTest {
             assert(topSet.weightKg == "45")
             assert(topSet.reps == 12)
             assert(topSet.oneRm == Weight.kilograms(estimateOneRmKg(45f, 12)))
-            assert(topSet.previousOneRm == null)
-        }
-    }
-
-    @Test
-    fun `history top set includes previous 1RM`() = runTest {
-        val session = completedSession(
-            planId = "full-body-b",
-            planName = "Full Body B",
-            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
-            exercises = listOf(
-                WorkoutExercise(
-                    exerciseDefinition = catalogExercise("romanian-deadlift"),
-                    repRange = 8..10,
-                    sets = listOf(
-                        ExerciseSet(
-                            catalogExercise("romanian-deadlift"),
-                            Weight.kilograms(45),
-                            12,
-                            SetState.Completed(),
-                            PreviousSetPerformance(Weight.kilograms(45), 9),
-                        ),
-                    ),
-                ),
-            ),
-        )
-        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
-        val viewModel = historyViewModel(repository)
-
-        viewModel.uiState.test {
-            skipItems(1)
-            val topSet = (awaitItem() as WorkoutHistoryUiState.History)
-                .sessions.single().exercises.single()
-            assert(topSet.oneRm == Weight.kilograms(estimateOneRmKg(45f, 12)))
-            assert(topSet.previousOneRm == Weight.kilograms(estimateOneRmKg(45f, 9)))
         }
     }
 
@@ -423,7 +387,7 @@ class WorkoutHistoryViewModelTest {
             assert(history.sessions.first().duration == "00:56")
             assert(
                 history.sessions.first().exercises.first().contentDescription() ==
-                    "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM, -",
+                    "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM",
             )
             assert(history.sessions.any { it.planName == "Full Body B" })
             assert(history.sessions.any { it.planName == "Full Body A" })

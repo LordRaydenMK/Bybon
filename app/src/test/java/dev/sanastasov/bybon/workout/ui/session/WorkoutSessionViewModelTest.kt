@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.ExerciseState
+import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -15,6 +16,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.domain.updateExercise
 import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.first
@@ -92,6 +94,74 @@ class WorkoutSessionViewModelTest {
             val removed = awaitItem()!!
             assert(removed.exercises.first().sets.size == 3)
             assert(removed.exercises.first().warmupSets?.size == 3)
+        }
+    }
+
+    @Test
+    fun `session work previous stays aligned after dropping a warmup`() = runTest {
+        val previous = completedSessionWithDistinctSets()
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(previous),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            val bench = session.exercises.first()
+            assert(bench.warmupSets?.size == 3)
+            assert(bench.sets.size == 3)
+
+            viewModel.onAction(WorkoutSessionAction.OnConvertToWorkSet(bench))
+            val converted = awaitItem()!!
+            viewModel.onAction(WorkoutSessionAction.RemoveLastSet(converted.exercises.first()))
+            val reduced = awaitItem()!!
+            val updated = reduced.exercises.first()
+
+            assert(updated.warmupSets?.size == 2)
+            assert(updated.sets.size == 3)
+            assert(
+                updated.sets.map { it.previous } == listOf(
+                    PreviousSetPerformance(Weight.kilograms(80), 8),
+                    PreviousSetPerformance(Weight.kilograms(81), 9),
+                    PreviousSetPerformance(Weight.kilograms(82), 10),
+                ),
+            )
+        }
+    }
+
+    @Test
+    fun `added work set picks up the matching previous work set`() = runTest {
+        val previous = completedSessionWithDistinctSets().let { session ->
+            session.updateExercise(session.exercises.first().id) { bench ->
+                bench.copy(
+                    sets = bench.sets + ExerciseSet(
+                        bench.exerciseDefinition,
+                        Weight.kilograms(83),
+                        11,
+                        SetState.Completed(),
+                    ),
+                )
+            }
+        }
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(previous),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            viewModel.onAction(WorkoutSessionAction.OnAddSet(session.exercises.first()))
+            val added = awaitItem()!!
+            val bench = added.exercises.first()
+
+            assert(bench.sets.size == 4)
+            assert(
+                bench.sets.last().previous == PreviousSetPerformance(Weight.kilograms(83), 11),
+            )
         }
     }
 
@@ -411,6 +481,32 @@ class LiveSessionOrLastTest {
         assert(liveSessionOrLast(fullBodyA.id, live, listOf(done)) == null)
     }
 }
+
+private fun completedSessionWithDistinctSets(): WorkoutSession =
+    fullBodyA.toWorkoutSession().let { session ->
+        session.copy(
+            exercises = session.exercises.map { exercise ->
+                exercise.copy(
+                    sets = exercise.sets.mapIndexed { index, set ->
+                        set.copy(
+                            weight = Weight.kilograms(80 + index),
+                            reps = 8 + index,
+                            setState = SetState.Completed(),
+                        )
+                    },
+                    warmupSets = exercise.warmupSets?.mapIndexed { index, set ->
+                        set.copy(
+                            weight = Weight.kilograms(20 + index),
+                            reps = 8,
+                            setState = SetState.Completed(),
+                        )
+                    },
+                )
+            },
+            duration = kotlin.time.Duration.ZERO,
+            startedAt = LocalDateTime.of(2026, 10, 1, 12, 0),
+        )
+    }
 
 internal fun twoExerciseSession(firstState: SetState, secondState: SetState): WorkoutSession {
     val bench = catalogExercise("bench-press")

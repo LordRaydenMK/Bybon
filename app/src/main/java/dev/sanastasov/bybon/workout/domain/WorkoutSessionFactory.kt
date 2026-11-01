@@ -36,15 +36,18 @@ fun WorkoutPlan.toWorkoutSession(
                         },
                         previousSet?.reps ?: planedExercise.repRange.first,
                         SetState.NotStated,
-                        previous = previousSet?.let {
-                            PreviousSetPerformance(it.weight, it.reps)
-                        },
                     )
                 },
                 restAfterWorkSet = previousExercise?.restAfterWorkSet
                     ?: planedExercise.restAfterWorkSet,
                 notes = planedExercise.notes,
-            )
+            ).let { exercise ->
+                if (previousExercise != null) {
+                    exercise.withPreviousFrom(previousExercise)
+                } else {
+                    exercise
+                }
+            }
         },
         startedAt,
     )
@@ -70,9 +73,6 @@ private fun warmupSetsFromPlan(
             reps = previousWarmup?.reps
                 ?: defaultWarmupReps.getOrElse(index) { defaultWarmupReps.last() },
             setState = SetState.NotStated,
-            previous = previousWarmup?.let {
-                PreviousSetPerformance(it.weight, it.reps)
-            },
         )
     }
 }
@@ -84,15 +84,6 @@ fun WorkoutPlan.toOverviewSession(
     previousSession = previousSession,
     previousHistory = previousHistory,
 ).asOverviewDraft()
-
-fun List<WorkoutSession>.latestCompletedExercise(exerciseId: String): WorkoutExercise? =
-    mapNotNull { session ->
-        if (session.state !is WorkoutState.Completed) {
-            null
-        } else {
-            session.exercises.firstOrNull { it.id == exerciseId }?.let { session.startedAt to it }
-        }
-    }.maxByOrNull { it.first }?.second
 
 fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     duration = null,

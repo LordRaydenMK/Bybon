@@ -13,7 +13,7 @@ class WorkoutHistoryUiTest {
             reps = 12,
             oneRm = Weight.kilograms(63f),
         )
-        assert(topSet.contentDescription() == "Romanian Deadlift, 45 kg x 12, 63 kg 1RM, -")
+        assert(topSet.contentDescription() == "Romanian Deadlift, 45 kg x 12, 63 kg 1RM")
     }
 
     @Test
@@ -24,18 +24,6 @@ class WorkoutHistoryUiTest {
             reps = 8,
             oneRm = null,
         )
-        assert(topSet.contentDescription() == "Assisted Pull-up, - x 8, -, -")
-    }
-
-    @Test
-    fun `top set content description includes 1RM delta vs previous`() {
-        val topSet = ExerciseTopSetUi(
-            name = "Romanian Deadlift",
-            weightKg = "45",
-            reps = 12,
-            oneRm = Weight.kilograms(63f),
-            previousOneRm = Weight.kilograms(57.86f),
-        )
-        assert(topSet.contentDescription() == "Romanian Deadlift, 45 kg x 12, 63 kg 1RM, +5.14kg")
+        assert(topSet.contentDescription() == "Assisted Pull-up, - x 8, -")
     }
 }
