@@ -322,6 +322,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
         viewModel.effects.test {
             val current = viewModel.uiState.first { it != null }!!
             viewModel.onAction(WorkoutSessionAction.OnRemoveExercise(current.exercises.last()))
+            assert(awaitItem() == WorkoutSessionEffect.StopService)
             assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
             expectNoEvents()
         }

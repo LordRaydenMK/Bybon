@@ -19,8 +19,10 @@ import dev.sanastasov.bybon.MainActivity
 import dev.sanastasov.bybon.R
 import dev.sanastasov.bybon.mainModule
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.activeRestTimer
 import dev.sanastasov.bybon.workout.domain.activeSession
+import dev.sanastasov.bybon.workout.domain.completeInProgressSet
 import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,7 +43,10 @@ class WorkoutSessionService : LifecycleService() {
         with(mainModule) {
             workoutsRepository.activeSession().mapLatest { session ->
                 Log.d(TAG, "activeSession mapLatest session: $session")
-                session ?: return@mapLatest
+                session ?: run {
+                    restPromoteScheduler.cancel()
+                    return@mapLatest
+                }
                 displayNotification(session, WorkoutSessionNotificationKind.Ongoing)
                 val rest = session.activeRestTimer(LocalDateTime.now())
                 if (rest == null) {
@@ -62,8 +67,9 @@ class WorkoutSessionService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        if (intent != null && intent.action == REST_PROMOTE_ALARM_ACTION) {
-            onRestPromoteAlarm()
+        when (intent?.action) {
+            REST_PROMOTE_ALARM_ACTION -> onRestPromoteAlarm()
+            COMPLETE_SET_ACTION -> completeSetFromNotification()
         }
         return START_NOT_STICKY
     }
@@ -172,6 +178,13 @@ class WorkoutSessionService : LifecycleService() {
         if (presentation.silent) {
             builder.setSilent(true)
         }
+        if (content.showCompleteSetAction) {
+            builder.addAction(
+                R.drawable.ic_workout_notification,
+                getString(R.string.workout_session_notification_complete_set),
+                completeSetPendingIntent(this),
+            )
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN) {
             builder.setStyle(sessionMetricStyle(content))
         }
@@ -213,15 +226,6 @@ class WorkoutSessionService : LifecycleService() {
         )
     }
 
-    private fun currentSetMetricLabel(content: WorkoutSessionNotification): String {
-        val labelRes = if (content.currentSetIsWarmup) {
-            R.string.workout_session_notification_warmup_set
-        } else {
-            R.string.workout_session_notification_work_set
-        }
-        return getString(labelRes, content.currentSetNumber, content.currentSetTotal)
-    }
-
     companion object {
         fun start(context: Context) {
             context.startService(Intent(context, WorkoutSessionService::class.java))
@@ -231,4 +235,56 @@ class WorkoutSessionService : LifecycleService() {
             context.stopService(Intent(context, WorkoutSessionService::class.java))
         }
     }
+}
+
+private fun WorkoutSessionService.completeSetFromNotification() {
+    lifecycleScope.launch {
+        val repository = mainModule.workoutsRepository
+        val session = repository.activeSession().first() ?: return@launch
+        if (session.activeRestTimer(LocalDateTime.now()) != null) return@launch
+        val updated = repository.completeInProgressSet() ?: return@launch
+        if (updated.state is WorkoutState.Completed) {
+            mainModule.restPromoteScheduler.cancel()
+            notifyWorkoutCompleted(updated)
+            ServiceCompat.stopForeground(
+                this@completeSetFromNotification,
+                ServiceCompat.STOP_FOREGROUND_DETACH,
+            )
+            stopSelf()
+        }
+    }
+}
+
+private fun WorkoutSessionService.notifyWorkoutCompleted(session: WorkoutSession) {
+    val manager = getSystemService<NotificationManager>() ?: error(
+        "Failed to get NotificationManager",
+    )
+    val contentIntent = PendingIntent.getActivity(
+        this,
+        WORKOUT_SESSION_NOTIFICATION_ID,
+        MainActivity.create(this, session.planId),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+    val notification = NotificationCompat.Builder(this, WORKOUT_SESSION_CHANNEL_ID)
+        .setSmallIcon(R.drawable.ic_workout_notification)
+        .setContentTitle(session.planName)
+        .setContentText(getString(R.string.workout_session_notification_completed))
+        .setContentIntent(contentIntent)
+        .setAutoCancel(true)
+        .setOngoing(false)
+        .setOnlyAlertOnce(true)
+        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+        .build()
+    manager.notify(WORKOUT_SESSION_NOTIFICATION_ID, notification)
+}
+
+private fun WorkoutSessionService.currentSetMetricLabel(
+    content: WorkoutSessionNotification,
+): String {
+    val labelRes = if (content.currentSetIsWarmup) {
+        R.string.workout_session_notification_warmup_set
+    } else {
+        R.string.workout_session_notification_work_set
+    }
+    return getString(labelRes, content.currentSetNumber, content.currentSetTotal)
 }

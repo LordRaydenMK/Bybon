@@ -39,6 +39,7 @@ class WorkoutSessionNotificationTest {
             ),
         )
         assert(content.criticalMetricIndex == 0)
+        assert(content.showCompleteSetAction)
     }
 
     @Test
@@ -67,6 +68,7 @@ class WorkoutSessionNotificationTest {
                 WorkoutSessionNotificationMetric.Set,
             ),
         )
+        assert(content.showCompleteSetAction)
     }
 
     @Test
@@ -95,6 +97,7 @@ class WorkoutSessionNotificationTest {
             ),
         )
         assert(content.criticalMetricIndex == 0)
+        assert(content.showCompleteSetAction == false)
     }
 
     @Test
@@ -116,6 +119,7 @@ class WorkoutSessionNotificationTest {
                 WorkoutSessionNotificationMetric.Set,
             ),
         )
+        assert(content.showCompleteSetAction)
     }
 }
 
