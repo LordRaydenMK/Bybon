@@ -18,6 +18,8 @@ import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorScreen
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.notificationSummarySessionId
 import dev.sanastasov.bybon.workout.ui.details.ExerciseDetailsScreen
 import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import dev.sanastasov.bybon.workout.ui.library.ExerciseLibraryScreen
@@ -44,7 +46,12 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
     LaunchedEffect(openSession) {
         when (openSession) {
             OpenSessionRequest.None -> Unit
-            is OpenSessionRequest.Open -> openWorkoutSessionIfMissing(backStack, openSession.planId)
+
+            is OpenSessionRequest.Open -> openWorkoutFromNotification(
+                backStack,
+                openSession.planId,
+                workoutsRepository.notificationSummarySessionId(openSession.planId),
+            )
         }
     }
     NavDisplay(
@@ -169,5 +176,23 @@ internal fun openWorkoutSessionIfMissing(backStack: MutableList<Screen>, planId:
     val target = Screen.WorkoutSession(planId)
     if (target !in backStack) {
         backStack.add(target)
+    }
+}
+
+internal fun openWorkoutFromNotification(
+    backStack: MutableList<Screen>,
+    planId: WorkoutPlanId,
+    completedSessionId: WorkoutSessionId?,
+) {
+    if (completedSessionId == null) {
+        openWorkoutSessionIfMissing(backStack, planId)
+        return
+    }
+    backStack.removeAll { screen ->
+        screen is Screen.WorkoutSession && screen.planId == planId
+    }
+    val summary = Screen.WorkoutSummary(completedSessionId)
+    if (summary !in backStack) {
+        backStack.add(summary)
     }
 }

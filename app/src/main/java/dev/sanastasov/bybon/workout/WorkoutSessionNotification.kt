@@ -79,6 +79,9 @@ data class WorkoutSessionNotification(
 
     val criticalMetricIndex: Int
         get() = 0
+
+    val showCompleteSetAction: Boolean
+        get() = restEnd == null
 }
 
 fun WorkoutSession.toNotificationContent(
