@@ -269,7 +269,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `canceling a workout deletes it and navigates back`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val scheduler = RecordingRestPromoteScheduler()
+        val scheduler = FakeRestPromoteScheduler()
         val viewModel = WorkoutSessionViewModel(
             fullBodyA.id,
             repository,
@@ -284,7 +284,7 @@ class WorkoutSessionViewModelTest {
             assert(awaitItem() == WorkoutSessionEffect.NavigateBack)
         }
         assert(repository.workoutSessions().first().isEmpty())
-        assert(scheduler.cancelCount == 1)
+        assert(scheduler.state == FakeRestPromoteScheduler.State.Cancelled)
     }
 
     @Test
@@ -310,7 +310,7 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(session),
         )
-        val scheduler = RecordingRestPromoteScheduler()
+        val scheduler = FakeRestPromoteScheduler()
         val viewModel = WorkoutSessionViewModel(
             fullBodyA.id,
             repository,
@@ -325,7 +325,7 @@ class WorkoutSessionViewModelTest {
             assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
             expectNoEvents()
         }
-        assert(scheduler.cancelCount == 1)
+        assert(scheduler.state == FakeRestPromoteScheduler.State.Cancelled)
         val stored = repository.workoutSessions().first().single()
         assert(stored.state is WorkoutState.Completed)
         assert(stored.exercises.single().state == ExerciseState.Completed)
@@ -501,7 +501,7 @@ class LiveSessionOrLastTest {
 
     @Test
     fun `completing a rest-starting set schedules rest promote 3s early`() = runTest {
-        val scheduler = RecordingRestPromoteScheduler()
+        val scheduler = FakeRestPromoteScheduler()
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = WorkoutSessionViewModel(
             fullBodyA.id,
@@ -525,21 +525,33 @@ class LiveSessionOrLastTest {
                 session = awaitItem()!!
             }
             val rest = checkNotNull(session.restTimer())
-            assert(scheduler.scheduled.last() == rest.duration - REST_PROMOTE_LEAD)
+            assert(
+                scheduler.state == FakeRestPromoteScheduler.State.Scheduled(
+                    rest.duration - REST_PROMOTE_LEAD,
+                ),
+            )
         }
     }
 }
 
-private class RecordingRestPromoteScheduler : RestPromoteScheduler {
-    val scheduled = mutableListOf<Duration>()
-    var cancelCount = 0
+private class FakeRestPromoteScheduler : RestPromoteScheduler {
+    sealed interface State {
+        data object Idle : State
+        data class Scheduled(
+            val wait: Duration,
+        ) : State
+        data object Cancelled : State
+    }
+
+    var state: State = State.Idle
+        private set
 
     override fun schedule(wait: Duration) {
-        scheduled += wait
+        state = State.Scheduled(wait)
     }
 
     override fun cancel() {
-        cancelCount++
+        state = State.Cancelled
     }
 }
 
