@@ -29,6 +29,7 @@ import dev.sanastasov.bybon.workout.domain.updateWorkout
 import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
 import dev.sanastasov.bybon.workout.restPromoteWait
 import java.time.LocalDateTime
+import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -174,8 +175,13 @@ class WorkoutSessionViewModel(
         val rest = session.activeRestTimer(now)
         if (rest == null) {
             restPromoteScheduler.cancel()
+            return
+        }
+        val wait = restPromoteWait(rest.remaining(now))
+        if (wait > Duration.ZERO) {
+            restPromoteScheduler.schedule(wait)
         } else {
-            restPromoteScheduler.schedule(restPromoteWait(rest.remaining(now)))
+            restPromoteScheduler.cancel()
         }
     }
 

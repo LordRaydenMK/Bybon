@@ -26,7 +26,7 @@ interface WorkoutModule : DbModule {
             ).also { repository = it }
             val alarms = appContext.getSystemService<AlarmManager>()
                 ?: error("Failed to get AlarmManager")
-            val restAlarms = WorkoutSessionRestAlarm(appContext, alarms)
+            val restAlarms = WorkoutSessionRestAlarm(alarms, restPromotePendingIntent(appContext))
             return object : WorkoutModule, DbModule by dbModule {
                 override val workoutsRepository: WorkoutsRepository = workouts
                 override val alarmManager: AlarmManager = alarms
