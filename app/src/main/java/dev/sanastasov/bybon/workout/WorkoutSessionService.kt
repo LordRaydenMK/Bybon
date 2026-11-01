@@ -62,8 +62,8 @@ class WorkoutSessionService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
-        if (intent != null) {
-            onRestPromoteAlarm(intent)
+        if (intent != null && intent.action == REST_PROMOTE_ALARM_ACTION) {
+            onRestPromoteAlarm()
         }
         return START_NOT_STICKY
     }
@@ -73,10 +73,11 @@ class WorkoutSessionService : LifecycleService() {
         super.onDestroy()
     }
 
-    private fun onRestPromoteAlarm(intent: Intent) {
-        if (intent.action != REST_PROMOTE_ALARM_ACTION) return
+    private fun onRestPromoteAlarm() {
         lifecycleScope.launch {
-            val session = mainModule.workoutsRepository.activeSession().first() ?: return@launch
+            val session = checkNotNull(mainModule.workoutsRepository.activeSession().first()) {
+                "Rest promote alarm requires an active workout session"
+            }
             displayNotification(session, WorkoutSessionNotificationKind.RestComplete)
             val remaining = session.activeRestTimer(LocalDateTime.now())
                 ?.remaining(LocalDateTime.now())
