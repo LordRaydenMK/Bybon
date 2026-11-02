@@ -52,8 +52,19 @@ fun WorkoutSession.updateWeight(
     setIndex: Int,
     weight: Weight?,
     isWarmup: Boolean = false,
-): WorkoutSession = updateExerciseSet(exercise, setIndex, isWarmup) {
-    it.copy(weight = weight)
+): WorkoutSession {
+    if (isWarmup) {
+        return updateExerciseSet(exercise, setIndex, isWarmup = true) {
+            it.copy(weight = weight)
+        }
+    }
+    return updateExercise(exercise.id) { current ->
+        current.copy(
+            sets = current.sets.mapIndexed { index, set ->
+                if (index >= setIndex) set.copy(weight = weight) else set
+            },
+        )
+    }
 }
 
 fun WorkoutSession.updateReps(
