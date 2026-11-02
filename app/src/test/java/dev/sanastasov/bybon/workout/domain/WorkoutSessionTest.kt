@@ -161,6 +161,19 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `clearing a work set weight does not change later work sets`() {
+        val session = fullBodyA.toWorkoutSession()
+        val bench = session.exercises.first()
+        val laterWeights = bench.sets.drop(1).map { it.weight }
+
+        val actual = session.updateWeight(bench, 0, null)
+        val actualBench = actual.exercises.first()
+
+        assert(actualBench.sets.first().weight == null)
+        assert(actualBench.sets.drop(1).map { it.weight } == laterWeights)
+    }
+
+    @Test
     fun `update warmup weight does not change work sets`() {
         val session = fullBodyA.toWorkoutSession()
         val bench = session.exercises.first()
@@ -514,14 +527,19 @@ class WorkoutSessionTest {
         val session = fullBodyA.toOverviewSession()
         val bench = session.exercises.first()
 
+        val originalLater = bench.sets.drop(1).map { it.weight }
         val cleared = session.updateWeightFromField(bench, 0, "")
-        assert(cleared.exercises.first().sets.all { it.weight == null })
+        assert(cleared.exercises.first().sets.first().weight == null)
+        assert(cleared.exercises.first().sets.drop(1).map { it.weight } == originalLater)
 
         val loaded = session.updateWeightFromField(bench, 0, "80")
         assert(loaded.exercises.first().sets.all { it.weight == Weight.kilograms(80) })
 
         val zeroed = loaded.updateWeightFromField(loaded.exercises.first(), 0, "0")
-        assert(zeroed.exercises.first().sets.all { it.weight == null })
+        assert(zeroed.exercises.first().sets.first().weight == null)
+        assert(
+            zeroed.exercises.first().sets.drop(1).all { it.weight == Weight.kilograms(80) },
+        )
 
         val ignored = loaded.updateWeightFromField(loaded.exercises.first(), 0, "nope")
         assert(ignored.exercises.first().sets.first().weight == Weight.kilograms(80))

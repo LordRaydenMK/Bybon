@@ -60,10 +60,12 @@ fun NumberInputField(
             state.setTextAndPlaceCursorAtEnd(initialText)
         }
     }
-    LaunchedEffect(state, key) {
+    LaunchedEffect(state, key, focused) {
         snapshotFlow { state.text.toString() }
             .drop(1)
-            .collectLatest(onTextChanged)
+            .collectLatest { text ->
+                if (focused) onTextChanged(text)
+            }
     }
     val textStyle = MaterialTheme.typography.labelMedium.copy(textAlign = TextAlign.Center)
     val fieldWidth = rememberNumberInputWidth(state.text.toString(), minWidth, textStyle)

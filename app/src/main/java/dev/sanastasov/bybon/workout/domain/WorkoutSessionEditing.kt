@@ -61,7 +61,11 @@ fun WorkoutSession.updateWeight(
     return updateExercise(exercise.id) { current ->
         current.copy(
             sets = current.sets.mapIndexed { index, set ->
-                if (index >= setIndex) set.copy(weight = weight) else set
+                when {
+                    index == setIndex -> set.copy(weight = weight)
+                    weight != null && index > setIndex -> set.copy(weight = weight)
+                    else -> set
+                }
             },
         )
     }
