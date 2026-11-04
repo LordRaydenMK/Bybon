@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDateTime
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
@@ -22,7 +23,10 @@ class SessionElapsedClockTest {
         assert(0.seconds.formatSessionElapsedClock() == "00:00")
         assert(1.seconds.formatSessionElapsedClock() == "00:01")
         assert(1.minutes.formatSessionElapsedClock() == "01:00")
-        assert(125.minutes.formatSessionElapsedClock() == "125:00")
+        assert(59.minutes.formatSessionElapsedClock() == "59:00")
+        assert(1.hours.formatSessionElapsedClock() == "1:00:00")
+        assert((1.hours + 5.minutes + 7.seconds).formatSessionElapsedClock() == "1:05:07")
+        assert(125.minutes.formatSessionElapsedClock() == "2:05:00")
     }
 
     @Test
@@ -38,6 +42,15 @@ class SessionElapsedClockTest {
         assert(
             (50.minutes + 20.seconds).elapsedClockContentDescription() ==
                 "Elapsed 50 minutes 20 seconds",
+        )
+        assert(1.hours.elapsedClockContentDescription() == "Elapsed 1 hour")
+        assert(
+            (2.hours + 5.minutes).elapsedClockContentDescription() ==
+                "Elapsed 2 hours 5 minutes",
+        )
+        assert(
+            (1.hours + 5.minutes + 7.seconds).elapsedClockContentDescription() ==
+                "Elapsed 1 hour 5 minutes 7 seconds",
         )
     }
 

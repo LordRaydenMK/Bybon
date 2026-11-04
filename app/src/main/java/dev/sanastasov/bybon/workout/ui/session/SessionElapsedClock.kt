@@ -46,26 +46,34 @@ internal fun SessionElapsedClock(
 
 internal fun Duration.formatSessionElapsedClock(): String {
     val totalSeconds = inWholeSeconds.coerceAtLeast(0)
-    val minutes = totalSeconds / 60
+    val hours = totalSeconds / 3_600
+    val minutes = (totalSeconds % 3_600) / 60
     val seconds = totalSeconds % 60
-    return "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+    val mmSs = "${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}"
+    return if (hours > 0) "$hours:$mmSs" else mmSs
 }
 
 internal fun Duration.elapsedClockContentDescription(): String {
     val totalSeconds = inWholeSeconds.coerceAtLeast(0)
-    val minutes = totalSeconds / 60
+    val hours = totalSeconds / 3_600
+    val minutes = (totalSeconds % 3_600) / 60
     val seconds = totalSeconds % 60
+    val hourPart = when (hours) {
+        0L -> null
+        1L -> "1 hour"
+        else -> "$hours hours"
+    }
     val minutePart = when (minutes) {
         0L -> null
         1L -> "1 minute"
         else -> "$minutes minutes"
     }
     val secondPart = when {
-        minutes > 0L && seconds == 0L -> null
+        (hours > 0L || minutes > 0L) && seconds == 0L -> null
         seconds == 1L -> "1 second"
         else -> "$seconds seconds"
     }
-    return "Elapsed ${listOfNotNull(minutePart, secondPart).joinToString(" ")}"
+    return "Elapsed ${listOfNotNull(hourPart, minutePart, secondPart).joinToString(" ")}"
 }
 
 @Preview
