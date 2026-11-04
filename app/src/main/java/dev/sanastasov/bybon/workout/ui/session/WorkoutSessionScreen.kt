@@ -81,37 +81,40 @@ fun WorkoutModule.WorkoutSessionScreen(
         viewModel.onAction(WorkoutSessionAction.OnExercisePicked(exerciseId))
     }
     val context = LocalContext.current
-    uiState?.let { session ->
-        LaunchedEffect(session.id) {
+    val session = uiState
+    LaunchedEffect(session?.id) {
+        if (session != null) {
             WorkoutSessionService.start(context)
         }
-        val pagerState = rememberPagerState(
-            session.currentExerciseIndex ?: 0,
-        ) { session.exercises.size }
-        viewModel.effects.collectEffectWithLifecycle { effect ->
-            when (effect) {
-                WorkoutSessionEffect.NavigateBack -> onBack()
+    }
+    val pagerState = rememberPagerState(
+        session?.currentExerciseIndex ?: 0,
+    ) { session?.exercises?.size?.coerceAtLeast(1) ?: 1 }
+    viewModel.effects.collectEffectWithLifecycle { effect ->
+        when (effect) {
+            WorkoutSessionEffect.NavigateBack -> onBack()
 
-                is WorkoutSessionEffect.NavigateToSummary -> onWorkoutCompleted(effect.sessionId)
+            is WorkoutSessionEffect.NavigateToSummary -> onWorkoutCompleted(effect.sessionId)
 
-                is WorkoutSessionEffect.OpenExerciseLibrary ->
-                    onNavigateToExerciseLibrary(effect.existingExerciseIds)
+            is WorkoutSessionEffect.OpenExerciseLibrary ->
+                onNavigateToExerciseLibrary(effect.existingExerciseIds)
 
-                is WorkoutSessionEffect.OpenExerciseDetails ->
-                    onNavigateToExerciseDetails(effect.exerciseId)
+            is WorkoutSessionEffect.OpenExerciseDetails ->
+                onNavigateToExerciseDetails(effect.exerciseId)
 
-                is WorkoutSessionEffect.ScrollToExercise -> {
-                    if (pagerState.pageCount == 0) return@collectEffectWithLifecycle
-                    pagerState.animateScrollToPage(
-                        effect.page.coerceIn(0, pagerState.pageCount - 1),
-                    )
-                }
-
-                WorkoutSessionEffect.StopService -> WorkoutSessionService.stop(context)
+            is WorkoutSessionEffect.ScrollToExercise -> {
+                if (pagerState.pageCount == 0) return@collectEffectWithLifecycle
+                pagerState.animateScrollToPage(
+                    effect.page.coerceIn(0, pagerState.pageCount - 1),
+                )
             }
+
+            WorkoutSessionEffect.StopService -> WorkoutSessionService.stop(context)
         }
+    }
+    session?.let { current ->
         SessionScreenContent(
-            session,
+            current,
             pagerState,
             viewModel::onAction,
             onBack,

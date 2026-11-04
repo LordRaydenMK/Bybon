@@ -8,4 +8,6 @@
     <string name="workout_session_notification_rest">Rest</string>
     <string name="workout_session_notification_work_set">%1$d/%2$d</string>
     <string name="workout_session_notification_warmup_set">W %1$d/%2$d</string>
+    <string name="workout_session_notification_complete_set">Complete Set</string>
+    <string name="workout_session_notification_completed">Workout complete</string>
 </resources>

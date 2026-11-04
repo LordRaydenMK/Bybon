@@ -15,6 +15,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercise
+import dev.sanastasov.bybon.workout.domain.completeInProgressSet
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.restTimer
@@ -329,6 +330,40 @@ class WorkoutSessionViewModelTest {
         val stored = repository.workoutSessions().first().single()
         assert(stored.state is WorkoutState.Completed)
         assert(stored.exercises.single().state == ExerciseState.Completed)
+    }
+
+    @Test
+    fun `completing the last set from the repository opens the summary`() = runTest {
+        val bench = catalogExercise("bench-press")
+        val startedAt = LocalDateTime.of(2026, 1, 1, 12, 0)
+        val session = WorkoutSession(
+            planId = fullBodyA.id,
+            planName = fullBodyA.name,
+            note = null,
+            exercises = listOf(
+                WorkoutExercise(
+                    exerciseDefinition = bench,
+                    repRange = 8..10,
+                    sets = listOf(
+                        ExerciseSet(bench, Weight.kilograms(50), 8, SetState.InProgress),
+                    ),
+                ),
+            ),
+            startedAt = startedAt,
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(session),
+        )
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            viewModel.uiState.first { it != null }
+            repository.completeInProgressSet()
+            assert(awaitItem() == WorkoutSessionEffect.StopService)
+            assert(awaitItem() == WorkoutSessionEffect.NavigateToSummary(session.id))
+            expectNoEvents()
+        }
     }
 
     @Test
