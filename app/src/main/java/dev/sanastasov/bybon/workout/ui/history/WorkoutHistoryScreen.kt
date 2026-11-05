@@ -64,17 +64,10 @@ fun WorkoutHistoryTab(
     Box(modifier.fillMaxSize()) {
         when (uiState) {
             WorkoutHistoryUiState.Loading -> LoadingIndicator()
-
             WorkoutHistoryUiState.Empty -> EmptyHistory(onImportHistoryClick)
-
             WorkoutHistoryUiState.Importing -> ImportingIndicator()
-
             is WorkoutHistoryUiState.Summary -> ImportSummary(uiState.summary, onImportDone)
-
-            is WorkoutHistoryUiState.History -> HistoryList(
-                uiState.sessions.toHistoryPeriodSections(LocalDate.now()),
-                onSessionClick,
-            )
+            is WorkoutHistoryUiState.History -> HistoryList(uiState.sections, onSessionClick)
         }
     }
 }
@@ -331,7 +324,9 @@ private fun HeaderCell(text: String, modifier: Modifier, textAlign: TextAlign) {
 private fun WorkoutHistoryContentPreview() {
     Surface {
         WorkoutHistoryTab(
-            uiState = WorkoutHistoryUiState.History(previewHistorySessions()),
+            uiState = WorkoutHistoryUiState.History(
+                previewHistorySessions().toHistoryPeriodSections(LocalDate.now()),
+            ),
             onSessionClick = {},
             onImportHistoryClick = {},
             onImportDone = {},

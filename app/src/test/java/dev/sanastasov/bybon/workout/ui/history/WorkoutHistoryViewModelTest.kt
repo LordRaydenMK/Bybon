@@ -30,6 +30,8 @@ import org.junit.Test
 
 class WorkoutHistoryViewModelTest {
 
+    private val historyToday = LocalDate.of(2026, 11, 5)
+
     @Test
     fun `empty repository emits empty history`() = runTest {
         val repository = FakeWorkoutsRepository()
@@ -77,48 +79,46 @@ class WorkoutHistoryViewModelTest {
         val repository = FakeWorkoutsRepository(initialSessions = listOf(older, newer))
         val viewModel = historyViewModel(repository)
 
-        val expected = WorkoutHistoryUiState.History(
-            listOf(
-                WorkoutSessionHistoryUi(
-                    id = WorkoutSessionId(
-                        WorkoutPlanId("full-body-b"),
-                        LocalDateTime.of(2026, 8, 13, 18, 0),
-                    ),
-                    planName = "Full Body B",
-                    date = LocalDate.of(2026, 8, 13),
-                    startTime = "18:00",
-                    duration = "00:40",
-                    exercises = listOf(
-                        ExerciseTopSetUi(
-                            name = "Romanian Deadlift",
-                            weightKg = "45",
-                            reps = 12,
-                            oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
-                        ),
+        val expected = historyState(
+            WorkoutSessionHistoryUi(
+                id = WorkoutSessionId(
+                    WorkoutPlanId("full-body-b"),
+                    LocalDateTime.of(2026, 8, 13, 18, 0),
+                ),
+                planName = "Full Body B",
+                date = LocalDate.of(2026, 8, 13),
+                startTime = "18:00",
+                duration = "00:40",
+                exercises = listOf(
+                    ExerciseTopSetUi(
+                        name = "Romanian Deadlift",
+                        weightKg = "45",
+                        reps = 12,
+                        oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
                     ),
                 ),
-                WorkoutSessionHistoryUi(
-                    id = WorkoutSessionId(
-                        WorkoutPlanId("full-body-a"),
-                        LocalDateTime.of(2026, 8, 10, 18, 0),
+            ),
+            WorkoutSessionHistoryUi(
+                id = WorkoutSessionId(
+                    WorkoutPlanId("full-body-a"),
+                    LocalDateTime.of(2026, 8, 10, 18, 0),
+                ),
+                planName = "Full Body A",
+                date = LocalDate.of(2026, 8, 10),
+                startTime = "18:00",
+                duration = "00:40",
+                exercises = listOf(
+                    ExerciseTopSetUi(
+                        name = "Barbell Bench Press",
+                        weightKg = "80",
+                        reps = 8,
+                        oneRm = Weight.kilograms(estimateOneRmKg(80f, 8)),
                     ),
-                    planName = "Full Body A",
-                    date = LocalDate.of(2026, 8, 10),
-                    startTime = "18:00",
-                    duration = "00:40",
-                    exercises = listOf(
-                        ExerciseTopSetUi(
-                            name = "Barbell Bench Press",
-                            weightKg = "80",
-                            reps = 8,
-                            oneRm = Weight.kilograms(estimateOneRmKg(80f, 8)),
-                        ),
-                        ExerciseTopSetUi(
-                            name = "Barbell Back Squat",
-                            weightKg = "100",
-                            reps = 5,
-                            oneRm = Weight.kilograms(estimateOneRmKg(100f, 5)),
-                        ),
+                    ExerciseTopSetUi(
+                        name = "Barbell Back Squat",
+                        weightKg = "100",
+                        reps = 5,
+                        oneRm = Weight.kilograms(estimateOneRmKg(100f, 5)),
                     ),
                 ),
             ),
@@ -146,6 +146,44 @@ class WorkoutHistoryViewModelTest {
             val actual = awaitItem() as WorkoutHistoryUiState.History
             assert(actual.sessions.size == 1)
             assert(actual.sessions.single().planName == "Full Body B")
+        }
+    }
+
+    @Test
+    fun `history sessions are grouped into period sections`() = runTest {
+        val thisWeek = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = historyToday.atTime(18, 0),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
+        )
+        val thisMonth = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 11, 1, 18, 0),
+            exercises = listOf(completedExercise("bench-press", 80f to 8)),
+        )
+        val october = completedSession(
+            planId = "upper-body-a",
+            planName = "Upper body A",
+            startedAt = LocalDateTime.of(2026, 10, 20, 18, 0),
+            exercises = listOf(completedExercise("bench-press", 60f to 8)),
+        )
+        val repository = FakeWorkoutsRepository(
+            initialSessions = listOf(thisWeek, thisMonth, october),
+        )
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val actual = awaitItem() as WorkoutHistoryUiState.History
+            assert(
+                actual.sections.map { it.title } ==
+                    listOf("This Week", "This Month", "October"),
+            )
+            assert(actual.sections[0].sessions.single().planName == "Full Body B")
+            assert(actual.sections[1].sessions.single().planName == "Full Body A")
+            assert(actual.sections[2].sessions.single().planName == "Upper body A")
         }
     }
 
@@ -287,24 +325,22 @@ class WorkoutHistoryViewModelTest {
             startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
             exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
         )
-        val expected = WorkoutHistoryUiState.History(
-            listOf(
-                WorkoutSessionHistoryUi(
-                    id = WorkoutSessionId(
-                        WorkoutPlanId("full-body-b"),
-                        LocalDateTime.of(2026, 8, 13, 18, 0),
-                    ),
-                    planName = "Full Body B",
-                    date = LocalDate.of(2026, 8, 13),
-                    startTime = "18:00",
-                    duration = "00:40",
-                    exercises = listOf(
-                        ExerciseTopSetUi(
-                            name = "Romanian Deadlift",
-                            weightKg = "45",
-                            reps = 12,
-                            oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
-                        ),
+        val expected = historyState(
+            WorkoutSessionHistoryUi(
+                id = WorkoutSessionId(
+                    WorkoutPlanId("full-body-b"),
+                    LocalDateTime.of(2026, 8, 13, 18, 0),
+                ),
+                planName = "Full Body B",
+                date = LocalDate.of(2026, 8, 13),
+                startTime = "18:00",
+                duration = "00:40",
+                exercises = listOf(
+                    ExerciseTopSetUi(
+                        name = "Romanian Deadlift",
+                        weightKg = "45",
+                        reps = 12,
+                        oneRm = Weight.kilograms(estimateOneRmKg(45f, 12)),
                     ),
                 ),
             ),
@@ -401,6 +437,8 @@ class WorkoutHistoryViewModelTest {
             viewModel.onAction(WorkoutHistoryAction.OnImportDone)
 
             val history = awaitItem() as WorkoutHistoryUiState.History
+            assert(history.sections.first().title == "August")
+            assert(history.sections.none { it.title == "This Week" || it.title == "This Month" })
             assert(history.sessions.size == 52)
             assert(history.sessions.first().planName == "Upper body B")
             assert(history.sessions.first().date == LocalDate.of(2026, 8, 20))
@@ -520,5 +558,9 @@ class WorkoutHistoryViewModelTest {
             contentResolverReader = FakeContentResolverReader(csv),
             ioDispatcher = UnconfinedTestDispatcher(testScheduler),
             defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
+            today = { historyToday },
         )
+
+    private fun historyState(vararg sessions: WorkoutSessionHistoryUi) =
+        WorkoutHistoryUiState.History(sessions.toList().toHistoryPeriodSections(historyToday))
 }

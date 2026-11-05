@@ -23,8 +23,11 @@ sealed class WorkoutHistoryUiState {
         val summary: ImportSummaryUi,
     ) : WorkoutHistoryUiState()
     data class History(
-        val sessions: List<WorkoutSessionHistoryUi>,
-    ) : WorkoutHistoryUiState()
+        val sections: List<WorkoutHistoryPeriodSection>,
+    ) : WorkoutHistoryUiState() {
+        val sessions: List<WorkoutSessionHistoryUi>
+            get() = sections.flatMap { it.sessions }
+    }
 }
 
 data class ImportSummaryUi(

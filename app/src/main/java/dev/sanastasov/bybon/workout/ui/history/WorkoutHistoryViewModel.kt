@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import java.io.IOException
 import java.time.DateTimeException
+import java.time.LocalDate
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -28,6 +30,7 @@ class WorkoutHistoryViewModel(
     private val contentResolverReader: ContentResolverReader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val today: () -> LocalDate = { LocalDate.now() },
 ) {
 
     private val importPhase = MutableStateFlow<ImportPhase>(ImportPhase.Idle)
@@ -36,13 +39,21 @@ class WorkoutHistoryViewModel(
         combine(
             repository.workoutSessions(),
             importPhase,
-        ) { sessions, phase ->
-            when (phase) {
-                ImportPhase.Importing -> WorkoutHistoryUiState.Importing
-                is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
-                ImportPhase.Idle -> sessions.toUiState()
+        ) { sessions, phase -> sessions to phase }
+            .transform { (sessions, phase) ->
+                emit(
+                    when (phase) {
+                        ImportPhase.Importing -> WorkoutHistoryUiState.Importing
+
+                        is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
+
+                        ImportPhase.Idle -> withContext(defaultDispatcher) {
+                            sessions.toUiState()
+                        }
+                    },
+                )
             }
-        }.stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
+            .stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
 
     fun onAction(action: WorkoutHistoryAction) {
         when (action) {
@@ -95,7 +106,7 @@ class WorkoutHistoryViewModel(
         return if (history.isEmpty()) {
             WorkoutHistoryUiState.Empty
         } else {
-            WorkoutHistoryUiState.History(history)
+            WorkoutHistoryUiState.History(history.toHistoryPeriodSections(today()))
         }
     }
 
