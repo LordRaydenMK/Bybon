@@ -14,6 +14,7 @@ data class WorkoutOverviewUiState(
     val session: WorkoutSession,
     val previousDate: String? = null,
     val history: List<WorkoutSession> = emptyList(),
+    val canDiscardDraft: Boolean = false,
 ) {
     val exercises: List<WorkoutExercise> get() = session.exercises
     val workoutSets: List<ExerciseSet> get() = session.workoutSets

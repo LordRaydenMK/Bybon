@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
+import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -21,6 +22,7 @@ class WorkoutOverviewDraftTest {
             awaitItem()!!
             viewModel.onAction(WorkoutOverviewAction.OnIncreaseWorkout)
             val increased = awaitItem()!!
+            assert(!increased.canDiscardDraft)
             viewModel.onAction(WorkoutOverviewAction.OnSaveDraft)
             val saved = repository.workoutSessions().first { it.isNotEmpty() }.single()
             assert(saved.state is WorkoutState.NotStarted)
@@ -40,6 +42,7 @@ class WorkoutOverviewDraftTest {
                 repository.workoutSessions().first().single().exercises.first().sets.first().reps,
         )
         assert(loaded.session.state is WorkoutState.NotStarted)
+        assert(loaded.canDiscardDraft)
     }
 
     @Test
@@ -81,14 +84,26 @@ class WorkoutOverviewDraftTest {
     }
 
     @Test
-    fun `discarding an unsaved overview leaves without persisting`() = runTest {
+    fun `discard is offered only when a draft is already saved`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
 
-        viewModel.uiState.first { it != null }
-        viewModel.onAction(WorkoutOverviewAction.OnDiscardDraft)
+        assert(!viewModel.uiState.first { it != null }!!.canDiscardDraft)
 
-        assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateBack)
-        assert(repository.workoutSessions().first().isEmpty())
+        viewModel.onAction(WorkoutOverviewAction.OnSaveDraft)
+        repository.workoutSessions().first { it.isNotEmpty() }
+
+        assert(viewModel.uiState.first { it?.canDiscardDraft == true }!!.canDiscardDraft)
+    }
+
+    @Test
+    fun `a loaded draft offers discard`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(fullBodyA.toOverviewSession()),
+        )
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        assert(viewModel.uiState.first { it != null }!!.canDiscardDraft)
     }
 }

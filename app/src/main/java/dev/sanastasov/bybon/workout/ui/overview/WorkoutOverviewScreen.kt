@@ -101,11 +101,7 @@ private fun OverviewScreenContent(
 ) {
     val session = state.session
     Scaffold(
-        topBar = {
-            OverviewTopBar(session.planName, onBack) {
-                onAction(WorkoutOverviewAction.OnDiscardDraft)
-            }
-        },
+        topBar = { OverviewTopBar(state, onBack, onAction) },
     ) { contentPadding ->
         Column(
             Modifier
@@ -163,11 +159,22 @@ private fun OverviewScreenContent(
 }
 
 @Composable
-private fun OverviewTopBar(planName: String, onBack: () -> Unit, onDiscardDraft: () -> Unit) {
+private fun OverviewTopBar(
+    state: WorkoutOverviewUiState,
+    onBack: () -> Unit,
+    onAction: (WorkoutOverviewAction) -> Unit,
+) {
+    val planName = state.session.planName
     BybonTopAppBar(
         planName,
         onBack,
-        actions = { OverviewOverflowMenu(planName, onDiscardDraft) },
+        actions = {
+            if (state.canDiscardDraft) {
+                OverviewOverflowMenu(planName) {
+                    onAction(WorkoutOverviewAction.OnDiscardDraft)
+                }
+            }
+        },
     )
 }
 

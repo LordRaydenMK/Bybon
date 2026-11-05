@@ -59,6 +59,7 @@ class WorkoutOverviewViewModel(
                 session = draft ?: plan.toOverviewSession(previousHistory = sessions),
                 previousDate = previousPlanDateLabel(previousSession?.startedAt),
                 history = sessions,
+                canDiscardDraft = draft != null,
             )
         }
             .distinctUntilChanged()
@@ -77,9 +78,8 @@ class WorkoutOverviewViewModel(
             }
 
             WorkoutOverviewAction.OnDiscardDraft -> coroutineScope.launch {
-                repository.workoutSession(planId).first()
-                    .firstOrNull { it.isDraft }
-                    ?.let { repository.deleteWorkout(it.id) }
+                val draft = repository.workoutSession(planId).first().first { it.isDraft }
+                repository.deleteWorkout(draft.id)
                 _effects.trySend(WorkoutOverviewEffect.NavigateBack)
             }
 
