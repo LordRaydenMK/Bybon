@@ -76,6 +76,13 @@ class WorkoutOverviewViewModel(
                 repository.updateWorkout(requireOverviewSession().asOverviewDraft())
             }
 
+            WorkoutOverviewAction.OnDiscardDraft -> coroutineScope.launch {
+                repository.workoutSession(planId).first()
+                    .firstOrNull { it.isDraft }
+                    ?.let { repository.deleteWorkout(it.id) }
+                _effects.trySend(WorkoutOverviewEffect.NavigateBack)
+            }
+
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
                 repository.updateWorkout(requireOverviewSession().startWorkout())
                 _effects.trySend(WorkoutOverviewEffect.NavigateToSession)

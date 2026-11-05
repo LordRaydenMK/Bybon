@@ -64,4 +64,31 @@ class WorkoutOverviewDraftTest {
         assert(loaded.exercises.size == originalCount)
         assert(repository.workoutPlans().first().single { it.id == fullBodyA.id }.sets.size == 1)
     }
+
+    @Test
+    fun `discarding a saved draft deletes it and leaves overview`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(WorkoutOverviewAction.OnSaveDraft)
+        repository.workoutSessions().first { it.isNotEmpty() }
+
+        viewModel.onAction(WorkoutOverviewAction.OnDiscardDraft)
+
+        assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateBack)
+        assert(repository.workoutSessions().first().isEmpty())
+    }
+
+    @Test
+    fun `discarding an unsaved overview leaves without persisting`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(WorkoutOverviewAction.OnDiscardDraft)
+
+        assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateBack)
+        assert(repository.workoutSessions().first().isEmpty())
+    }
 }

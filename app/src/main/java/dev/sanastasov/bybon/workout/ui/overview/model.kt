@@ -73,6 +73,7 @@ sealed class WorkoutOverviewAction {
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
     data object OnSaveDraft : WorkoutOverviewAction()
+    data object OnDiscardDraft : WorkoutOverviewAction()
     data object OnStartWorkout : WorkoutOverviewAction()
     data object OnAddExercise : WorkoutOverviewAction()
     data class OnExercisePicked(
@@ -112,6 +113,7 @@ fun WorkoutSession.exerciseOverflow(
 
 sealed class WorkoutOverviewEffect {
     data object NavigateToSession : WorkoutOverviewEffect()
+    data object NavigateBack : WorkoutOverviewEffect()
     data class OpenExerciseLibrary(
         val existingExerciseIds: List<String>,
     ) : WorkoutOverviewEffect()
