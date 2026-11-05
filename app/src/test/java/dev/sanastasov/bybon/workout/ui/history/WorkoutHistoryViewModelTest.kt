@@ -18,6 +18,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -125,6 +126,26 @@ class WorkoutHistoryViewModelTest {
         viewModel.uiState.test {
             assert(awaitItem() == WorkoutHistoryUiState.Loading)
             assert(awaitItem() == expected)
+        }
+    }
+
+    @Test
+    fun `draft sessions are excluded from history`() = runTest {
+        val completed = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
+        )
+        val draft = fullBodyA.toOverviewSession()
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(draft, completed))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            skipItems(1)
+            val actual = awaitItem() as WorkoutHistoryUiState.History
+            assert(actual.sessions.size == 1)
+            assert(actual.sessions.single().planName == "Full Body B")
         }
     }
 

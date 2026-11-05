@@ -7,6 +7,7 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import org.junit.Test
@@ -36,7 +37,23 @@ class WorkoutPlanUiTest {
 
         assert(ui.lastExecutedLabel == "10 Aug")
         assert(ui.isActive)
+        assert(!ui.isDraft)
         assert(ui.activeExerciseId == fullBodyA.sets.first().exercise.id)
+        assert(ui.startActionLabel == "Open Workout")
+    }
+
+    @Test
+    fun `saved overview draft is a draft not an active workout`() {
+        val completed = completedFullBodyA(LocalDateTime.of(2026, 8, 10, 18, 0))
+        val draft = fullBodyA.toOverviewSession(completed)
+
+        val ui = fullBodyA.toUi(listOf(completed, draft))
+
+        assert(ui.isDraft)
+        assert(!ui.isActive)
+        assert(ui.activeExerciseId == null)
+        assert(ui.lastExecutedLabel == "10 Aug")
+        assert(ui.startActionLabel == "Continue Draft")
     }
 
     @Test

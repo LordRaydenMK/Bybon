@@ -27,6 +27,9 @@ data class WorkoutSession(
             else -> WorkoutState.InProgress
         }
 
+    val isDraft: Boolean
+        get() = state is WorkoutState.NotStarted
+
     val isResumable: Boolean
         get() = state is WorkoutState.InProgress
 

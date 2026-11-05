@@ -59,8 +59,10 @@ class OverviewUiTest {
         val inProgress = fullBodyA.toWorkoutSession(
             startedAt = LocalDateTime.of(2026, 8, 21, 18, 0),
         )
+        val draft = fullBodyA.toOverviewSession()
 
-        val actual = listOf(older, newer, otherPlan, inProgress).latestCompletedFor(fullBodyA.id)
+        val actual = listOf(older, newer, otherPlan, inProgress, draft)
+            .latestCompletedFor(fullBodyA.id)
 
         assert(actual == newer)
         assert(previousPlanDateLabel(actual?.startedAt) == "Previous: 13 Aug 2026")

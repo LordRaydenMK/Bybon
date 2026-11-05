@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -64,6 +65,13 @@ class WorkoutPlansViewModel(
 
             WorkoutPlansAction.OnHideArchivedPlans -> {
                 showArchived.value = false
+            }
+
+            is WorkoutPlansAction.OnDiscardDraft -> coroutineScope.launch {
+                val draft = repository.workoutSessions().first()
+                    .firstOrNull { it.planId == action.plan.id && it.isDraft }
+                    ?: return@launch
+                repository.deleteWorkout(draft.id)
             }
         }
     }

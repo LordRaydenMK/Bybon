@@ -41,4 +41,14 @@ class WorkoutsRepositoryExtTest {
             assert(update.await().note == "edited")
             assert(repository.workoutSessions().first().single().note == "edited")
         }
+
+    @Test
+    fun `activeSession ignores overview drafts`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(fullBodyA.toOverviewSession()),
+        )
+
+        assert(repository.activeSession().first() == null)
+    }
 }

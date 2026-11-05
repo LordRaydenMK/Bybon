@@ -7,12 +7,14 @@ import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
+import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
@@ -133,6 +135,26 @@ class WorkoutsRepositoryImplTest {
         repository.deleteWorkout(started.id)
 
         assert(repository.workoutSessions().first().isEmpty())
+    }
+
+    @Test
+    fun `updateWorkout stores an overview draft and restamps startedAt on start`() = runTest {
+        val repository: WorkoutsRepository = repository()
+        val draft = fullBodyA.toOverviewSession()
+        repository.updateWorkout(draft)
+
+        val storedDraft = repository.workoutSessions().first().single()
+        assert(storedDraft.state is WorkoutState.NotStarted)
+        assert(storedDraft.isDraft)
+
+        val startedAt = LocalDateTime.of(2026, 10, 23, 18, 5, 12)
+        repository.updateWorkout(storedDraft.startWorkout(now = startedAt))
+
+        val started = repository.workoutSessions().first().single()
+        assert(started.state is WorkoutState.InProgress)
+        assert(!started.isDraft)
+        assert(started.startedAt == startedAt)
+        assert(started.id.startedAt == startedAt)
     }
 
     @Test

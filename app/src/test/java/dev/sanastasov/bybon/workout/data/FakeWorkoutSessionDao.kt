@@ -57,6 +57,7 @@ class FakeWorkoutSessionDao(
         id: Long,
         planName: String,
         note: String?,
+        startedAt: LocalDateTime,
         durationSeconds: Int?,
     ) {
         val current = sessions.value
@@ -68,6 +69,7 @@ class FakeWorkoutSessionDao(
                 current[index].copy(
                     planName = planName,
                     note = note,
+                    startedAt = startedAt,
                     durationSeconds = durationSeconds,
                 ),
             )

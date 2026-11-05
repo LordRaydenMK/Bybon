@@ -19,6 +19,9 @@ data class WorkoutOverviewUiState(
     val workoutSets: List<ExerciseSet> get() = session.workoutSets
 }
 
+fun List<WorkoutSession>.draftFor(planId: WorkoutPlanId): WorkoutSession? =
+    firstOrNull { it.planId == planId && it.isDraft }
+
 fun List<WorkoutSession>.latestCompletedFor(planId: WorkoutPlanId): WorkoutSession? =
     filter { it.planId == planId && it.state is WorkoutState.Completed }
         .maxByOrNull { it.startedAt }
@@ -69,6 +72,7 @@ sealed class WorkoutOverviewAction {
     data class OnResetExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
+    data object OnSaveDraft : WorkoutOverviewAction()
     data object OnStartWorkout : WorkoutOverviewAction()
     data object OnAddExercise : WorkoutOverviewAction()
     data class OnExercisePicked(

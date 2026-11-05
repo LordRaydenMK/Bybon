@@ -6,6 +6,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Full Body A"
 - tapOn: "Start Workout"
 - assertVisible: "Full body workout routine variant A"
+- assertVisible: "Save"
 - assertVisible: "Start Workout"
 - scrollUntilVisible:
     element: "Add Exercise"

@@ -127,11 +127,22 @@ private fun OverviewScreenContent(
             }
 
             Spacer(Modifier.height(16.dp))
-            Button(
-                { onAction(WorkoutOverviewAction.OnStartWorkout) },
+            Row(
                 Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("Start Workout")
+                OutlinedButton(
+                    { onAction(WorkoutOverviewAction.OnSaveDraft) },
+                    Modifier.weight(1f),
+                ) {
+                    Text("Save")
+                }
+                Button(
+                    { onAction(WorkoutOverviewAction.OnStartWorkout) },
+                    Modifier.weight(1f),
+                ) {
+                    Text("Start Workout")
+                }
             }
         }
     }

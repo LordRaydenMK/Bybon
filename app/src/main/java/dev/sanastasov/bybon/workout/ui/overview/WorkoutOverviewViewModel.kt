@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
+import dev.sanastasov.bybon.workout.domain.asOverviewDraft
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
@@ -53,8 +54,9 @@ class WorkoutOverviewViewModel(
         ) { plans, sessions ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
             val previousSession = sessions.latestCompletedFor(planId)
+            val draft = sessions.draftFor(planId)
             WorkoutOverviewUiState(
-                session = plan.toOverviewSession(previousHistory = sessions),
+                session = draft ?: plan.toOverviewSession(previousHistory = sessions),
                 previousDate = previousPlanDateLabel(previousSession?.startedAt),
                 history = sessions,
             )
@@ -70,6 +72,11 @@ class WorkoutOverviewViewModel(
 
     fun onAction(action: WorkoutOverviewAction) {
         when (action) {
+            WorkoutOverviewAction.OnSaveDraft -> coroutineScope.launch {
+                val session = uiState.value?.session ?: return@launch
+                repository.updateWorkout(session.asOverviewDraft())
+            }
+
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
                 val session = uiState.value?.session ?: return@launch
                 repository.updateWorkout(session.startWorkout())
