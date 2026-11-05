@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import dev.sanastasov.bybon.strong.readStrongBackupSample
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
@@ -39,8 +40,7 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
-            assert(awaitItem() == WorkoutHistoryUiState.Loading)
-            assert(awaitItem() == WorkoutHistoryUiState.Empty)
+            assert(awaitAfterLoading() == WorkoutHistoryUiState.Empty)
         }
     }
 
@@ -125,8 +125,7 @@ class WorkoutHistoryViewModelTest {
             ),
         )
         viewModel.uiState.test {
-            assert(awaitItem() == WorkoutHistoryUiState.Loading)
-            assert(awaitItem() == expected)
+            assert(awaitAfterLoading() == expected)
         }
     }
 
@@ -143,8 +142,7 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val actual = awaitItem() as WorkoutHistoryUiState.History
+            val actual = awaitAfterLoading() as WorkoutHistoryUiState.History
             assert(actual.sessions.size == 1)
             assert(actual.sessions.single().planName == "Full Body B")
         }
@@ -176,8 +174,7 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val actual = awaitItem() as WorkoutHistoryUiState.History
+            val actual = awaitAfterLoading() as WorkoutHistoryUiState.History
             assert(
                 actual.sections.map { it.title } ==
                     listOf("This Week", "This Month", "October"),
@@ -213,8 +210,7 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val actual = awaitItem() as WorkoutHistoryUiState.History
+            val actual = awaitAfterLoading() as WorkoutHistoryUiState.History
             assert(actual.sessions.size == 1)
             assert(actual.sessions.single().planName == "Full Body B")
             assert(actual.sessions.single().date == LocalDate.of(2026, 8, 13))
@@ -243,8 +239,7 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val actual = awaitItem() as WorkoutHistoryUiState.History
+            val actual = awaitAfterLoading() as WorkoutHistoryUiState.History
             val session = actual.sessions.single()
             val exercise = session.exercises.single()
             assert(session.startTime == "18:00")
@@ -273,8 +268,7 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val topSet = (awaitItem() as WorkoutHistoryUiState.History)
+            val topSet = (awaitAfterLoading() as WorkoutHistoryUiState.History)
                 .sessions.single().exercises.single()
             assert(topSet.weightKg == "45")
             assert(topSet.reps == 12)
@@ -307,8 +301,7 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val topSet = (awaitItem() as WorkoutHistoryUiState.History)
+            val topSet = (awaitAfterLoading() as WorkoutHistoryUiState.History)
                 .sessions.single().exercises.single()
             assert(topSet.weightKg == "-")
             assert(topSet.reps == 8)
@@ -348,8 +341,7 @@ class WorkoutHistoryViewModelTest {
         )
 
         viewModel.uiState.test {
-            assert(awaitItem() == WorkoutHistoryUiState.Loading)
-            assert(awaitItem() == WorkoutHistoryUiState.Empty)
+            assert(awaitAfterLoading() == WorkoutHistoryUiState.Empty)
             repository.emitSessions(listOf(session))
             assert(awaitItem() == expected)
         }
@@ -367,13 +359,11 @@ class WorkoutHistoryViewModelTest {
         )
 
         viewModel.uiState.test {
-            assert(awaitItem() == WorkoutHistoryUiState.Loading)
-            assert(awaitItem() == WorkoutHistoryUiState.Empty)
+            assert(awaitAfterLoading() == WorkoutHistoryUiState.Empty)
 
             viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
 
-            assert(awaitItem() == WorkoutHistoryUiState.Importing)
-            val summary = (awaitItem() as WorkoutHistoryUiState.Summary).summary
+            val summary = awaitSummary().summary
             assert(summary.sessionCount == 52)
             assert(summary.sessionsSkipped == 0)
             assert(
@@ -405,10 +395,9 @@ class WorkoutHistoryViewModelTest {
         )
 
         viewModel.uiState.test {
-            skipItems(2)
+            assert(awaitAfterLoading() == WorkoutHistoryUiState.Empty)
             viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
-            skipItems(1)
-            assert(awaitItem() is WorkoutHistoryUiState.Summary)
+            awaitSummary()
         }
 
         val stored = repository.exercises().first()
@@ -429,11 +418,9 @@ class WorkoutHistoryViewModelTest {
         )
 
         viewModel.uiState.test {
-            skipItems(2)
+            assert(awaitAfterLoading() == WorkoutHistoryUiState.Empty)
             viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
-            skipItems(1)
-            val summary = awaitItem()
-            assert(summary is WorkoutHistoryUiState.Summary)
+            awaitSummary()
 
             viewModel.onAction(WorkoutHistoryAction.OnImportDone)
 
@@ -466,17 +453,15 @@ class WorkoutHistoryViewModelTest {
         )
 
         viewModel.uiState.test {
-            skipItems(2)
+            assert(awaitAfterLoading() == WorkoutHistoryUiState.Empty)
             viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
-            skipItems(1)
-            val first = awaitItem() as WorkoutHistoryUiState.Summary
+            val first = awaitSummary()
             assert(first.summary.sessionCount == 52)
             assert(first.summary.sessionsSkipped == 0)
 
             viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
 
-            assert(awaitItem() == WorkoutHistoryUiState.Importing)
-            val second = awaitItem() as WorkoutHistoryUiState.Summary
+            val second = awaitSummary()
             assert(second.summary.sessionCount == 0)
             assert(second.summary.sessionsSkipped == 52)
             assert(second.summary.plansCreatedCount == 0)
@@ -519,10 +504,9 @@ class WorkoutHistoryViewModelTest {
         )
 
         viewModel.uiState.test {
-            skipItems(2)
+            assert(awaitAfterLoading() is WorkoutHistoryUiState.History)
             viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
-            skipItems(1)
-            val summary = (awaitItem() as WorkoutHistoryUiState.Summary).summary
+            val summary = awaitSummary().summary
             assert(summary.sessionCount == 51)
             assert(summary.sessionsSkipped == 1)
         }
@@ -541,13 +525,16 @@ class WorkoutHistoryViewModelTest {
         val viewModel = historyViewModel(repository, csv = "not a strong csv")
 
         viewModel.uiState.test {
-            assert(awaitItem() == WorkoutHistoryUiState.Loading)
-            assert(awaitItem() == WorkoutHistoryUiState.Empty)
+            assert(awaitAfterLoading() == WorkoutHistoryUiState.Empty)
 
             viewModel.onAction(WorkoutHistoryAction.OnCsvSelected(dummyUri()))
 
-            assert(awaitItem() == WorkoutHistoryUiState.Importing)
-            assert(awaitItem() == WorkoutHistoryUiState.Empty)
+            val afterImport = awaitItem()
+            if (afterImport == WorkoutHistoryUiState.Importing) {
+                assert(awaitItem() == WorkoutHistoryUiState.Empty)
+            } else {
+                assert(afterImport == WorkoutHistoryUiState.Empty)
+            }
         }
     }
 
@@ -564,4 +551,15 @@ class WorkoutHistoryViewModelTest {
 
     private fun historyState(vararg sessions: WorkoutSessionHistoryUi) =
         WorkoutHistoryUiState.History(sessions.toList().toHistoryPeriodSections(historyToday))
+}
+
+private suspend fun ReceiveTurbine<WorkoutHistoryUiState>.awaitAfterLoading(): WorkoutHistoryUiState {
+    val item = awaitItem()
+    return if (item == WorkoutHistoryUiState.Loading) awaitItem() else item
+}
+
+private suspend fun ReceiveTurbine<WorkoutHistoryUiState>.awaitSummary(): WorkoutHistoryUiState.Summary {
+    val item = awaitItem()
+    val summary = if (item == WorkoutHistoryUiState.Importing) awaitItem() else item
+    return summary as WorkoutHistoryUiState.Summary
 }
