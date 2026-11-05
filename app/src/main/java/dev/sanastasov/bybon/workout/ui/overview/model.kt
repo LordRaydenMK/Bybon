@@ -14,10 +14,14 @@ data class WorkoutOverviewUiState(
     val session: WorkoutSession,
     val previousDate: String? = null,
     val history: List<WorkoutSession> = emptyList(),
+    val canDiscardDraft: Boolean = false,
 ) {
     val exercises: List<WorkoutExercise> get() = session.exercises
     val workoutSets: List<ExerciseSet> get() = session.workoutSets
 }
+
+fun List<WorkoutSession>.draftFor(planId: WorkoutPlanId): WorkoutSession? =
+    firstOrNull { it.planId == planId && it.isDraft }
 
 fun List<WorkoutSession>.latestCompletedFor(planId: WorkoutPlanId): WorkoutSession? =
     filter { it.planId == planId && it.state is WorkoutState.Completed }
@@ -69,6 +73,8 @@ sealed class WorkoutOverviewAction {
     data class OnResetExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
+    data object OnSaveDraft : WorkoutOverviewAction()
+    data object OnDiscardDraft : WorkoutOverviewAction()
     data object OnStartWorkout : WorkoutOverviewAction()
     data object OnAddExercise : WorkoutOverviewAction()
     data class OnExercisePicked(
@@ -108,6 +114,7 @@ fun WorkoutSession.exerciseOverflow(
 
 sealed class WorkoutOverviewEffect {
     data object NavigateToSession : WorkoutOverviewEffect()
+    data object NavigateBack : WorkoutOverviewEffect()
     data class OpenExerciseLibrary(
         val existingExerciseIds: List<String>,
     ) : WorkoutOverviewEffect()

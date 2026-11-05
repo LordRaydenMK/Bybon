@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewAction
@@ -24,6 +25,37 @@ class WorkoutPlansViewModelTest {
         viewModel.uiState.first { it.unarchivedPlans.isNotEmpty() }
         viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
         assert(viewModel.effects.first() == WorkoutPlanEffect.OpenOverview(fullBodyA))
+    }
+
+    @Test
+    fun `starting a plan with a draft opens the overview`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(fullBodyA.toOverviewSession()),
+        )
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isDraft } }
+        assert(state.unarchivedPlans.single().isDraft)
+        assert(!state.unarchivedPlans.single().isActive)
+        viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
+        assert(viewModel.effects.first() == WorkoutPlanEffect.OpenOverview(fullBodyA))
+    }
+
+    @Test
+    fun `discarding a draft deletes the saved session`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(fullBodyA.toOverviewSession()),
+        )
+        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isDraft } }
+        viewModel.onAction(WorkoutPlansAction.OnDiscardDraft(fullBodyA))
+
+        val state = viewModel.uiState.first { s -> s.unarchivedPlans.none { it.isDraft } }
+        assert(state.unarchivedPlans.single().startActionLabel == "Start Workout")
+        assert(repository.workoutSessions().first().isEmpty())
     }
 
     @Test
@@ -135,8 +167,8 @@ class WorkoutPlansViewModelTest {
 
         val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
         assert(state.unarchivedPlans.map { it.plan.id } == listOf(fullBodyB.id, fullBodyA.id))
-        assert(state.unarchivedPlans.first().isActive)
-        assert(state.unarchivedPlans.first().activeExerciseId == fullBodyB.sets.first().exercise.id)
+        val active = state.unarchivedPlans.first() as WorkoutPlanUi.Active
+        assert(active.activeExerciseId == fullBodyB.sets.first().exercise.id)
     }
 
     @Test

@@ -15,6 +15,9 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_session ORDER BY rowid")
     fun observeSessions(): Flow<List<WorkoutSessionEntity>>
 
+    @Query("SELECT * FROM workout_session WHERE plan_id = :planId ORDER BY rowid")
+    fun observeSessionsForPlan(planId: String): Flow<List<WorkoutSessionEntity>>
+
     @Query("SELECT * FROM workout_session_exercise ORDER BY rowid")
     fun observeSessionExercises(): Flow<List<WorkoutSessionExerciseEntity>>
 
@@ -49,7 +52,8 @@ interface WorkoutSessionDao {
     @Query(
         """
         UPDATE workout_session
-        SET plan_name = :planName, note = :note, duration_seconds = :durationSeconds
+        SET plan_name = :planName, note = :note, started_at = :startedAt,
+            duration_seconds = :durationSeconds
         WHERE id = :id
         """,
     )
@@ -57,6 +61,7 @@ interface WorkoutSessionDao {
         id: Long,
         planName: String,
         note: String?,
+        startedAt: LocalDateTime,
         durationSeconds: Int?,
     )
 
@@ -88,6 +93,7 @@ interface WorkoutSessionDao {
             id = sessionId,
             planName = write.header.planName,
             note = write.header.note,
+            startedAt = write.header.startedAt,
             durationSeconds = write.header.durationSeconds,
         )
         deleteExercisesForSession(sessionId)

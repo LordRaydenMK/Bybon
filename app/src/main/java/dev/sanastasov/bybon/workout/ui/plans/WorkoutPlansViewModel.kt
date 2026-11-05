@@ -8,6 +8,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -36,7 +37,7 @@ class WorkoutPlansViewModel(
         when (action) {
             is WorkoutPlansAction.OnStartPlan -> {
                 val isResume = uiState.value.unarchivedPlans.any {
-                    it.plan.id == action.plan.id && it.isActive
+                    it.plan.id == action.plan.id && it is WorkoutPlanUi.Active
                 }
                 val effect = if (isResume) {
                     WorkoutPlanEffect.OpenSession(action.plan)
@@ -64,6 +65,12 @@ class WorkoutPlansViewModel(
 
             WorkoutPlansAction.OnHideArchivedPlans -> {
                 showArchived.value = false
+            }
+
+            is WorkoutPlansAction.OnDiscardDraft -> coroutineScope.launch {
+                val draft = repository.workoutSession(action.plan.id).first()
+                    .first { it.isDraft }
+                repository.deleteWorkout(draft.id)
             }
         }
     }

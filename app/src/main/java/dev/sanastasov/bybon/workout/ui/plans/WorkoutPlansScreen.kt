@@ -121,15 +121,20 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction
         ) {
             WorkoutPlanInfo(
                 plan = plan,
-                isActive = planUi.isActive,
+                isActive = planUi is WorkoutPlanUi.Active,
+                isDraft = planUi is WorkoutPlanUi.Draft,
                 lastExecutedLabel = planUi.lastExecutedLabel,
-                activeExerciseId = planUi.activeExerciseId,
+                activeExerciseId = (planUi as? WorkoutPlanUi.Active)?.activeExerciseId,
                 headerTrailing = {
                     if (!plan.isArchived) {
                         PlanOverflowMenu(
                             plan,
+                            canDiscardDraft = planUi is WorkoutPlanUi.Draft,
                             onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
                             onArchiveClicked = { onAction(WorkoutPlansAction.OnArchivePlan(it)) },
+                            onDiscardDraftClicked = {
+                                onAction(WorkoutPlansAction.OnDiscardDraft(it))
+                            },
                         )
                     }
                 },
@@ -146,7 +151,7 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction
                     { onAction(WorkoutPlansAction.OnStartPlan(plan)) },
                     Modifier.align(Alignment.CenterHorizontally),
                 ) {
-                    Text(if (planUi.isActive) "Open Workout" else "Start Workout")
+                    Text(planUi.startActionLabel)
                 }
             }
         }
@@ -156,8 +161,10 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction
 @Composable
 private fun PlanOverflowMenu(
     plan: WorkoutPlan,
+    canDiscardDraft: Boolean,
     onEditClicked: (WorkoutPlan) -> Unit,
     onArchiveClicked: (WorkoutPlan) -> Unit,
+    onDiscardDraftClicked: (WorkoutPlan) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -185,6 +192,15 @@ private fun PlanOverflowMenu(
                     onArchiveClicked(plan)
                 },
             )
+            if (canDiscardDraft) {
+                DropdownMenuItem(
+                    text = { Text("Discard Draft") },
+                    onClick = {
+                        expanded = false
+                        onDiscardDraftClicked(plan)
+                    },
+                )
+            }
         }
     }
 }
@@ -194,6 +210,7 @@ internal fun WorkoutPlanInfo(
     plan: WorkoutPlan,
     modifier: Modifier = Modifier,
     isActive: Boolean = false,
+    isDraft: Boolean = false,
     lastExecutedLabel: String? = null,
     activeExerciseId: String? = null,
     headerTrailing: @Composable RowScope.() -> Unit = {},
@@ -208,9 +225,16 @@ internal fun WorkoutPlanInfo(
                 Modifier.weight(1f),
                 fontWeight = FontWeight.Bold,
             )
-            when {
-                plan.isArchived -> PlanBadge("Archived")
-                isActive -> PlanBadge("Active")
+            if (plan.isArchived) {
+                PlanBadge("Archived")
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (isDraft) PlanBadge("Draft")
+                    if (isActive) PlanBadge("Active")
+                }
             }
             headerTrailing()
         }
@@ -275,12 +299,14 @@ private fun WorkoutPlansContentPreview() {
         WorkoutsTab(
             WorkoutPlansUiState(
                 plans = listOf(
-                    WorkoutPlanUi(fullBodyB, isActive = false, lastExecutedLabel = "1 Oct"),
-                    WorkoutPlanUi(
+                    WorkoutPlanUi.Active(
                         fullBodyA,
-                        isActive = true,
                         lastExecutedLabel = "10 Aug",
                         activeExerciseId = fullBodyA.sets[1].exercise.id,
+                    ),
+                    WorkoutPlanUi.Draft(
+                        fullBodyB,
+                        lastExecutedLabel = "1 Oct",
                     ),
                 ),
             ),
@@ -296,9 +322,9 @@ private fun WorkoutPlansWithArchivedPreview() {
         WorkoutsTab(
             WorkoutPlansUiState(
                 plans = listOf(
-                    WorkoutPlanUi(fullBodyA, isActive = false),
-                    WorkoutPlanUi(fullBodyB, isActive = false),
-                    WorkoutPlanUi(upperBodyA, isActive = false),
+                    WorkoutPlanUi.Idle(fullBodyA),
+                    WorkoutPlanUi.Idle(fullBodyB),
+                    WorkoutPlanUi.Idle(upperBodyA),
                 ),
                 showArchived = true,
             ),

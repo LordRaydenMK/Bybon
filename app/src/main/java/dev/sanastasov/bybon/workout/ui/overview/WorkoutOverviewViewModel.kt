@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
 import dev.sanastasov.bybon.workout.domain.adjustAll
 import dev.sanastasov.bybon.workout.domain.adjustExercise
+import dev.sanastasov.bybon.workout.domain.asOverviewDraft
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
@@ -53,10 +54,12 @@ class WorkoutOverviewViewModel(
         ) { plans, sessions ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
             val previousSession = sessions.latestCompletedFor(planId)
+            val draft = sessions.draftFor(planId)
             WorkoutOverviewUiState(
-                session = plan.toOverviewSession(previousHistory = sessions),
+                session = draft ?: plan.toOverviewSession(previousHistory = sessions),
                 previousDate = previousPlanDateLabel(previousSession?.startedAt),
                 history = sessions,
+                canDiscardDraft = draft != null,
             )
         }
             .distinctUntilChanged()
@@ -70,14 +73,23 @@ class WorkoutOverviewViewModel(
 
     fun onAction(action: WorkoutOverviewAction) {
         when (action) {
+            WorkoutOverviewAction.OnSaveDraft -> coroutineScope.launch {
+                repository.updateWorkout(requireOverviewSession().asOverviewDraft())
+            }
+
+            WorkoutOverviewAction.OnDiscardDraft -> coroutineScope.launch {
+                val draft = repository.workoutSession(planId).first().first { it.isDraft }
+                repository.deleteWorkout(draft.id)
+                _effects.trySend(WorkoutOverviewEffect.NavigateBack)
+            }
+
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
-                val session = uiState.value?.session ?: return@launch
-                repository.updateWorkout(session.startWorkout())
+                repository.updateWorkout(requireOverviewSession().startWorkout())
                 _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
             }
 
             WorkoutOverviewAction.OnAddExercise -> {
-                val session = checkNotNull(uiState.value?.session) { "No overview session" }
+                val session = requireOverviewSession()
                 _effects.trySend(
                     WorkoutOverviewEffect.OpenExerciseLibrary(session.exercises.map { it.id }),
                 )
@@ -95,7 +107,7 @@ class WorkoutOverviewViewModel(
             }
 
             is WorkoutOverviewAction.OnRemoveExercise -> {
-                val session = checkNotNull(uiState.value?.session) { "No overview session" }
+                val session = requireOverviewSession()
                 session.removeExercise(action.exercise.id)
                 emitAction(action)
             }
@@ -103,6 +115,9 @@ class WorkoutOverviewViewModel(
             else -> emitAction(action)
         }
     }
+
+    private fun requireOverviewSession(): WorkoutSession =
+        requireNotNull(uiState.value?.session) { "No overview session" }
 
     private fun emitAction(action: WorkoutOverviewAction) {
         actions.trySend(action)
