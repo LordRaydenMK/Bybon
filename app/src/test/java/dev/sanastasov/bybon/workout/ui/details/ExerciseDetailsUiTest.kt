@@ -92,7 +92,68 @@ class ExerciseDetailsUiTest {
     }
 
     @Test
-    fun `maps PR chart points and working-set history`() {
+    fun `maps PR as estimated 1RM with a relative date`() {
+        val ui = benchDetailsUi()
+        val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
+        assert(ui.personalRecord == PersonalRecordUi(newerOneRm, "1 Oct 2026 (21 days ago)"))
+        assert(personalRecordOneRmLabel(newerOneRm) == "${newerOneRm.kilograms} kg Estimated 1RM")
+    }
+
+    @Test
+    fun `maps chart points with top-set and work-set average 1RM`() {
+        val ui = benchDetailsUi()
+        val olderTopOneRm = Weight.kilograms(estimateOneRmKg(45f, 12))
+        val olderAverageOneRm = averageOneRm(
+            estimateOneRmKg(50f, 5),
+            estimateOneRmKg(45f, 12),
+        )
+        val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
+        assert(
+            ui.oneRmTrend == listOf(
+                ExerciseOneRmPointUi(
+                    "10 Aug",
+                    olderTopOneRm.kilogramsValue,
+                    olderTopOneRm,
+                    "45",
+                    12,
+                    olderAverageOneRm.kilogramsValue,
+                    olderAverageOneRm,
+                ),
+                ExerciseOneRmPointUi(
+                    "1 Oct",
+                    newerOneRm.kilogramsValue,
+                    newerOneRm,
+                    "80",
+                    8,
+                    newerOneRm.kilogramsValue,
+                    newerOneRm,
+                ),
+            ),
+        )
+        assert(
+            oneRmTrendPopupText(ui.oneRmTrend, 1) ==
+                "1 Oct  80 kg x 8 · avg ${newerOneRm.kilograms} kg",
+        )
+    }
+
+    @Test
+    fun `maps working-set history without warmup sets`() {
+        val ui = benchDetailsUi()
+        val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
+        assert(ui.recentSessions.map { it.planName } == listOf("Full Body B", "Full Body A"))
+        assert(ui.recentSessions.first().dateLabel == "1 Oct 2026")
+        assert(
+            ui.recentSessions.first().sets == listOf(
+                ExerciseDetailsSetUi(1, "80", 8, Weight.kilograms(estimateOneRmKg(80f, 8))),
+            ),
+        )
+        assert(ui.recentSessions.last().sets.size == 2)
+        val firstSet = ui.recentSessions.first().sets.single()
+        assert(historySetLoadLabel(firstSet) == "1. 80 kg x 8")
+        assert(historySetOneRmLabel(firstSet) == "${newerOneRm.kilograms} kg 1RM")
+    }
+
+    private fun benchDetailsUi(): ExerciseDetailsUiState.Content {
         val older = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -117,30 +178,12 @@ class ExerciseDetailsUiTest {
             ),
         )
         val now = LocalDateTime.of(2026, 10, 22, 18, 0)
-        val ui = catalogExercise("bench-press").toDetailsUi(
+        return catalogExercise("bench-press").toDetailsUi(
             listOf(older, newer).exercisePerformance("bench-press", now),
+            now,
         )
-
-        val olderOneRm = Weight.kilograms(estimateOneRmKg(45f, 12))
-        val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
-        assert(ui.personalRecord == PersonalRecordUi(newerOneRm, "1 Oct 2026"))
-        assert(
-            ui.oneRmTrend == listOf(
-                ExerciseOneRmPointUi("10 Aug", olderOneRm.kilogramsValue, olderOneRm, "45", 12),
-                ExerciseOneRmPointUi("1 Oct", newerOneRm.kilogramsValue, newerOneRm, "80", 8),
-            ),
-        )
-        assert(oneRmTrendPopupText(ui.oneRmTrend, 1) == "1 Oct  80 kg x 8")
-        assert(ui.recentSessions.map { it.planName } == listOf("Full Body B", "Full Body A"))
-        assert(ui.recentSessions.first().dateLabel == "1 Oct 2026")
-        assert(
-            ui.recentSessions.first().sets == listOf(
-                ExerciseDetailsSetUi(1, "80", 8, Weight.kilograms(estimateOneRmKg(80f, 8))),
-            ),
-        )
-        assert(ui.recentSessions.last().sets.size == 2)
-        val firstSet = ui.recentSessions.first().sets.single()
-        assert(historySetLoadLabel(firstSet) == "1. 80 kg x 8")
-        assert(historySetOneRmLabel(firstSet) == "${newerOneRm.kilograms} kg 1RM")
     }
+
+    private fun averageOneRm(vararg kilograms: Float): Weight =
+        Weight.kilograms((kilograms.map { it.toDouble() }.average()).toFloat())
 }

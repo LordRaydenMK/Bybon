@@ -22,6 +22,14 @@ data class ExerciseSessionLog(
     val workSets: List<ExerciseSet>,
 ) {
     val topSetOneRm: Weight? get() = topSet.oneRm
+
+    val averageWorkSetOneRm: Weight?
+        get() {
+            val estimates = workSets.mapNotNull { it.oneRm }
+            if (estimates.isEmpty()) return null
+            val averageKg = estimates.map { it.kilogramsValue.toDouble() }.average()
+            return Weight.kilograms(averageKg.toFloat())
+        }
 }
 
 fun List<WorkoutSession>.exercisePerformance(
