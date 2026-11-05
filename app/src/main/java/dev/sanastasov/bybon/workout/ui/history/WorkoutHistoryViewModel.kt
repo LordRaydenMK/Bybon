@@ -20,7 +20,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -40,19 +41,14 @@ class WorkoutHistoryViewModel(
             repository.workoutSessions(),
             importPhase,
         ) { sessions, phase -> sessions to phase }
-            .transform { (sessions, phase) ->
-                emit(
-                    when (phase) {
-                        ImportPhase.Importing -> WorkoutHistoryUiState.Importing
-
-                        is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
-
-                        ImportPhase.Idle -> withContext(defaultDispatcher) {
-                            sessions.toUiState()
-                        }
-                    },
-                )
+            .map { (sessions, phase) ->
+                when (phase) {
+                    ImportPhase.Importing -> WorkoutHistoryUiState.Importing
+                    is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
+                    ImportPhase.Idle -> sessions.toUiState()
+                }
             }
+            .flowOn(defaultDispatcher)
             .stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
 
     fun onAction(action: WorkoutHistoryAction) {

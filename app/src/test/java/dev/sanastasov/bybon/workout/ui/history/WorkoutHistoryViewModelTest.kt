@@ -21,6 +21,7 @@ import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -557,7 +558,7 @@ class WorkoutHistoryViewModelTest {
             coroutineScope = backgroundScope,
             contentResolverReader = FakeContentResolverReader(csv),
             ioDispatcher = UnconfinedTestDispatcher(testScheduler),
-            defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
+            defaultDispatcher = Dispatchers.Default, // flowOn() + UnconfinedTestDispatcher deadlocks
             today = { historyToday },
         )
 
