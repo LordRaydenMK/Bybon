@@ -121,15 +121,15 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction
         ) {
             WorkoutPlanInfo(
                 plan = plan,
-                isActive = planUi.isActive,
-                isDraft = planUi.isDraft,
+                isActive = planUi is WorkoutPlanUi.Active,
+                isDraft = planUi is WorkoutPlanUi.Draft,
                 lastExecutedLabel = planUi.lastExecutedLabel,
-                activeExerciseId = planUi.activeExerciseId,
+                activeExerciseId = (planUi as? WorkoutPlanUi.Active)?.activeExerciseId,
                 headerTrailing = {
                     if (!plan.isArchived) {
                         PlanOverflowMenu(
                             plan,
-                            canDiscardDraft = planUi.isDraft,
+                            canDiscardDraft = planUi is WorkoutPlanUi.Draft,
                             onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
                             onArchiveClicked = { onAction(WorkoutPlansAction.OnArchivePlan(it)) },
                             onDiscardDraftClicked = {
@@ -299,16 +299,13 @@ private fun WorkoutPlansContentPreview() {
         WorkoutsTab(
             WorkoutPlansUiState(
                 plans = listOf(
-                    WorkoutPlanUi(
+                    WorkoutPlanUi.Active(
                         fullBodyA,
-                        isActive = true,
                         lastExecutedLabel = "10 Aug",
                         activeExerciseId = fullBodyA.sets[1].exercise.id,
                     ),
-                    WorkoutPlanUi(
+                    WorkoutPlanUi.Draft(
                         fullBodyB,
-                        isActive = false,
-                        isDraft = true,
                         lastExecutedLabel = "1 Oct",
                     ),
                 ),
@@ -325,9 +322,9 @@ private fun WorkoutPlansWithArchivedPreview() {
         WorkoutsTab(
             WorkoutPlansUiState(
                 plans = listOf(
-                    WorkoutPlanUi(fullBodyA, isActive = false),
-                    WorkoutPlanUi(fullBodyB, isActive = false),
-                    WorkoutPlanUi(upperBodyA, isActive = false),
+                    WorkoutPlanUi.Idle(fullBodyA),
+                    WorkoutPlanUi.Idle(fullBodyB),
+                    WorkoutPlanUi.Idle(upperBodyA),
                 ),
                 showArchived = true,
             ),

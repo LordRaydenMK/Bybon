@@ -133,7 +133,6 @@ private fun OverviewScreenContent(
             ) {
                 OutlinedButton(
                     { onAction(WorkoutOverviewAction.OnSaveDraft) },
-                    Modifier.weight(1f),
                 ) {
                     Text("Save")
                 }

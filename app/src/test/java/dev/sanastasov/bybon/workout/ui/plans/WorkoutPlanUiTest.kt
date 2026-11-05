@@ -19,11 +19,9 @@ class WorkoutPlanUiTest {
         val older = completedFullBodyA(LocalDateTime.of(2026, 8, 10, 18, 0))
         val newer = completedFullBodyA(LocalDateTime.of(2026, 10, 1, 18, 0))
 
-        val ui = fullBodyA.toUi(listOf(older, newer))
+        val ui = fullBodyA.toUi(listOf(older, newer)) as WorkoutPlanUi.Idle
 
         assert(ui.lastExecutedLabel == "1 Oct")
-        assert(!ui.isActive)
-        assert(ui.activeExerciseId == null)
     }
 
     @Test
@@ -33,11 +31,9 @@ class WorkoutPlanUiTest {
             startedAt = LocalDateTime.of(2026, 10, 23, 18, 0),
         )
 
-        val ui = fullBodyA.toUi(listOf(completed, inProgress))
+        val ui = fullBodyA.toUi(listOf(completed, inProgress)) as WorkoutPlanUi.Active
 
         assert(ui.lastExecutedLabel == "10 Aug")
-        assert(ui.isActive)
-        assert(!ui.isDraft)
         assert(ui.activeExerciseId == fullBodyA.sets.first().exercise.id)
         assert(ui.startActionLabel == "Open Workout")
     }
@@ -47,22 +43,17 @@ class WorkoutPlanUiTest {
         val completed = completedFullBodyA(LocalDateTime.of(2026, 8, 10, 18, 0))
         val draft = fullBodyA.toOverviewSession(completed)
 
-        val ui = fullBodyA.toUi(listOf(completed, draft))
+        val ui = fullBodyA.toUi(listOf(completed, draft)) as WorkoutPlanUi.Draft
 
-        assert(ui.isDraft)
-        assert(!ui.isActive)
-        assert(ui.activeExerciseId == null)
         assert(ui.lastExecutedLabel == "10 Aug")
         assert(ui.startActionLabel == "Continue Draft")
     }
 
     @Test
     fun `never completed omits last executed`() {
-        val ui = fullBodyA.toUi(emptyList())
+        val ui = fullBodyA.toUi(emptyList()) as WorkoutPlanUi.Idle
 
         assert(ui.lastExecutedLabel == null)
-        assert(!ui.isActive)
-        assert(ui.activeExerciseId == null)
     }
 
     @Test
@@ -75,9 +66,8 @@ class WorkoutPlanUiTest {
         assert(firstDone.exercises.first().state == ExerciseState.Completed)
         assert(firstDone.exercises[1].state == ExerciseState.NotStarted)
 
-        val ui = fullBodyA.toUi(listOf(firstDone))
+        val ui = fullBodyA.toUi(listOf(firstDone)) as WorkoutPlanUi.Active
 
-        assert(ui.isActive)
         assert(ui.activeExerciseId == fullBodyA.sets[1].exercise.id)
     }
 
@@ -97,9 +87,8 @@ class WorkoutPlanUiTest {
         }
         val session = started.copy(exercises = listOf(extra) + resetPlanExercises)
 
-        val ui = fullBodyA.toUi(listOf(session))
+        val ui = fullBodyA.toUi(listOf(session)) as WorkoutPlanUi.Active
 
-        assert(ui.isActive)
         assert(ui.activeExerciseId == null)
     }
 
@@ -107,8 +96,8 @@ class WorkoutPlanUiTest {
     fun `active plan is listed first among unarchived plans`() {
         val state = WorkoutPlansUiState(
             plans = listOf(
-                WorkoutPlanUi(fullBodyA, isActive = false),
-                WorkoutPlanUi(fullBodyB, isActive = true),
+                WorkoutPlanUi.Idle(fullBodyA),
+                WorkoutPlanUi.Active(fullBodyB),
             ),
         )
 

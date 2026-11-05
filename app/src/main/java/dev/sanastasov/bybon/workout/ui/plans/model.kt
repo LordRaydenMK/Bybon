@@ -17,7 +17,8 @@ data class WorkoutPlansUiState(
 ) {
     val unarchivedPlans: List<WorkoutPlanUi>
         get() = plans.filter { !it.plan.isArchived }.sortedWith(
-            compareByDescending<WorkoutPlanUi> { it.isActive }.thenByDescending { it.isDraft },
+            compareByDescending<WorkoutPlanUi> { it is WorkoutPlanUi.Active }
+                .thenByDescending { it is WorkoutPlanUi.Draft },
         )
 
     val archivedPlans: List<WorkoutPlanUi> get() = plans.filter { it.plan.isArchived }
@@ -33,36 +34,58 @@ data class WorkoutPlansUiState(
     val hideArchivedPlansButton: Boolean get() = showArchived
 }
 
-data class WorkoutPlanUi(
-    val plan: WorkoutPlan,
-    val isActive: Boolean,
-    val isDraft: Boolean = false,
-    val lastExecutedLabel: String? = null,
-    val activeExerciseId: String? = null,
-) {
+sealed class WorkoutPlanUi {
+    abstract val plan: WorkoutPlan
+    abstract val lastExecutedLabel: String?
+
+    val isActive: Boolean get() = this is Active
+    val isDraft: Boolean get() = this is Draft
+
     val startActionLabel: String
-        get() = when {
-            isActive -> "Open Workout"
-            isDraft -> "Continue Draft"
-            else -> "Start Workout"
+        get() = when (this) {
+            is Active -> "Open Workout"
+            is Draft -> "Continue Draft"
+            is Idle -> "Start Workout"
         }
+
+    data class Idle(
+        override val plan: WorkoutPlan,
+        override val lastExecutedLabel: String? = null,
+    ) : WorkoutPlanUi()
+
+    data class Draft(
+        override val plan: WorkoutPlan,
+        override val lastExecutedLabel: String? = null,
+    ) : WorkoutPlanUi()
+
+    data class Active(
+        override val plan: WorkoutPlan,
+        override val lastExecutedLabel: String? = null,
+        val activeExerciseId: String? = null,
+    ) : WorkoutPlanUi()
 }
 
 fun WorkoutPlan.toUi(sessions: List<WorkoutSession>): WorkoutPlanUi {
     val forPlan = sessions.filter { it.planId == id }
-    val resumable = forPlan.firstOrNull { it.isResumable }
-    val draft = forPlan.firstOrNull { it.isDraft }
     val lastCompleted = forPlan
         .filter { it.state is WorkoutState.Completed }
         .maxByOrNull { it.startedAt }
-    val isActive = !isArchived && resumable != null
-    return WorkoutPlanUi(
-        plan = this,
-        isActive = isActive,
-        isDraft = !isArchived && !isActive && draft != null,
-        lastExecutedLabel = lastCompleted?.startedAt?.toLocalDate()?.toShortDisplayDate(),
-        activeExerciseId = resumable?.takeIf { isActive }?.currentPlanExerciseId(this),
-    )
+    val lastExecutedLabel = lastCompleted?.startedAt?.toLocalDate()?.toShortDisplayDate()
+    val resumable = forPlan.firstOrNull { it.isResumable }
+    val draft = forPlan.firstOrNull { it.isDraft }
+    return when {
+        isArchived -> WorkoutPlanUi.Idle(this, lastExecutedLabel)
+
+        resumable != null -> WorkoutPlanUi.Active(
+            plan = this,
+            lastExecutedLabel = lastExecutedLabel,
+            activeExerciseId = resumable.currentPlanExerciseId(this),
+        )
+
+        draft != null -> WorkoutPlanUi.Draft(this, lastExecutedLabel)
+
+        else -> WorkoutPlanUi.Idle(this, lastExecutedLabel)
+    }
 }
 
 internal fun WorkoutSession.currentPlanExerciseId(plan: WorkoutPlan): String? {

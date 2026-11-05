@@ -167,8 +167,8 @@ class WorkoutPlansViewModelTest {
 
         val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
         assert(state.unarchivedPlans.map { it.plan.id } == listOf(fullBodyB.id, fullBodyA.id))
-        assert(state.unarchivedPlans.first().isActive)
-        assert(state.unarchivedPlans.first().activeExerciseId == fullBodyB.sets.first().exercise.id)
+        val active = state.unarchivedPlans.first() as WorkoutPlanUi.Active
+        assert(active.activeExerciseId == fullBodyB.sets.first().exercise.id)
     }
 
     @Test

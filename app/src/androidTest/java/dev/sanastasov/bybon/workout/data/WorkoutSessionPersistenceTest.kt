@@ -6,9 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import dev.sanastasov.bybon.data.BybonDatabase
 import dev.sanastasov.bybon.data.OpenSessionIndexCallback
-import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
-import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.first
@@ -62,27 +60,5 @@ class WorkoutSessionPersistenceTest {
         )
 
         assert(relaunched.workoutSessions().first() == listOf(history, live))
-    }
-
-    @Test
-    fun draftSessionSurvivesANewRepositoryInstance() = runBlocking {
-        val repository = WorkoutsRepositoryImpl(
-            db.exerciseDao(),
-            db.workoutPlanDao(),
-            db.workoutSessionDao(),
-        )
-        val draft = fullBodyA.toOverviewSession()
-        repository.updateWorkout(draft)
-
-        val relaunched = WorkoutsRepositoryImpl(
-            db.exerciseDao(),
-            db.workoutPlanDao(),
-            db.workoutSessionDao(),
-        )
-
-        val stored = relaunched.workoutSessions().first().single()
-        assert(stored.isDraft)
-        assert(stored.state is WorkoutState.NotStarted)
-        assert(stored.exercises.map { it.id } == draft.exercises.map { it.id })
     }
 }

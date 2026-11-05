@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package dev.sanastasov.bybon.workout.data
 
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
@@ -109,6 +111,12 @@ class WorkoutsRepositoryImpl internal constructor(
             seedLocked()
             workoutSessionDao.deleteSession(sessionId.planId.id, sessionId.startedAt)
         }
+    }
+
+    override suspend fun workoutSession(planId: WorkoutPlanId): WorkoutSession? {
+        seedLock.withLock { seedLocked() }
+        val existing = workoutSessionDao.openSessionForPlan(planId.id) ?: return null
+        return existing.toDomainSession()
     }
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = flow {

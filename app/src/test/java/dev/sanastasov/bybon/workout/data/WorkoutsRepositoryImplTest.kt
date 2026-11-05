@@ -146,6 +146,7 @@ class WorkoutsRepositoryImplTest {
         val storedDraft = repository.workoutSessions().first().single()
         assert(storedDraft.state is WorkoutState.NotStarted)
         assert(storedDraft.isDraft)
+        assert(repository.workoutSession(fullBodyA.id) == storedDraft)
 
         val startedAt = LocalDateTime.of(2026, 10, 23, 18, 5, 12)
         repository.updateWorkout(storedDraft.startWorkout(now = startedAt))
@@ -155,6 +156,8 @@ class WorkoutsRepositoryImplTest {
         assert(!started.isDraft)
         assert(started.startedAt == startedAt)
         assert(started.id.startedAt == startedAt)
+        assert(repository.workoutSession(fullBodyA.id) == started)
+        assert(repository.workoutSession(fullBodyB.id) == null)
     }
 
     @Test

@@ -73,18 +73,16 @@ class WorkoutOverviewViewModel(
     fun onAction(action: WorkoutOverviewAction) {
         when (action) {
             WorkoutOverviewAction.OnSaveDraft -> coroutineScope.launch {
-                val session = uiState.value?.session ?: return@launch
-                repository.updateWorkout(session.asOverviewDraft())
+                repository.updateWorkout(requireOverviewSession().asOverviewDraft())
             }
 
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
-                val session = uiState.value?.session ?: return@launch
-                repository.updateWorkout(session.startWorkout())
+                repository.updateWorkout(requireOverviewSession().startWorkout())
                 _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
             }
 
             WorkoutOverviewAction.OnAddExercise -> {
-                val session = checkNotNull(uiState.value?.session) { "No overview session" }
+                val session = requireOverviewSession()
                 _effects.trySend(
                     WorkoutOverviewEffect.OpenExerciseLibrary(session.exercises.map { it.id }),
                 )
@@ -102,7 +100,7 @@ class WorkoutOverviewViewModel(
             }
 
             is WorkoutOverviewAction.OnRemoveExercise -> {
-                val session = checkNotNull(uiState.value?.session) { "No overview session" }
+                val session = requireOverviewSession()
                 session.removeExercise(action.exercise.id)
                 emitAction(action)
             }
@@ -110,6 +108,9 @@ class WorkoutOverviewViewModel(
             else -> emitAction(action)
         }
     }
+
+    private fun requireOverviewSession(): WorkoutSession =
+        requireNotNull(uiState.value?.session) { "No overview session" }
 
     private fun emitAction(action: WorkoutOverviewAction) {
         actions.trySend(action)

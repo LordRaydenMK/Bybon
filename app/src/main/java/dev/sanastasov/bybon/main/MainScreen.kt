@@ -254,8 +254,8 @@ private fun MainScreenContentWorkoutsPreview() {
         {},
         WorkoutPlansUiState(
             listOf(
-                WorkoutPlanUi(fullBodyA, isActive = false),
-                WorkoutPlanUi(fullBodyB, isActive = false),
+                WorkoutPlanUi.Idle(fullBodyA),
+                WorkoutPlanUi.Idle(fullBodyB),
             ),
         ),
         {},
@@ -278,8 +278,8 @@ private fun MainScreenContentHistoryPreview() {
         {},
         WorkoutPlansUiState(
             listOf(
-                WorkoutPlanUi(fullBodyA, isActive = false),
-                WorkoutPlanUi(fullBodyB, isActive = false),
+                WorkoutPlanUi.Idle(fullBodyA),
+                WorkoutPlanUi.Idle(fullBodyB),
             ),
         ),
         {},
@@ -313,8 +313,8 @@ private fun MainScreenContentWeightTrackPreview() {
         {},
         WorkoutPlansUiState(
             listOf(
-                WorkoutPlanUi(fullBodyA, isActive = false),
-                WorkoutPlanUi(fullBodyB, isActive = false),
+                WorkoutPlanUi.Idle(fullBodyA),
+                WorkoutPlanUi.Idle(fullBodyB),
             ),
         ),
         {},

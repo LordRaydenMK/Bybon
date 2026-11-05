@@ -79,6 +79,9 @@ class FakeWorkoutsRepository(
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = sessions
 
+    override suspend fun workoutSession(planId: WorkoutPlanId): WorkoutSession? =
+        sessions.value.firstOrNull { it.planId == planId && it.state !is WorkoutState.Completed }
+
     override suspend fun importHistory(
         plans: List<WorkoutPlan>,
         sessions: List<WorkoutSession>,
