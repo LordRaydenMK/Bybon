@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.data
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeWorkoutSessionDao(
     private val exerciseDao: ExerciseDao = FakeExerciseDao(),
@@ -17,6 +18,9 @@ class FakeWorkoutSessionDao(
     private var nextSetId = 1L
 
     override fun observeSessions(): Flow<List<WorkoutSessionEntity>> = sessions
+
+    override fun observeSessionsForPlan(planId: String): Flow<List<WorkoutSessionEntity>> =
+        sessions.map { list -> list.filter { it.planId == planId } }
 
     override fun observeSessionExercises(): Flow<List<WorkoutSessionExerciseEntity>> = exercises
 

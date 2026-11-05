@@ -20,7 +20,7 @@ interface WorkoutsRepository {
 
     fun workoutSessions(): Flow<List<WorkoutSession>>
 
-    suspend fun workoutSession(planId: WorkoutPlanId): WorkoutSession?
+    fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>>
 
     suspend fun importHistory(
         plans: List<WorkoutPlan>,

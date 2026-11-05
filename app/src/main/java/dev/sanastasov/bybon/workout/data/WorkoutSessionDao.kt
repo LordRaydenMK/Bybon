@@ -15,6 +15,9 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_session ORDER BY rowid")
     fun observeSessions(): Flow<List<WorkoutSessionEntity>>
 
+    @Query("SELECT * FROM workout_session WHERE plan_id = :planId ORDER BY rowid")
+    fun observeSessionsForPlan(planId: String): Flow<List<WorkoutSessionEntity>>
+
     @Query("SELECT * FROM workout_session_exercise ORDER BY rowid")
     fun observeSessionExercises(): Flow<List<WorkoutSessionExerciseEntity>>
 

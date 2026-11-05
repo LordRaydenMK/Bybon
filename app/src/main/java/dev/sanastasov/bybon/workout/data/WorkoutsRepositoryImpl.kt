@@ -113,10 +113,18 @@ class WorkoutsRepositoryImpl internal constructor(
         }
     }
 
-    override suspend fun workoutSession(planId: WorkoutPlanId): WorkoutSession? {
-        seedLock.withLock { seedLocked() }
-        val existing = workoutSessionDao.openSessionForPlan(planId.id) ?: return null
-        return existing.toDomainSession()
+    override fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>> = flow {
+        ensureCatalog()
+        emitAll(
+            combine(
+                workoutSessionDao.observeSessionsForPlan(planId.id),
+                workoutSessionDao.observeSessionExercises(),
+                workoutSessionDao.observeSets(),
+                exerciseDao.observeAll(),
+            ) { sessions, lines, sets, exercises ->
+                sessions.toDomainSessions(lines, sets, exercises)
+            },
+        )
     }
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = flow {
