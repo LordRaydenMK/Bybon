@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseImages
+import dev.sanastasov.bybon.workout.domain.ExerciseSessionLog
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -151,6 +152,39 @@ class ExerciseDetailsUiTest {
         val firstSet = ui.recentSessions.first().sets.single()
         assert(historySetLoadLabel(firstSet) == "1. 80 kg x 8")
         assert(historySetOneRmLabel(firstSet) == "${newerOneRm.kilograms} kg 1RM")
+    }
+
+    @Test
+    fun `keeps top-set 1RM on the trend when work-set average is missing`() {
+        val top = ExerciseSet(
+            catalogExercise("bench-press"),
+            Weight.kilograms(80),
+            8,
+            SetState.Completed(),
+        )
+        val unloaded = ExerciseSet(
+            catalogExercise("bench-press"),
+            null,
+            8,
+            SetState.Completed(),
+        )
+        val points = listOf(
+            ExerciseSessionLog(
+                startedAt = LocalDateTime.of(2026, 10, 1, 18, 0),
+                planName = "Full Body B",
+                topSet = top,
+                workSets = listOf(unloaded),
+            ),
+        ).toOneRmTrend()
+
+        assert(points.single().oneRm == top.oneRm)
+        assert(points.single().averageOneRm == null)
+        assert(oneRmTrendPopupText(points, 0) == "1 Oct  80 kg x 8")
+        assert(completeAverageValues(points) == null)
+        assert(
+            oneRmTrendCaption(points, hasPersonalRecord = false) ==
+                "Last 3 months · top-set 1RM",
+        )
     }
 
     private fun benchDetailsUi(): ExerciseDetailsUiState.Content {

@@ -47,8 +47,8 @@ data class ExerciseOneRmPointUi(
     val oneRm: Weight,
     val weightKg: String,
     val reps: Int,
-    val averageKilograms: Float,
-    val averageOneRm: Weight,
+    val averageKilograms: Float? = null,
+    val averageOneRm: Weight? = null,
 )
 
 data class ExerciseDetailsSessionUi(
@@ -106,22 +106,23 @@ internal fun PersonalRecord.toPersonalRecordUi(today: LocalDate? = null): Person
 internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi> =
     asReversed().mapNotNull { session ->
         val oneRm = session.topSetOneRm ?: return@mapNotNull null
-        val averageOneRm = session.averageWorkSetOneRm ?: return@mapNotNull null
+        val averageOneRm = session.averageWorkSetOneRm
         ExerciseOneRmPointUi(
             dateLabel = CHART_DATE_FORMAT.format(session.startedAt),
             kilograms = oneRm.kilogramsValue,
             oneRm = oneRm,
             weightKg = session.topSet.weight.toLoadLabel(),
             reps = session.topSet.reps,
-            averageKilograms = averageOneRm.kilogramsValue,
+            averageKilograms = averageOneRm?.kilogramsValue,
             averageOneRm = averageOneRm,
         )
     }
 
 internal fun oneRmTrendPopupText(points: List<ExerciseOneRmPointUi>, index: Int): String {
     val point = points.getOrNull(index) ?: return ""
-    return "${point.dateLabel}  ${formatLoadedSet(point.weightKg, point.reps)}" +
-        " · avg ${point.averageOneRm.kilograms} kg"
+    val load = "${point.dateLabel}  ${formatLoadedSet(point.weightKg, point.reps)}"
+    val average = point.averageOneRm?.let { " · avg ${it.kilograms} kg" }.orEmpty()
+    return load + average
 }
 
 private fun ExerciseSessionLog.toSessionUi(): ExerciseDetailsSessionUi = ExerciseDetailsSessionUi(

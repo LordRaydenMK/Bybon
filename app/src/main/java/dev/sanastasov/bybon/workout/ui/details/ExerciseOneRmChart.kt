@@ -48,11 +48,7 @@ internal fun ExerciseOneRmTrendCard(
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            if (personalRecordOneRm == null) {
-                "Last 3 months · top-set 1RM · work-set average"
-            } else {
-                "Last 3 months · top-set 1RM · work-set average · dashed line is PR"
-            },
+            oneRmTrendCaption(points, personalRecordOneRm != null),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -75,10 +71,10 @@ private fun ExerciseOneRmChart(
 ) {
     val colors = oneRmChartColors()
     val topSetValues = remember(points) { points.map { it.kilograms.toDouble() } }
-    val averageValues = remember(points) { points.map { it.averageKilograms.toDouble() } }
+    val averageValues = remember(points) { completeAverageValues(points) }
     val personalRecordKg = personalRecordOneRm?.kilogramsValue?.toDouble()
     val yRange = remember(topSetValues, averageValues, personalRecordKg) {
-        oneRmYAxisRange(topSetValues + averageValues, personalRecordKg)
+        oneRmYAxisRange(topSetValues + (averageValues ?: emptyList()), personalRecordKg)
     }
     val lines = remember(topSetValues, averageValues, personalRecordKg, colors) {
         oneRmChartLines(topSetValues, averageValues, personalRecordKg, colors)
@@ -159,9 +155,27 @@ private fun oneRmChartColors(): OneRmChartColors {
     )
 }
 
+internal fun oneRmTrendCaption(
+    points: List<ExerciseOneRmPointUi>,
+    hasPersonalRecord: Boolean,
+): String {
+    val hasAverage = points.any { it.averageOneRm != null }
+    return buildList {
+        add("Last 3 months")
+        add("top-set 1RM")
+        if (hasAverage) add("work-set average")
+        if (hasPersonalRecord) add("dashed line is PR")
+    }.joinToString(" · ")
+}
+
+internal fun completeAverageValues(points: List<ExerciseOneRmPointUi>): List<Double>? =
+    points.map { it.averageKilograms?.toDouble() }
+        .takeIf { values -> values.isNotEmpty() && values.all { it != null } }
+        ?.filterNotNull()
+
 private fun oneRmChartLines(
     topSetValues: List<Double>,
-    averageValues: List<Double>,
+    averageValues: List<Double>?,
     personalRecordKg: Double?,
     colors: OneRmChartColors,
 ): List<Line> = buildList {
@@ -174,15 +188,17 @@ private fun oneRmChartLines(
             filled = true,
         ),
     )
-    add(
-        oneRmTrendLine(
-            label = "Average 1RM",
-            values = averageValues,
-            lineColor = colors.averageLine,
-            surfaceColor = colors.surface,
-            filled = false,
-        ),
-    )
+    if (averageValues != null) {
+        add(
+            oneRmTrendLine(
+                label = "Average 1RM",
+                values = averageValues,
+                lineColor = colors.averageLine,
+                surfaceColor = colors.surface,
+                filled = false,
+            ),
+        )
+    }
     if (personalRecordKg != null) {
         add(personalRecordGuideline(topSetValues.size, personalRecordKg, colors.guideline))
     }
@@ -251,8 +267,15 @@ internal fun chartDateLabels(points: List<ExerciseOneRmPointUi>): List<String> {
     }
 }
 
-private fun oneRmTrendDescription(points: List<ExerciseOneRmPointUi>): String =
-    points.joinToString(prefix = "Estimated 1RM of the top set and work-set average. ") {
-        "${it.dateLabel} ${it.weightKg} kg x ${it.reps}, ${it.oneRm.kilograms} kg, " +
-            "average ${it.averageOneRm.kilograms} kg"
+private fun oneRmTrendDescription(points: List<ExerciseOneRmPointUi>): String {
+    val prefix = if (points.any { it.averageOneRm != null }) {
+        "Estimated 1RM of the top set and work-set average. "
+    } else {
+        "Estimated 1RM of the top set. "
     }
+    return points.joinToString(prefix = prefix) { point ->
+        val top = "${point.dateLabel} ${point.weightKg} kg x ${point.reps}, ${point.oneRm.kilograms} kg"
+        val average = point.averageOneRm ?: return@joinToString top
+        "$top, average ${average.kilograms} kg"
+    }
+}
