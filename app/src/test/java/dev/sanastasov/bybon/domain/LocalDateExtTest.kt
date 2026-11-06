@@ -14,6 +14,29 @@ class LocalDateExtTest {
     }
 
     @Test
+    fun `relative dates use days up to 30 then months`() {
+        val today = LocalDate.of(2026, 9, 9)
+        assert(
+            LocalDate.of(2026, 9, 9).toDisplayDateWithRelative(today) == "9 Sep 2026 (today)",
+        )
+        assert(
+            LocalDate.of(2026, 9, 8).toDisplayDateWithRelative(today) == "8 Sep 2026 (1 day ago)",
+        )
+        assert(
+            LocalDate.of(2026, 8, 10).toDisplayDateWithRelative(today) ==
+                "10 Aug 2026 (30 days ago)",
+        )
+        assert(
+            LocalDate.of(2026, 8, 9).toDisplayDateWithRelative(today) ==
+                "9 Aug 2026 (1 month ago)",
+        )
+        assert(
+            LocalDate.of(2026, 7, 9).toDisplayDateWithRelative(today) ==
+                "9 Jul 2026 (2 months ago)",
+        )
+    }
+
+    @Test
     fun `iso week starts on Monday`() {
         val wednesday = LocalDate.of(2026, 9, 9)
         assert(wednesday.isoWeekStart() == LocalDate.of(2026, 9, 7))

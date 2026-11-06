@@ -48,11 +48,7 @@ internal fun ExerciseOneRmTrendCard(
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            if (personalRecordOneRm == null) {
-                "Last 3 months · top-set 1RM"
-            } else {
-                "Last 3 months · top-set 1RM · dashed line is PR"
-            },
+            oneRmTrendCaption(points, personalRecordOneRm != null),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -62,7 +58,7 @@ internal fun ExerciseOneRmTrendCard(
             personalRecordOneRm,
             Modifier
                 .fillMaxWidth()
-                .height(220.dp),
+                .height(248.dp),
         )
     }
 }
@@ -74,18 +70,14 @@ private fun ExerciseOneRmChart(
     modifier: Modifier = Modifier,
 ) {
     val colors = oneRmChartColors()
-    val values = remember(points) { points.map { it.kilograms.toDouble() } }
+    val topSetValues = remember(points) { points.map { it.kilograms.toDouble() } }
+    val averageValues = remember(points) { completeAverageValues(points) }
     val personalRecordKg = personalRecordOneRm?.kilogramsValue?.toDouble()
-    val yRange = remember(values, personalRecordKg) {
-        oneRmYAxisRange(values, personalRecordKg)
+    val yRange = remember(topSetValues, averageValues, personalRecordKg) {
+        oneRmYAxisRange(topSetValues + (averageValues ?: emptyList()), personalRecordKg)
     }
-    val lines = remember(values, personalRecordKg, colors) {
-        buildList {
-            add(oneRmTrendLine(values, colors.line, colors.surface))
-            if (personalRecordKg != null) {
-                add(personalRecordGuideline(values.size, personalRecordKg, colors.guideline))
-            }
-        }
+    val lines = remember(topSetValues, averageValues, personalRecordKg, colors) {
+        oneRmChartLines(topSetValues, averageValues, personalRecordKg, colors)
     }
     LineChart(
         modifier = modifier.semantics { contentDescription = oneRmTrendDescription(points) },
@@ -94,7 +86,10 @@ private fun ExerciseOneRmChart(
         animationDelay = 80,
         minValue = yRange.start,
         maxValue = yRange.endInclusive,
-        labelHelperProperties = LabelHelperProperties(enabled = false),
+        labelHelperProperties = LabelHelperProperties(
+            enabled = true,
+            textStyle = colors.labelStyle,
+        ),
         dividerProperties = DividerProperties(
             xAxisProperties = LineProperties(color = SolidColor(colors.outline)),
             yAxisProperties = LineProperties(color = SolidColor(colors.outline)),
@@ -133,6 +128,7 @@ private fun ExerciseOneRmChart(
 
 private data class OneRmChartColors(
     val line: Color,
+    val averageLine: Color,
     val guideline: Color,
     val surface: Color,
     val outline: Color,
@@ -147,6 +143,7 @@ private fun oneRmChartColors(): OneRmChartColors {
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = colorScheme.onSurfaceVariant)
     return OneRmChartColors(
         line = colorScheme.primary,
+        averageLine = colorScheme.secondary,
         guideline = colorScheme.tertiary,
         surface = colorScheme.surface,
         outline = colorScheme.outlineVariant,
@@ -158,26 +155,80 @@ private fun oneRmChartColors(): OneRmChartColors {
     )
 }
 
-private fun oneRmTrendLine(values: List<Double>, lineColor: Color, surfaceColor: Color): Line =
-    Line(
-        label = "Top-set 1RM",
-        values = values,
-        color = SolidColor(lineColor),
-        firstGradientFillColor = lineColor.copy(alpha = 0.28f),
-        secondGradientFillColor = Color.Transparent,
-        curvedEdges = false,
-        drawStyle = DrawStyle.Stroke(width = 2.5.dp),
-        strokeAnimationSpec = tween(700),
-        gradientAnimationSpec = tween(700),
-        gradientAnimationDelay = 150,
-        dotProperties = DotProperties(
-            enabled = true,
-            radius = 4.dp,
-            color = SolidColor(surfaceColor),
-            strokeWidth = 2.dp,
-            strokeColor = SolidColor(lineColor),
+internal fun oneRmTrendCaption(
+    points: List<ExerciseOneRmPointUi>,
+    hasPersonalRecord: Boolean,
+): String {
+    val hasAverage = points.any { it.averageOneRm != null }
+    return buildList {
+        add("Last 3 months")
+        add("top-set 1RM")
+        if (hasAverage) add("work-set average")
+        if (hasPersonalRecord) add("dashed line is PR")
+    }.joinToString(" · ")
+}
+
+internal fun completeAverageValues(points: List<ExerciseOneRmPointUi>): List<Double>? =
+    points.map { it.averageKilograms?.toDouble() }
+        .takeIf { values -> values.isNotEmpty() && values.all { it != null } }
+        ?.filterNotNull()
+
+private fun oneRmChartLines(
+    topSetValues: List<Double>,
+    averageValues: List<Double>?,
+    personalRecordKg: Double?,
+    colors: OneRmChartColors,
+): List<Line> = buildList {
+    add(
+        oneRmTrendLine(
+            label = "Top-set 1RM",
+            values = topSetValues,
+            lineColor = colors.line,
+            surfaceColor = colors.surface,
+            filled = true,
         ),
     )
+    if (averageValues != null) {
+        add(
+            oneRmTrendLine(
+                label = "Average 1RM",
+                values = averageValues,
+                lineColor = colors.averageLine,
+                surfaceColor = colors.surface,
+                filled = false,
+            ),
+        )
+    }
+    if (personalRecordKg != null) {
+        add(personalRecordGuideline(topSetValues.size, personalRecordKg, colors.guideline))
+    }
+}
+
+private fun oneRmTrendLine(
+    label: String,
+    values: List<Double>,
+    lineColor: Color,
+    surfaceColor: Color,
+    filled: Boolean,
+): Line = Line(
+    label = label,
+    values = values,
+    color = SolidColor(lineColor),
+    firstGradientFillColor = if (filled) lineColor.copy(alpha = 0.28f) else Color.Unspecified,
+    secondGradientFillColor = if (filled) Color.Transparent else Color.Unspecified,
+    curvedEdges = false,
+    drawStyle = DrawStyle.Stroke(width = if (filled) 2.5.dp else 2.dp),
+    strokeAnimationSpec = tween(700),
+    gradientAnimationSpec = tween(if (filled) 700 else 0),
+    gradientAnimationDelay = if (filled) 150 else 0,
+    dotProperties = DotProperties(
+        enabled = true,
+        radius = if (filled) 4.dp else 3.dp,
+        color = SolidColor(surfaceColor),
+        strokeWidth = 2.dp,
+        strokeColor = SolidColor(lineColor),
+    ),
+)
 
 private fun personalRecordGuideline(pointCount: Int, kilograms: Double, color: Color): Line = Line(
     label = "Personal record",
@@ -216,7 +267,15 @@ internal fun chartDateLabels(points: List<ExerciseOneRmPointUi>): List<String> {
     }
 }
 
-private fun oneRmTrendDescription(points: List<ExerciseOneRmPointUi>): String =
-    points.joinToString(prefix = "Estimated 1RM of the top set. ") {
-        "${it.dateLabel} ${it.weightKg} kg x ${it.reps}, ${it.oneRm.kilograms} kg"
+private fun oneRmTrendDescription(points: List<ExerciseOneRmPointUi>): String {
+    val prefix = if (points.any { it.averageOneRm != null }) {
+        "Estimated 1RM of the top set and work-set average. "
+    } else {
+        "Estimated 1RM of the top set. "
     }
+    return points.joinToString(prefix = prefix) { point ->
+        val top = "${point.dateLabel} ${point.weightKg} kg x ${point.reps}, ${point.oneRm.kilograms} kg"
+        val average = point.averageOneRm ?: return@joinToString top
+        "$top, average ${average.kilograms} kg"
+    }
+}

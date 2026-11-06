@@ -26,7 +26,7 @@ internal fun LazyListScope.detailsPersonalRecord(personalRecord: PersonalRecordU
         DetailsSection("Personal record") {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    "${personalRecord.oneRm.kilograms} kg 1RM",
+                    personalRecordOneRmLabel(personalRecord.oneRm),
                     style = MaterialTheme.typography.bodyLarge,
                 )
                 Text(
@@ -117,3 +117,5 @@ internal fun historySetLoadLabel(set: ExerciseDetailsSetUi): String =
 
 internal fun historySetOneRmLabel(set: ExerciseDetailsSetUi): String =
     set.oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
+
+internal fun personalRecordOneRmLabel(oneRm: Weight): String = "${oneRm.kilograms} kg Estimated 1RM"
