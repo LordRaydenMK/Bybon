@@ -8,8 +8,9 @@ val NumberedSet.oneRmLabel: String
 
 val NumberedSet.previousLabel: String?
     get() = set.previous?.let { previous ->
+        val equipment = set.exerciseDefinition.equipment
         buildString {
-            append("${previous.weight.toLoadLabel()} x ${previous.reps}")
+            append("${previous.weight.toLoadLabel(equipment)} x ${previous.reps}")
             if (!isWarmup) {
                 append(", ${set.previousOneRm.toOneRmLabel()}")
             }
@@ -20,7 +21,7 @@ val NumberedSet.oneRmDeltaLabel: String
     get() = formatOneRmDelta(set.oneRm, set.previousOneRm)
 
 val NumberedSet.weightRepsLabel: String
-    get() = formatLoadedSet(set.weight, set.reps)
+    get() = formatLoadedSet(set.weight, set.reps, set.exerciseDefinition.equipment)
 
 fun NumberedSet.notificationText(totalInGroup: Int): String = buildString {
     if (isWarmup) append("[w] ")
@@ -32,7 +33,9 @@ val NumberedSet.setTitle: String
 
 val NumberedSet.overviewContentDescription: String
     get() = buildString {
-        append("$setTitle, ${set.weight.toContentLoadLabel()} by ${set.reps}")
+        append("$setTitle, ")
+        append(set.weight.toContentLoadLabel(set.exerciseDefinition.equipment))
+        append(" by ${set.reps}")
         if (!isWarmup) {
             append(", $oneRmLabel, $oneRmDeltaLabel")
         }
@@ -45,7 +48,9 @@ val NumberedSet.sessionContentDescription: String
         if (set.setState == SetState.InProgress) {
             append(" in progress")
         }
-        append(", ${set.weight.toContentLoadLabel()} by ${set.reps}")
+        append(
+            ", ${set.weight.toContentLoadLabel(set.exerciseDefinition.equipment)} by ${set.reps}",
+        )
         if (!isWarmup) {
             append(", $oneRmLabel, $oneRmDeltaLabel")
         }
@@ -68,6 +73,13 @@ val NumberedSet.completedContentDescription: String
             append(weightRepsLabel)
         } else {
             append("$workSetNumber. ")
-            append(formatSetPerformance(set.weight, set.reps, set.oneRm))
+            append(
+                formatSetPerformance(
+                    set.weight,
+                    set.reps,
+                    set.oneRm,
+                    set.exerciseDefinition.equipment,
+                ),
+            )
         }
     }

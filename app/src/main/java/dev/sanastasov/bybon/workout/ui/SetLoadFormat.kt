@@ -1,6 +1,8 @@
 package dev.sanastasov.bybon.workout.ui
 
+import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.isAssisted
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -9,9 +11,16 @@ const val MISSING_LOAD_LABEL = "-"
 
 fun formatOneRmKg(kg: Float): String = "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
 
-fun Weight?.toLoadLabel(): String = this?.kilograms ?: MISSING_LOAD_LABEL
+fun Weight?.toLoadLabel(equipment: Equipment? = null): String {
+    val kilograms = this?.kilograms ?: return MISSING_LOAD_LABEL
+    return if (equipment?.isAssisted == true) "-$kilograms" else kilograms
+}
 
-fun Weight?.toContentLoadLabel(): String = this?.let { "${it.kilograms} kg" } ?: MISSING_LOAD_LABEL
+fun Weight?.toContentLoadLabel(equipment: Equipment? = null): String {
+    val kilograms = this?.kilograms ?: return MISSING_LOAD_LABEL
+    val signed = if (equipment?.isAssisted == true) "-$kilograms" else kilograms
+    return "$signed kg"
+}
 
 fun Weight?.toOneRmColumnLabel(): String =
     this?.let { formatOneRmKg(it.kilogramsValue) } ?: MISSING_LOAD_LABEL
@@ -31,13 +40,19 @@ fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
     }
 }
 
-fun formatLoadedSet(weight: Weight?, reps: Int): String = "${weight.toContentLoadLabel()} x $reps"
+fun formatLoadedSet(weight: Weight?, reps: Int, equipment: Equipment? = null): String =
+    "${weight.toContentLoadLabel(equipment)} x $reps"
 
 fun formatLoadedSet(weightKg: String, reps: Int): String = "${weightKg.toDisplayLoad()} x $reps"
 
-fun formatSetPerformance(weight: Weight?, reps: Int, oneRm: Weight?): String {
+fun formatSetPerformance(
+    weight: Weight?,
+    reps: Int,
+    oneRm: Weight?,
+    equipment: Equipment? = null,
+): String {
     val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
-    return "${formatLoadedSet(weight, reps)} @ $rm"
+    return "${formatLoadedSet(weight, reps, equipment)} @ $rm"
 }
 
 fun formatSetPerformance(weightKg: String, reps: Int, oneRm: Weight?): String {

@@ -41,6 +41,24 @@ class NumberedSetExtTest {
     }
 
     @Test
+    fun `assisted load labels use a minus prefix`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                catalogExercise("assisted-pull-ups"),
+                Weight.kilograms(25),
+                8,
+                SetState.NotStated,
+                bodyWeight = Weight.kilograms(80),
+            ),
+            isWarmup = false,
+            index = 0,
+        )
+
+        assert(numbered.weightRepsLabel == "-25 kg x 8")
+        assert(numbered.overviewContentDescription.contains("-25 kg by 8"))
+    }
+
+    @Test
     fun `missing load renders as dash and has no 1RM`() {
         val numbered = NumberedSet(
             set = ExerciseSet(

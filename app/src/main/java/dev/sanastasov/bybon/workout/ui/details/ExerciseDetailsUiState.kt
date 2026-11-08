@@ -110,7 +110,9 @@ internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi>
             dateLabel = CHART_DATE_FORMAT.format(session.startedAt),
             kilograms = oneRm.kilogramsValue,
             oneRm = oneRm,
-            weightKg = session.topSet.weight.toLoadLabel(),
+            weightKg = session.topSet.weight.toLoadLabel(
+                session.topSet.exerciseDefinition.equipment,
+            ),
             reps = session.topSet.reps,
             averageOneRm = averageOneRm,
         )
@@ -135,7 +137,7 @@ private fun ExerciseSessionLog.toSessionUi(): ExerciseDetailsSessionUi = Exercis
 
 private fun ExerciseSet.toSetUi(number: Int): ExerciseDetailsSetUi = ExerciseDetailsSetUi(
     number = number,
-    weightKg = weight.toLoadLabel(),
+    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
     reps = reps,
     oneRm = oneRm,
 )

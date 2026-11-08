@@ -27,6 +27,7 @@ import dev.sanastasov.bybon.ui.components.NumberInputRepsMinWidth
 import dev.sanastasov.bybon.ui.components.NumberInputWeightMinWidth
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.isAssisted
 import kotlin.time.Duration
 
 @Composable
@@ -134,7 +135,9 @@ private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            previous?.let { "${it.weight.toLoadLabel()} x ${it.reps}" }.orEmpty(),
+            previous?.let {
+                "${it.weight.toLoadLabel(numbered.set.exerciseDefinition.equipment)} x ${it.reps}"
+            }.orEmpty(),
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -142,7 +145,9 @@ private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
             overflow = TextOverflow.Ellipsis,
         )
         if (!numbered.isWarmup && previous != null) {
-            SecondarySetLabel(numbered.set.previousOneRm.toOneRmColumnLabel())
+            SecondarySetLabel(
+                numbered.set.previousOneRm.toOneRmColumnLabel(),
+            )
         }
     }
 }
@@ -174,10 +179,20 @@ internal fun EditableWeight(
     numbered: NumberedSet,
     onEvent: (ExerciseCardEvent) -> Unit,
 ) {
-    WeightField(exercise, numbered) { weight ->
-        onEvent(
-            ExerciseCardEvent.OnWeightUpdated(weight, numbered.index, numbered.isWarmup),
-        )
+    val assisted = exercise.exerciseDefinition.equipment?.isAssisted == true
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (assisted) {
+            Text(
+                "-",
+                style = MaterialTheme.typography.labelMedium,
+                textAlign = TextAlign.Center,
+            )
+        }
+        WeightField(exercise, numbered) { weight ->
+            onEvent(
+                ExerciseCardEvent.OnWeightUpdated(weight, numbered.index, numbered.isWarmup),
+            )
+        }
     }
 }
 

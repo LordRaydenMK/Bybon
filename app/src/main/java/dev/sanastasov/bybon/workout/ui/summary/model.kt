@@ -116,7 +116,7 @@ private fun WorkoutExercise.toSummaryExerciseUi(
 
 private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = null,
-    weightKg = weight.toLoadLabel(),
+    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
     reps = reps,
     oneRm = null,
     isWarmup = true,
@@ -124,7 +124,7 @@ private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummar
 
 private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = number,
-    weightKg = weight.toLoadLabel(),
+    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
     reps = reps,
     oneRm = oneRm,
     previousOneRm = previousOneRm,
