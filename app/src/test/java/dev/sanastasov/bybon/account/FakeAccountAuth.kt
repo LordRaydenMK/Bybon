@@ -18,7 +18,7 @@ class FakeAccountAuth(
 
     override suspend fun signInWithIdToken(idToken: String) {
         signInError?.let { throw it }
-        current.value = AccountUser("$idToken@example.com")
+        current.value = AccountUser(idToken, "$idToken@example.com")
     }
 
     override suspend fun signOut() {

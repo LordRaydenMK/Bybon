@@ -20,19 +20,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
-import dev.sanastasov.bybon.account.AccountModule
 import dev.sanastasov.bybon.account.data.CredentialManagerGoogleSignIn
+import dev.sanastasov.bybon.domain.toDisplayDate
+import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.theme.BybonTheme
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
-fun AccountModule.AccountScreen(onNavigateBack: () -> Unit) {
+fun MainModule.AccountScreen(onNavigateBack: () -> Unit) {
     val context = LocalContext.current
     val viewModel = retain {
         AccountViewModel(
             accountAuth,
             CredentialManagerGoogleSignIn(context),
             firebaseEnvName,
+            weightBackup,
             it.coroutineScope,
         )
     }
@@ -59,6 +65,7 @@ fun AccountScreenContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(uiState.environmentName, style = MaterialTheme.typography.titleMedium)
+            BackupStatus(uiState)
             if (uiState.signedIn) {
                 Text(uiState.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                 OutlinedButton(
@@ -93,6 +100,66 @@ fun AccountScreenContent(
             },
         )
     }
+    if (uiState.conflict) {
+        WeightConflictDialog(onAction)
+    } else {
+        uiState.importSummary?.let { summary -> WeightImportDialog(summary, onAction) }
+    }
+}
+
+@Composable
+private fun WeightConflictDialog(onAction: (AccountAction) -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("Weights differ") },
+        text = { Text("The backup would change weights saved on this phone.") },
+        confirmButton = {
+            Column {
+                TextButton({ onAction(AccountAction.UseTheBackup) }) { Text("Use the backup") }
+                TextButton({ onAction(AccountAction.ReplaceTheBackup) }) {
+                    Text("Replace the backup")
+                }
+                TextButton({ onAction(AccountAction.KeepThisPhone) }) { Text("Keep this phone") }
+            }
+        },
+    )
+}
+
+@Composable
+private fun BackupStatus(uiState: AccountUiState) {
+    if (uiState.backupPending) {
+        Text("Backup pending", style = MaterialTheme.typography.bodyMedium)
+    }
+    uiState.lastBackupMillis?.let { millis ->
+        Text(
+            "Last backup ${formatLastBackup(millis)}",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
+@Composable
+private fun WeightImportDialog(summary: AccountImportSummary, onAction: (AccountAction) -> Unit) {
+    val noun = if (summary.count == 1) "weight" else "weights"
+    AlertDialog(
+        onDismissRequest = { onAction(AccountAction.DismissImportSummary) },
+        title = { Text("Weights imported") },
+        text = {
+            Text(
+                "Imported ${summary.count} $noun, from " +
+                    "${summary.earliest.toDisplayDate()} to ${summary.latest.toDisplayDate()}.",
+            )
+        },
+        confirmButton = {
+            TextButton({ onAction(AccountAction.DismissImportSummary) }) { Text("OK") }
+        },
+    )
+}
+
+private fun formatLastBackup(millis: Long): String {
+    val formatter = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.US)
+        .withZone(ZoneId.systemDefault())
+    return formatter.format(Instant.ofEpochMilli(millis))
 }
 
 @Preview

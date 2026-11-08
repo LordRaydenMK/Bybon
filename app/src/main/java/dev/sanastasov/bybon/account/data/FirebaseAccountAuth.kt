@@ -50,5 +50,7 @@ internal fun FirebaseException.toSignInFailureOrRethrow(): SignInFailure = when 
     else -> throw this
 }
 
-private fun FirebaseUser.toAccountUser(): AccountUser =
-    AccountUser(requireNotNull(email) { "Signed-in user has no email" })
+private fun FirebaseUser.toAccountUser(): AccountUser = AccountUser(
+    uid = uid,
+    email = requireNotNull(email) { "Signed-in user has no email" },
+)
