@@ -11,13 +11,13 @@ val NumberedSet.previousLabel: String?
         buildString {
             append("${previous.weight.toLoadLabel()} x ${previous.reps}")
             if (!isWarmup) {
-                append(", ${previous.oneRm.toOneRmLabel()}")
+                append(", ${set.previousOneRm.toOneRmLabel()}")
             }
         }
     }
 
 val NumberedSet.oneRmDeltaLabel: String
-    get() = formatOneRmDelta(set.oneRm, set.previous?.oneRm)
+    get() = formatOneRmDelta(set.oneRm, set.previousOneRm)
 
 val NumberedSet.weightRepsLabel: String
     get() = formatLoadedSet(set.weight, set.reps)

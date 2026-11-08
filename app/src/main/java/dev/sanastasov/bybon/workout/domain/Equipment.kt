@@ -46,3 +46,6 @@ val Equipment.label: String
         Equipment.AssistedBodyWeight -> "Assisted"
         else -> name
     }
+
+val Equipment.isAssisted: Boolean
+    get() = this == Equipment.AssistedBodyWeight

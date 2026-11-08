@@ -127,5 +127,5 @@ private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = Work
     weightKg = weight.toLoadLabel(),
     reps = reps,
     oneRm = oneRm,
-    previousOneRm = previous?.oneRm,
+    previousOneRm = previousOneRm,
 )

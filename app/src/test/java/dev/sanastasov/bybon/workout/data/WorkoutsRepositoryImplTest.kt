@@ -14,6 +14,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.catalogExercises
+import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
@@ -511,6 +512,10 @@ class WorkoutsRepositoryImplTest {
         val pullUp = session.exercises.single { it.id == "assisted-pull-ups" }
         assert(pullUp.sets.single().bodyWeight == Weight.kilograms(80))
         assert(session.bodyWeight == null)
+        assert(
+            pullUp.sets.single().oneRm ==
+                Weight.kilograms(estimateOneRmKg(55f, 8)),
+        )
     }
 
     private fun repository(

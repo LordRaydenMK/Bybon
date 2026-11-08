@@ -252,6 +252,35 @@ class WorkoutProgressionTest {
     }
 
     @Test
+    fun `assisted plus at the top of the range reduces assistance`() {
+        val start = assistedSet(Weight.kilograms(25), 10)
+        val increased = start.increaseAssisted()
+
+        assert(increased.weight == Weight.kilograms(22.5f))
+        assert(increased.requireOneRm > start.requireOneRm)
+        assert(increased.oneRm == Weight.kilograms(estimateOneRmKg(57.5f, increased.reps)))
+    }
+
+    @Test
+    fun `assisted plus at zero assist only adds reps`() {
+        val midRange = assistedSet(null, 8)
+        val atTop = assistedSet(null, 10)
+
+        assert(midRange.increaseAssisted().reps == 9)
+        assert(midRange.increaseAssisted().weight == null)
+        assert(atTop.increaseAssisted() == atTop)
+    }
+
+    @Test
+    fun `assisted minus at the bottom of the range adds assistance`() {
+        val start = assistedSet(Weight.kilograms(25), 6)
+        val decreased = start.decreaseAssisted()
+
+        assert(decreased.weight == Weight.kilograms(27.5f))
+        assert(decreased.requireOneRm < start.requireOneRm)
+    }
+
+    @Test
     fun `adjust preserves previous performance`() {
         val previous = PreviousSetPerformance(Weight.kilograms(45), 12)
         val session = fullBodyA.toOverviewSession().let { overview ->
@@ -301,6 +330,20 @@ class WorkoutProgressionTest {
 
     private fun ExerciseSet.decreaseLateral() =
         adjust(lateralRange, Equipment.Dumbbell.weightIncrement, increase = false)
+
+    private fun assistedSet(weight: Weight?, reps: Int) = ExerciseSet(
+        catalogExercise("assisted-pull-ups"),
+        weight,
+        reps,
+        SetState.NotStated,
+        bodyWeight = Weight.kilograms(80),
+    )
+
+    private fun ExerciseSet.increaseAssisted() =
+        adjust(6..10, Equipment.AssistedBodyWeight.weightIncrement, increase = true)
+
+    private fun ExerciseSet.decreaseAssisted() =
+        adjust(6..10, Equipment.AssistedBodyWeight.weightIncrement, increase = false)
 }
 
 private val ExerciseSet.requireOneRm: Weight
