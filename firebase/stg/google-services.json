@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "840288776102",
+    "project_id": "bybon-stg",
+    "storage_bucket": "bybon-stg.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:840288776102:android:aed455ef244c7ce674a967",
+        "android_client_info": {
+          "package_name": "dev.sanastasov.bybon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiHjf79ahxqQaDZompsEwMqReGXqg1t10"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:840288776102:android:8088163bc05de0e874a967",
+        "android_client_info": {
+          "package_name": "dev.sanastasov.bybon.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiHjf79ahxqQaDZompsEwMqReGXqg1t10"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

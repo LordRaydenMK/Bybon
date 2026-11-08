@@ -68,6 +68,7 @@ fun MainModule.MainScreen(
     onNavigateToSummary: (WorkoutSessionId) -> Unit,
     onNavigateToOneRmCalculator: () -> Unit,
     onNavigateToExerciseLibrary: () -> Unit,
+    onNavigateToAccount: () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
@@ -127,6 +128,7 @@ fun MainModule.MainScreen(
         onNavigateToSummary,
         onNavigateToOneRmCalculator,
         onNavigateToExerciseLibrary,
+        onNavigateToAccount,
     )
 }
 
@@ -145,6 +147,7 @@ private fun MainScreenContent(
     onSessionClick: (WorkoutSessionId) -> Unit,
     onNavigateToOneRmCalculator: () -> Unit,
     onNavigateToExerciseLibrary: () -> Unit,
+    onNavigateToAccount: () -> Unit,
 ) {
     Scaffold(
         Modifier.fillMaxSize(),
@@ -155,6 +158,7 @@ private fun MainScreenContent(
                     MainOverflowMenu(
                         onNavigateToOneRmCalculator,
                         onNavigateToExerciseLibrary,
+                        onNavigateToAccount,
                     )
                 },
             )
@@ -216,6 +220,7 @@ private fun MainScreenContent(
 private fun MainOverflowMenu(
     onNavigateToOneRmCalculator: () -> Unit,
     onNavigateToExerciseLibrary: () -> Unit,
+    onNavigateToAccount: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -226,6 +231,13 @@ private fun MainOverflowMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
+            DropdownMenuItem(
+                text = { Text("Account") },
+                onClick = {
+                    expanded = false
+                    onNavigateToAccount()
+                },
+            )
             DropdownMenuItem(
                 text = { Text("1RM calculator") },
                 onClick = {
@@ -265,6 +277,7 @@ private fun MainScreenContentWorkoutsPreview() {
         {},
         {},
         {},
+        {},
     )
 }
 
@@ -284,6 +297,7 @@ private fun MainScreenContentHistoryPreview() {
         ),
         {},
         WorkoutHistoryUiState.Empty,
+        {},
         {},
         {},
         {},
@@ -319,6 +333,7 @@ private fun MainScreenContentWeightTrackPreview() {
         ),
         {},
         WorkoutHistoryUiState.Empty,
+        {},
         {},
         {},
         {},

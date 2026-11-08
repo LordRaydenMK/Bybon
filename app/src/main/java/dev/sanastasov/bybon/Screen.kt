@@ -44,6 +44,9 @@ sealed interface Screen : NavKey {
     data object OneRmCalculator : Screen
 
     @Serializable
+    data object Account : Screen
+
+    @Serializable
     data class WorkoutSummary(
         val sessionId: WorkoutSessionId,
     ) : Screen

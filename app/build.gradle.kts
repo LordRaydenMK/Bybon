@@ -1,4 +1,7 @@
+import bybon.firebase.FirebaseEnv
 import bybon.repdb.GenerateRepdbCatalogTask
+import com.android.build.api.variant.BuildConfigField
+import com.google.gms.googleservices.GoogleServicesTask
 import dev.detekt.gradle.Detekt
 import java.util.*
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -25,11 +28,46 @@ val generateRepdbCatalog = tasks.register<GenerateRepdbCatalogTask>("generateRep
     cacheDirectory.set(repdbCacheDirectory)
 }
 
+val envOverride = providers.gradleProperty("env").orNull
+FirebaseEnv.validateOverride(envOverride)
+
+fun firebaseEnv(buildType: String): String = FirebaseEnv.resolve(envOverride, buildType)
+
+listOf("debug", "release").forEach { buildType ->
+    val env = firebaseEnv(buildType)
+    val json = FirebaseEnv.googleServicesFile(rootProject.projectDir, env)
+    tasks.register<Copy>("copy${buildType.replaceFirstChar { it.uppercase() }}GoogleServices") {
+        description = "Copy firebase/$env/google-services.json for the $buildType variant"
+        from(json)
+        into(layout.buildDirectory.dir("generated/google-services/$buildType"))
+        rename { "google-services.json" }
+    }
+}
+
+afterEvaluate {
+    tasks.withType<GoogleServicesTask>().configureEach {
+        val buildType = if ("Release" in name) "release" else "debug"
+        val copy = tasks.named<Copy>("copy${buildType.replaceFirstChar { it.uppercase() }}GoogleServices")
+        dependsOn(copy)
+        googleServicesJsonFiles.set(
+            copy.map { listOf(it.destinationDir.resolve("google-services.json")) },
+        )
+    }
+}
+
 androidComponents {
     onVariants { variant ->
         variant.sources.kotlin?.addGeneratedSourceDirectory(
             generateRepdbCatalog,
             GenerateRepdbCatalogTask::outputDirectory,
+        )
+        val buildType = variant.buildType ?: error("Missing build type for ${variant.name}")
+        val env = firebaseEnv(buildType)
+        val buildConfigFields = variant.buildConfigFields
+            ?: error("BuildConfig is disabled for ${variant.name}")
+        buildConfigFields.put(
+            "FIREBASE_ENV",
+            BuildConfigField("String", "\"$env\"", "Firebase environment name"),
         )
     }
 }
@@ -58,19 +96,13 @@ android {
     }
 
     val keystorePropertiesFile = rootProject.file("keystore.properties")
-    // GitHub Actions sets CI=true. Local debug builds keep the default Android debug keystore.
-    val useCiDebugSigning = providers.environmentVariable("CI")
-        .orNull
-        .equals("true", ignoreCase = true)
 
     signingConfigs {
         getByName("debug") {
-            if (useCiDebugSigning) {
-                storeFile = rootProject.file("keystore/debug.keystore")
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
-            }
+            storeFile = rootProject.file("keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
 
         if (keystorePropertiesFile.exists()) {
@@ -107,6 +139,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     testFixtures {
         enable = true
@@ -169,6 +202,11 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytcs)
+    implementation(libs.firebase.auth)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.room3.runtime)
     ksp(libs.androidx.room3.compiler)

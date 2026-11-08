@@ -13,6 +13,7 @@ import androidx.navigation3.runtime.result.rememberResultEventBusNavEntryDecorat
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.navigation3.runtime.serialization.NavKeySerializer
 import androidx.navigation3.ui.NavDisplay
+import dev.sanastasov.bybon.account.ui.AccountScreen
 import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
@@ -70,6 +71,7 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
                         onNavigateToExerciseLibrary = {
                             backStack.add(Screen.ExerciseLibrary(picker = false))
                         },
+                        onNavigateToAccount = { backStack.add(Screen.Account) },
                     )
                 }
 
@@ -149,6 +151,10 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
 
                 Screen.OneRmCalculator -> NavEntry(key) {
                     OneRmCalculatorScreen { backStack.removeLastOrNull() }
+                }
+
+                Screen.Account -> NavEntry(key) {
+                    AccountScreen { backStack.removeLastOrNull() }
                 }
 
                 is Screen.WorkoutSummary -> NavEntry(key) {

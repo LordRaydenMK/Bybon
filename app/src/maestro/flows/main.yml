@@ -8,6 +8,12 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Weight Tracking"
 - assertVisible: "Full Body A"
 - tapOn: "Overflow menu"
+- tapOn: "Account"
+- assertVisible: "stg"
+- assertVisible: "Sign in with Google"
+- back
+- assertVisible: "Full Body A"
+- tapOn: "Overflow menu"
 - tapOn: "1RM calculator"
 - assertVisible: "Estimated 1RM"
 - tapOn: "+1 Rep"
