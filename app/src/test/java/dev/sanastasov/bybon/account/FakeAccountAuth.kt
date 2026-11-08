@@ -16,7 +16,7 @@ class FakeAccountAuth(
     override fun user(): Flow<AccountUser?> = current
 
     override suspend fun signInWithIdToken(idToken: String) {
-        current.value = AccountUser("$idToken@example.com")
+        current.value = AccountUser(idToken, "$idToken@example.com")
     }
 
     override suspend fun signOut() {
