@@ -9,7 +9,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Full Body A"
 - tapOn: "Overflow menu"
 - tapOn: "Account"
-- assertVisible: "prd"
+- assertVisible: "stg"
 - assertVisible: "Sign in with Google"
 - back
 - assertVisible: "Full Body A"
