@@ -47,7 +47,6 @@ data class ExerciseOneRmPointUi(
     val oneRm: Weight,
     val weightKg: String,
     val reps: Int,
-    val averageKilograms: Float? = null,
     val averageOneRm: Weight? = null,
 )
 
@@ -113,7 +112,6 @@ internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi>
             oneRm = oneRm,
             weightKg = session.topSet.weight.toLoadLabel(),
             reps = session.topSet.reps,
-            averageKilograms = averageOneRm?.kilogramsValue,
             averageOneRm = averageOneRm,
         )
     }

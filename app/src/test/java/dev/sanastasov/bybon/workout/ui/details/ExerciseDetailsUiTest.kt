@@ -117,7 +117,6 @@ class ExerciseDetailsUiTest {
                     olderTopOneRm,
                     "45",
                     12,
-                    olderAverageOneRm.kilogramsValue,
                     olderAverageOneRm,
                 ),
                 ExerciseOneRmPointUi(
@@ -126,7 +125,6 @@ class ExerciseDetailsUiTest {
                     newerOneRm,
                     "80",
                     8,
-                    newerOneRm.kilogramsValue,
                     newerOneRm,
                 ),
             ),

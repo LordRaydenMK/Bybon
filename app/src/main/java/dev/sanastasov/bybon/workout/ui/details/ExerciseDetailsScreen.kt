@@ -113,7 +113,6 @@ private fun ExerciseDetailsContentPreview() {
                         Weight.kilograms(70f),
                         "55",
                         8,
-                        68f,
                         Weight.kilograms(68f),
                     ),
                     ExerciseOneRmPointUi(
@@ -122,7 +121,6 @@ private fun ExerciseDetailsContentPreview() {
                         Weight.kilograms(74f),
                         "58",
                         8,
-                        72f,
                         Weight.kilograms(72f),
                     ),
                     ExerciseOneRmPointUi(
@@ -131,7 +129,6 @@ private fun ExerciseDetailsContentPreview() {
                         Weight.kilograms(78f),
                         "60",
                         8,
-                        75f,
                         Weight.kilograms(75f),
                     ),
                 ),

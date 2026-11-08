@@ -27,7 +27,7 @@ class ExerciseOneRmChartLayoutTest {
     @Test
     fun `average series is omitted when any session is missing it`() {
         val withAverage = point("1 Aug")
-        val missingAverage = point("15 Aug").copy(averageKilograms = null, averageOneRm = null)
+        val missingAverage = point("15 Aug").copy(averageOneRm = null)
         assert(completeAverageValues(listOf(withAverage)) == listOf(65.0))
         assert(completeAverageValues(listOf(withAverage, missingAverage)) == null)
     }
@@ -57,7 +57,6 @@ class ExerciseOneRmChartLayoutTest {
         Weight.kilograms(70f),
         "60",
         8,
-        65f,
         Weight.kilograms(65f),
     )
 }

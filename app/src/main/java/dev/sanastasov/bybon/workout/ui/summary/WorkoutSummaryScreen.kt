@@ -326,7 +326,6 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     Weight.kilograms(55f),
                     "40",
                     10,
-                    53f,
                     Weight.kilograms(53f),
                 ),
                 ExerciseOneRmPointUi(
@@ -335,7 +334,6 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     Weight.kilograms(58f),
                     "42",
                     10,
-                    56f,
                     Weight.kilograms(56f),
                 ),
                 ExerciseOneRmPointUi(
@@ -344,7 +342,6 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     Weight.kilograms(63f),
                     "45",
                     12,
-                    63f,
                     Weight.kilograms(63f),
                 ),
             ),
@@ -384,7 +381,6 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     Weight.kilograms(22.93f),
                     "16",
                     12,
-                    21.5f,
                     Weight.kilograms(21.5f),
                 ),
                 ExerciseOneRmPointUi(
@@ -393,7 +389,6 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     Weight.kilograms(24.83f),
                     "18",
                     11,
-                    23.4f,
                     Weight.kilograms(23.4f),
                 ),
                 ExerciseOneRmPointUi(
@@ -402,7 +397,6 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     Weight.kilograms(28.67f),
                     "20",
                     13,
-                    26.94f,
                     Weight.kilograms(26.94f),
                 ),
             ),

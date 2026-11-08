@@ -172,7 +172,7 @@ internal fun oneRmTrendCaption(
 }
 
 internal fun completeAverageValues(points: List<ExerciseOneRmPointUi>): List<Double>? =
-    points.map { it.averageKilograms?.toDouble() }
+    points.map { it.averageOneRm?.kilogramsValue?.toDouble() }
         .takeIf { values -> values.isNotEmpty() && values.all { it != null } }
         ?.filterNotNull()
 
