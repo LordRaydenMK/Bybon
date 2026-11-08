@@ -1,7 +1,6 @@
 import bybon.firebase.FirebaseEnv
 import bybon.repdb.GenerateRepdbCatalogTask
 import com.android.build.api.variant.BuildConfigField
-import com.google.gms.googleservices.GoogleServicesTask
 import dev.detekt.gradle.Detekt
 import java.util.*
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -12,6 +11,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.google.google.services)
+    id("bybon.environment")
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.power.assert)
@@ -29,31 +29,6 @@ val generateRepdbCatalog = tasks.register<GenerateRepdbCatalogTask>("generateRep
 }
 
 val envOverride = providers.gradleProperty("env").orNull
-FirebaseEnv.validateOverride(envOverride)
-
-fun firebaseEnv(buildType: String): String = FirebaseEnv.resolve(envOverride, buildType)
-
-listOf("debug", "release").forEach { buildType ->
-    val env = firebaseEnv(buildType)
-    val json = FirebaseEnv.googleServicesFile(rootProject.projectDir, env)
-    tasks.register<Copy>("copy${buildType.replaceFirstChar { it.uppercase() }}GoogleServices") {
-        description = "Copy firebase/$env/google-services.json for the $buildType variant"
-        from(json)
-        into(layout.buildDirectory.dir("generated/google-services/$buildType"))
-        rename { "google-services.json" }
-    }
-}
-
-afterEvaluate {
-    tasks.withType<GoogleServicesTask>().configureEach {
-        val buildType = if ("Release" in name) "release" else "debug"
-        val copy = tasks.named<Copy>("copy${buildType.replaceFirstChar { it.uppercase() }}GoogleServices")
-        dependsOn(copy)
-        googleServicesJsonFiles.set(
-            copy.map { listOf(it.destinationDir.resolve("google-services.json")) },
-        )
-    }
-}
 
 androidComponents {
     onVariants { variant ->
@@ -62,7 +37,7 @@ androidComponents {
             GenerateRepdbCatalogTask::outputDirectory,
         )
         val buildType = variant.buildType ?: error("Missing build type for ${variant.name}")
-        val env = firebaseEnv(buildType)
+        val env = FirebaseEnv.resolve(envOverride, buildType)
         val buildConfigFields = variant.buildConfigFields
             ?: error("BuildConfig is disabled for ${variant.name}")
         buildConfigFields.put(

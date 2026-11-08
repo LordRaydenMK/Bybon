@@ -40,4 +40,27 @@ class FirebaseEnvTest {
             FirebaseEnv.googleServicesFile(tmp.root, "stg")
         }
     }
+
+    @Test
+    fun `copy task name is capitalized build type`() {
+        assertEquals("copyDebugGoogleServices", FirebaseEnv.copyGoogleServicesTaskName("debug"))
+        assertEquals("copyReleaseGoogleServices", FirebaseEnv.copyGoogleServicesTaskName("release"))
+    }
+
+    @Test
+    fun `google services task name maps to build type`() {
+        assertEquals("debug", FirebaseEnv.buildTypeFromGoogleServicesTaskName("processDebugGoogleServices"))
+        assertEquals("release", FirebaseEnv.buildTypeFromGoogleServicesTaskName("processReleaseGoogleServices"))
+        assertEquals(
+            "debug",
+            FirebaseEnv.buildTypeFromGoogleServicesTaskName("processDebugAndroidTestGoogleServices"),
+        )
+    }
+
+    @Test
+    fun `unknown google services task name fails`() {
+        assertThrows(IllegalStateException::class.java) {
+            FirebaseEnv.buildTypeFromGoogleServicesTaskName("processGoogleServices")
+        }
+    }
 }
