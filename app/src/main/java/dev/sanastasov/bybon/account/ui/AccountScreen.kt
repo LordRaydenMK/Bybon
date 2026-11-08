@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.account.data.CredentialManagerGoogleSignIn
-import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.theme.BybonTheme
@@ -39,6 +38,7 @@ fun MainModule.AccountScreen(onNavigateBack: () -> Unit) {
             CredentialManagerGoogleSignIn(context),
             firebaseEnvName,
             weightBackup,
+            weightSyncScheduler,
             it.coroutineScope,
         )
     }
@@ -100,29 +100,6 @@ fun AccountScreenContent(
             },
         )
     }
-    if (uiState.conflict) {
-        WeightConflictDialog(onAction)
-    } else {
-        uiState.importSummary?.let { summary -> WeightImportDialog(summary, onAction) }
-    }
-}
-
-@Composable
-private fun WeightConflictDialog(onAction: (AccountAction) -> Unit) {
-    AlertDialog(
-        onDismissRequest = {},
-        title = { Text("Weights differ") },
-        text = { Text("The backup would change weights saved on this phone.") },
-        confirmButton = {
-            Column {
-                TextButton({ onAction(AccountAction.UseTheBackup) }) { Text("Use the backup") }
-                TextButton({ onAction(AccountAction.ReplaceTheBackup) }) {
-                    Text("Replace the backup")
-                }
-                TextButton({ onAction(AccountAction.KeepThisPhone) }) { Text("Keep this phone") }
-            }
-        },
-    )
 }
 
 @Composable
@@ -136,24 +113,6 @@ private fun BackupStatus(uiState: AccountUiState) {
             style = MaterialTheme.typography.bodyMedium,
         )
     }
-}
-
-@Composable
-private fun WeightImportDialog(summary: AccountImportSummary, onAction: (AccountAction) -> Unit) {
-    val noun = if (summary.count == 1) "weight" else "weights"
-    AlertDialog(
-        onDismissRequest = { onAction(AccountAction.DismissImportSummary) },
-        title = { Text("Weights imported") },
-        text = {
-            Text(
-                "Imported ${summary.count} $noun, from " +
-                    "${summary.earliest.toDisplayDate()} to ${summary.latest.toDisplayDate()}.",
-            )
-        },
-        confirmButton = {
-            TextButton({ onAction(AccountAction.DismissImportSummary) }) { Text("OK") }
-        },
-    )
 }
 
 private fun formatLastBackup(millis: Long): String {

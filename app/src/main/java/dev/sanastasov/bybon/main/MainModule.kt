@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.bodyweight.BodyWeightModule
 import dev.sanastasov.bybon.bodyweight.data.FirestoreWeightCloud
 import dev.sanastasov.bybon.bodyweight.sync.WeightBackup
 import dev.sanastasov.bybon.bodyweight.sync.WeightBackupController
+import dev.sanastasov.bybon.bodyweight.sync.WeightSyncScheduler
 import dev.sanastasov.bybon.data.BybonDatabase
 import dev.sanastasov.bybon.workout.WorkoutModule
 
@@ -17,6 +18,8 @@ interface MainModule :
 
     val weightBackup: WeightBackup
 
+    val weightSyncScheduler: WeightSyncScheduler
+
     companion object {
         private val scope = AppScope()
 
@@ -24,12 +27,15 @@ interface MainModule :
             bodyWeightModule: BodyWeightModule,
             workoutModule: WorkoutModule,
             accountModule: AccountModule,
+            scheduler: WeightSyncScheduler,
         ): MainModule = object :
             MainModule,
             BodyWeightModule by bodyWeightModule,
             WorkoutModule by workoutModule,
             AccountModule by accountModule {
             override val appScope: AppScope = scope
+
+            override val weightSyncScheduler: WeightSyncScheduler = scheduler
 
             override val weightBackup: WeightBackup = WeightBackupController(
                 bodyWeightRepository,

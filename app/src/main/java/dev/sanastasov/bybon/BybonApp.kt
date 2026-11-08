@@ -2,7 +2,10 @@ package dev.sanastasov.bybon
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSerializable
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
@@ -13,8 +16,12 @@ import androidx.navigation3.runtime.result.rememberResultEventBusNavEntryDecorat
 import androidx.navigation3.runtime.serialization.NavBackStackSerializer
 import androidx.navigation3.runtime.serialization.NavKeySerializer
 import androidx.navigation3.ui.NavDisplay
+import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.account.data.CredentialManagerGoogleSignIn
 import dev.sanastasov.bybon.account.ui.AccountScreen
 import dev.sanastasov.bybon.bodyweight.input.WeightInputScreen
+import dev.sanastasov.bybon.bodyweight.sync.WeightSyncPromptDialogs
+import dev.sanastasov.bybon.bodyweight.sync.WeightSyncPromptViewModel
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.main.MainScreen
 import dev.sanastasov.bybon.onermcalc.OneRmCalculatorScreen
@@ -41,6 +48,17 @@ fun <T : NavKey> rememberNavBackStack(vararg elements: NavKey): NavBackStack<T> 
 @Suppress("LongMethod")
 @Composable
 fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.None) {
+    val context = LocalContext.current
+    val promptModel = retain {
+        WeightSyncPromptViewModel(
+            weightBackup,
+            accountAuth,
+            CredentialManagerGoogleSignIn(context),
+            firebaseEnvName,
+            it.coroutineScope,
+        )
+    }
+    val prompt by promptModel.prompt.collectAsStateWithLifecycle()
     val backStack: BackStack = rememberNavBackStack(Screen.MainScreen)
     LaunchedEffect(openSession) {
         when (openSession) {
@@ -169,6 +187,7 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
             }
         },
     )
+    WeightSyncPromptDialogs(prompt, promptModel::onAction)
 }
 
 internal fun openWorkoutSessionIfMissing(backStack: MutableList<Screen>, planId: WorkoutPlanId) {

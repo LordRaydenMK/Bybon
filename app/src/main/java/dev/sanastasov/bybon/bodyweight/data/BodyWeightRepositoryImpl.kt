@@ -22,6 +22,7 @@ class BodyWeightRepositoryImpl(
     private val weightEntryDao: WeightDao,
     private val dietPhaseDao: DietPhaseDao,
     private val weightSyncDao: WeightSyncDao,
+    private val onWeightChanged: () -> Unit = {},
 ) : BodyWeightRepository {
 
     override fun entries(): Flow<List<BodyWeightEntry>> = weightEntryDao.weightEntries()
@@ -36,6 +37,7 @@ class BodyWeightRepositoryImpl(
                 weight = entry.weight.value,
             ),
         )
+        onWeightChanged()
     }
 
     override suspend fun deleteEntry(entry: BodyWeightEntry) {
@@ -47,6 +49,7 @@ class BodyWeightRepositoryImpl(
                 weight = null,
             ),
         )
+        onWeightChanged()
     }
 
     override suspend fun replaceAll(entries: List<BodyWeightEntry>) {
