@@ -1,5 +1,7 @@
 # Step 1 — Google sign-in and sign-out
 
+Implemented.
+
 Firebase Auth only. This step writes no user data to the cloud. It does not restore, upload, or ask
 about conflicts.
 
