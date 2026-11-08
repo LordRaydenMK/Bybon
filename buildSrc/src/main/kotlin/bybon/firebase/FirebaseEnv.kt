@@ -21,4 +21,13 @@ object FirebaseEnv {
         }
         return file
     }
+
+    fun copyGoogleServicesTaskName(buildType: String): String =
+        "copy${buildType.replaceFirstChar { it.uppercase() }}GoogleServices"
+
+    fun buildTypeFromGoogleServicesTaskName(taskName: String): String = when {
+        "Release" in taskName -> "release"
+        "Debug" in taskName -> "debug"
+        else -> error("Cannot infer build type from Google Services task '$taskName'")
+    }
 }
