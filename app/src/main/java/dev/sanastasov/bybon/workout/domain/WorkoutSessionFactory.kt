@@ -8,6 +8,7 @@ fun WorkoutPlan.toWorkoutSession(
     previousSession: WorkoutSession? = null,
     startedAt: LocalDateTime = LocalDateTime.now(),
     previousHistory: List<WorkoutSession> = emptyList(),
+    bodyWeight: Weight? = null,
 ): WorkoutSession {
     val history = previousHistory.ifEmpty { listOfNotNull(previousSession) }
     val session = WorkoutSession(
@@ -50,8 +51,9 @@ fun WorkoutPlan.toWorkoutSession(
             }
         },
         startedAt,
+        bodyWeight = bodyWeight,
     )
-    return session.startWorkout(now = startedAt)
+    return session.startWorkout(now = startedAt).withBodyWeightOnSets()
 }
 
 private fun warmupSetsFromPlan(
@@ -95,7 +97,10 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
     },
 )
 
-fun WorkoutSession.startWorkout(now: LocalDateTime = LocalDateTime.now()): WorkoutSession {
+fun WorkoutSession.startWorkout(
+    now: LocalDateTime = LocalDateTime.now(),
+    snapshot: Weight? = bodyWeight,
+): WorkoutSession {
     val first = takeUnless {
         it.workoutSets.any { set -> set.setState == SetState.InProgress }
     }?.firstNotStartedSet()
@@ -107,9 +112,10 @@ fun WorkoutSession.startWorkout(now: LocalDateTime = LocalDateTime.now()): Worko
             it.copy(setState = SetState.InProgress)
         }
     }
-    return if (state is WorkoutState.NotStarted) {
+    val timed = if (state is WorkoutState.NotStarted) {
         started.copy(startedAt = now)
     } else {
         started
     }
+    return timed.freezeBodyWeight(snapshot)
 }

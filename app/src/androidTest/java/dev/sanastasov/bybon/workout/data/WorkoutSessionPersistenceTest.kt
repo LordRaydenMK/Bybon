@@ -36,6 +36,7 @@ class WorkoutSessionPersistenceTest {
             db.exerciseDao(),
             db.workoutPlanDao(),
             db.workoutSessionDao(),
+            db.weightEntryDao(),
         )
         val history = completedSession(
             planId = "full-body-a",
@@ -57,6 +58,7 @@ class WorkoutSessionPersistenceTest {
             db.exerciseDao(),
             db.workoutPlanDao(),
             db.workoutSessionDao(),
+            db.weightEntryDao(),
         )
 
         assert(relaunched.workoutSessions().first() == listOf(history, live))

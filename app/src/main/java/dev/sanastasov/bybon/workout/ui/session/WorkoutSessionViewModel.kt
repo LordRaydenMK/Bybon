@@ -72,7 +72,12 @@ class WorkoutSessionViewModel(
                         val plan = repository.workoutPlans()
                             .first()
                             .first { it.id == planId }
-                        val session = plan.toWorkoutSession(previousHistory = sessions)
+                        val now = LocalDateTime.now()
+                        val session = plan.toWorkoutSession(
+                            previousHistory = sessions,
+                            startedAt = now,
+                            bodyWeight = repository.sevenDayBodyWeight(now.toLocalDate()),
+                        )
                         repository.updateWorkout(session)
                     }
 

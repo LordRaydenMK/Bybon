@@ -23,6 +23,7 @@ interface WorkoutModule : DbModule {
                 exerciseDao = db.exerciseDao(),
                 workoutPlanDao = db.workoutPlanDao(),
                 workoutSessionDao = db.workoutSessionDao(),
+                weightDao = db.weightEntryDao(),
             ).also { repository = it }
             val alarms = appContext.getSystemService<AlarmManager>()
                 ?: error("Failed to get AlarmManager")

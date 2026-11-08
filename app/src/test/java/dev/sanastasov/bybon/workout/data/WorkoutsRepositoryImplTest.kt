@@ -1,10 +1,13 @@
 package dev.sanastasov.bybon.workout.data
 
 import app.cash.turbine.test
+import dev.sanastasov.bybon.bodyweight.data.WeightDao
+import dev.sanastasov.bybon.bodyweight.data.WeightEntryEntity
 import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutState
@@ -18,6 +21,7 @@ import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
+import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -478,16 +482,49 @@ class WorkoutsRepositoryImplTest {
         assert(second.workoutPlans().first() == listOf(fullBodyB))
     }
 
+    @Test
+    fun `resolves seven day body weight onto sets without a snapshot`() = runTest {
+        val date = LocalDate.of(2026, 8, 20)
+        val repository = repository(
+            weightDao = FakeWeightDao(
+                listOf(
+                    WeightEntryEntity(date.minusDays(2), 8000),
+                    WeightEntryEntity(date.minusDays(1), 8000),
+                    WeightEntryEntity(date, 8000),
+                ),
+            ),
+        )
+        repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(
+                completedSession(
+                    planId = "full-body-a",
+                    planName = "Full Body A",
+                    startedAt = date.atTime(18, 0),
+                    exercises = listOf(completedExercise("assisted-pull-ups", 25f to 8)),
+                ),
+            ),
+            exercises = emptyList(),
+        )
+
+        val session = repository.workoutSessions().first().single()
+        val pullUp = session.exercises.single { it.id == "assisted-pull-ups" }
+        assert(pullUp.sets.single().bodyWeight == Weight.kilograms(80))
+        assert(session.bodyWeight == null)
+    }
+
     private fun repository(
         exerciseDao: ExerciseDao = FakeExerciseDao(),
         workoutPlanDao: WorkoutPlanDao = FakeWorkoutPlanDao(),
         workoutSessionDao: WorkoutSessionDao = FakeWorkoutSessionDao(exerciseDao, workoutPlanDao),
+        weightDao: WeightDao = FakeWeightDao(),
         catalog: List<ExerciseDefinition> = catalogExercises,
         repdbCommit: String = repdbCatalogCommit,
     ): WorkoutsRepository = WorkoutsRepositoryImpl(
         exerciseDao = exerciseDao,
         workoutPlanDao = workoutPlanDao,
         workoutSessionDao = workoutSessionDao,
+        weightDao = weightDao,
         catalog = catalog,
         repdbCommit = repdbCommit,
     )

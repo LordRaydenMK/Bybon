@@ -41,4 +41,4 @@ fun List<WorkoutSession>.latestCompletedExercise(
 }.maxByOrNull { it.first }?.second
 
 private fun ExerciseSet.toPreviousPerformance(): PreviousSetPerformance =
-    PreviousSetPerformance(weight, reps)
+    PreviousSetPerformance(weight, reps, bodyWeight)

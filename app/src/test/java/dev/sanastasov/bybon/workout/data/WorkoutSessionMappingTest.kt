@@ -42,6 +42,40 @@ class WorkoutSessionMappingTest {
         assert(firstSets.first().setState == "InProgress")
         assert(Weight.kilograms(32.5f).toHundredths() == 3250)
         assert(firstSets.all { it.completedAt == null })
+        assert(write.header.bodyWeightHundredths == null)
+    }
+
+    @Test
+    fun `round trip keeps a frozen session body weight snapshot`() {
+        val startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34)
+        val original = fullBodyA.toWorkoutSession(
+            startedAt = startedAt,
+            bodyWeight = Weight.kilograms(82.5f),
+        )
+        val write = original.toWrite(sessionId = 7)
+        val lines = write.exercises.mapIndexed { index, exercise ->
+            exercise.entity.copy(id = index + 1L, sessionId = 7)
+        }
+        val sets = write.exercises.flatMapIndexed { index, exercise ->
+            exercise.sets.map { it.copy(sessionExerciseId = index + 1L) }
+        }
+        val catalog = original.exercises.map {
+            it.exerciseDefinition.toEntity(source = ExerciseSource.SHIPPED)
+        }
+
+        val restored = listOf(write.header.copy(id = 7))
+            .toDomainSessions(lines, sets, catalog)
+            .single()
+
+        assert(write.header.bodyWeightHundredths == 8250)
+        assert(restored.bodyWeight == Weight.kilograms(82.5f))
+        assert(
+            restored.exercises.all { exercise ->
+                exercise.orderedSets.all { it.bodyWeight == Weight.kilograms(82.5f) }
+            },
+        )
+        val pullUp = restored.exercises.first { it.id == "assisted-pull-ups" }
+        assert(pullUp.sets.first().oneRm == null)
     }
 
     @Test

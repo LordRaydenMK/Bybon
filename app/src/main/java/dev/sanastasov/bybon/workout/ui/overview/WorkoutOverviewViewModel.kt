@@ -84,7 +84,13 @@ class WorkoutOverviewViewModel(
             }
 
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
-                repository.updateWorkout(requireOverviewSession().startWorkout())
+                val now = java.time.LocalDateTime.now()
+                repository.updateWorkout(
+                    requireOverviewSession().startWorkout(
+                        now = now,
+                        snapshot = repository.sevenDayBodyWeight(now.toLocalDate()),
+                    ),
+                )
                 _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
             }
 
