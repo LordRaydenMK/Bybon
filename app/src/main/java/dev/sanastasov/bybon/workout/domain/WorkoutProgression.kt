@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions")
+
 package dev.sanastasov.bybon.workout.domain
 
 fun WorkoutSession.adjustAll(increase: Boolean): WorkoutSession =
@@ -27,31 +29,79 @@ private fun WorkoutExercise.adjust(increase: Boolean): WorkoutExercise {
     )
 }
 
-fun ExerciseSet.adjust(repRange: IntRange, increment: Weight?, increase: Boolean): ExerciseSet {
-    val load = weight
-    return when {
+fun ExerciseSet.adjust(repRange: IntRange, increment: Weight?, increase: Boolean): ExerciseSet =
+    when {
         increase && reps < repRange.last -> copy(reps = reps + 1)
 
         !increase && reps > repRange.first -> copy(reps = reps - 1)
 
-        increment == null || load == null -> this
+        increment == null -> this
 
-        else -> {
-            val expandedRange = repRange.expanded()
-            generateSequence(
-                if (increase) load + increment else load.minusOrNull(increment),
-            ) { current ->
-                if (increase) current + increment else current.minusOrNull(increment)
-            }.take(64).firstNotNullOfOrNull { newWeight ->
-                withWeightPreservingOneRm(
-                    newWeight,
-                    preferredRange = repRange,
-                    fallbackRange = expandedRange,
-                    increase = increase,
-                )
-            } ?: this
-        }
+        exerciseDefinition.equipment.isAssisted -> adjustAssisted(repRange, increment, increase)
+
+        weight == null -> this
+
+        else -> adjustLoggedWeight(
+            repRange = repRange,
+            increment = increment,
+            increase = increase,
+            decreasingLoad = !increase,
+            start = weight,
+        )
     }
+
+private fun ExerciseSet.adjustAssisted(
+    repRange: IntRange,
+    increment: Weight,
+    increase: Boolean,
+): ExerciseSet {
+    if (weight == null && increase) return this
+    return adjustLoggedWeight(
+        repRange = repRange,
+        increment = increment,
+        increase = increase,
+        decreasingLoad = increase,
+        start = weight,
+    )
+}
+
+private fun ExerciseSet.adjustLoggedWeight(
+    repRange: IntRange,
+    increment: Weight,
+    increase: Boolean,
+    decreasingLoad: Boolean,
+    start: Weight?,
+): ExerciseSet {
+    val expandedRange = repRange.expanded()
+    return loggedWeightSteps(start, increment, decreasingLoad).firstNotNullOfOrNull { newWeight ->
+        withWeightPreservingOneRm(
+            newWeight,
+            preferredRange = repRange,
+            fallbackRange = expandedRange,
+            increase = increase,
+        )
+    } ?: this
+}
+
+private fun loggedWeightSteps(
+    start: Weight?,
+    increment: Weight,
+    decreasing: Boolean,
+): List<Weight?> {
+    val steps = mutableListOf<Weight?>()
+    var current = start
+    repeat(64) {
+        current = if (decreasing) {
+            current?.minusOrNull(increment)
+        } else if (current == null) {
+            increment
+        } else {
+            current + increment
+        }
+        steps.add(current)
+        if (decreasing && current == null) return steps
+    }
+    return steps
 }
 
 private fun ExerciseSet.followFirstWorkSet(
@@ -68,8 +118,6 @@ private fun ExerciseSet.followFirstWorkSet(
             copy(reps = (reps + delta).coerceIn(expandedRange))
         }
 
-        newWeight == null -> copy(weight = null)
-
         else -> withWeightPreservingOneRm(
             newWeight,
             preferredRange = expandedRange,
@@ -80,7 +128,7 @@ private fun ExerciseSet.followFirstWorkSet(
 }
 
 private fun ExerciseSet.withWeightPreservingOneRm(
-    newWeight: Weight,
+    newWeight: Weight?,
     preferredRange: IntRange,
     fallbackRange: IntRange,
     increase: Boolean,
@@ -88,7 +136,13 @@ private fun ExerciseSet.withWeightPreservingOneRm(
     val currentOneRm = oneRm ?: return copy(weight = newWeight)
     fun pick(range: IntRange): Int? {
         val candidates = range.filter { candidateReps ->
-            val candidateOneRm = estimatedOneRm(newWeight, candidateReps)
+            val candidateOneRm = estimatedSetOneRm(
+                equipment = exerciseDefinition.equipment,
+                loggedWeight = newWeight,
+                reps = candidateReps,
+                bodyWeight = bodyWeight,
+                missingWeightIsZeroAssist = true,
+            ) ?: return@filter false
             if (increase) candidateOneRm > currentOneRm else candidateOneRm < currentOneRm
         }
         return if (increase) candidates.minOrNull() else candidates.maxOrNull()

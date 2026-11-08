@@ -142,7 +142,7 @@ private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
             overflow = TextOverflow.Ellipsis,
         )
         if (!numbered.isWarmup && previous != null) {
-            SecondarySetLabel(previous.oneRm.toOneRmColumnLabel())
+            SecondarySetLabel(numbered.set.previousOneRm.toOneRmColumnLabel())
         }
     }
 }

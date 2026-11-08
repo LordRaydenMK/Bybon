@@ -14,6 +14,35 @@ fun estimateOneRmKg(weightKg: Float, reps: Int): Float = if (reps < 10) {
 fun estimatedOneRm(weight: Weight, reps: Int): Weight =
     Weight.kilograms(estimateOneRmKg(weight.kilogramsValue, reps))
 
+fun estimatedSetOneRm(
+    equipment: Equipment?,
+    loggedWeight: Weight?,
+    reps: Int,
+    bodyWeight: Weight?,
+    missingWeightIsZeroAssist: Boolean,
+): Weight? {
+    val load = effectiveLoadForOneRm(
+        equipment,
+        loggedWeight,
+        bodyWeight,
+        missingWeightIsZeroAssist,
+    ) ?: return null
+    return estimatedOneRm(load, reps)
+}
+
+fun effectiveLoadForOneRm(
+    equipment: Equipment?,
+    loggedWeight: Weight?,
+    bodyWeight: Weight?,
+    missingWeightIsZeroAssist: Boolean,
+): Weight? = when {
+    equipment != Equipment.AssistedBodyWeight -> loggedWeight
+    bodyWeight == null -> null
+    loggedWeight != null -> bodyWeight.minusOrNull(loggedWeight)
+    missingWeightIsZeroAssist -> bodyWeight
+    else -> null
+}
+
 fun sevenDayBodyWeightAverage(entries: List<BodyWeightEntry>, on: LocalDate): Weight? {
     val start = on.minusDays(6)
     val window = entries.filter { it.date in start..on }

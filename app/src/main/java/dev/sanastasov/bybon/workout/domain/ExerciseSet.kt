@@ -11,8 +11,13 @@ data class PreviousSetPerformance(
         require(reps > 0) { "reps must be positive" }
     }
 
-    val oneRm: Weight?
-        get() = weight?.let { estimatedOneRm(it, reps) }
+    fun oneRm(equipment: Equipment?): Weight? = estimatedSetOneRm(
+        equipment = equipment,
+        loggedWeight = weight,
+        reps = reps,
+        bodyWeight = bodyWeight,
+        missingWeightIsZeroAssist = true,
+    )
 }
 
 data class ExerciseSet(
@@ -31,5 +36,14 @@ data class ExerciseSet(
         get() = (setState as? SetState.Completed)?.at
 
     val oneRm: Weight?
-        get() = weight?.let { estimatedOneRm(it, reps) }
+        get() = estimatedSetOneRm(
+            equipment = exerciseDefinition.equipment,
+            loggedWeight = weight,
+            reps = reps,
+            bodyWeight = bodyWeight,
+            missingWeightIsZeroAssist = setState is SetState.Completed,
+        )
+
+    val previousOneRm: Weight?
+        get() = previous?.oneRm(exerciseDefinition.equipment)
 }

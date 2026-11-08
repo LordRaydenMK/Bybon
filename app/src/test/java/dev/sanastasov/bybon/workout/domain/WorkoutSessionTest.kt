@@ -408,6 +408,18 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `estimated assisted one RM uses body weight when assist is omitted`() {
+        val set = ExerciseSet(
+            catalogExercise("assisted-pull-ups"),
+            null,
+            8,
+            SetState.Completed(),
+            bodyWeight = Weight.kilograms(80),
+        )
+        assert(set.oneRm == Weight.kilograms(estimateOneRmKg(80f, 8)))
+    }
+
+    @Test
     fun `toWorkoutSession leaves assisted loads empty`() {
         val session = fullBodyA.toWorkoutSession()
         val pullUp = session.exercises.first { it.id == "assisted-pull-ups" }
