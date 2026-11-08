@@ -42,7 +42,7 @@ class WorkoutSessionMappingTest {
         assert(firstSets.first().setState == "InProgress")
         assert(Weight.kilograms(32.5f).toHundredths() == 3250)
         assert(firstSets.all { it.completedAt == null })
-        assert(write.header.bodyWeight == null)
+        assert(write.header.bodyWeightHundredths == null)
     }
 
     @Test
@@ -50,7 +50,7 @@ class WorkoutSessionMappingTest {
         val startedAt = LocalDateTime.of(2026, 8, 20, 17, 59, 34)
         val original = fullBodyA.toWorkoutSession(
             startedAt = startedAt,
-            bodyWeightSnapshot = Weight.kilograms(82.5f),
+            bodyWeight = Weight.kilograms(82.5f),
         )
         val write = original.toWrite(sessionId = 7)
         val lines = write.exercises.mapIndexed { index, exercise ->
@@ -67,8 +67,7 @@ class WorkoutSessionMappingTest {
             .toDomainSessions(lines, sets, catalog)
             .single()
 
-        assert(write.header.bodyWeight == 8250)
-        assert(restored.bodyWeightSnapshot == Weight.kilograms(82.5f))
+        assert(write.header.bodyWeightHundredths == 8250)
         assert(restored.bodyWeight == Weight.kilograms(82.5f))
         assert(
             restored.exercises.all { exercise ->

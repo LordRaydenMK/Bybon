@@ -37,7 +37,7 @@ internal fun WorkoutSession.toWrite(sessionId: Long): WorkoutSessionWrite {
         note = note,
         startedAt = startedAt,
         durationSeconds = durationSeconds,
-        bodyWeight = bodyWeightSnapshot?.toHundredths(),
+        bodyWeightHundredths = bodyWeight?.toHundredths(),
     )
     val exercises = exercises.mapIndexed { position, exercise ->
         val entity = WorkoutSessionExerciseEntity(
@@ -111,7 +111,7 @@ internal fun WorkoutSessionEntity.toDomainOrNull(
             exercises = exercisesMapped,
             startedAt = startedAt,
             duration = durationSeconds?.seconds,
-            bodyWeightSnapshot = bodyWeight?.toWeightOrNull(),
+            bodyWeight = bodyWeightHundredths?.toWeightOrNull(),
         )
     }
 }

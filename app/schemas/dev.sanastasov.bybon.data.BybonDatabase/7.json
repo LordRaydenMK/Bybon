@@ -466,7 +466,7 @@
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "bodyWeight",
+            "fieldPath": "bodyWeightHundredths",
             "columnName": "body_weight",
             "affinity": "INTEGER"
           }

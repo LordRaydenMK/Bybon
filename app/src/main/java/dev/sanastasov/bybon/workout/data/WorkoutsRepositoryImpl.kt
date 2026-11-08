@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -38,7 +37,7 @@ class WorkoutsRepositoryImpl internal constructor(
     private val exerciseDao: ExerciseDao,
     private val workoutPlanDao: WorkoutPlanDao,
     private val workoutSessionDao: WorkoutSessionDao,
-    private val weightDao: WeightDao? = null,
+    private val weightDao: WeightDao,
     private val catalog: List<ExerciseDefinition> = catalogExercises,
     private val repdbCommit: String = repdbCatalogCommit,
 ) : WorkoutsRepository {
@@ -225,7 +224,7 @@ class WorkoutsRepositoryImpl internal constructor(
         sevenDayBodyWeightAverage(bodyWeightEntries().first(), on)
 
     private fun bodyWeightEntries(): Flow<List<BodyWeightEntry>> =
-        weightDao?.weightEntries()?.map { entities ->
+        weightDao.weightEntries().map { entities ->
             entities.map { BodyWeightEntry(it.date, BodyWeight(it.weight)) }
-        } ?: flowOf(emptyList())
+        }
 }

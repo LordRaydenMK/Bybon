@@ -8,7 +8,7 @@ fun WorkoutPlan.toWorkoutSession(
     previousSession: WorkoutSession? = null,
     startedAt: LocalDateTime = LocalDateTime.now(),
     previousHistory: List<WorkoutSession> = emptyList(),
-    bodyWeightSnapshot: Weight? = null,
+    bodyWeight: Weight? = null,
 ): WorkoutSession {
     val history = previousHistory.ifEmpty { listOfNotNull(previousSession) }
     val session = WorkoutSession(
@@ -51,8 +51,7 @@ fun WorkoutPlan.toWorkoutSession(
             }
         },
         startedAt,
-        bodyWeightSnapshot = bodyWeightSnapshot,
-        bodyWeight = bodyWeightSnapshot,
+        bodyWeight = bodyWeight,
     )
     return session.startWorkout(now = startedAt).withBodyWeightOnSets()
 }
@@ -100,7 +99,7 @@ fun WorkoutSession.asOverviewDraft(): WorkoutSession = copy(
 
 fun WorkoutSession.startWorkout(
     now: LocalDateTime = LocalDateTime.now(),
-    snapshot: Weight? = bodyWeightSnapshot,
+    snapshot: Weight? = bodyWeight,
 ): WorkoutSession {
     val first = takeUnless {
         it.workoutSets.any { set -> set.setState == SetState.InProgress }

@@ -36,7 +36,8 @@ data class WorkoutSessionEntity(
     val note: String?,
     @ColumnInfo(name = "started_at") val startedAt: LocalDateTime,
     @ColumnInfo(name = "duration_seconds") val durationSeconds: Int?,
-    @ColumnInfo(name = "body_weight") val bodyWeight: Int? = null,
+    /** Frozen 7-day mean at session start, in hundredths of a kilogram. */
+    @ColumnInfo(name = "body_weight") val bodyWeightHundredths: Int? = null,
 )
 
 @Entity(

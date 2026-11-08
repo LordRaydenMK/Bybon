@@ -76,7 +76,7 @@ class WorkoutSessionViewModel(
                         val session = plan.toWorkoutSession(
                             previousHistory = sessions,
                             startedAt = now,
-                            bodyWeightSnapshot = repository.sevenDayBodyWeight(now.toLocalDate()),
+                            bodyWeight = repository.sevenDayBodyWeight(now.toLocalDate()),
                         )
                         repository.updateWorkout(session)
                     }

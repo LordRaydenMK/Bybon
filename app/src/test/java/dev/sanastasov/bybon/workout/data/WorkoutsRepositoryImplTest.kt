@@ -510,15 +510,14 @@ class WorkoutsRepositoryImplTest {
         val session = repository.workoutSessions().first().single()
         val pullUp = session.exercises.single { it.id == "assisted-pull-ups" }
         assert(pullUp.sets.single().bodyWeight == Weight.kilograms(80))
-        assert(session.bodyWeightSnapshot == null)
-        assert(session.bodyWeight == Weight.kilograms(80))
+        assert(session.bodyWeight == null)
     }
 
     private fun repository(
         exerciseDao: ExerciseDao = FakeExerciseDao(),
         workoutPlanDao: WorkoutPlanDao = FakeWorkoutPlanDao(),
         workoutSessionDao: WorkoutSessionDao = FakeWorkoutSessionDao(exerciseDao, workoutPlanDao),
-        weightDao: WeightDao? = null,
+        weightDao: WeightDao = FakeWeightDao(),
         catalog: List<ExerciseDefinition> = catalogExercises,
         repdbCommit: String = repdbCatalogCommit,
     ): WorkoutsRepository = WorkoutsRepositoryImpl(

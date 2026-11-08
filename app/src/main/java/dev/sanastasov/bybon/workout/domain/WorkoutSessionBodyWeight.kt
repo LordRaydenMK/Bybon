@@ -2,28 +2,23 @@ package dev.sanastasov.bybon.workout.domain
 
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 
-fun WorkoutSession.withBodyWeightOnSets(): WorkoutSession = copy(
+fun WorkoutSession.withBodyWeightOnSets(resolved: Weight? = bodyWeight): WorkoutSession = copy(
     exercises = exercises.map { exercise ->
         exercise.copy(
-            warmupSets = exercise.warmupSets?.map { it.copy(bodyWeight = bodyWeight) },
-            sets = exercise.sets.map { it.copy(bodyWeight = bodyWeight) },
+            warmupSets = exercise.warmupSets?.map { it.copy(bodyWeight = resolved) },
+            sets = exercise.sets.map { it.copy(bodyWeight = resolved) },
         )
     },
 )
 
 fun WorkoutSession.resolveBodyWeight(entries: List<BodyWeightEntry>): WorkoutSession {
-    val resolved = bodyWeightSnapshot
-        ?: sevenDayBodyWeightAverage(entries, startedAt.toLocalDate())
-        ?: bodyWeight
-    return copy(bodyWeight = resolved).withBodyWeightOnSets()
+    val resolved = bodyWeight ?: sevenDayBodyWeightAverage(entries, startedAt.toLocalDate())
+    return withBodyWeightOnSets(resolved)
 }
 
 fun WorkoutSession.freezeBodyWeight(snapshot: Weight?): WorkoutSession {
-    if (bodyWeightSnapshot != null) return withBodyWeightOnSets()
-    return copy(
-        bodyWeightSnapshot = snapshot,
-        bodyWeight = snapshot ?: bodyWeight,
-    ).withBodyWeightOnSets()
+    if (bodyWeight != null) return withBodyWeightOnSets()
+    return copy(bodyWeight = snapshot).withBodyWeightOnSets()
 }
 
 fun List<WorkoutSession>.resolveBodyWeights(entries: List<BodyWeightEntry>): List<WorkoutSession> {
@@ -66,9 +61,9 @@ private fun List<WorkoutSession>.latestCompletedSessionBodyWeight(
         null
     } else if (!session.startedAt.isBefore(before)) {
         null
-    } else if (session.exercises.none { it.id == exerciseId }) {
-        null
     } else {
-        session.startedAt to session.bodyWeight
+        val exercise = session.exercises.firstOrNull { it.id == exerciseId }
+            ?: return@mapNotNull null
+        session.startedAt to exercise.orderedSets.firstOrNull()?.bodyWeight
     }
 }.maxByOrNull { it.first }?.second

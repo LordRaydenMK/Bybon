@@ -53,7 +53,7 @@ interface WorkoutSessionDao {
         """
         UPDATE workout_session
         SET plan_name = :planName, note = :note, started_at = :startedAt,
-            duration_seconds = :durationSeconds, body_weight = :bodyWeight
+            duration_seconds = :durationSeconds, body_weight = :bodyWeightHundredths
         WHERE id = :id
         """,
     )
@@ -63,7 +63,7 @@ interface WorkoutSessionDao {
         note: String?,
         startedAt: LocalDateTime,
         durationSeconds: Int?,
-        bodyWeight: Int?,
+        bodyWeightHundredths: Int?,
     )
 
     @Query("DELETE FROM workout_session_exercise WHERE session_id = :sessionId")
@@ -96,7 +96,7 @@ interface WorkoutSessionDao {
             note = write.header.note,
             startedAt = write.header.startedAt,
             durationSeconds = write.header.durationSeconds,
-            bodyWeight = write.header.bodyWeight,
+            bodyWeightHundredths = write.header.bodyWeightHundredths,
         )
         deleteExercisesForSession(sessionId)
         insertChildren(sessionId, write.exercises)

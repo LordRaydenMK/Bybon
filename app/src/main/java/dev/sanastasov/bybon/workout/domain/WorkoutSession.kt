@@ -10,7 +10,7 @@ data class WorkoutSession(
     val exercises: List<WorkoutExercise>,
     val startedAt: LocalDateTime,
     val duration: Duration? = null,
-    val bodyWeightSnapshot: Weight? = null,
+    /** Frozen 7-day mean at session start. Null on older sessions that resolve on the fly. */
     val bodyWeight: Weight? = null,
 ) {
     val id: WorkoutSessionId

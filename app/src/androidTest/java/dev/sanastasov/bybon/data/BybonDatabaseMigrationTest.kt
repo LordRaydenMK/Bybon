@@ -327,7 +327,24 @@ class BybonDatabaseMigrationTest {
         val db = openMigratedDatabase()
         try {
             val session = db.workoutSessionDao().observeSessions().first().single()
-            assert(session.bodyWeight == null)
+            assert(session.planId == "full-body-a")
+            assert(session.planName == "Full Body A")
+            assert(session.startedAt.toString() == "2026-08-20T17:59:34")
+            assert(session.durationSeconds == null)
+            assert(session.bodyWeightHundredths == null)
+
+            val exercise = db.workoutSessionDao().observeSessionExercises().first().single()
+            assert(exercise.exerciseId == "bench-press")
+            assert(exercise.repMin == 8)
+            assert(exercise.repMax == 10)
+
+            val set = db.workoutSessionDao().observeSets().first().single()
+            assert(set.weight == 8000)
+            assert(set.reps == 8)
+            assert(set.setState == "Completed")
+
+            val weight = db.weightEntryDao().weightEntries().first().single()
+            assert(weight.weight == 6500)
         } finally {
             db.close()
         }
