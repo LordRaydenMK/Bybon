@@ -3,7 +3,8 @@
 Backup and restore of `weight_entry` only. One row per calendar date.
 
 Not specified yet. The sign-in restore rule below was agreed early and applies once this step has
-cloud data. Step 1 does not implement it.
+cloud data. Step 1 does not implement it. Cloud writes go to the Firestore database named by this
+build's environment, `stg` or `prd`, in `bybon-f343b`.
 
 ## Sign-in restore
 
