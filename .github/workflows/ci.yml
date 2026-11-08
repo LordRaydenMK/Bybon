@@ -40,6 +40,10 @@ jobs:
   e2e-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      MAESTRO_VERSION: "2.12.1"
+      MAESTRO_CLI_NO_ANALYTICS: "true"
+      MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED: "true"
 
     steps:
       - name: Checkout
@@ -50,21 +54,17 @@ jobs:
         with:
           enable-kvm: true
 
+      - name: Cache Maestro CLI
+        uses: actions/cache@v4
+        with:
+          path: ~/.maestro
+          key: maestro-cli-${{ env.MAESTRO_VERSION }}-${{ runner.os }}
+
       - name: Install Maestro
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            if curl -Ls "https://get.maestro.mobile.dev" | bash \
-              && [ -x "$HOME/.maestro/bin/maestro" ]; then
-              break
-            fi
-            echo "Maestro install attempt $attempt failed"
-            if [ "$attempt" -eq 3 ]; then
-              echo "Maestro is not installed at $HOME/.maestro/bin/maestro"
-              exit 1
-            fi
-            sleep $((attempt * 5))
-          done
+          bash .github/scripts/install-maestro.sh
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
           "$HOME/.maestro/bin/maestro" --version
 
