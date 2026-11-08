@@ -132,8 +132,13 @@ class ExerciseDetailsUiTest {
             ),
         )
         assert(
+            oneRmTrendPopupText(ui.oneRmTrend, 0) ==
+                "10 Aug  45 kg x 12 · ${olderTopOneRm.kilograms} kg" +
+                " · avg ${olderAverageOneRm.kilograms} kg",
+        )
+        assert(
             oneRmTrendPopupText(ui.oneRmTrend, 1) ==
-                "1 Oct  80 kg x 8 · avg ${newerOneRm.kilograms} kg",
+                "1 Oct  80 kg x 8 · ${newerOneRm.kilograms} kg",
         )
     }
 
@@ -179,7 +184,10 @@ class ExerciseDetailsUiTest {
 
         assert(points.single().oneRm == top.oneRm)
         assert(points.single().averageOneRm == null)
-        assert(oneRmTrendPopupText(points, 0) == "1 Oct  80 kg x 8")
+        assert(
+            oneRmTrendPopupText(points, 0) ==
+                "1 Oct  80 kg x 8 · ${top.oneRm?.kilograms} kg",
+        )
         assert(completeAverageValues(points) == null)
         assert(
             oneRmTrendCaption(points, hasPersonalRecord = false) ==

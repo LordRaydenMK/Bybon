@@ -121,8 +121,12 @@ internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi>
 internal fun oneRmTrendPopupText(points: List<ExerciseOneRmPointUi>, index: Int): String {
     val point = points.getOrNull(index) ?: return ""
     val load = "${point.dateLabel}  ${formatLoadedSet(point.weightKg, point.reps)}"
-    val average = point.averageOneRm?.let { " · avg ${it.kilograms} kg" }.orEmpty()
-    return load + average
+    val estimated = " · ${point.oneRm.kilograms} kg"
+    val average = point.averageOneRm
+        ?.takeIf { it != point.oneRm }
+        ?.let { " · avg ${it.kilograms} kg" }
+        .orEmpty()
+    return load + estimated + average
 }
 
 private fun ExerciseSessionLog.toSessionUi(): ExerciseDetailsSessionUi = ExerciseDetailsSessionUi(

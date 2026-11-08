@@ -76,8 +76,16 @@ private fun ExerciseOneRmChart(
     val yRange = remember(topSetValues, averageValues, personalRecordKg) {
         oneRmYAxisRange(topSetValues + (averageValues ?: emptyList()), personalRecordKg)
     }
-    val lines = remember(topSetValues, averageValues, personalRecordKg, colors) {
-        oneRmChartLines(topSetValues, averageValues, personalRecordKg, colors)
+    val popup = remember(points, colors) {
+        PopupProperties(
+            textStyle = colors.popupTextStyle,
+            containerColor = colors.popupContainer,
+            mode = PopupProperties.Mode.PointMode(),
+            contentBuilder = { item -> oneRmTrendPopupText(points, item.valueIndex) },
+        )
+    }
+    val lines = remember(topSetValues, averageValues, personalRecordKg, colors, popup) {
+        oneRmChartLines(topSetValues, averageValues, personalRecordKg, colors, popup)
     }
     LineChart(
         modifier = modifier.semantics { contentDescription = oneRmTrendDescription(points) },
@@ -117,12 +125,7 @@ private fun ExerciseOneRmChart(
                 degree = 0f,
             ),
         ),
-        popupProperties = PopupProperties(
-            textStyle = colors.popupTextStyle,
-            containerColor = colors.popupContainer,
-            mode = PopupProperties.Mode.PointMode(),
-            contentBuilder = { popup -> oneRmTrendPopupText(points, popup.valueIndex) },
-        ),
+        popupProperties = popup,
     )
 }
 
@@ -143,7 +146,7 @@ private fun oneRmChartColors(): OneRmChartColors {
     val labelStyle = MaterialTheme.typography.labelSmall.copy(color = colorScheme.onSurfaceVariant)
     return OneRmChartColors(
         line = colorScheme.primary,
-        averageLine = colorScheme.secondary,
+        averageLine = colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
         guideline = colorScheme.tertiary,
         surface = colorScheme.surface,
         outline = colorScheme.outlineVariant,
@@ -178,6 +181,7 @@ private fun oneRmChartLines(
     averageValues: List<Double>?,
     personalRecordKg: Double?,
     colors: OneRmChartColors,
+    popupProperties: PopupProperties,
 ): List<Line> = buildList {
     add(
         oneRmTrendLine(
@@ -185,22 +189,28 @@ private fun oneRmChartLines(
             values = topSetValues,
             lineColor = colors.line,
             surfaceColor = colors.surface,
-            filled = true,
+            popupProperties = popupProperties,
         ),
     )
     if (averageValues != null) {
         add(
-            oneRmTrendLine(
+            secondaryTrendLine(
                 label = "Average 1RM",
                 values = averageValues,
-                lineColor = colors.averageLine,
-                surfaceColor = colors.surface,
-                filled = false,
+                color = colors.averageLine,
+                dashed = false,
             ),
         )
     }
     if (personalRecordKg != null) {
-        add(personalRecordGuideline(topSetValues.size, personalRecordKg, colors.guideline))
+        add(
+            secondaryTrendLine(
+                label = "Personal record",
+                values = List(topSetValues.size) { personalRecordKg },
+                color = colors.guideline,
+                dashed = true,
+            ),
+        )
     }
 }
 
@@ -209,35 +219,41 @@ private fun oneRmTrendLine(
     values: List<Double>,
     lineColor: Color,
     surfaceColor: Color,
-    filled: Boolean,
+    popupProperties: PopupProperties,
 ): Line = Line(
     label = label,
     values = values,
     color = SolidColor(lineColor),
-    firstGradientFillColor = if (filled) lineColor.copy(alpha = 0.28f) else Color.Unspecified,
-    secondGradientFillColor = if (filled) Color.Transparent else Color.Unspecified,
+    firstGradientFillColor = lineColor.copy(alpha = 0.28f),
+    secondGradientFillColor = Color.Transparent,
     curvedEdges = false,
-    drawStyle = DrawStyle.Stroke(width = if (filled) 2.5.dp else 2.dp),
+    drawStyle = DrawStyle.Stroke(width = 2.5.dp),
     strokeAnimationSpec = tween(700),
-    gradientAnimationSpec = tween(if (filled) 700 else 0),
-    gradientAnimationDelay = if (filled) 150 else 0,
+    gradientAnimationSpec = tween(700),
+    gradientAnimationDelay = 150,
     dotProperties = DotProperties(
         enabled = true,
-        radius = if (filled) 4.dp else 3.dp,
+        radius = 4.dp,
         color = SolidColor(surfaceColor),
         strokeWidth = 2.dp,
         strokeColor = SolidColor(lineColor),
     ),
+    popupProperties = popupProperties,
 )
 
-private fun personalRecordGuideline(pointCount: Int, kilograms: Double, color: Color): Line = Line(
-    label = "Personal record",
-    values = List(pointCount) { kilograms },
+private fun secondaryTrendLine(
+    label: String,
+    values: List<Double>,
+    color: Color,
+    dashed: Boolean,
+): Line = Line(
+    label = label,
+    values = values,
     color = SolidColor(color),
     curvedEdges = false,
     drawStyle = DrawStyle.Stroke(
-        width = 1.5.dp,
-        strokeStyle = StrokeStyle.Dashed(),
+        width = if (dashed) 1.5.dp else 1.25.dp,
+        strokeStyle = if (dashed) StrokeStyle.Dashed() else StrokeStyle.Normal,
     ),
     strokeAnimationSpec = tween(700),
     gradientAnimationSpec = tween(0),
