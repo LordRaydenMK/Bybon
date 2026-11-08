@@ -23,7 +23,15 @@ class FakeWeightDao(
         entries.value = entries.value.filterNot { it.date == entry.date } + entry
     }
 
-    override suspend fun deleteEntry(entry: WeightEntryEntity) {
-        entries.value = entries.value.filterNot { it.date == entry.date }
+    override suspend fun insertWeights(entries: List<WeightEntryEntity>) {
+        entries.forEach { insertWeight(it) }
+    }
+
+    override suspend fun deleteByDate(date: LocalDate) {
+        entries.value = entries.value.filterNot { it.date == date }
+    }
+
+    override suspend fun deleteAllWeights() {
+        entries.value = emptyList()
     }
 }

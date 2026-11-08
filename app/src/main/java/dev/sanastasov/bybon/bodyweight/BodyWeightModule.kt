@@ -16,6 +16,7 @@ interface BodyWeightModule : DbModule {
                     get() = BodyWeightRepositoryImpl(
                         bybonDb.weightEntryDao(),
                         bybonDb.dietPhaseDao(),
+                        bybonDb.weightSyncDao(),
                     )
             }
     }
