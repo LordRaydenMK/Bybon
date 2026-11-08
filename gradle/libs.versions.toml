@@ -26,7 +26,7 @@ detekt = "2.0.0-alpha.6"
 composeCharts = "1.0.0"
 coil3 = "3.6.3"
 okhttp = "5.5.1"
-credentials = "1.5.0"
+credentials = "1.6.0"
 googleid = "1.1.1"
 
 [libraries]
