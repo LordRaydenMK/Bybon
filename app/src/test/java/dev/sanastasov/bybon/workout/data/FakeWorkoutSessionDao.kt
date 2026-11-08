@@ -63,6 +63,7 @@ class FakeWorkoutSessionDao(
         note: String?,
         startedAt: LocalDateTime,
         durationSeconds: Int?,
+        bodyWeight: Int?,
     ) {
         val current = sessions.value
         val index = current.indexOfFirst { it.id == id }
@@ -75,6 +76,7 @@ class FakeWorkoutSessionDao(
                     note = note,
                     startedAt = startedAt,
                     durationSeconds = durationSeconds,
+                    bodyWeight = bodyWeight,
                 ),
             )
         }

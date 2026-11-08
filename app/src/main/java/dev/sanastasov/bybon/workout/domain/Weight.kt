@@ -42,6 +42,8 @@ value class Weight(
             return if (hundredths > 0) Weight(hundredths) else null
         }
 
+        fun hundredths(value: Int): Weight = Weight(value)
+
         fun parseString(value: String): Weight = kilograms(value.toFloat())
     }
 }

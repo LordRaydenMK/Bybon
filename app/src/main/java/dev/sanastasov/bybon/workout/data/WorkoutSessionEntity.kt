@@ -36,6 +36,7 @@ data class WorkoutSessionEntity(
     val note: String?,
     @ColumnInfo(name = "started_at") val startedAt: LocalDateTime,
     @ColumnInfo(name = "duration_seconds") val durationSeconds: Int?,
+    @ColumnInfo(name = "body_weight") val bodyWeight: Int? = null,
 )
 
 @Entity(

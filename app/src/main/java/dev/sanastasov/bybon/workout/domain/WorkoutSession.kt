@@ -10,6 +10,8 @@ data class WorkoutSession(
     val exercises: List<WorkoutExercise>,
     val startedAt: LocalDateTime,
     val duration: Duration? = null,
+    val bodyWeightSnapshot: Weight? = null,
+    val bodyWeight: Weight? = null,
 ) {
     val id: WorkoutSessionId
         get() = WorkoutSessionId(planId, startedAt)

@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 data class PreviousSetPerformance(
     val weight: Weight?,
     val reps: Int,
+    val bodyWeight: Weight? = null,
 ) {
     init {
         require(reps > 0) { "reps must be positive" }
@@ -20,6 +21,7 @@ data class ExerciseSet(
     val reps: Int,
     val setState: SetState,
     val previous: PreviousSetPerformance? = null,
+    val bodyWeight: Weight? = null,
 ) {
     init {
         require(reps > 0) { "reps must be positive" }

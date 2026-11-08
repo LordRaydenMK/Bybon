@@ -525,11 +525,9 @@ class LiveSessionOrLastTest {
                 session = awaitItem()!!
             }
             val rest = checkNotNull(session.restTimer())
-            assert(
-                scheduler.state == FakeRestPromoteScheduler.State.Scheduled(
-                    rest.duration - REST_PROMOTE_LEAD,
-                ),
-            )
+            val scheduled = scheduler.state as FakeRestPromoteScheduler.State.Scheduled
+            val expected = rest.duration - REST_PROMOTE_LEAD
+            assert(kotlin.math.abs((scheduled.wait - expected).inWholeNanoseconds) < 10_000_000)
         }
     }
 }

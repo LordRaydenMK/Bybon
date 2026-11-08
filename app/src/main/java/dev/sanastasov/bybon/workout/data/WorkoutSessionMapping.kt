@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.data
 
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
@@ -9,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.resolveBodyWeights
 import dev.sanastasov.bybon.workout.domain.storedName
 import java.util.Locale
 import kotlin.time.Duration.Companion.seconds
@@ -35,6 +37,7 @@ internal fun WorkoutSession.toWrite(sessionId: Long): WorkoutSessionWrite {
         note = note,
         startedAt = startedAt,
         durationSeconds = durationSeconds,
+        bodyWeight = bodyWeightSnapshot?.toHundredths(),
     )
     val exercises = exercises.mapIndexed { position, exercise ->
         val entity = WorkoutSessionExerciseEntity(
@@ -76,6 +79,7 @@ internal fun List<WorkoutSessionEntity>.toDomainSessions(
     lines: List<WorkoutSessionExerciseEntity>,
     sets: List<WorkoutSetEntity>,
     exercises: List<ExerciseEntity>,
+    bodyWeightEntries: List<BodyWeightEntry> = emptyList(),
 ): List<WorkoutSession> {
     val definitions = exercises.associate { it.id to it.toDefinition() }
     val linesBySession = lines.groupBy { it.sessionId }
@@ -86,7 +90,7 @@ internal fun List<WorkoutSessionEntity>.toDomainSessions(
             setsByExercise,
             definitions,
         )
-    }
+    }.resolveBodyWeights(bodyWeightEntries)
 }
 
 internal fun WorkoutSessionEntity.toDomainOrNull(
@@ -107,6 +111,7 @@ internal fun WorkoutSessionEntity.toDomainOrNull(
             exercises = exercisesMapped,
             startedAt = startedAt,
             duration = durationSeconds?.seconds,
+            bodyWeightSnapshot = bodyWeight?.toWeightOrNull(),
         )
     }
 }

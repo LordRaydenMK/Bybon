@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 interface WorkoutsRepository {
@@ -21,6 +22,8 @@ interface WorkoutsRepository {
     fun workoutSessions(): Flow<List<WorkoutSession>>
 
     fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>>
+
+    suspend fun sevenDayBodyWeight(on: LocalDate): Weight?
 
     suspend fun importHistory(
         plans: List<WorkoutPlan>,

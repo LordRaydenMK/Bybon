@@ -2,8 +2,12 @@
 
 package dev.sanastasov.bybon.workout.data
 
+import dev.sanastasov.bybon.bodyweight.BodyWeight
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.data.WeightDao
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ImportHistoryResult
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
@@ -15,12 +19,15 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
+import dev.sanastasov.bybon.workout.domain.sevenDayBodyWeightAverage
 import dev.sanastasov.bybon.workout.domain.upperBodyA
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -31,6 +38,7 @@ class WorkoutsRepositoryImpl internal constructor(
     private val exerciseDao: ExerciseDao,
     private val workoutPlanDao: WorkoutPlanDao,
     private val workoutSessionDao: WorkoutSessionDao,
+    private val weightDao: WeightDao? = null,
     private val catalog: List<ExerciseDefinition> = catalogExercises,
     private val repdbCommit: String = repdbCatalogCommit,
 ) : WorkoutsRepository {
@@ -121,8 +129,9 @@ class WorkoutsRepositoryImpl internal constructor(
                 workoutSessionDao.observeSessionExercises(),
                 workoutSessionDao.observeSets(),
                 exerciseDao.observeAll(),
-            ) { sessions, lines, sets, exercises ->
-                sessions.toDomainSessions(lines, sets, exercises)
+                bodyWeightEntries(),
+            ) { sessions, lines, sets, exercises, weights ->
+                sessions.toDomainSessions(lines, sets, exercises, weights)
             },
         )
     }
@@ -135,8 +144,9 @@ class WorkoutsRepositoryImpl internal constructor(
                 workoutSessionDao.observeSessionExercises(),
                 workoutSessionDao.observeSets(),
                 exerciseDao.observeAll(),
-            ) { sessions, lines, sets, exercises ->
-                sessions.toDomainSessions(lines, sets, exercises)
+                bodyWeightEntries(),
+            ) { sessions, lines, sets, exercises, weights ->
+                sessions.toDomainSessions(lines, sets, exercises, weights)
             },
         )
     }
@@ -205,8 +215,17 @@ class WorkoutsRepositoryImpl internal constructor(
             workoutSessionDao.setsForExercises(lines.map { it.id })
         }
         val exercises = exerciseDao.observeAll().first()
+        val weights = bodyWeightEntries().first()
         return checkNotNull(
-            listOf(this).toDomainSessions(lines, sets, exercises).singleOrNull(),
+            listOf(this).toDomainSessions(lines, sets, exercises, weights).singleOrNull(),
         ) { "Session $id has no exercises" }
     }
+
+    override suspend fun sevenDayBodyWeight(on: LocalDate): Weight? =
+        sevenDayBodyWeightAverage(bodyWeightEntries().first(), on)
+
+    private fun bodyWeightEntries(): Flow<List<BodyWeightEntry>> =
+        weightDao?.weightEntries()?.map { entities ->
+            entities.map { BodyWeightEntry(it.date, BodyWeight(it.weight)) }
+        } ?: flowOf(emptyList())
 }

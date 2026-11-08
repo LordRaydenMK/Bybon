@@ -268,6 +268,71 @@ class BybonDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrateFrom6To7AddsNullableBodyWeightOnSessions() = runBlocking {
+        helper.createDatabase(6).use { connection ->
+            connection.execSQL(
+                "INSERT INTO weight_entry (date, weight) VALUES ('2026-09-09', 6500)",
+            )
+            connection.execSQL(
+                """
+                INSERT INTO diet_phase (kind, startDate, startWeight, targetWeight, durationWeeks, endedAt)
+                VALUES ('Maintain', '2026-09-07', 6500, 6500, NULL, NULL)
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO exercise (
+                    id, name, body_part, equipment, mechanic, primary_muscles, secondary_muscles,
+                    equipment_slug, force_type, difficulty, tags, description, instructions, tips,
+                    image_start, image_peak, image_main, source, is_archived
+                ) VALUES (
+                    'bench-press', 'Barbell Bench Press', 'Chest', 'Barbell', 'Compound', '[]', '[]',
+                    NULL, NULL, NULL, '[]', NULL, NULL, NULL,
+                    NULL, NULL, NULL, 'shipped', 0
+                )
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO workout_plan (id, name, description, is_archived)
+                VALUES ('full-body-a', 'Full Body A', 'Full body workout routine variant A', 0)
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO workout_session (id, plan_id, plan_name, note, started_at, duration_seconds)
+                VALUES (1, 'full-body-a', 'Full Body A', NULL, '2026-08-20T17:59:34', NULL)
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO workout_session_exercise (
+                    id, session_id, exercise_id, exercise_name, position, rep_min, rep_max,
+                    rest_after_work_set_seconds, notes
+                ) VALUES (1, 1, 'bench-press', 'Barbell Bench Press', 0, 8, 10, 120, '[]')
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO workout_set (
+                    session_exercise_id, position, is_warmup, weight, reps, set_state,
+                    previous_weight, previous_reps, completed_at
+                ) VALUES (1, 0, 0, 8000, 8, 'Completed', NULL, NULL, NULL)
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(7).close()
+
+        val db = openMigratedDatabase()
+        try {
+            val session = db.workoutSessionDao().observeSessions().first().single()
+            assert(session.bodyWeight == null)
+        } finally {
+            db.close()
+        }
+    }
+
     private fun openMigratedDatabase(): BybonDatabase =
         Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
             .setDriver(AndroidSQLiteDriver())

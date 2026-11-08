@@ -1,7 +1,9 @@
 package dev.sanastasov.bybon.workout.data
 
+import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ImportHistoryResult
+import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
@@ -9,6 +11,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.sevenDayBodyWeightAverage
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -18,11 +22,13 @@ class FakeWorkoutsRepository(
     initialPlans: List<WorkoutPlan> = emptyList(),
     initialSessions: List<WorkoutSession> = emptyList(),
     initialExercises: List<ExerciseDefinition> = emptyList(),
+    initialBodyWeights: List<BodyWeightEntry> = emptyList(),
 ) : WorkoutsRepository {
 
     private val exercises = MutableStateFlow(initialExercises)
     private val plans = MutableStateFlow(initialPlans)
     private val sessions = MutableStateFlow(initialSessions)
+    private val bodyWeights = MutableStateFlow(initialBodyWeights)
 
     override fun exercises(): Flow<List<ExerciseDefinition>> = exercises
 
@@ -81,6 +87,9 @@ class FakeWorkoutsRepository(
 
     override fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>> =
         sessions.map { list -> list.filter { it.planId == planId } }
+
+    override suspend fun sevenDayBodyWeight(on: LocalDate): Weight? =
+        sevenDayBodyWeightAverage(bodyWeights.value, on)
 
     override suspend fun importHistory(
         plans: List<WorkoutPlan>,
