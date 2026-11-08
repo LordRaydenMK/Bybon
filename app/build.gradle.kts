@@ -1,4 +1,6 @@
+import bybon.firebase.FirebaseEnv
 import bybon.repdb.GenerateRepdbCatalogTask
+import com.android.build.api.variant.BuildConfigField
 import dev.detekt.gradle.Detekt
 import java.util.*
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -25,11 +27,40 @@ val generateRepdbCatalog = tasks.register<GenerateRepdbCatalogTask>("generateRep
     cacheDirectory.set(repdbCacheDirectory)
 }
 
+val envOverride = providers.gradleProperty("env").orNull
+FirebaseEnv.validateOverride(envOverride)
+val stgConfigExists = rootProject.file("firebase/stg/google-services.json").isFile
+
+fun firebaseEnv(buildType: String): String =
+    FirebaseEnv.resolve(envOverride, buildType, stgConfigExists)
+
+fun googleServicesJson(buildType: String): File =
+    FirebaseEnv.googleServicesFile(rootProject.projectDir, firebaseEnv(buildType))
+
+listOf("debug", "release").forEach { buildType ->
+    val dest = file("src/$buildType/google-services.json")
+    dest.parentFile.mkdirs()
+    googleServicesJson(buildType).copyTo(dest, overwrite = true)
+}
+
 androidComponents {
     onVariants { variant ->
         variant.sources.kotlin?.addGeneratedSourceDirectory(
             generateRepdbCatalog,
             GenerateRepdbCatalogTask::outputDirectory,
+        )
+        val buildType = variant.buildType ?: error("Missing build type for ${variant.name}")
+        val env = firebaseEnv(buildType)
+        val webClientId = FirebaseEnv.webClientId(googleServicesJson(buildType))
+        val buildConfigFields = variant.buildConfigFields
+            ?: error("BuildConfig is disabled for ${variant.name}")
+        buildConfigFields.put(
+            "FIREBASE_ENV",
+            BuildConfigField("String", "\"$env\"", "Firebase environment name"),
+        )
+        buildConfigFields.put(
+            "GOOGLE_WEB_CLIENT_ID",
+            BuildConfigField("String", "\"$webClientId\"", "Google OAuth web client ID"),
         )
     }
 }
@@ -58,19 +89,13 @@ android {
     }
 
     val keystorePropertiesFile = rootProject.file("keystore.properties")
-    // GitHub Actions sets CI=true. Local debug builds keep the default Android debug keystore.
-    val useCiDebugSigning = providers.environmentVariable("CI")
-        .orNull
-        .equals("true", ignoreCase = true)
 
     signingConfigs {
         getByName("debug") {
-            if (useCiDebugSigning) {
-                storeFile = rootProject.file("keystore/debug.keystore")
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
-            }
+            storeFile = rootProject.file("keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
         }
 
         if (keystorePropertiesFile.exists()) {
@@ -107,6 +132,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     testFixtures {
         enable = true
@@ -169,6 +195,11 @@ dependencies {
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytcs)
+    implementation(libs.firebase.auth)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(libs.androidx.room3.runtime)
     ksp(libs.androidx.room3.compiler)

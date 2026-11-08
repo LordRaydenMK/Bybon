@@ -31,3 +31,6 @@ local.properties
 # Release signing is supplied by CI secrets. Debug CI signing uses keystore/debug.keystore.
 /keystore.jks
 keystore.properties
+# Copied from firebase/{env}/google-services.json for the selected environment.
+/app/src/debug/google-services.json
+/app/src/release/google-services.json
