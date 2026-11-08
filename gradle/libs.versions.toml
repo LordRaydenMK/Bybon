@@ -27,7 +27,7 @@ composeCharts = "1.0.0"
 coil3 = "3.6.3"
 okhttp = "5.5.1"
 credentials = "1.6.0"
-googleid = "1.1.1"
+googleid = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
