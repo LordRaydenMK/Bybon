@@ -7,6 +7,10 @@ A single-device step is explicit backup and restore of that slice. Until multi-d
 conflicting restore replaces the phone's user data with the cloud snapshot. Two phones do not edit
 the same slice until that slice's multi-device step.
 
+The app uses one Firebase project, `bybon-f343b`, for Auth and Crashlytics. Later Firestore steps
+use `stg` and `prd` databases in that project. Two Firebase projects are not used: Google OAuth
+clients require the Android package name plus SHA-1 to be globally unique.
+
 ## Steps
 
 1. [Google sign-in and sign-out](spec-firebase-backup/01-sign-in.md)

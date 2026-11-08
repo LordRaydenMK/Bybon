@@ -11,7 +11,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.google.google.services)
-    id("bybon.environment")
     alias(libs.plugins.firebase.crashlytics)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.power.assert)
@@ -29,6 +28,7 @@ val generateRepdbCatalog = tasks.register<GenerateRepdbCatalogTask>("generateRep
 }
 
 val envOverride = providers.gradleProperty("env").orNull
+FirebaseEnv.validateOverride(envOverride)
 
 androidComponents {
     onVariants { variant ->
