@@ -18,6 +18,21 @@ class ExerciseOneRmChartLayoutTest {
     }
 
     @Test
+    fun `includes work-set averages in the y axis range`() {
+        val range = oneRmYAxisRange(listOf(80.0, 78.0, 70.0, 68.0))
+        assert(range.start < 68.0)
+        assert(range.endInclusive > 80.0)
+    }
+
+    @Test
+    fun `average series is omitted when any session is missing it`() {
+        val withAverage = point("1 Aug")
+        val missingAverage = point("15 Aug").copy(averageOneRm = null)
+        assert(completeAverageValues(listOf(withAverage)) == listOf(65.0))
+        assert(completeAverageValues(listOf(withAverage, missingAverage)) == null)
+    }
+
+    @Test
     fun `keeps every label when the series is short`() {
         val points = listOf(
             point("1 Aug"),
@@ -36,6 +51,12 @@ class ExerciseOneRmChartLayoutTest {
         assert(labels.count { it.isNotEmpty() } < points.size)
     }
 
-    private fun point(label: String) =
-        ExerciseOneRmPointUi(label, 70f, Weight.kilograms(70f), "60", 8)
+    private fun point(label: String) = ExerciseOneRmPointUi(
+        label,
+        70f,
+        Weight.kilograms(70f),
+        "60",
+        8,
+        Weight.kilograms(65f),
+    )
 }

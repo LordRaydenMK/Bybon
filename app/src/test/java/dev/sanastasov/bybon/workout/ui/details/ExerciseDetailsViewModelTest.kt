@@ -61,6 +61,7 @@ class ExerciseDetailsViewModelTest {
             assert(
                 awaitItem() == catalogExercise("bench-press").toDetailsUi(
                     listOf(recent, olderPr).exercisePerformance("bench-press", now),
+                    now,
                 ),
             )
         }
@@ -91,6 +92,7 @@ class ExerciseDetailsViewModelTest {
             assert(
                 awaitItem() == catalogExercise("bench-press").toDetailsUi(
                     listOf(completed).exercisePerformance("bench-press", now),
+                    now,
                 ),
             )
         }

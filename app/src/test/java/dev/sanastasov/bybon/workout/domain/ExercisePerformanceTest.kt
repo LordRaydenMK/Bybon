@@ -134,6 +134,18 @@ class ExercisePerformanceTest {
         )
         assert(performance.recentSessions.first().planName == "Full Body B")
         assert(performance.recentSessions.first().workSets.map { it.reps } == listOf(8, 7))
+        val newestAverage = listOf(
+            estimateOneRmKg(60f, 8),
+            estimateOneRmKg(60f, 7),
+        ).map { it.toDouble() }.average()
+        assert(
+            performance.recentSessions.first().averageWorkSetOneRm ==
+                Weight.kilograms(newestAverage.toFloat()),
+        )
+        assert(
+            performance.recentSessions.first().averageWorkSetOneRm !=
+                performance.recentSessions.first().topSetOneRm,
+        )
     }
 
     @Test

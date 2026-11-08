@@ -107,9 +107,30 @@ private fun ExerciseDetailsContentPreview() {
             catalogExercise("bench-press").toDetailsUi().copy(
                 personalRecord = PersonalRecordUi(Weight.kilograms(78f), "20 Sep 2026"),
                 oneRmTrend = listOf(
-                    ExerciseOneRmPointUi("12 Jul", 70f, Weight.kilograms(70f), "55", 8),
-                    ExerciseOneRmPointUi("2 Aug", 74f, Weight.kilograms(74f), "58", 8),
-                    ExerciseOneRmPointUi("20 Sep", 78f, Weight.kilograms(78f), "60", 8),
+                    ExerciseOneRmPointUi(
+                        "12 Jul",
+                        70f,
+                        Weight.kilograms(70f),
+                        "55",
+                        8,
+                        Weight.kilograms(68f),
+                    ),
+                    ExerciseOneRmPointUi(
+                        "2 Aug",
+                        74f,
+                        Weight.kilograms(74f),
+                        "58",
+                        8,
+                        Weight.kilograms(72f),
+                    ),
+                    ExerciseOneRmPointUi(
+                        "20 Sep",
+                        78f,
+                        Weight.kilograms(78f),
+                        "60",
+                        8,
+                        Weight.kilograms(75f),
+                    ),
                 ),
                 recentSessions = listOf(
                     ExerciseDetailsSessionUi(

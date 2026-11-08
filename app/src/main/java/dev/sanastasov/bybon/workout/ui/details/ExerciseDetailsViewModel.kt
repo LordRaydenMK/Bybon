@@ -22,6 +22,10 @@ class ExerciseDetailsViewModel(
                 "Exercise $exerciseId is not in the repository"
             }
             val completed = sessions.filter { it.state is WorkoutState.Completed }
-            exercise.toDetailsUi(completed.exercisePerformance(exerciseId, now()))
+            val currentTime = now()
+            exercise.toDetailsUi(
+                completed.exercisePerformance(exerciseId, currentTime),
+                currentTime,
+            )
         }.stateInWhileInForeground(coroutineScope, ExerciseDetailsUiState.Loading)
 }
