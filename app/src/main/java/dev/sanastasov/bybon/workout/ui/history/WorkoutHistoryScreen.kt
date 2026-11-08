@@ -406,7 +406,7 @@ private fun previewTopSet(exerciseId: String, kg: Float, reps: Int): ExerciseTop
     val weight = Weight.kilograms(kg)
     return ExerciseTopSetUi(
         name = catalogExercise(exerciseId).name,
-        weightKg = weight.toLoadLabel(),
+        weightKg = weight.toLoadLabel(catalogExercise(exerciseId).equipment),
         reps = reps,
         oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
     )

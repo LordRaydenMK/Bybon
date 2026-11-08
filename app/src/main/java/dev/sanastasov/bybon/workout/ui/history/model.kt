@@ -136,7 +136,7 @@ internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
 
 private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi = ExerciseTopSetUi(
     name = exerciseDefinition.name,
-    weightKg = topSet.weight.toLoadLabel(),
+    weightKg = topSet.weight.toLoadLabel(exerciseDefinition.equipment),
     reps = topSet.reps,
     oneRm = topSet.oneRm,
 )
