@@ -25,10 +25,6 @@ jobs:
   e2e-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      MAESTRO_VERSION: "2.12.1"
-      MAESTRO_CLI_NO_ANALYTICS: "true"
-      MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED: "true"
 
     steps:
       - name: Checkout
@@ -39,19 +35,8 @@ jobs:
         with:
           enable-kvm: true
 
-      - name: Cache Maestro CLI
-        uses: actions/cache@v4
-        with:
-          path: ~/.maestro
-          key: maestro-cli-${{ env.MAESTRO_VERSION }}-${{ runner.os }}
-
-      - name: Install Maestro
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          bash .github/scripts/install-maestro.sh
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
-          "$HOME/.maestro/bin/maestro" --version
+      - name: Setup Maestro
+        uses: ./.github/actions/setup-maestro
 
       - name: Create debug APK
         run: ./gradlew assembleDebug

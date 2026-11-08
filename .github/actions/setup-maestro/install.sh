@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Pin and install Maestro from GitHub Releases via the API (`gh`).
-# get.maestro.mobile.dev and the browser asset URLs 504 on the ~330MB zip;
-# `gh release download` uses api.github.com and is reliable on GitHub Actions.
-MAESTRO_VERSION="${MAESTRO_VERSION:-2.12.1}"
+# Download Maestro from GitHub Releases via `gh`. Browser asset URLs (used by
+# get.maestro.mobile.dev) 504 on the large zip; the Releases API does not.
+MAESTRO_VERSION="${MAESTRO_VERSION:?MAESTRO_VERSION is required}"
+MAESTRO_VERSION="${MAESTRO_VERSION#cli-}"
 MAESTRO_DIR="${MAESTRO_DIR:-${HOME}/.maestro}"
 REPO="mobile-dev-inc/maestro"
 TMP="${MAESTRO_DIR}/tmp"
