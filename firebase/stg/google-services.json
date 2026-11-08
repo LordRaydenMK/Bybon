@@ -12,7 +12,28 @@
           "package_name": "dev.sanastasov.bybon"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "840288776102-4t47vb3udn2rij1js04hpljfgfpi3bca.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.sanastasov.bybon",
+            "certificate_hash": "ceebff73aa925d915d77f4bf6444e6ddfdd8933c"
+          }
+        },
+        {
+          "client_id": "840288776102-6tkc5db6oo2g6liuetteiuofn1uspk3m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.sanastasov.bybon",
+            "certificate_hash": "a57b4ce035e8336d2f2217031205bb49446ec357"
+          }
+        },
+        {
+          "client_id": "840288776102-nmek1okjrti7akla9fiku0ga5tmmk4t6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBiHjf79ahxqQaDZompsEwMqReGXqg1t10"
@@ -20,7 +41,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "840288776102-nmek1okjrti7akla9fiku0ga5tmmk4t6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     },
@@ -31,7 +57,28 @@
           "package_name": "dev.sanastasov.bybon.debug"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "840288776102-c99akuvlorhe5r3ud9s20hpp8qfmp63d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.sanastasov.bybon.debug",
+            "certificate_hash": "ceebff73aa925d915d77f4bf6444e6ddfdd8933c"
+          }
+        },
+        {
+          "client_id": "840288776102-nsl2dp27fkd94hj6rqbrns0shvqcnb33.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.sanastasov.bybon.debug",
+            "certificate_hash": "a57b4ce035e8336d2f2217031205bb49446ec357"
+          }
+        },
+        {
+          "client_id": "840288776102-nmek1okjrti7akla9fiku0ga5tmmk4t6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBiHjf79ahxqQaDZompsEwMqReGXqg1t10"
@@ -39,7 +86,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "840288776102-nmek1okjrti7akla9fiku0ga5tmmk4t6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
