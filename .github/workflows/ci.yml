@@ -50,23 +50,8 @@ jobs:
         with:
           enable-kvm: true
 
-      - name: Install Maestro
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            if curl -Ls "https://get.maestro.mobile.dev" | bash \
-              && [ -x "$HOME/.maestro/bin/maestro" ]; then
-              break
-            fi
-            echo "Maestro install attempt $attempt failed"
-            if [ "$attempt" -eq 3 ]; then
-              echo "Maestro is not installed at $HOME/.maestro/bin/maestro"
-              exit 1
-            fi
-            sleep $((attempt * 5))
-          done
-          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
-          "$HOME/.maestro/bin/maestro" --version
+      - name: Setup Maestro
+        uses: ./.github/actions/setup-maestro
 
       - name: Create debug APKs
         run: ./gradlew assembleDebug assembleDebugAndroidTest
@@ -85,7 +70,7 @@ jobs:
             ./gradlew connectedDebugAndroidTest
             ./gradlew installDebug
             bash .github/scripts/seed-strong-csv.sh
-            "$HOME/.maestro/bin/maestro" test app/src/maestro/flows
+            maestro test app/src/maestro/flows
 
       - name: Archive Android instrumented test results on failure
         if: failure()

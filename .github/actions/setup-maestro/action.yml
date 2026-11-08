@@ -1,0 +1,63 @@
+name: Setup Maestro
+description: Download the latest Maestro CLI from GitHub Releases and cache it
+
+inputs:
+  version:
+    description: Maestro CLI version (for example 2.12.1). Empty uses the latest GitHub release.
+    required: false
+    default: ''
+  github-token:
+    description: Token used to call the GitHub Releases API
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: Resolved Maestro CLI version (without the cli- prefix)
+    value: ${{ steps.version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve Maestro version
+      id: version
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REQUESTED_VERSION: ${{ inputs.version }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [[ -n "${REQUESTED_VERSION}" ]]; then
+          version="${REQUESTED_VERSION#cli-}"
+        else
+          tag="$(gh release view --repo mobile-dev-inc/maestro --json tagName --jq .tagName)"
+          version="${tag#cli-}"
+        fi
+        echo "Resolved Maestro ${version}"
+        echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+    - name: Cache Maestro CLI
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.maestro/bin
+          ~/.maestro/lib
+        key: maestro-cli-${{ steps.version.outputs.version }}-${{ runner.os }}
+
+    - name: Install Maestro
+      if: steps.cache.outputs.cache-hit != 'true'
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        MAESTRO_VERSION: ${{ steps.version.outputs.version }}
+      shell: bash
+      run: bash "${GITHUB_ACTION_PATH}/install.sh"
+
+    - name: Add Maestro to PATH
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "${HOME}/.maestro/bin" >> "${GITHUB_PATH}"
+        echo "MAESTRO_CLI_NO_ANALYTICS=true" >> "${GITHUB_ENV}"
+        echo "MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true" >> "${GITHUB_ENV}"
+        "${HOME}/.maestro/bin/maestro" --version

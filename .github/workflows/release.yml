@@ -35,10 +35,8 @@ jobs:
         with:
           enable-kvm: true
 
-      - name: Install Maestro
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+      - name: Setup Maestro
+        uses: ./.github/actions/setup-maestro
 
       - name: Create debug APK
         run: ./gradlew assembleDebug
