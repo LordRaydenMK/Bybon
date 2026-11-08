@@ -1,10 +1,10 @@
 package dev.sanastasov.bybon.account.ui
 
+import androidx.credentials.exceptions.ClearCredentialException
 import dev.sanastasov.bybon.account.domain.AccountAuth
 import dev.sanastasov.bybon.account.domain.GoogleSignIn
 import dev.sanastasov.bybon.account.domain.SignInFailure
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -49,12 +49,9 @@ class AccountViewModel(
             try {
                 accountAuth.signInWithIdToken(googleSignIn.idToken())
                 session.update { it.copy(signingIn = false, message = null) }
-            } catch (e: CancellationException) {
-                session.update { it.copy(signingIn = false) }
-                throw e
             } catch (_: SignInFailure.Canceled) {
                 session.update { it.copy(signingIn = false, message = "Sign-in canceled") }
-            } catch (_: Exception) {
+            } catch (_: SignInFailure.Failed) {
                 session.update { it.copy(signingIn = false, message = "Sign-in failed") }
             }
         }
@@ -63,7 +60,11 @@ class AccountViewModel(
     private fun signOut() {
         coroutineScope.launch {
             accountAuth.signOut()
-            googleSignIn.clearCredentialState()
+            try {
+                googleSignIn.clearCredentialState()
+            } catch (_: ClearCredentialException) {
+                // Firebase session already ended.
+            }
             session.value = SessionUi()
         }
     }

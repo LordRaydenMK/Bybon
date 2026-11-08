@@ -22,7 +22,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.account.AccountModule
 import dev.sanastasov.bybon.account.data.CredentialManagerGoogleSignIn
-import dev.sanastasov.bybon.account.googleWebClientId
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.theme.BybonTheme
 
@@ -32,7 +31,7 @@ fun AccountModule.AccountScreen(onNavigateBack: () -> Unit) {
     val viewModel = retain {
         AccountViewModel(
             accountAuth,
-            CredentialManagerGoogleSignIn(context, context.googleWebClientId()),
+            CredentialManagerGoogleSignIn(context),
             firebaseEnvName,
             it.coroutineScope,
         )

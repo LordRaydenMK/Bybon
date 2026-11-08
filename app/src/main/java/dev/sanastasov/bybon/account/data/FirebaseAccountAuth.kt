@@ -1,10 +1,12 @@
 package dev.sanastasov.bybon.account.data
 
+import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import dev.sanastasov.bybon.account.domain.AccountAuth
 import dev.sanastasov.bybon.account.domain.AccountUser
+import dev.sanastasov.bybon.account.domain.SignInFailure
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -23,8 +25,12 @@ class FirebaseAccountAuth(
     }
 
     override suspend fun signInWithIdToken(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential).await()
+        try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            auth.signInWithCredential(credential).await()
+        } catch (_: FirebaseException) {
+            throw SignInFailure.Failed
+        }
     }
 
     override suspend fun signOut() {
@@ -33,4 +39,4 @@ class FirebaseAccountAuth(
 }
 
 private fun FirebaseUser.toAccountUser(): AccountUser =
-    AccountUser(email ?: displayName ?: "Signed in")
+    AccountUser(requireNotNull(email) { "Signed-in user has no email" })
