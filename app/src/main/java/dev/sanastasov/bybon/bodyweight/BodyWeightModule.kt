@@ -10,13 +10,14 @@ interface BodyWeightModule : DbModule {
 
     companion object {
 
-        fun create(dbModule: DbModule): BodyWeightModule =
+        fun create(dbModule: DbModule, onWeightChanged: () -> Unit = {}): BodyWeightModule =
             object : BodyWeightModule, DbModule by dbModule {
                 override val bodyWeightRepository: BodyWeightRepository
                     get() = BodyWeightRepositoryImpl(
                         bybonDb.weightEntryDao(),
                         bybonDb.dietPhaseDao(),
                         bybonDb.weightSyncDao(),
+                        onWeightChanged,
                     )
             }
     }

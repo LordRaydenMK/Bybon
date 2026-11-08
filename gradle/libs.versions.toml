@@ -27,6 +27,7 @@ composeCharts = "1.0.0"
 coil3 = "3.6.3"
 okhttp = "5.5.1"
 credentials = "1.6.0"
+work = "2.10.5"
 googleid = "1.2.1"
 
 [libraries]
@@ -56,6 +57,7 @@ androidx-room3-runtime = { module = "androidx.room3:room3-runtime", version.ref 
 androidx-room3-compiler = { module = "androidx.room3:room3-compiler", version.ref = "roomVersion" }
 androidx-room3-testing = { module = "androidx.room3:room3-testing", version.ref = "roomVersion" }
 androidx-room-common = { group = "androidx.room", name = "room-common", version.ref = "roomCommon" }
+androidx-work-runtime = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-crashlytcs = { group = "com.google.firebase", name = "firebase-crashlytics" }

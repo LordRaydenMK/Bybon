@@ -174,6 +174,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.material3.adaptive.navigation3)
     implementation(libs.androidx.room.common)
+    implementation(libs.androidx.work.runtime)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytcs)

@@ -4,9 +4,8 @@ import dev.sanastasov.bybon.account.FakeAccountAuth
 import dev.sanastasov.bybon.account.FakeGoogleSignIn
 import dev.sanastasov.bybon.account.domain.AccountUser
 import dev.sanastasov.bybon.bodyweight.sync.FakeWeightBackup
+import dev.sanastasov.bybon.bodyweight.sync.RecordingWeightSyncScheduler
 import dev.sanastasov.bybon.bodyweight.sync.WeightBackupStatus
-import dev.sanastasov.bybon.bodyweight.sync.WeightImportSummary
-import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
@@ -115,43 +114,27 @@ class AccountViewModelTest {
     }
 
     @Test
-    fun `conflict offers use, replace, and keep this phone`() = runTest {
+    fun `opening account while signed in syncs without enqueueing another job`() = runTest {
         val backup = FakeWeightBackup()
-        backup.status.value = WeightBackupStatus(conflict = true)
+        val scheduler = RecordingWeightSyncScheduler()
         val viewModel = viewModel(
             auth = FakeAccountAuth(AccountUser("uid", "stolea@gmail.com")),
             backup = backup,
-        )
-
-        val state = viewModel.uiState.first { it.conflict }
-
-        assert(
-            state.conflictChoices == listOf(
-                AccountAction.UseTheBackup,
-                AccountAction.ReplaceTheBackup,
-                AccountAction.KeepThisPhone,
-            ),
-        )
-    }
-
-    @Test
-    fun `opening account while signed in syncs without a full sign-in read`() = runTest {
-        val backup = FakeWeightBackup()
-        val viewModel = viewModel(
-            auth = FakeAccountAuth(AccountUser("uid", "stolea@gmail.com")),
-            backup = backup,
+            scheduler = scheduler,
         )
 
         viewModel.uiState.first { it.email == "stolea@gmail.com" }
         yield()
 
         assert(backup.syncs.single() == ("uid" to false))
+        assert(scheduler.immediate.isEmpty())
     }
 
     @Test
-    fun `sign-in starts a full sync for that uid`() = runTest {
+    fun `sign-in enqueues one immediate full sync`() = runTest {
         val backup = FakeWeightBackup()
-        val viewModel = viewModel(backup = backup)
+        val scheduler = RecordingWeightSyncScheduler()
+        val viewModel = viewModel(backup = backup, scheduler = scheduler)
 
         viewModel.uiState.first { !it.signingIn }
         viewModel.onAction(AccountAction.OnSignInClicked)
@@ -159,40 +142,7 @@ class AccountViewModelTest {
         yield()
 
         assert(backup.syncs.any { it == ("token" to true) })
-    }
-
-    @Test
-    fun `keep this phone signs out`() = runTest {
-        val auth = FakeAccountAuth(AccountUser("uid", "stolea@gmail.com"))
-        val backup = FakeWeightBackup()
-        val viewModel = viewModel(auth, backup = backup)
-
-        viewModel.uiState.first { it.email == "stolea@gmail.com" }
-        viewModel.onAction(AccountAction.KeepThisPhone)
-
-        val signedOut = viewModel.uiState.first { it.email == null }
-        assert(signedOut.email == null)
-        assert(auth.signedOut)
-        assert(backup.kept)
-    }
-
-    @Test
-    fun `import summary is offered until it is dismissed`() = runTest {
-        val backup = FakeWeightBackup()
-        val summary = WeightImportSummary(
-            count = 2,
-            earliest = LocalDate.of(2026, 1, 1),
-            latest = LocalDate.of(2026, 2, 1),
-        )
-        backup.status.value = WeightBackupStatus(summary = summary)
-        val viewModel = viewModel(backup = backup)
-
-        val showing = viewModel.uiState.first { it.importSummary != null }
-        assert(showing.importSummary?.count == 2)
-
-        viewModel.onAction(AccountAction.DismissImportSummary)
-        val dismissed = viewModel.uiState.first { it.importSummary == null }
-        assert(dismissed.importSummary == null)
+        assert(scheduler.immediate == listOf(true))
     }
 
     private fun kotlinx.coroutines.test.TestScope.viewModel(
@@ -200,5 +150,13 @@ class AccountViewModelTest {
         googleSignIn: FakeGoogleSignIn = FakeGoogleSignIn(),
         environmentName: String = "prd",
         backup: FakeWeightBackup = FakeWeightBackup(),
-    ) = AccountViewModel(auth, googleSignIn, environmentName, backup, backgroundScope)
+        scheduler: RecordingWeightSyncScheduler = RecordingWeightSyncScheduler(),
+    ) = AccountViewModel(
+        auth,
+        googleSignIn,
+        environmentName,
+        backup,
+        scheduler,
+        backgroundScope,
+    )
 }

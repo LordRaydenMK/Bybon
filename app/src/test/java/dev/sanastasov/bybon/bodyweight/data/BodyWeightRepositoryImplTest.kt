@@ -46,6 +46,23 @@ class BodyWeightRepositoryImplTest {
         assert(op.weight == null)
     }
 
+    @Test
+    fun `saving or deleting a weight enqueues one immediate sync`() = runTest {
+        var calls = 0
+        val repository = BodyWeightRepositoryImpl(
+            FakeWeightDao(),
+            FakeDietPhaseDao(),
+            FakeWeightSyncDao(),
+        ) { calls += 1 }
+        val entry = BodyWeightEntry(LocalDate.of(2026, 11, 8), BodyWeight(6500))
+
+        repository.insert(entry)
+        repository.deleteEntry(entry)
+        repository.replaceAll(emptyList())
+
+        assert(calls == 2)
+    }
+
     private fun repository(): BodyWeightRepositoryImpl = BodyWeightRepositoryImpl(
         FakeWeightDao(),
         FakeDietPhaseDao(),

@@ -23,6 +23,7 @@ class FakeWeightBackup : WeightBackup {
 
     override suspend fun keepThisPhone(databaseName: String) {
         kept = true
+        status.update { it.copy(conflict = false) }
     }
 
     override suspend fun useBackup(databaseName: String, uid: String) {
