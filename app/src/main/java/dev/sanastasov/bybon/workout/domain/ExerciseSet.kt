@@ -11,12 +11,12 @@ data class PreviousSetPerformance(
         require(reps > 0) { "reps must be positive" }
     }
 
-    fun oneRm(equipment: Equipment?): Weight? = estimatedSetOneRm(
+    fun oneRm(equipment: Equipment): Weight? = oneRmFor(
         equipment = equipment,
         loggedWeight = weight,
         reps = reps,
         bodyWeight = bodyWeight,
-        missingWeightIsZeroAssist = true,
+        blankIsUnassisted = true,
     )
 }
 
@@ -36,14 +36,38 @@ data class ExerciseSet(
         get() = (setState as? SetState.Completed)?.at
 
     val oneRm: Weight?
-        get() = estimatedSetOneRm(
-            equipment = exerciseDefinition.equipment,
-            loggedWeight = weight,
-            reps = reps,
-            bodyWeight = bodyWeight,
-            missingWeightIsZeroAssist = setState is SetState.Completed,
-        )
+        get() = oneRmFor(weight, reps, blankIsUnassisted = setState is SetState.Completed)
 
     val previousOneRm: Weight?
-        get() = previous?.oneRm(exerciseDefinition.equipment)
+        get() {
+            val previous = previous ?: return null
+            val equipment = exerciseDefinition.equipment ?: return previous.weight?.let {
+                estimatedOneRm(it, previous.reps)
+            }
+            return previous.oneRm(equipment)
+        }
+
+    internal fun oneRmFor(
+        loggedWeight: Weight?,
+        reps: Int,
+        blankIsUnassisted: Boolean = true,
+    ): Weight? {
+        val equipment = exerciseDefinition.equipment ?: return loggedWeight?.let {
+            estimatedOneRm(it, reps)
+        }
+        return oneRmFor(equipment, loggedWeight, reps, bodyWeight, blankIsUnassisted)
+    }
+}
+
+internal fun oneRmFor(
+    equipment: Equipment,
+    loggedWeight: Weight?,
+    reps: Int,
+    bodyWeight: Weight?,
+    blankIsUnassisted: Boolean,
+): Weight? = if (equipment.isAssisted) {
+    val knownBodyWeight = bodyWeight ?: return null
+    estimatedAssistedOneRm(knownBodyWeight, loggedWeight, reps, blankIsUnassisted)
+} else {
+    loggedWeight?.let { estimatedOneRm(it, reps) }
 }

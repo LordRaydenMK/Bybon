@@ -11,7 +11,7 @@ val NumberedSet.previousLabel: String?
         buildString {
             append("${previous.weight.toLoadLabel()} x ${previous.reps}")
             if (!isWarmup) {
-                append(", ${previous.oneRm(set.exerciseDefinition.equipment).toOneRmLabel()}")
+                append(", ${set.previousOneRm.toOneRmLabel()}")
             }
         }
     }
