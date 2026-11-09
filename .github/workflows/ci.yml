@@ -37,13 +37,119 @@ jobs:
           retention-days: ${{ github.ref == 'refs/heads/main' && 7 || 3 }}
           if-no-files-found: error
 
-  e2e-test:
+  firebase-emulator-image:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      actions: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Detect firebase image changes
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          changed=false
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin "$BASE_SHA"
+            if ! git diff --quiet "$BASE_SHA" HEAD -- firebase; then
+              changed=true
+            fi
+          elif [ -z "${BEFORE_SHA:-}" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            changed=true
+          else
+            git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
+            if ! git diff --quiet "$BEFORE_SHA" HEAD -- firebase; then
+              changed=true
+            fi
+          fi
+          echo "firebase=${changed}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve image
+        id: image
+        env:
+          FIREBASE_CHANGED: ${{ steps.changes.outputs.firebase }}
+        run: |
+          set -euo pipefail
+          image_repo="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/firebase-emulator"
+          if [ "$FIREBASE_CHANGED" = "true" ]; then
+            echo "image=${image_repo}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "push=true" >> "$GITHUB_OUTPUT"
+            tags="${image_repo}:${GITHUB_SHA}"
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              tags="${tags},${image_repo}:latest"
+            fi
+            echo "tags=${tags}" >> "$GITHUB_OUTPUT"
+          else
+            echo "image=${image_repo}:latest" >> "$GITHUB_OUTPUT"
+            echo "push=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.image.outputs.push == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: steps.image.outputs.push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Firebase emulator image
+        if: steps.image.outputs.push == 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: firebase
+          file: firebase/Dockerfile
+          push: true
+          tags: ${{ steps.image.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  e2e-test:
+    needs: firebase-emulator-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+
+    services:
+      firebase-emulator:
+        image: ${{ needs.firebase-emulator-image.outputs.image }}
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        ports:
+          - 4400:4400
+          - 8080:8080
+          - 9099:9099
+          - 9150:9150
+        options: >-
+          --health-cmd "curl -sf http://127.0.0.1:4400/emulators | grep -q '\"auth\"' && curl -sf http://127.0.0.1:4400/emulators | grep -q '\"firestore\"'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+          --health-start-period 40s
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Smoke Firebase emulator
+        run: bash .github/scripts/smoke-firebase-emulator.sh
 
       - name: Common setup
         uses: ./.github/actions/setup-android
