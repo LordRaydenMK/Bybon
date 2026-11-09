@@ -25,10 +25,34 @@ jobs:
   e2e-test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+
+    services:
+      firebase-emulator:
+        image: ghcr.io/lordraydenmk/bybon/firebase-emulator:latest
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        ports:
+          - 4400:4400
+          - 8080:8080
+          - 9099:9099
+          - 9150:9150
+        options: >-
+          --health-cmd "curl -sf http://127.0.0.1:4400/emulators | grep -q '\"auth\"' && curl -sf http://127.0.0.1:4400/emulators | grep -q '\"firestore\"'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 30
+          --health-start-period 40s
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Smoke Firebase emulator
+        run: python3 .github/scripts/smoke-firebase-emulator.py
 
       - name: Common setup
         uses: ./.github/actions/setup-android
@@ -112,4 +136,3 @@ jobs:
           gh release upload \
             "${{ github.event.release.tag_name }}" \
             app/build/outputs/apk/release/*.apk
-
