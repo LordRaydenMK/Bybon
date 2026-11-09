@@ -44,6 +44,7 @@ jobs:
       contents: read
       packages: write
       actions: write
+      pull-requests: read
     outputs:
       image: ${{ steps.image.outputs.image }}
 
@@ -53,27 +54,11 @@ jobs:
 
       - name: Detect firebase image changes
         id: changes
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -euo pipefail
-          changed=false
-          if [ "$EVENT_NAME" = "pull_request" ]; then
-            git fetch --no-tags --depth=1 origin "$BASE_SHA"
-            if ! git diff --quiet "$BASE_SHA" HEAD -- firebase; then
-              changed=true
-            fi
-          elif [ -z "${BEFORE_SHA:-}" ] || [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            changed=true
-          else
-            git fetch --no-tags --depth=1 origin "$BEFORE_SHA"
-            if ! git diff --quiet "$BEFORE_SHA" HEAD -- firebase; then
-              changed=true
-            fi
-          fi
-          echo "firebase=${changed}" >> "$GITHUB_OUTPUT"
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            firebase:
+              - 'firebase/**'
 
       - name: Resolve image
         id: image
