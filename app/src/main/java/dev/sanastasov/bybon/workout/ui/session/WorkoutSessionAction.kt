@@ -1,7 +1,11 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.canMoveExerciseDown
+import dev.sanastasov.bybon.workout.domain.canMoveExerciseUp
+import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 
 sealed class WorkoutSessionAction {
     data class OnCompleteSet(
@@ -64,6 +68,14 @@ sealed class WorkoutSessionAction {
         val exerciseId: String,
     ) : WorkoutSessionAction()
 
+    data class OnMoveExerciseUp(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
+
+    data class OnMoveExerciseDown(
+        val exercise: WorkoutExercise,
+    ) : WorkoutSessionAction()
+
     data class OnRemoveExercise(
         val exercise: WorkoutExercise,
     ) : WorkoutSessionAction()
@@ -92,4 +104,23 @@ sealed class WorkoutSessionEffect {
     ) : WorkoutSessionEffect()
 
     data object StopService : WorkoutSessionEffect()
+}
+
+fun WorkoutSession.exerciseOverflow(
+    index: Int,
+    onAction: (WorkoutSessionAction) -> Unit,
+): ExerciseOverflow? {
+    val exercise = exercises.getOrNull(index) ?: return null
+    val canMoveUp = canMoveExerciseUp(exercise)
+    val canMoveDown = canMoveExerciseDown(exercise)
+    return if (canMoveUp || canMoveDown) {
+        ExerciseOverflow(
+            canMoveUp = canMoveUp,
+            canMoveDown = canMoveDown,
+            onMoveUp = { onAction(WorkoutSessionAction.OnMoveExerciseUp(exercise)) },
+            onMoveDown = { onAction(WorkoutSessionAction.OnMoveExerciseDown(exercise)) },
+        )
+    } else {
+        null
+    }
 }

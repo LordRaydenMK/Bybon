@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -374,5 +375,84 @@ class WorkoutSessionViewModelExerciseEditingTest {
         assert(created.exercises.none { it.id == "incline-db-curl" })
         assert(created.exercises.any { it.id == "seated-leg-curl" })
         assert(repository.workoutPlans().first() == listOf(fullBodyA))
+    }
+
+    @Test
+    fun `moving an incomplete exercise persists the new order`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val session = awaitItem()!!
+            assert(session.exercises.map { it.id }.take(2) == listOf("bench-press", "squat"))
+
+            viewModel.onAction(WorkoutSessionAction.OnMoveExerciseDown(session.exercises.first()))
+            val updated = awaitItem()!!
+            assert(updated.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
+            viewModel.onAction(WorkoutSessionAction.OnMoveExerciseUp(updated.exercises[1]))
+            val restored = awaitItem()!!
+            assert(restored.exercises.map { it.id }.take(2) == listOf("bench-press", "squat"))
+            assert(
+                updated.exercises.first { it.id == "bench-press" }.state ==
+                    ExerciseState.InProgress,
+            )
+            assert(repository.workoutPlans().first() == listOf(fullBodyA))
+        }
+    }
+
+    @Test
+    fun `moving an exercise scrolls to its new page`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(WorkoutSessionAction.OnMoveExerciseDown(session.exercises.first()))
+            assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(1))
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `moving a completed exercise is rejected`() = runTest {
+        val session = twoExerciseSession(
+            firstState = SetState.Completed(),
+            secondState = SetState.InProgress,
+        )
+        val failures = BackgroundFailures(this)
+        val viewModel = WorkoutSessionViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialSessions = listOf(session),
+            ),
+            failures.scope,
+        )
+        val current = viewModel.uiState.first { it != null }!!
+        failures.expectFailure("Cannot move completed exercise bench-press") {
+            viewModel.onAction(WorkoutSessionAction.OnMoveExerciseDown(current.exercises.first()))
+        }
+    }
+
+    @Test
+    fun `moving up past a completed exercise is rejected`() = runTest {
+        val session = twoExerciseSession(
+            firstState = SetState.Completed(),
+            secondState = SetState.InProgress,
+        )
+        val failures = BackgroundFailures(this)
+        val viewModel = WorkoutSessionViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(
+                initialPlans = listOf(fullBodyA),
+                initialSessions = listOf(session),
+            ),
+            failures.scope,
+        )
+        val current = viewModel.uiState.first { it != null }!!
+        failures.expectFailure("Cannot move incline-db-curl up") {
+            viewModel.onAction(WorkoutSessionAction.OnMoveExerciseUp(current.exercises.last()))
+        }
     }
 }
