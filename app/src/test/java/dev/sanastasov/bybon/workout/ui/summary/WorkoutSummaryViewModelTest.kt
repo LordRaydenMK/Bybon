@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
 import app.cash.turbine.test
+import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
@@ -9,13 +10,16 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.domain.workoutSessionSummary
 import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
 import dev.sanastasov.bybon.workout.ui.details.toPersonalRecordUi
+import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.minutes
@@ -53,7 +57,8 @@ class WorkoutSummaryViewModelTest {
             title = "Full Body B",
             date = "13 Aug 2026",
             startTime = "18:00",
-            duration = "00:40",
+            duration = "40m",
+            sessionSummary = session.sessionSummaryUi(),
             exercises = listOf(
                 WorkoutSummaryExerciseUi(
                     id = "romanian-deadlift",
@@ -109,7 +114,7 @@ class WorkoutSummaryViewModelTest {
             assert(actual.title == "Full Body B")
             assert(actual.date == "13 Aug 2026")
             assert(actual.startTime == "18:00")
-            assert(actual.duration == "00:40")
+            assert(actual.duration == "40m")
             assert(actual.exercises.single().id == "romanian-deadlift")
         }
     }
@@ -153,7 +158,9 @@ class WorkoutSummaryViewModelTest {
         val content = session.toSummaryUi()
         assert(content.date == "13 Aug 2026")
         assert(content.startTime == "18:25")
-        assert(content.duration == "00:47")
+        assert(content.duration == "47m")
+        assert(content.sessionSummary.subtitle == "Full Body B · 13 Aug 2026 · Start 18:25")
+        assert(content.sessionSummary.duration == "47m")
     }
 
     @Test
@@ -360,6 +367,16 @@ class WorkoutSummaryViewModelTest {
         ).map { it.kilogramsValue.toDouble() }.average()
         assert(exercise.averageOneRm == Weight.kilograms(expectedAverage.toFloat()))
         assert(exercise.previous?.topSetOneRm == oneRm(17.5f, 14))
+
+        val summary = listOf(previous, session).let { sessions ->
+            session.toSummaryUi(sessions, session.startedAt).sessionSummary
+        }
+        assert(summary.workingSetCount == 3)
+        assert(summary.totalReps == 39)
+        assert(summary.volumeLoadLabel == "682.5 kg")
+        assert(summary.setPerformance == SetPerformanceUi(3, 0, 0))
+        assert(summary.exercisePerformance.single().name == "Incline Dumbbell Press")
+        assert(summary.exercisePerformance.single().changeLabel.startsWith("↑"))
     }
 
     @Test
@@ -561,6 +578,19 @@ class WorkoutSummaryViewModelTest {
 
     private fun WorkoutSession.oneRmTrend(exerciseId: String) =
         listOf(this).exercisePerformance(exerciseId, startedAt).recentSessions.toOneRmTrend()
+
+    private fun WorkoutSession.sessionSummaryUi(
+        completed: List<WorkoutSession> = listOf(this),
+    ): WorkoutSessionSummaryUi {
+        val completedState = state
+        check(completedState is WorkoutState.Completed)
+        return workoutSessionSummary(completed).toUi(
+            planName = planName,
+            date = startedAt.toLocalDate().toDisplayDate(),
+            startTime = startedAt.toStartTimeLabel(),
+            duration = completedState.duration,
+        )
+    }
 
     private fun TestScope.summaryViewModel(session: WorkoutSession) = WorkoutSummaryViewModel(
         session.id,

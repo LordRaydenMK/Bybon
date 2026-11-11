@@ -18,4 +18,14 @@ class ElapsedClockFormatTest {
         assert((1.hours + 5.minutes).formatElapsedClock() == "01:05")
         assert(125.minutes.formatElapsedClock() == "02:05")
     }
+
+    @Test
+    fun `formatTrainingTime drops zero hours or minutes`() {
+        assert(10.seconds.formatTrainingTime() == "0m")
+        assert(47.minutes.formatTrainingTime() == "47m")
+        assert((47.minutes + 44.seconds).formatTrainingTime() == "47m")
+        assert(1.hours.formatTrainingTime() == "1h")
+        assert((1.hours + 12.minutes).formatTrainingTime() == "1h 12m")
+        assert(125.minutes.formatTrainingTime() == "2h 5m")
+    }
 }
