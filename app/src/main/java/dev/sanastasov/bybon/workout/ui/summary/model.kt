@@ -13,6 +13,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionSummary
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
+import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.latestCompletedExerciseOccurrence
 import dev.sanastasov.bybon.workout.domain.withPreviousFrom
 import dev.sanastasov.bybon.workout.domain.workoutSessionSummary
@@ -164,7 +165,7 @@ internal fun WorkoutSessionSummary.toUi(
     volumeLoadLabel = "${formatOneRmKg(volumeLoadKg)} kg",
     setPerformance = setPerformance.toUi(),
     exercisePerformance = exercisePerformance.map { it.toUi() },
-    musclesTrained = musclesTrained.map { it.name },
+    musclesTrained = musclesTrained.map { it.label },
 )
 
 private fun PerformanceChange.toUi(): SetPerformanceUi? = takeIf { comparableCount > 0 }?.let {

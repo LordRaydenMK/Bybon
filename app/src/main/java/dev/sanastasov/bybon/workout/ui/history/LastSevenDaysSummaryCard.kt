@@ -4,8 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -17,7 +15,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,6 +25,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.sanastasov.bybon.workout.ui.TrainedMuscleChips
 
 private val ImprovedGreen = Color(0xFF2E7D32)
 private val DeclinedRed = Color(0xFFE57373)
@@ -168,7 +166,6 @@ private fun RowScope.BarSegment(count: Int, color: Color) {
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MusclesSection(muscles: List<String>) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -177,23 +174,7 @@ private fun MusclesSection(muscles: List<String>) {
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            muscles.forEach { muscle ->
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                ) {
-                    Text(
-                        muscle,
-                        Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-        }
+        TrainedMuscleChips(muscles)
     }
 }
 

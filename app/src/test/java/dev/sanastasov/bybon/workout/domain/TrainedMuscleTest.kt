@@ -34,8 +34,13 @@ class TrainedMuscleTest {
 
     @Test
     fun `falls back to body part when primary muscles are missing`() {
-        val definition = catalogExercise("bench-press").copy(primaryMuscles = emptyList())
-        assert(definition.trainedMuscles() == setOf(TrainedMuscle.Chest))
+        val chest = catalogExercise("bench-press").copy(primaryMuscles = emptyList())
+        val upperArms = catalogExercise("incline-db-curl").copy(primaryMuscles = emptyList())
+        val fullBody = catalogExercise("back-lever").copy(primaryMuscles = emptyList())
+        assert(chest.trainedMuscles() == setOf(TrainedMuscle.Chest))
+        assert(upperArms.trainedMuscles() == setOf(TrainedMuscle.Biceps, TrainedMuscle.Triceps))
+        assert(fullBody.trainedMuscles() == setOf(TrainedMuscle.FullBody))
+        assert(TrainedMuscle.FullBody.label == "Full body")
     }
 
     @Test
