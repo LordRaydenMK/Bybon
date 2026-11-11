@@ -36,12 +36,6 @@ enum class TrainedMuscle {
     Forearms,
 }
 
-val TrainedMuscle.label: String
-    get() = when (this) {
-        TrainedMuscle.Quads -> "Quads"
-        else -> name
-    }
-
 fun List<WorkoutSession>.lastSevenDaysSummary(today: LocalDate): LastSevenDaysSummary {
     val startDate = today.minusDays(6)
     val completed = filter { it.state is WorkoutState.Completed }

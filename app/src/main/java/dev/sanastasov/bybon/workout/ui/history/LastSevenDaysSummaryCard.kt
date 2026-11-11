@@ -149,15 +149,17 @@ private fun PerformanceBar(performance: LastSevenDaysPerformanceUi) {
             .height(8.dp)
             .clip(RoundedCornerShape(4.dp)),
     ) {
-        BarSegment(performance.improved, ImprovedGreen)
-        BarSegment(performance.maintained, MaterialTheme.colorScheme.outlineVariant)
-        BarSegment(performance.declined, DeclinedRed)
+        if (performance.improved > 0) BarSegment(performance.improved, ImprovedGreen)
+        if (performance.maintained > 0) {
+            BarSegment(performance.maintained, MaterialTheme.colorScheme.outlineVariant)
+        }
+        if (performance.declined > 0) BarSegment(performance.declined, DeclinedRed)
     }
 }
 
 @Composable
 private fun RowScope.BarSegment(count: Int, color: Color) {
-    if (count <= 0) return
+    require(count > 0) { "Bar segment count must be positive" }
     Box(
         Modifier
             .weight(count.toFloat())

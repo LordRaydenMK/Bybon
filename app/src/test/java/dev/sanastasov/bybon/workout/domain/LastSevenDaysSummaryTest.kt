@@ -213,8 +213,6 @@ class LastSevenDaysSummaryTest {
                 TrainedMuscle.Triceps,
             ),
         )
-        assert(TrainedMuscle.Quads.label == "Quads")
-        assert(TrainedMuscle.Hamstrings.label == "Hamstrings")
     }
 
     @Test
