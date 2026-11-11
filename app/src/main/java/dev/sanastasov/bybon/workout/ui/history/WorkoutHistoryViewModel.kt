@@ -9,6 +9,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.lastSevenDaysSummary
 import java.io.IOException
 import java.time.DateTimeException
 import java.time.LocalDate
@@ -102,7 +103,10 @@ class WorkoutHistoryViewModel(
         return if (history.isEmpty()) {
             WorkoutHistoryUiState.Empty
         } else {
-            WorkoutHistoryUiState.History(history.toHistoryPeriodSections(today()))
+            WorkoutHistoryUiState.History(
+                lastSevenDaysSummary(today()).toUi(),
+                history.toHistoryPeriodSections(today()),
+            )
         }
     }
 
