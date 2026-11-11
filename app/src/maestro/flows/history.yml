@@ -34,7 +34,8 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "Upper body B"
 - assertVisible: "Full body B without legs"
 - assertVisible: "Rep range 11-15"
-- assertVisible: "1. 20 kg x 14, 29.33 kg 1RM, +0.66kg"
+- assertVisible: "Top-set e1RM, 29.33 kg, ↑ 0.66 kg vs previous"
+- assertVisible: "1. 20 kg × 14, 29.33 kg e1RM"
 - back
 - assertVisible: "History"
 - tapOn: "Workout Plans"

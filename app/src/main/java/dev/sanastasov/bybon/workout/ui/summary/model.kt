@@ -1,6 +1,8 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
 import dev.sanastasov.bybon.domain.toDisplayDate
+import dev.sanastasov.bybon.domain.toDisplayDateDotRelative
+import dev.sanastasov.bybon.workout.domain.CompletedExerciseOccurrence
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -8,13 +10,14 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
-import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
+import dev.sanastasov.bybon.workout.domain.latestCompletedExerciseOccurrence
 import dev.sanastasov.bybon.workout.domain.withPreviousFrom
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
 import dev.sanastasov.bybon.workout.ui.details.toPersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
+import dev.sanastasov.bybon.workout.ui.formatOneRmKg
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDateTime
@@ -35,14 +38,30 @@ data class WorkoutSummaryExerciseUi(
     val id: String,
     val name: String,
     val sets: List<WorkoutSummarySetUi>,
+    val volumeLoadLabel: String,
     val notes: List<String> = emptyList(),
     val personalRecord: PersonalRecordUi? = null,
     val oneRmTrend: List<ExerciseOneRmPointUi> = emptyList(),
+    val previous: WorkoutSummaryPreviousUi? = null,
+) {
+    val workSets: List<WorkoutSummarySetUi> get() = sets.filterNot { it.isWarmup }
+
+    val topSetOneRm: Weight? get() = workSets.mapNotNull { it.oneRm }.maxOrNull()
+
+    val averageOneRm: Weight? get() = workSets.mapNotNull { it.oneRm }.averageWeight()
+
+    val totalReps: Int get() = workSets.sumOf { it.reps }
+}
+
+data class WorkoutSummaryPreviousUi(
+    val workoutLabel: String,
+    val topSetOneRm: Weight,
+    val averageOneRm: Weight,
 )
 
 data class WorkoutSummarySetUi(
     val number: Int?,
-    val weightKg: String,
+    val weightKg: String?,
     val reps: Int,
     val oneRm: Weight?,
     val isWarmup: Boolean = false,
@@ -99,7 +118,11 @@ private fun WorkoutExercise.toSummaryExerciseUi(
     sessionStartedAt: LocalDateTime,
 ): WorkoutSummaryExerciseUi? {
     if (sets.isEmpty()) return null
-    val previous = completedSessions.latestCompletedExercise(id, before = sessionStartedAt)
+    val previousOccurrence = completedSessions.latestCompletedExerciseOccurrence(
+        id,
+        before = sessionStartedAt,
+    )
+    val previous = previousOccurrence?.exercise
     val matched = if (previous != null) withPreviousFrom(previous) else this
     val warmups = matched.warmupSets.orEmpty().map { it.toWarmupSummaryUi() }
     val work = matched.sets.mapIndexed { index, set -> set.toWorkSummaryUi(index + 1) }
@@ -108,15 +131,43 @@ private fun WorkoutExercise.toSummaryExerciseUi(
         id = id,
         name = exerciseDefinition.name,
         sets = warmups + work,
+        volumeLoadLabel = matched.sets.volumeLoadLabel(),
         notes = notes,
         personalRecord = performance.personalRecord?.toPersonalRecordUi(),
         oneRmTrend = performance.recentSessions.toOneRmTrend(),
+        previous = previousOccurrence?.toPreviousUi(now),
     )
+}
+
+private fun CompletedExerciseOccurrence.toPreviousUi(
+    now: LocalDateTime,
+): WorkoutSummaryPreviousUi? {
+    val topSetOneRm = exercise.topSet.oneRm
+    val averageOneRm = exercise.sets.mapNotNull { it.oneRm }.averageWeight()
+    if (topSetOneRm == null || averageOneRm == null) return null
+    val date = startedAt.toLocalDate().toDisplayDateDotRelative(now.toLocalDate())
+    return WorkoutSummaryPreviousUi(
+        workoutLabel = "Previous workout: $date",
+        topSetOneRm = topSetOneRm,
+        averageOneRm = averageOneRm,
+    )
+}
+
+private fun List<Weight>.averageWeight(): Weight? {
+    if (isEmpty()) return null
+    return Weight.kilograms(map { it.kilogramsValue.toDouble() }.average().toFloat())
+}
+
+private fun List<ExerciseSet>.volumeLoadLabel(): String {
+    val kilograms = sumOf { set ->
+        (set.weight?.kilogramsValue ?: 0f).toDouble() * set.reps
+    }
+    return "${formatOneRmKg(kilograms.toFloat())} kg"
 }
 
 private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = null,
-    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
+    weightKg = weight?.toLoadLabel(exerciseDefinition.equipment),
     reps = reps,
     oneRm = null,
     isWarmup = true,
@@ -124,7 +175,7 @@ private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummar
 
 private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = number,
-    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
+    weightKg = weight?.toLoadLabel(exerciseDefinition.equipment),
     reps = reps,
     oneRm = oneRm,
     previousOneRm = previousOneRm,

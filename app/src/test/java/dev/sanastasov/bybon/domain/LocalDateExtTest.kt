@@ -17,22 +17,26 @@ class LocalDateExtTest {
     fun `relative dates use days up to 30 then months`() {
         val today = LocalDate.of(2026, 9, 9)
         assert(
-            LocalDate.of(2026, 9, 9).toDisplayDateWithRelative(today) == "9 Sep 2026 (today)",
+            LocalDate.of(2026, 9, 9).toDisplayDateDotRelative(today) == "9 Sep 2026 · today",
         )
         assert(
-            LocalDate.of(2026, 9, 8).toDisplayDateWithRelative(today) == "8 Sep 2026 (1 day ago)",
+            LocalDate.of(2026, 9, 8).toDisplayDateDotRelative(today) == "8 Sep 2026 · 1 day ago",
         )
         assert(
-            LocalDate.of(2026, 8, 10).toDisplayDateWithRelative(today) ==
-                "10 Aug 2026 (30 days ago)",
+            LocalDate.of(2026, 8, 10).toDisplayDateDotRelative(today) ==
+                "10 Aug 2026 · 30 days ago",
         )
         assert(
-            LocalDate.of(2026, 8, 9).toDisplayDateWithRelative(today) ==
-                "9 Aug 2026 (1 month ago)",
+            LocalDate.of(2026, 8, 9).toDisplayDateDotRelative(today) ==
+                "9 Aug 2026 · 1 month ago",
         )
         assert(
-            LocalDate.of(2026, 7, 9).toDisplayDateWithRelative(today) ==
-                "9 Jul 2026 (2 months ago)",
+            LocalDate.of(2026, 7, 9).toDisplayDateDotRelative(today) ==
+                "9 Jul 2026 · 2 months ago",
+        )
+        assert(
+            LocalDate.of(2026, 11, 6).toDisplayDateDotRelative(LocalDate.of(2026, 11, 10)) ==
+                "6 Nov 2026 · 4 days ago",
         )
     }
 
