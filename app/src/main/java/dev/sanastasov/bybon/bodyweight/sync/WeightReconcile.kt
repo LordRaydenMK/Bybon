@@ -2,6 +2,10 @@ package dev.sanastasov.bybon.bodyweight.sync
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
+import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
+import dev.sanastasov.bybon.bodyweight.domain.WeightDateClash
+import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOpKind
 import java.time.LocalDate
@@ -19,12 +23,6 @@ data class WeightUpload(
     val deleted: Boolean,
 )
 
-data class WeightImportSummary(
-    val count: Int,
-    val earliest: LocalDate,
-    val latest: LocalDate,
-)
-
 data class WeightSyncInput(
     val local: List<BodyWeightEntry>,
     val remote: List<RemoteWeight>,
@@ -38,7 +36,9 @@ data class WeightSyncInput(
 sealed interface WeightSyncPlan {
     data object Blocked : WeightSyncPlan
 
-    data object Ask : WeightSyncPlan
+    data class Ask(
+        val conflict: WeightConflict,
+    ) : WeightSyncPlan
 
     data class Apply(
         val replaceLocal: List<BodyWeightEntry>?,
@@ -53,13 +53,28 @@ sealed interface WeightSyncPlan {
 fun reconcileWeights(input: WeightSyncInput): WeightSyncPlan = when {
     input.conflictPending -> WeightSyncPlan.Blocked
 
-    input.lastSyncedUid != null &&
-        input.lastSyncedUid != input.signedInUid &&
-        input.local.isNotEmpty() -> WeightSyncPlan.Ask
+    differentAccount(input) -> WeightSyncPlan.Ask(
+        WeightConflict.DifferentAccount(
+            signedInUid = input.signedInUid,
+            previousUid = checkNotNull(input.lastSyncedUid),
+        ),
+    )
 
-    wouldChangePhone(input.local, input.remote) -> WeightSyncPlan.Ask
+    else -> askOrApply(input)
+}
 
-    else -> planChanges(input)
+private fun differentAccount(input: WeightSyncInput): Boolean {
+    val previous = input.lastSyncedUid
+    return previous != null && previous != input.signedInUid && input.local.isNotEmpty()
+}
+
+private fun askOrApply(input: WeightSyncInput): WeightSyncPlan {
+    val dates = clashes(input.local, input.remote)
+    return if (dates.isEmpty()) {
+        planChanges(input)
+    } else {
+        WeightSyncPlan.Ask(WeightConflict.OverlappingDates(dates))
+    }
 }
 
 internal fun List<BodyWeightEntry>.toImportSummary(): WeightImportSummary? {
@@ -112,12 +127,25 @@ private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
     }
 }
 
-private fun wouldChangePhone(local: List<BodyWeightEntry>, remote: List<RemoteWeight>): Boolean {
+private fun clashes(
+    local: List<BodyWeightEntry>,
+    remote: List<RemoteWeight>,
+): List<WeightDateClash> {
     val byDate = remote.associateBy { it.date }
-    return local.any { entry ->
-        val doc = byDate[entry.date] ?: return@any false
-        doc.deleted || doc.weight != entry.weight.value
-    }
+    return local.mapNotNull { entry ->
+        val doc = byDate[entry.date] ?: return@mapNotNull null
+        when {
+            doc.deleted -> WeightDateClash(entry.date, entry.weight, CloudWeight.Deleted)
+
+            doc.weight != entry.weight.value -> WeightDateClash(
+                date = entry.date,
+                onThisPhone = entry.weight,
+                inBackup = CloudWeight.Value(BodyWeight(doc.weight)),
+            )
+
+            else -> null
+        }
+    }.sortedBy { it.date }
 }
 
 private fun liveEntries(remote: List<RemoteWeight>): List<BodyWeightEntry> =

@@ -1,5 +1,3 @@
-@file:Suppress("TooManyFunctions")
-
 package dev.sanastasov.bybon.bodyweight.data
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
@@ -8,13 +6,13 @@ import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
 import dev.sanastasov.bybon.bodyweight.domain.DietPhase
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseKind
 import dev.sanastasov.bybon.bodyweight.domain.DietPhaseRecord
-import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
-import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOpKind
-import dev.sanastasov.bybon.bodyweight.domain.WeightSyncState
+import dev.sanastasov.bybon.bodyweight.domain.WeightBackupStatus
+import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
+import dev.sanastasov.bybon.bodyweight.domain.WeightSyncResult
 import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
 import dev.sanastasov.bybon.bodyweight.domain.kind
 import dev.sanastasov.bybon.bodyweight.domain.requireValid
-import java.time.LocalDate
+import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -22,7 +20,18 @@ class BodyWeightRepositoryImpl(
     private val weightEntryDao: WeightDao,
     private val dietPhaseDao: DietPhaseDao,
     private val weightSyncDao: WeightSyncDao,
+    cloud: WeightCloud,
+    databaseName: String,
+    clock: () -> Long = { System.currentTimeMillis() },
 ) : BodyWeightRepository {
+
+    private val syncEngine = WeightSyncEngine(
+        weights = weightEntryDao,
+        syncDao = weightSyncDao,
+        cloud = cloud,
+        databaseName = databaseName,
+        clock = clock,
+    )
 
     override fun entries(): Flow<List<BodyWeightEntry>> = weightEntryDao.weightEntries()
         .map { entries -> entries.map { BodyWeightEntry(it.date, BodyWeight(it.weight)) } }
@@ -49,40 +58,13 @@ class BodyWeightRepositoryImpl(
         )
     }
 
-    override suspend fun replaceAll(entries: List<BodyWeightEntry>) {
-        weightEntryDao.deleteAllWeights()
-        if (entries.isNotEmpty()) {
-            weightEntryDao.insertWeights(entries.map { it.toEntity() })
-        }
-    }
+    override fun backupStatus(): Flow<WeightBackupStatus> = syncEngine.status()
 
-    override suspend fun addAll(entries: List<BodyWeightEntry>) {
-        if (entries.isEmpty()) return
-        weightEntryDao.insertWeights(entries.map { it.toEntity() })
-    }
+    override suspend fun sync(command: WeightSyncCommand): WeightSyncResult =
+        syncEngine.sync(command)
 
-    override fun observePendingOps(): Flow<List<WeightSyncOp>> =
-        weightSyncDao.observeOps().map { ops -> ops.map { it.toOp() } }
-
-    override suspend fun pendingOps(): List<WeightSyncOp> = weightSyncDao.ops().map { it.toOp() }
-
-    override suspend fun clearPendingOps() {
-        weightSyncDao.clearOps()
-    }
-
-    override suspend fun removePendingOps(dates: List<LocalDate>) {
-        if (dates.isEmpty()) return
-        weightSyncDao.deleteOps(dates)
-    }
-
-    override fun observeSyncState(databaseName: String): Flow<WeightSyncState?> =
-        weightSyncDao.observeState(databaseName).map { it?.toState() }
-
-    override suspend fun syncState(databaseName: String): WeightSyncState? =
-        weightSyncDao.state(databaseName)?.toState()
-
-    override suspend fun saveSyncState(state: WeightSyncState) {
-        weightSyncDao.upsertState(state.toEntity())
+    override suspend fun dismissSummary() {
+        syncEngine.dismissSummary()
     }
 
     override fun phases(): Flow<List<DietPhaseRecord>> = dietPhaseDao.phases().map { entities ->
@@ -93,40 +75,6 @@ class BodyWeightRepositoryImpl(
         dietPhaseDao.upsert(record.toEntity())
     }
 }
-
-private fun BodyWeightEntry.toEntity(): WeightEntryEntity = WeightEntryEntity(date, weight.value)
-
-private fun WeightSyncOpEntity.toOp(): WeightSyncOp = WeightSyncOp(
-    date = date,
-    kind = if (kind == WeightSyncOpEntity.DELETE) {
-        WeightSyncOpKind.Delete
-    } else {
-        WeightSyncOpKind.Upsert
-    },
-    weight = weight,
-)
-
-private fun WeightSyncStateEntity.toState(): WeightSyncState = WeightSyncState(
-    databaseName = databaseName,
-    lastSyncedUid = lastSyncedUid,
-    cursorMillis = cursorMillis,
-    lastSuccessMillis = lastSuccessMillis,
-    conflictPending = conflictPending,
-    summaryCount = summaryCount,
-    summaryEarliest = summaryEarliest,
-    summaryLatest = summaryLatest,
-)
-
-private fun WeightSyncState.toEntity(): WeightSyncStateEntity = WeightSyncStateEntity(
-    databaseName = databaseName,
-    lastSyncedUid = lastSyncedUid,
-    cursorMillis = cursorMillis,
-    lastSuccessMillis = lastSuccessMillis,
-    conflictPending = conflictPending,
-    summaryCount = summaryCount,
-    summaryEarliest = summaryEarliest,
-    summaryLatest = summaryLatest,
-)
 
 private fun DietPhaseRecord.toEntity(): DietPhaseEntity = DietPhaseEntity(
     id = id,

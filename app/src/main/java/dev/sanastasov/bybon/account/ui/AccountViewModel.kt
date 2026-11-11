@@ -4,7 +4,10 @@ import androidx.credentials.exceptions.ClearCredentialException
 import dev.sanastasov.bybon.account.domain.AccountAuth
 import dev.sanastasov.bybon.account.domain.GoogleSignIn
 import dev.sanastasov.bybon.account.domain.SignInFailure
-import dev.sanastasov.bybon.bodyweight.sync.WeightBackup
+import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
+import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
+import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +20,7 @@ class AccountViewModel(
     private val accountAuth: AccountAuth,
     private val googleSignIn: GoogleSignIn,
     private val environmentName: String,
-    private val backup: WeightBackup,
+    private val repository: BodyWeightRepository,
     private val coroutineScope: CoroutineScope,
 ) {
 
@@ -26,7 +29,7 @@ class AccountViewModel(
     val uiState = combine(
         accountAuth.user(),
         session,
-        backup.observe(environmentName),
+        repository.backupStatus(),
     ) { user, sessionUi, backupStatus ->
         AccountUiState(
             environmentName = environmentName,
@@ -37,9 +40,7 @@ class AccountViewModel(
             backupPending = backupStatus.pending,
             lastBackupMillis = backupStatus.lastSuccessMillis,
             conflict = backupStatus.conflict,
-            importSummary = backupStatus.summary?.let { summary ->
-                AccountImportSummary(summary.count, summary.earliest, summary.latest)
-            },
+            importSummary = backupStatus.summary,
         )
     }.stateInWhileInForeground(
         coroutineScope,
@@ -49,7 +50,7 @@ class AccountViewModel(
     init {
         coroutineScope.launch {
             val uid = accountAuth.user().first()?.uid ?: return@launch
-            backup.sync(environmentName, uid, signIn = false)
+            repository.sync(WeightSyncCommand.Pull(uid, WeightSyncStart.Incremental))
         }
     }
 
@@ -73,7 +74,9 @@ class AccountViewModel(
             try {
                 accountAuth.signInWithIdToken(googleSignIn.idToken())
                 val uid = accountAuth.user().first()?.uid
-                if (uid != null) backup.sync(environmentName, uid, signIn = true)
+                if (uid != null) {
+                    repository.sync(WeightSyncCommand.Pull(uid, WeightSyncStart.SignIn))
+                }
                 session.update { it.copy(signingIn = false, message = null) }
             } catch (_: SignInFailure.Canceled) {
                 session.update { it.copy(signingIn = false, message = "Sign-in canceled") }
@@ -90,26 +93,26 @@ class AccountViewModel(
     private fun useBackup() {
         coroutineScope.launch {
             val uid = accountAuth.user().first()?.uid ?: return@launch
-            backup.useBackup(environmentName, uid)
+            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.UseBackup(uid)))
         }
     }
 
     private fun replaceBackup() {
         coroutineScope.launch {
             val uid = accountAuth.user().first()?.uid ?: return@launch
-            backup.replaceBackup(environmentName, uid)
+            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.ReplaceBackup(uid)))
         }
     }
 
     private fun keepThisPhone() {
         coroutineScope.launch {
-            backup.keepThisPhone(environmentName)
+            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.KeepThisPhone))
             endSession()
         }
     }
 
     private fun dismissSummary() {
-        coroutineScope.launch { backup.dismissSummary(environmentName) }
+        coroutineScope.launch { repository.dismissSummary() }
     }
 
     private suspend fun endSession() {

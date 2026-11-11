@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "666e75171f3c5cf57ccd11426988cef6",
+    "identityHash": "3186b730f778631a387b760aafc813c9",
     "entities": [
       {
         "tableName": "weight_entry",
@@ -749,7 +749,7 @@
       },
       {
         "tableName": "weight_sync_state",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`databaseName` TEXT NOT NULL, `lastSyncedUid` TEXT, `cursorMillis` INTEGER, `lastSuccessMillis` INTEGER, `conflictPending` INTEGER NOT NULL, `summaryCount` INTEGER, `summaryEarliest` TEXT, `summaryLatest` TEXT, PRIMARY KEY(`databaseName`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`databaseName` TEXT NOT NULL, `lastSyncedUid` TEXT, `cursorMillis` INTEGER, `lastSuccessMillis` INTEGER, `conflictKind` TEXT, `conflictSignedInUid` TEXT, `conflictPreviousUid` TEXT, `summaryCount` INTEGER, `summaryEarliest` TEXT, `summaryLatest` TEXT, PRIMARY KEY(`databaseName`))",
         "fields": [
           {
             "fieldPath": "databaseName",
@@ -773,10 +773,19 @@
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "conflictPending",
-            "columnName": "conflictPending",
-            "affinity": "INTEGER",
-            "notNull": true
+            "fieldPath": "conflictKind",
+            "columnName": "conflictKind",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "conflictSignedInUid",
+            "columnName": "conflictSignedInUid",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "conflictPreviousUid",
+            "columnName": "conflictPreviousUid",
+            "affinity": "TEXT"
           },
           {
             "fieldPath": "summaryCount",
@@ -800,11 +809,66 @@
             "databaseName"
           ]
         }
+      },
+      {
+        "tableName": "weight_sync_clash",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`databaseName` TEXT NOT NULL, `date` TEXT NOT NULL, `phoneWeight` INTEGER NOT NULL, `backupWeight` INTEGER, `backupDeleted` INTEGER NOT NULL, PRIMARY KEY(`databaseName`, `date`), FOREIGN KEY(`databaseName`) REFERENCES `weight_sync_state`(`databaseName`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "databaseName",
+            "columnName": "databaseName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "phoneWeight",
+            "columnName": "phoneWeight",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "backupWeight",
+            "columnName": "backupWeight",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "backupDeleted",
+            "columnName": "backupDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "databaseName",
+            "date"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "weight_sync_state",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "databaseName"
+            ],
+            "referencedColumns": [
+              "databaseName"
+            ]
+          }
+        ]
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '666e75171f3c5cf57ccd11426988cef6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3186b730f778631a387b760aafc813c9')"
     ]
   }
 }

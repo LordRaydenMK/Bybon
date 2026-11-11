@@ -10,8 +10,15 @@ data class WeightSyncStateEntity(
     val lastSyncedUid: String?,
     val cursorMillis: Long?,
     val lastSuccessMillis: Long?,
-    val conflictPending: Boolean,
+    val conflictKind: String?,
+    val conflictSignedInUid: String?,
+    val conflictPreviousUid: String?,
     val summaryCount: Int?,
     val summaryEarliest: LocalDate?,
     val summaryLatest: LocalDate?,
-)
+) {
+    companion object {
+        const val ACCOUNT = "account"
+        const val DATES = "dates"
+    }
+}
