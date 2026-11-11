@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.session
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.RestPromoteScheduler
 import dev.sanastasov.bybon.workout.domain.ExerciseState
+import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
@@ -16,6 +17,7 @@ import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
+import dev.sanastasov.bybon.workout.domain.moveExercise
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.requireExercise
@@ -126,6 +128,7 @@ class WorkoutSessionViewModel(
                             reduce(session, action, history)
                         }
                         emitAfterSetCompleted(updated, action)
+                        emitAfterMove(updated, action)
                     }
                 }
             }
@@ -170,6 +173,18 @@ class WorkoutSessionViewModel(
                     _effects.trySend(WorkoutSessionEffect.ScrollToExercise(nextPage))
                 }
             }
+        }
+    }
+
+    private fun emitAfterMove(updated: WorkoutSession, action: WorkoutSessionAction) {
+        val exerciseId = when (action) {
+            is WorkoutSessionAction.OnMoveExerciseUp -> action.exercise.id
+            is WorkoutSessionAction.OnMoveExerciseDown -> action.exercise.id
+            else -> return
+        }
+        val page = updated.exercises.indexOfFirst { it.id == exerciseId }
+        if (page >= 0) {
+            _effects.trySend(WorkoutSessionEffect.ScrollToExercise(page))
         }
     }
 
@@ -234,6 +249,12 @@ class WorkoutSessionViewModel(
 
         is WorkoutSessionAction.OnConvertToWorkSet ->
             session.convertLastWarmupToWorkSet(action.exercise)
+
+        is WorkoutSessionAction.OnMoveExerciseUp ->
+            session.moveExercise(action.exercise.id, ReorderDirection.Up)
+
+        is WorkoutSessionAction.OnMoveExerciseDown ->
+            session.moveExercise(action.exercise.id, ReorderDirection.Down)
 
         else -> null
     }

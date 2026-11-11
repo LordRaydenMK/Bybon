@@ -196,6 +196,7 @@ private fun SessionExercisePager(
                     exercise = exercise,
                     mode = ExerciseCardMode.Session,
                     onEvent = { event -> onAction(event.toSessionAction(exercise)) },
+                    overflow = state.exerciseOverflow(page, onAction),
                     onRemoveExercise = if (state.canRemoveExercise(exercise)) {
                         { onAction(WorkoutSessionAction.OnRemoveExercise(exercise)) }
                     } else {
