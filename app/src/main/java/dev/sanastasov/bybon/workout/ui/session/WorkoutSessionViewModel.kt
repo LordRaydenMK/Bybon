@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.session
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.RestPromoteScheduler
 import dev.sanastasov.bybon.workout.domain.ExerciseState
+import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
@@ -16,8 +17,7 @@ import dev.sanastasov.bybon.workout.domain.completeSet
 import dev.sanastasov.bybon.workout.domain.convertFirstWorkSetToWarmup
 import dev.sanastasov.bybon.workout.domain.convertLastWarmupToWorkSet
 import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
-import dev.sanastasov.bybon.workout.domain.moveExerciseDown
-import dev.sanastasov.bybon.workout.domain.moveExerciseUp
+import dev.sanastasov.bybon.workout.domain.moveExercise
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.requireExercise
@@ -250,9 +250,11 @@ class WorkoutSessionViewModel(
         is WorkoutSessionAction.OnConvertToWorkSet ->
             session.convertLastWarmupToWorkSet(action.exercise)
 
-        is WorkoutSessionAction.OnMoveExerciseUp -> session.moveExerciseUp(action.exercise.id)
+        is WorkoutSessionAction.OnMoveExerciseUp ->
+            session.moveExercise(action.exercise.id, ReorderDirection.Up)
 
-        is WorkoutSessionAction.OnMoveExerciseDown -> session.moveExerciseDown(action.exercise.id)
+        is WorkoutSessionAction.OnMoveExerciseDown ->
+            session.moveExercise(action.exercise.id, ReorderDirection.Down)
 
         else -> null
     }

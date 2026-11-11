@@ -28,7 +28,7 @@ class WorkoutSessionReorderTest {
     @Test
     fun `moveExerciseUp throws for the first exercise`() {
         val session = fullBodyA.toOverviewSession()
-        val error = assertFailsWith<IllegalStateException> {
+        val error = assertFailsWith<IllegalArgumentException> {
             session.moveExerciseUp("bench-press")
         }
         assert(error.message == "Cannot move bench-press up")
@@ -38,7 +38,7 @@ class WorkoutSessionReorderTest {
     fun `moveExerciseDown throws for the last exercise`() {
         val session = fullBodyA.toOverviewSession()
         val lastId = session.exercises.last().id
-        val error = assertFailsWith<IllegalStateException> {
+        val error = assertFailsWith<IllegalArgumentException> {
             session.moveExerciseDown(lastId)
         }
         assert(error.message == "Cannot move $lastId down")
@@ -47,11 +47,11 @@ class WorkoutSessionReorderTest {
     @Test
     fun `unknown exercise id throws when moving`() {
         val session = fullBodyA.toOverviewSession()
-        val error = assertFailsWith<IllegalStateException> {
+        val error = assertFailsWith<IllegalArgumentException> {
             session.moveExerciseUp("missing")
         }
         assert(error.message == "Exercise missing is not in the session")
-        assertFailsWith<IllegalStateException> { session.moveExerciseDown("missing") }
+        assertFailsWith<IllegalArgumentException> { session.moveExerciseDown("missing") }
     }
 
     @Test
@@ -98,11 +98,11 @@ class WorkoutSessionReorderTest {
     @Test
     fun `moveExercise throws for a completed exercise`() {
         val session = fullBodyA.toWorkoutSession().withExerciseCompleted("bench-press")
-        val error = assertFailsWith<IllegalStateException> {
+        val error = assertFailsWith<IllegalArgumentException> {
             session.moveExerciseUp("bench-press")
         }
         assert(error.message == "Cannot move completed exercise bench-press")
-        val down = assertFailsWith<IllegalStateException> {
+        val down = assertFailsWith<IllegalArgumentException> {
             session.moveExerciseDown("bench-press")
         }
         assert(down.message == "Cannot move completed exercise bench-press")
@@ -111,25 +111,26 @@ class WorkoutSessionReorderTest {
     @Test
     fun `moveExerciseUp throws when the previous exercise is completed`() {
         val session = fullBodyA.toWorkoutSession().withExerciseCompleted("bench-press")
-        val error = assertFailsWith<IllegalStateException> {
+        val error = assertFailsWith<IllegalArgumentException> {
             session.moveExerciseUp("squat")
         }
         assert(error.message == "Cannot move squat up")
     }
 
     @Test
-    fun `canMoveExercise excludes completed neighbors`() {
+    fun `moveDirections excludes completed exercises and neighbors`() {
         val session = fullBodyA.toWorkoutSession().withExerciseCompleted("bench-press")
         val completed = session.exercises.first()
         val squat = session.exercises.first { it.id == "squat" }
         val last = session.exercises.last()
 
-        assert(!session.canMoveExerciseUp(completed))
-        assert(!session.canMoveExerciseDown(completed))
-        assert(!session.canMoveExerciseUp(squat))
-        assert(session.canMoveExerciseDown(squat))
-        assert(session.canMoveExerciseUp(last))
-        assert(!session.canMoveExerciseDown(last))
+        assert(session.moveDirections(completed).isEmpty())
+        assert(session.moveDirections(squat) == listOf(ReorderDirection.Down))
+        assert(
+            session.moveDirections(session.exercises.first { it.id == "assisted-pull-ups" }) ==
+                listOf(ReorderDirection.Up, ReorderDirection.Down),
+        )
+        assert(session.moveDirections(last) == listOf(ReorderDirection.Up))
     }
 }
 

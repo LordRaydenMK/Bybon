@@ -1,10 +1,10 @@
 package dev.sanastasov.bybon.workout.ui.session
 
+import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
-import dev.sanastasov.bybon.workout.domain.canMoveExerciseDown
-import dev.sanastasov.bybon.workout.domain.canMoveExerciseUp
+import dev.sanastasov.bybon.workout.domain.moveDirections
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 
 sealed class WorkoutSessionAction {
@@ -111,12 +111,11 @@ fun WorkoutSession.exerciseOverflow(
     onAction: (WorkoutSessionAction) -> Unit,
 ): ExerciseOverflow? {
     val exercise = exercises.getOrNull(index) ?: return null
-    val canMoveUp = canMoveExerciseUp(exercise)
-    val canMoveDown = canMoveExerciseDown(exercise)
-    return if (canMoveUp || canMoveDown) {
+    val directions = moveDirections(exercise)
+    return if (directions.isNotEmpty()) {
         ExerciseOverflow(
-            canMoveUp = canMoveUp,
-            canMoveDown = canMoveDown,
+            canMoveUp = ReorderDirection.Up in directions,
+            canMoveDown = ReorderDirection.Down in directions,
             onMoveUp = { onAction(WorkoutSessionAction.OnMoveExerciseUp(exercise)) },
             onMoveDown = { onAction(WorkoutSessionAction.OnMoveExerciseDown(exercise)) },
         )

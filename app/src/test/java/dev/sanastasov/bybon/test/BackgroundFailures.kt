@@ -14,7 +14,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
  * [assertFailsWith] does not see those exceptions: [TestScope] reports them as
  * uncaught after the block returns, and [backgroundScope] swallows them. This
  * scope uses the test dispatcher with a supervisor job so the thrown
- * [IllegalStateException] can be asserted without cancelling `runTest`.
+ * [IllegalArgumentException] or [IllegalStateException] can be asserted without
+ * cancelling `runTest`.
  */
 class BackgroundFailures(
     private val testScope: TestScope,
@@ -36,7 +37,7 @@ class BackgroundFailures(
         testScope.advanceUntilIdle()
         val error = failures.singleOrNull()
         checkNotNull(error) { "Expected a background failure, but none was recorded" }
-        assert(error is IllegalStateException)
+        assert(error is IllegalArgumentException || error is IllegalStateException)
         assert(error.message == expectedMessage)
     }
 }
