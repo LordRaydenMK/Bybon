@@ -3,11 +3,16 @@ package dev.sanastasov.bybon.workout.ui.overview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
@@ -93,6 +98,7 @@ fun WorkoutModule.WorkoutOverviewScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun OverviewScreenContent(
     state: WorkoutOverviewUiState,
@@ -100,12 +106,15 @@ private fun OverviewScreenContent(
     onBack: () -> Unit,
 ) {
     val session = state.session
+    val imeVisible = WindowInsets.isImeVisible
     Scaffold(
         topBar = { OverviewTopBar(state, onBack, onAction) },
     ) { contentPadding ->
         Column(
             Modifier
                 .padding(contentPadding)
+                .consumeWindowInsets(contentPadding)
+                .imePadding()
                 .padding(horizontal = 16.dp, vertical = 24.dp)
                 .fillMaxSize(),
         ) {
@@ -137,23 +146,30 @@ private fun OverviewScreenContent(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedButton(
-                    { onAction(WorkoutOverviewAction.OnSaveDraft) },
-                ) {
-                    Text("Save")
-                }
-                Button(
-                    { onAction(WorkoutOverviewAction.OnStartWorkout) },
-                    Modifier.weight(1f),
-                ) {
-                    Text("Start Workout")
-                }
+            if (!imeVisible) {
+                Spacer(Modifier.height(16.dp))
+                OverviewActions(onAction)
             }
+        }
+    }
+}
+
+@Composable
+private fun OverviewActions(onAction: (WorkoutOverviewAction) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        OutlinedButton(
+            { onAction(WorkoutOverviewAction.OnSaveDraft) },
+        ) {
+            Text("Save")
+        }
+        Button(
+            { onAction(WorkoutOverviewAction.OnStartWorkout) },
+            Modifier.weight(1f),
+        ) {
+            Text("Start Workout")
         }
     }
 }
