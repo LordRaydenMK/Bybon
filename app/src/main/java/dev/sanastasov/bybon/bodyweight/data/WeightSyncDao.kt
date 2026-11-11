@@ -4,10 +4,12 @@ import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
+import androidx.room3.Transaction
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 @Dao
+@Suppress("TooManyFunctions")
 interface WeightSyncDao {
 
     @Query("SELECT * FROM weight_sync_op")
@@ -33,4 +35,23 @@ interface WeightSyncDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertState(state: WeightSyncStateEntity)
+
+    @Query("SELECT * FROM weight_sync_clash WHERE databaseName = :databaseName")
+    fun observeClashes(databaseName: String): Flow<List<WeightSyncClashEntity>>
+
+    @Query("SELECT * FROM weight_sync_clash WHERE databaseName = :databaseName")
+    suspend fun clashes(databaseName: String): List<WeightSyncClashEntity>
+
+    @Query("DELETE FROM weight_sync_clash WHERE databaseName = :databaseName")
+    suspend fun deleteClashes(databaseName: String)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertClashes(clashes: List<WeightSyncClashEntity>)
+
+    @Transaction
+    suspend fun replaceState(state: WeightSyncStateEntity, clashes: List<WeightSyncClashEntity>) {
+        upsertState(state)
+        deleteClashes(state.databaseName)
+        if (clashes.isNotEmpty()) insertClashes(clashes)
+    }
 }

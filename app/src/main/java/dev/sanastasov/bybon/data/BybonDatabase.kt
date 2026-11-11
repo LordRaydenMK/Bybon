@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.bodyweight.data.DietPhaseDao
 import dev.sanastasov.bybon.bodyweight.data.DietPhaseEntity
 import dev.sanastasov.bybon.bodyweight.data.WeightDao
 import dev.sanastasov.bybon.bodyweight.data.WeightEntryEntity
+import dev.sanastasov.bybon.bodyweight.data.WeightSyncClashEntity
 import dev.sanastasov.bybon.bodyweight.data.WeightSyncDao
 import dev.sanastasov.bybon.bodyweight.data.WeightSyncOpEntity
 import dev.sanastasov.bybon.bodyweight.data.WeightSyncStateEntity
@@ -37,6 +38,7 @@ import dev.sanastasov.bybon.workout.data.WorkoutSetEntity
         WorkoutSetEntity::class,
         WeightSyncOpEntity::class,
         WeightSyncStateEntity::class,
+        WeightSyncClashEntity::class,
     ],
     version = 8,
     autoMigrations = [

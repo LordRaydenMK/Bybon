@@ -2,6 +2,9 @@ package dev.sanastasov.bybon.bodyweight.sync
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
+import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
+import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
+import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOpKind
 import java.time.LocalDate
@@ -41,7 +44,6 @@ class WeightReconcileTest {
         assert(apply.uploadAllLocal)
         assert(apply.summary == null)
         assert(apply.replaceLocal == null)
-        assert(plan != WeightSyncPlan.Ask)
     }
 
     @Test
@@ -54,7 +56,9 @@ class WeightReconcileTest {
             ),
         )
 
-        assert(plan == WeightSyncPlan.Ask)
+        val conflict = (plan as WeightSyncPlan.Ask).conflict as WeightConflict.DifferentAccount
+        assert(conflict.signedInUid == "other")
+        assert(conflict.previousUid == "uid")
     }
 
     @Test
@@ -104,7 +108,12 @@ class WeightReconcileTest {
             ),
         )
 
-        assert(plan == WeightSyncPlan.Ask)
+        val clash = (
+            (plan as WeightSyncPlan.Ask).conflict as WeightConflict.OverlappingDates
+            ).dates.single()
+        assert(clash.date == jan1)
+        assert(clash.onThisPhone.value == 6500)
+        assert((clash.inBackup as CloudWeight.Value).weight.value == 6550)
     }
 
     @Test
@@ -117,7 +126,11 @@ class WeightReconcileTest {
             ),
         )
 
-        assert(plan == WeightSyncPlan.Ask)
+        val clash = (
+            (plan as WeightSyncPlan.Ask).conflict as WeightConflict.OverlappingDates
+            ).dates.single()
+        assert(clash.date == jan1)
+        assert(clash.inBackup == CloudWeight.Deleted)
     }
 
     @Test

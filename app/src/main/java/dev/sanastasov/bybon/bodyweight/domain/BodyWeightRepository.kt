@@ -1,5 +1,3 @@
-@file:Suppress("TooManyFunctions")
-
 package dev.sanastasov.bybon.bodyweight.domain
 
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
@@ -15,23 +13,17 @@ interface BodyWeightRepository {
 
     suspend fun deleteEntry(entry: BodyWeightEntry)
 
-    suspend fun replaceAll(entries: List<BodyWeightEntry>)
+    fun backupStatus(): Flow<WeightBackupStatus>
 
-    suspend fun addAll(entries: List<BodyWeightEntry>)
+    /**
+     * Pull and upload, or apply the choice for a stored conflict.
+     * A pull that finds a stored conflict returns that choice request and does not read the cloud.
+     * Resolve throws when nothing is stored.
+     * A known remote failure returns [WeightSyncResult.Unavailable]. Anything else throws.
+     */
+    suspend fun sync(command: WeightSyncCommand): WeightSyncResult
 
-    fun observePendingOps(): Flow<List<WeightSyncOp>>
-
-    suspend fun pendingOps(): List<WeightSyncOp>
-
-    suspend fun clearPendingOps()
-
-    suspend fun removePendingOps(dates: List<LocalDate>)
-
-    fun observeSyncState(databaseName: String): Flow<WeightSyncState?>
-
-    suspend fun syncState(databaseName: String): WeightSyncState?
-
-    suspend fun saveSyncState(state: WeightSyncState)
+    suspend fun dismissSummary()
 
     fun phases(): Flow<List<DietPhaseRecord>>
 

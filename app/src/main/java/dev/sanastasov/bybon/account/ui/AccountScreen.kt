@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.account.data.CredentialManagerGoogleSignIn
+import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
+import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.main.MainModule
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
@@ -38,7 +40,7 @@ fun MainModule.AccountScreen(onNavigateBack: () -> Unit) {
             accountAuth,
             CredentialManagerGoogleSignIn(context),
             firebaseEnvName,
-            weightBackup,
+            bodyWeightRepository,
             it.coroutineScope,
         )
     }
@@ -100,19 +102,20 @@ fun AccountScreenContent(
             },
         )
     }
-    if (uiState.conflict) {
-        WeightConflictDialog(onAction)
+    val conflict = uiState.conflict
+    if (conflict != null) {
+        WeightConflictDialog(conflict, onAction)
     } else {
         uiState.importSummary?.let { summary -> WeightImportDialog(summary, onAction) }
     }
 }
 
 @Composable
-private fun WeightConflictDialog(onAction: (AccountAction) -> Unit) {
+private fun WeightConflictDialog(conflict: WeightConflict, onAction: (AccountAction) -> Unit) {
     AlertDialog(
         onDismissRequest = {},
         title = { Text("Weights differ") },
-        text = { Text("The backup would change weights saved on this phone.") },
+        text = { Text(conflict.detail()) },
         confirmButton = {
             Column {
                 TextButton({ onAction(AccountAction.UseTheBackup) }) { Text("Use the backup") }
@@ -139,7 +142,7 @@ private fun BackupStatus(uiState: AccountUiState) {
 }
 
 @Composable
-private fun WeightImportDialog(summary: AccountImportSummary, onAction: (AccountAction) -> Unit) {
+private fun WeightImportDialog(summary: WeightImportSummary, onAction: (AccountAction) -> Unit) {
     val noun = if (summary.count == 1) "weight" else "weights"
     AlertDialog(
         onDismissRequest = { onAction(AccountAction.DismissImportSummary) },
