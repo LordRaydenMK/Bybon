@@ -20,13 +20,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -96,7 +94,8 @@ fun NumberInputField(
             imeAction = ImeAction.Done,
         ),
         onKeyboardAction = {
-            dismissNumberInputIme(focusManager, keyboardController)
+            focusManager.clearFocus()
+            keyboardController?.hide()
         },
         lineLimits = TextFieldLineLimits.SingleLine,
         colors = TextFieldDefaults.colors(
@@ -107,14 +106,6 @@ fun NumberInputField(
         ),
         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp),
     )
-}
-
-internal fun dismissNumberInputIme(
-    focusManager: FocusManager,
-    keyboardController: SoftwareKeyboardController?,
-) {
-    focusManager.clearFocus()
-    keyboardController?.hide()
 }
 
 private val NumberInputHeight = 40.dp
