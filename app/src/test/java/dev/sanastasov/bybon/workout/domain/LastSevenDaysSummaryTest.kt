@@ -217,15 +217,32 @@ class LastSevenDaysSummaryTest {
 
     @Test
     fun `falls back to body part when primary muscles are missing`() {
-        val definition = catalogExercise("bench-press").copy(primaryMuscles = emptyList())
-        val session = sessionOn(
+        val chest = sessionOn(
             today,
-            completedExercise("bench-press", 60f to 8).copy(exerciseDefinition = definition),
+            completedExercise("bench-press", 60f to 8).withoutPrimaryMuscles(),
+        )
+        val upperArms = sessionOn(
+            today,
+            completedExercise("incline-db-curl", 10f to 12).withoutPrimaryMuscles(),
+        )
+        val fullBody = sessionOn(
+            today,
+            completedExercise("back-lever", 20f to 5).withoutPrimaryMuscles(),
         )
 
-        val summary = listOf(session).lastSevenDaysSummary(today)
-
-        assert(summary.musclesTrained == listOf(TrainedMuscle.Chest))
+        assert(
+            listOf(chest).lastSevenDaysSummary(today).musclesTrained ==
+                listOf(TrainedMuscle.Chest),
+        )
+        assert(
+            listOf(upperArms).lastSevenDaysSummary(today).musclesTrained ==
+                listOf(TrainedMuscle.Biceps, TrainedMuscle.Triceps),
+        )
+        assert(
+            listOf(fullBody).lastSevenDaysSummary(today).musclesTrained ==
+                listOf(TrainedMuscle.FullBody),
+        )
+        assert(TrainedMuscle.FullBody.label == "Full body")
     }
 
     @Test
@@ -254,6 +271,10 @@ class LastSevenDaysSummaryTest {
         assert(summary.performance == ExercisePerformanceChange(0, 0, 0))
         assert(summary.musclesTrained.isEmpty())
     }
+
+    private fun WorkoutExercise.withoutPrimaryMuscles() = copy(
+        exerciseDefinition = exerciseDefinition.copy(primaryMuscles = emptyList()),
+    )
 
     private fun sessionOn(date: LocalDate, vararg exercises: WorkoutExercise) = completedSession(
         planId = "plan",

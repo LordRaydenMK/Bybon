@@ -9,6 +9,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
@@ -148,7 +149,7 @@ internal fun LastSevenDaysSummary.toUi(): LastSevenDaysSummaryUi = LastSevenDays
     performance = performance.takeIf { it.comparableCount > 0 }?.let {
         LastSevenDaysPerformanceUi(it.improved, it.maintained, it.declined)
     },
-    musclesTrained = musclesTrained.map { it.name },
+    musclesTrained = musclesTrained.map { it.label },
 )
 
 internal fun formatLastSevenDaysRange(start: LocalDate, end: LocalDate): String {

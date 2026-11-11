@@ -34,7 +34,14 @@ enum class TrainedMuscle {
     Core,
     Calves,
     Forearms,
+    FullBody,
 }
+
+val TrainedMuscle.label: String
+    get() = when (this) {
+        TrainedMuscle.FullBody -> "Full body"
+        else -> name
+    }
 
 fun List<WorkoutSession>.lastSevenDaysSummary(today: LocalDate): LastSevenDaysSummary {
     val startDate = today.minusDays(6)
@@ -122,7 +129,8 @@ private fun BodyPart.toTrainedMuscles(): Set<TrainedMuscle> = when (this) {
     BodyPart.Shoulders -> setOf(TrainedMuscle.Shoulders)
     BodyPart.Core -> setOf(TrainedMuscle.Core)
     BodyPart.LowerArms -> setOf(TrainedMuscle.Forearms)
-    BodyPart.UpperArms, BodyPart.FullBody -> emptySet()
+    BodyPart.UpperArms -> setOf(TrainedMuscle.Biceps, TrainedMuscle.Triceps)
+    BodyPart.FullBody -> setOf(TrainedMuscle.FullBody)
 }
 
 private val PRIMARY_MUSCLE_TO_TRAINED = mapOf(
