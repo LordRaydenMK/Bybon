@@ -1,13 +1,9 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
@@ -31,8 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,14 +36,10 @@ import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
-import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.SessionMeta
-import dev.sanastasov.bybon.workout.ui.WarmupLoadRow
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmTrendCard
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
-import dev.sanastasov.bybon.workout.ui.formatLoadedSet
-import dev.sanastasov.bybon.workout.ui.formatOneRmDelta
 
 @Composable
 fun WorkoutModule.WorkoutSummaryScreen(
@@ -194,7 +184,7 @@ private fun SummaryList(
         state.exercises.forEach { exercise ->
             item(key = exercise.id) {
                 Card(Modifier.fillMaxWidth()) {
-                    ExerciseSummaryCard(exercise, onAction)
+                    WorkoutSummaryExerciseCard(exercise, onAction)
                 }
             }
             if (exercise.oneRmTrend.isNotEmpty()) {
@@ -207,79 +197,6 @@ private fun SummaryList(
             }
         }
     }
-}
-
-@Composable
-private fun ExerciseSummaryCard(
-    exercise: WorkoutSummaryExerciseUi,
-    onAction: (WorkoutSummaryAction) -> Unit,
-) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Spacer(Modifier.height(8.dp))
-        Text(
-            exercise.name,
-            Modifier
-                .fillMaxWidth()
-                .clickable(
-                    role = Role.Button,
-                    onClickLabel = "Open exercise details",
-                    onClick = {
-                        onAction(WorkoutSummaryAction.OnOpenExerciseDetails(exercise.id))
-                    },
-                ),
-            fontWeight = FontWeight.Bold,
-        )
-        exercise.notes.forEach { note ->
-            Text(
-                note,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        val workSets = exercise.sets.filterNot { it.isWarmup }
-        exercise.sets.filter { it.isWarmup }.forEach { set ->
-            WarmupLoadRow(
-                formatLoadedSet(set.weightKg, set.reps),
-                Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            )
-        }
-        if (workSets.isNotEmpty()) {
-            SetLoadOneRmHeader()
-            workSets.forEach { set ->
-                WorkSetRow(set)
-            }
-        }
-        exercise.personalRecord?.let { personalRecord ->
-            if (workSets.isEmpty()) SetLoadOneRmHeader()
-            AllTimeOneRmRow(personalRecord)
-        }
-    }
-}
-
-@Composable
-private fun WorkSetRow(set: WorkoutSummarySetUi) {
-    val number = checkNotNull(set.number)
-    SetLoadOneRmRow(
-        leading = "$number.",
-        weightKg = set.weightKg,
-        reps = set.reps,
-        oneRm = set.oneRm,
-        rowDescription = set.contentDescription(),
-        previousOneRm = set.previousOneRm,
-    )
-}
-
-internal fun WorkoutSummarySetUi.contentDescription(): String {
-    val number = checkNotNull(number)
-    val load = formatLoadedSet(weightKg, reps)
-    val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
-    return "$number. $load, $rm, ${formatOneRmDelta(oneRm, previousOneRm)}"
 }
 
 @Preview
@@ -319,6 +236,10 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                 ),
             ),
             personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026"),
+            previousWorkoutLabel = "Previous workout: 6 Aug 2026 · 7 days ago",
+            previousTopSetOneRm = Weight.kilograms(57.86f),
+            previousAverageOneRm = Weight.kilograms(57.86f),
+            volumeLoadLabel = "1080 kg",
             oneRmTrend = listOf(
                 ExerciseOneRmPointUi(
                     "12 Jul",
@@ -351,29 +272,35 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
             name = "Incline Dumbbell Press",
             notes = listOf("Rep range 11-15"),
             sets = listOf(
+                WorkoutSummarySetUi(null, "10", 8, null, isWarmup = true),
+                WorkoutSummarySetUi(null, "17.5", 3, null, isWarmup = true),
                 WorkoutSummarySetUi(
                     1,
-                    "20",
-                    13,
-                    Weight.kilograms(28.67f),
-                    previousOneRm = Weight.kilograms(22.93f),
+                    "17.5",
+                    15,
+                    Weight.kilograms(26.25f),
+                    previousOneRm = Weight.kilograms(25.67f),
                 ),
                 WorkoutSummarySetUi(
                     2,
-                    "20",
-                    11,
-                    Weight.kilograms(27.33f),
-                    previousOneRm = Weight.kilograms(21.33f),
+                    "17.5",
+                    13,
+                    Weight.kilograms(25.08f),
+                    previousOneRm = Weight.kilograms(24.5f),
                 ),
                 WorkoutSummarySetUi(
                     3,
-                    "20",
-                    8,
-                    Weight.kilograms(24.83f),
-                    previousOneRm = Weight.kilograms(19.86f),
+                    "17.5",
+                    11,
+                    Weight.kilograms(23.92f),
+                    previousOneRm = Weight.kilograms(23.33f),
                 ),
             ),
-            personalRecord = PersonalRecordUi(Weight.kilograms(28.67f), "13 Aug 2026"),
+            personalRecord = PersonalRecordUi(Weight.kilograms(26.25f), "13 Aug 2026"),
+            previousWorkoutLabel = "Previous workout: 6 Nov 2026 · 4 days ago",
+            previousTopSetOneRm = Weight.kilograms(25.67f),
+            previousAverageOneRm = Weight.kilograms(24.5f),
+            volumeLoadLabel = "682.5 kg",
             oneRmTrend = listOf(
                 ExerciseOneRmPointUi(
                     "12 Jul",

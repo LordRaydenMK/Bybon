@@ -27,18 +27,30 @@ private fun WorkoutExercise.withoutPrevious(): WorkoutExercise = copy(
     sets = sets.map { it.copy(previous = null) },
 )
 
+data class CompletedExerciseOccurrence(
+    val startedAt: LocalDateTime,
+    val exercise: WorkoutExercise,
+)
+
 fun List<WorkoutSession>.latestCompletedExercise(
     exerciseId: String,
     before: LocalDateTime? = null,
-): WorkoutExercise? = mapNotNull { session ->
+): WorkoutExercise? = latestCompletedExerciseOccurrence(exerciseId, before)?.exercise
+
+fun List<WorkoutSession>.latestCompletedExerciseOccurrence(
+    exerciseId: String,
+    before: LocalDateTime? = null,
+): CompletedExerciseOccurrence? = mapNotNull { session ->
     if (session.state !is WorkoutState.Completed) {
         null
     } else if (before != null && !session.startedAt.isBefore(before)) {
         null
     } else {
-        session.exercises.firstOrNull { it.id == exerciseId }?.let { session.startedAt to it }
+        session.exercises.firstOrNull { it.id == exerciseId }?.let { exercise ->
+            CompletedExerciseOccurrence(session.startedAt, exercise)
+        }
     }
-}.maxByOrNull { it.first }?.second
+}.maxByOrNull { it.startedAt }
 
 private fun ExerciseSet.toPreviousPerformance(): PreviousSetPerformance =
     PreviousSetPerformance(weight, reps, bodyWeight)

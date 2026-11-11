@@ -64,6 +64,7 @@ class WorkoutSummaryViewModelTest {
                     ),
                     personalRecord = session.personalRecordUi("romanian-deadlift"),
                     oneRmTrend = session.oneRmTrend("romanian-deadlift"),
+                    volumeLoadLabel = "1035 kg",
                 ),
                 WorkoutSummaryExerciseUi(
                     id = "incline-db-press",
@@ -75,6 +76,7 @@ class WorkoutSummaryViewModelTest {
                     ),
                     personalRecord = session.personalRecordUi("incline-db-press"),
                     oneRmTrend = session.oneRmTrend("incline-db-press"),
+                    volumeLoadLabel = "640 kg",
                 ),
             ),
         )
@@ -282,7 +284,7 @@ class WorkoutSummaryViewModelTest {
     }
 
     @Test
-    fun `summary incline set from the import sample has a signed delta`() {
+    fun `summary incline session reports e1RM vs previous workout`() {
         val previous = completedSession(
             planId = "full-body-b",
             planName = "Full Body B",
@@ -296,8 +298,68 @@ class WorkoutSummaryViewModelTest {
             exercises = listOf(completedExercise("incline-db-press", 20f to 14)),
         )
 
-        val set = listOf(previous, session).toSummarySets(session).single()
-        assert(set.contentDescription() == "1. 20 kg x 14, 29.33 kg 1RM, +0.66kg")
+        val exercise = listOf(previous, session).toSummaryExercise(session)
+        assert(exercise.previousWorkoutLabel == "Previous workout: 13 Aug 2026 · 7 days ago")
+        assert(exercise.topSetOneRm == oneRm(20f, 14))
+        assert(exercise.averageOneRm == oneRm(20f, 14))
+        assert(exercise.previousTopSetOneRm == oneRm(20f, 13))
+        assert(exercise.previousAverageOneRm == oneRm(20f, 13))
+        assert(exercise.volumeLoadLabel == "280 kg")
+        assert(exercise.sets.single().contentDescription() == "1. 20 kg × 14, 29.33 kg e1RM")
+    }
+
+    @Test
+    fun `summary volume ignores blank load and averages working-set e1RM`() {
+        val previous = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 11, 6, 18, 0),
+            exercises = listOf(
+                completedExercise("incline-db-press", 17.5f to 14, 17.5f to 12, 17.5f to 10),
+            ),
+        )
+        val session = completedSession(
+            planId = "full-body-b",
+            planName = "Full Body B",
+            startedAt = LocalDateTime.of(2026, 11, 10, 18, 0),
+            exercises = listOf(
+                completedExercise(
+                    "incline-db-press",
+                    17.5f to 15,
+                    17.5f to 13,
+                    17.5f to 11,
+                ).copy(
+                    warmupSets = listOf(
+                        ExerciseSet(
+                            catalogExercise("incline-db-press"),
+                            Weight.kilograms(10),
+                            8,
+                            SetState.Completed(),
+                        ),
+                        ExerciseSet(
+                            catalogExercise("incline-db-press"),
+                            null,
+                            3,
+                            SetState.Completed(),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        val exercise = listOf(previous, session).toSummaryExercise(session, now = session.startedAt)
+        assert(exercise.previousWorkoutLabel == "Previous workout: 6 Nov 2026 · 4 days ago")
+        assert(exercise.workSets.size == 3)
+        assert(exercise.totalReps == 39)
+        assert(exercise.volumeLoadLabel == "682.5 kg")
+        assert(exercise.topSetOneRm == oneRm(17.5f, 15))
+        val expectedAverage = listOf(
+            oneRm(17.5f, 15),
+            oneRm(17.5f, 13),
+            oneRm(17.5f, 11),
+        ).map { it.kilogramsValue.toDouble() }.average()
+        assert(exercise.averageOneRm == Weight.kilograms(expectedAverage.toFloat()))
+        assert(exercise.previousTopSetOneRm == oneRm(17.5f, 14))
     }
 
     @Test
@@ -485,7 +547,12 @@ class WorkoutSummaryViewModelTest {
 
     private fun List<WorkoutSession>.toSummarySets(
         session: WorkoutSession,
-    ): List<WorkoutSummarySetUi> = session.toSummaryUi(this).exercises.single().sets
+    ): List<WorkoutSummarySetUi> = toSummaryExercise(session).sets
+
+    private fun List<WorkoutSession>.toSummaryExercise(
+        session: WorkoutSession,
+        now: LocalDateTime = session.startedAt,
+    ): WorkoutSummaryExerciseUi = session.toSummaryUi(this, now).exercises.single()
 
     private fun oneRm(kg: Float, reps: Int): Weight = Weight.kilograms(estimateOneRmKg(kg, reps))
 

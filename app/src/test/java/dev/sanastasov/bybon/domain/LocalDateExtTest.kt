@@ -34,6 +34,10 @@ class LocalDateExtTest {
             LocalDate.of(2026, 7, 9).toDisplayDateWithRelative(today) ==
                 "9 Jul 2026 (2 months ago)",
         )
+        assert(
+            LocalDate.of(2026, 11, 6).toDisplayDateDotRelative(LocalDate.of(2026, 11, 10)) ==
+                "6 Nov 2026 · 4 days ago",
+        )
     }
 
     @Test
