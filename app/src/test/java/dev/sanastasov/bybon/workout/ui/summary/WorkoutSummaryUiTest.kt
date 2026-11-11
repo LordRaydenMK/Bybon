@@ -13,14 +13,14 @@ class WorkoutSummaryUiTest {
 
     @Test
     fun `missing load content description uses dashes`() {
-        val set = WorkoutSummarySetUi(1, "-", 8, null)
+        val set = WorkoutSummarySetUi(1, null, 8, null)
         assert(set.contentDescription() == "1. - × 8, -")
     }
 
     @Test
     fun `summary load uses times sign and kilograms`() {
         assert(formatSummaryLoad("17.5", 15) == "17.5 kg × 15")
-        assert(formatSummaryLoad("-", 8) == "- × 8")
+        assert(formatSummaryLoad(null, 8) == "- × 8")
     }
 
     @Test
@@ -34,6 +34,5 @@ class WorkoutSummaryUiTest {
                 "↓ 1 kg vs previous",
         )
         assert(formatOneRmVsPrevious(Weight.kilograms(25f), Weight.kilograms(25f)) == null)
-        assert(formatOneRmVsPrevious(Weight.kilograms(25f), null) == null)
     }
 }

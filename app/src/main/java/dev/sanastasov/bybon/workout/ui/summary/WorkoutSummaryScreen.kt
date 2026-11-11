@@ -235,11 +235,13 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     previousOneRm = Weight.kilograms(57.86f),
                 ),
             ),
-            personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026"),
-            previousWorkoutLabel = "Previous workout: 6 Aug 2026 · 7 days ago",
-            previousTopSetOneRm = Weight.kilograms(57.86f),
-            previousAverageOneRm = Weight.kilograms(57.86f),
             volumeLoadLabel = "1080 kg",
+            personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026"),
+            previous = WorkoutSummaryPreviousUi(
+                workoutLabel = "Previous workout: 6 Aug 2026 · 7 days ago",
+                topSetOneRm = Weight.kilograms(57.86f),
+                averageOneRm = Weight.kilograms(57.86f),
+            ),
             oneRmTrend = listOf(
                 ExerciseOneRmPointUi(
                     "12 Jul",
@@ -296,11 +298,13 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     previousOneRm = Weight.kilograms(23.33f),
                 ),
             ),
-            personalRecord = PersonalRecordUi(Weight.kilograms(26.25f), "13 Aug 2026"),
-            previousWorkoutLabel = "Previous workout: 6 Nov 2026 · 4 days ago",
-            previousTopSetOneRm = Weight.kilograms(25.67f),
-            previousAverageOneRm = Weight.kilograms(24.5f),
             volumeLoadLabel = "682.5 kg",
+            personalRecord = PersonalRecordUi(Weight.kilograms(26.25f), "13 Aug 2026"),
+            previous = WorkoutSummaryPreviousUi(
+                workoutLabel = "Previous workout: 6 Nov 2026 · 4 days ago",
+                topSetOneRm = Weight.kilograms(25.67f),
+                averageOneRm = Weight.kilograms(24.5f),
+            ),
             oneRmTrend = listOf(
                 ExerciseOneRmPointUi(
                     "12 Jul",

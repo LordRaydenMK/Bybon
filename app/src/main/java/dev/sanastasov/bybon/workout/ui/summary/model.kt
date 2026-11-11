@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.summary
 
 import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.domain.toDisplayDateDotRelative
+import dev.sanastasov.bybon.workout.domain.CompletedExerciseOccurrence
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
@@ -37,13 +38,11 @@ data class WorkoutSummaryExerciseUi(
     val id: String,
     val name: String,
     val sets: List<WorkoutSummarySetUi>,
+    val volumeLoadLabel: String,
     val notes: List<String> = emptyList(),
     val personalRecord: PersonalRecordUi? = null,
     val oneRmTrend: List<ExerciseOneRmPointUi> = emptyList(),
-    val previousWorkoutLabel: String? = null,
-    val previousTopSetOneRm: Weight? = null,
-    val previousAverageOneRm: Weight? = null,
-    val volumeLoadLabel: String = "0 kg",
+    val previous: WorkoutSummaryPreviousUi? = null,
 ) {
     val workSets: List<WorkoutSummarySetUi> get() = sets.filterNot { it.isWarmup }
 
@@ -54,9 +53,15 @@ data class WorkoutSummaryExerciseUi(
     val totalReps: Int get() = workSets.sumOf { it.reps }
 }
 
+data class WorkoutSummaryPreviousUi(
+    val workoutLabel: String,
+    val topSetOneRm: Weight,
+    val averageOneRm: Weight,
+)
+
 data class WorkoutSummarySetUi(
     val number: Int?,
-    val weightKg: String,
+    val weightKg: String?,
     val reps: Int,
     val oneRm: Weight?,
     val isWarmup: Boolean = false,
@@ -122,21 +127,29 @@ private fun WorkoutExercise.toSummaryExerciseUi(
     val warmups = matched.warmupSets.orEmpty().map { it.toWarmupSummaryUi() }
     val work = matched.sets.mapIndexed { index, set -> set.toWorkSummaryUi(index + 1) }
     val performance = completedSessions.exercisePerformance(id, now)
-    val previousWorkoutLabel = previousOccurrence?.let { occurrence ->
-        val date = occurrence.startedAt.toLocalDate().toDisplayDateDotRelative(now.toLocalDate())
-        "Previous workout: $date"
-    }
     return WorkoutSummaryExerciseUi(
         id = id,
         name = exerciseDefinition.name,
         sets = warmups + work,
+        volumeLoadLabel = matched.sets.volumeLoadLabel(),
         notes = notes,
         personalRecord = performance.personalRecord?.toPersonalRecordUi(),
         oneRmTrend = performance.recentSessions.toOneRmTrend(),
-        previousWorkoutLabel = previousWorkoutLabel,
-        previousTopSetOneRm = previous?.topSet?.oneRm,
-        previousAverageOneRm = previous?.sets?.mapNotNull { it.oneRm }?.averageWeight(),
-        volumeLoadLabel = matched.sets.volumeLoadLabel(),
+        previous = previousOccurrence?.toPreviousUi(now),
+    )
+}
+
+private fun CompletedExerciseOccurrence.toPreviousUi(
+    now: LocalDateTime,
+): WorkoutSummaryPreviousUi? {
+    val topSetOneRm = exercise.topSet.oneRm
+    val averageOneRm = exercise.sets.mapNotNull { it.oneRm }.averageWeight()
+    if (topSetOneRm == null || averageOneRm == null) return null
+    val date = startedAt.toLocalDate().toDisplayDateDotRelative(now.toLocalDate())
+    return WorkoutSummaryPreviousUi(
+        workoutLabel = "Previous workout: $date",
+        topSetOneRm = topSetOneRm,
+        averageOneRm = averageOneRm,
     )
 }
 
@@ -154,7 +167,7 @@ private fun List<ExerciseSet>.volumeLoadLabel(): String {
 
 private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = null,
-    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
+    weightKg = weight?.toLoadLabel(exerciseDefinition.equipment),
     reps = reps,
     oneRm = null,
     isWarmup = true,
@@ -162,7 +175,7 @@ private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummar
 
 private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = number,
-    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
+    weightKg = weight?.toLoadLabel(exerciseDefinition.equipment),
     reps = reps,
     oneRm = oneRm,
     previousOneRm = previousOneRm,

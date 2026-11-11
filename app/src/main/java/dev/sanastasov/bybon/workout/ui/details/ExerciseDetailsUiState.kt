@@ -1,7 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.details
 
 import dev.sanastasov.bybon.domain.toDisplayDate
-import dev.sanastasov.bybon.domain.toDisplayDateWithRelative
+import dev.sanastasov.bybon.domain.toDisplayDateDotRelative
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ExerciseImages
 import dev.sanastasov.bybon.workout.domain.ExercisePerformance
@@ -97,7 +97,7 @@ internal fun PersonalRecord.toPersonalRecordUi(today: LocalDate? = null): Person
         dateLabel = if (today == null) {
             date.toDisplayDate()
         } else {
-            date.toDisplayDateWithRelative(today)
+            date.toDisplayDateDotRelative(today)
         },
     )
 }

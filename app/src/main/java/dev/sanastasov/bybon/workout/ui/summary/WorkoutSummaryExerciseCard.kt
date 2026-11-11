@@ -62,7 +62,7 @@ internal fun WorkoutSummaryExerciseCard(
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
             )
-            exercise.previousWorkoutLabel?.let { PreviousWorkoutRow(it) }
+            exercise.previous?.let { PreviousWorkoutRow(it.workoutLabel) }
             exercise.notes.forEach { note ->
                 Text(
                     note,
@@ -161,13 +161,13 @@ private fun OneRmHighlights(exercise: WorkoutSummaryExerciseUi) {
         OneRmHighlight(
             title = "Top-set e1RM",
             oneRm = exercise.topSetOneRm,
-            previousOneRm = exercise.previousTopSetOneRm,
+            previousOneRm = exercise.previous?.topSetOneRm,
             modifier = Modifier.weight(1f),
         )
         OneRmHighlight(
             title = "Average e1RM",
             oneRm = exercise.averageOneRm,
-            previousOneRm = exercise.previousAverageOneRm,
+            previousOneRm = exercise.previous?.averageOneRm,
             modifier = Modifier.weight(1f),
         )
     }
@@ -181,8 +181,16 @@ private fun OneRmHighlight(
     modifier: Modifier = Modifier,
 ) {
     val value = oneRm?.let { "${it.kilograms} kg" } ?: MISSING_LOAD_LABEL
-    val vsPrevious = formatOneRmVsPrevious(oneRm, previousOneRm)
-    val deltaHundredths = oneRmDeltaHundredths(oneRm, previousOneRm)
+    val vsPrevious = if (oneRm != null && previousOneRm != null) {
+        formatOneRmVsPrevious(oneRm, previousOneRm)
+    } else {
+        null
+    }
+    val deltaHundredths = if (oneRm != null && previousOneRm != null) {
+        oneRmDeltaHundredths(oneRm, previousOneRm)
+    } else {
+        null
+    }
     Column(
         modifier.clearAndSetSemantics {
             contentDescription = listOfNotNull(title, value, vsPrevious).joinToString(", ")
@@ -245,21 +253,16 @@ private fun TotalRow(label: String, value: String) {
     }
 }
 
-internal fun formatSummaryLoad(weightKg: String, reps: Int): String {
-    val load = if (weightKg == MISSING_LOAD_LABEL) MISSING_LOAD_LABEL else "$weightKg kg"
+internal fun formatSummaryLoad(weightKg: String?, reps: Int): String {
+    val load = weightKg?.let { "$it kg" } ?: MISSING_LOAD_LABEL
     return "$load × $reps"
 }
 
-internal fun oneRmDeltaHundredths(current: Weight?, previous: Weight?): Int? =
-    if (current == null || previous == null) {
-        null
-    } else {
-        (current.kilogramsValue * 100f).roundToInt() -
-            (previous.kilogramsValue * 100f).roundToInt()
-    }
+internal fun oneRmDeltaHundredths(current: Weight, previous: Weight): Int =
+    (current.kilogramsValue * 100f).roundToInt() - (previous.kilogramsValue * 100f).roundToInt()
 
-internal fun formatOneRmVsPrevious(current: Weight?, previous: Weight?): String? {
-    val deltaHundredths = oneRmDeltaHundredths(current, previous)?.takeIf { it != 0 } ?: return null
+internal fun formatOneRmVsPrevious(current: Weight, previous: Weight): String? {
+    val deltaHundredths = oneRmDeltaHundredths(current, previous).takeIf { it != 0 } ?: return null
     val amount = formatOneRmKg(abs(deltaHundredths) / 100f)
     val arrow = if (deltaHundredths > 0) "↑" else "↓"
     return "$arrow $amount kg vs previous"

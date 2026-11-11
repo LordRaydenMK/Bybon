@@ -189,7 +189,7 @@ class WorkoutSummaryViewModelTest {
         )
 
         val content = session.toSummaryUi()
-        assert(content.exercises.single().sets.single().weightKg == "-")
+        assert(content.exercises.single().sets.single().weightKg == null)
         assert(content.exercises.single().sets.single().reps == 8)
         assert(content.exercises.single().sets.single().oneRm == null)
         assert(content.exercises.single().sets.single().previousOneRm == null)
@@ -299,11 +299,11 @@ class WorkoutSummaryViewModelTest {
         )
 
         val exercise = listOf(previous, session).toSummaryExercise(session)
-        assert(exercise.previousWorkoutLabel == "Previous workout: 13 Aug 2026 · 7 days ago")
+        assert(exercise.previous?.workoutLabel == "Previous workout: 13 Aug 2026 · 7 days ago")
         assert(exercise.topSetOneRm == oneRm(20f, 14))
         assert(exercise.averageOneRm == oneRm(20f, 14))
-        assert(exercise.previousTopSetOneRm == oneRm(20f, 13))
-        assert(exercise.previousAverageOneRm == oneRm(20f, 13))
+        assert(exercise.previous?.topSetOneRm == oneRm(20f, 13))
+        assert(exercise.previous?.averageOneRm == oneRm(20f, 13))
         assert(exercise.volumeLoadLabel == "280 kg")
         assert(exercise.sets.single().contentDescription() == "1. 20 kg × 14, 29.33 kg e1RM")
     }
@@ -348,7 +348,7 @@ class WorkoutSummaryViewModelTest {
         )
 
         val exercise = listOf(previous, session).toSummaryExercise(session, now = session.startedAt)
-        assert(exercise.previousWorkoutLabel == "Previous workout: 6 Nov 2026 · 4 days ago")
+        assert(exercise.previous?.workoutLabel == "Previous workout: 6 Nov 2026 · 4 days ago")
         assert(exercise.workSets.size == 3)
         assert(exercise.totalReps == 39)
         assert(exercise.volumeLoadLabel == "682.5 kg")
@@ -359,7 +359,7 @@ class WorkoutSummaryViewModelTest {
             oneRm(17.5f, 11),
         ).map { it.kilogramsValue.toDouble() }.average()
         assert(exercise.averageOneRm == Weight.kilograms(expectedAverage.toFloat()))
-        assert(exercise.previousTopSetOneRm == oneRm(17.5f, 14))
+        assert(exercise.previous?.topSetOneRm == oneRm(17.5f, 14))
     }
 
     @Test
@@ -412,7 +412,7 @@ class WorkoutSummaryViewModelTest {
         assert(
             sets == listOf(
                 WorkoutSummarySetUi(null, "40", 5, null, isWarmup = true),
-                WorkoutSummarySetUi(null, "-", 6, null, isWarmup = true),
+                WorkoutSummarySetUi(null, null, 6, null, isWarmup = true),
                 WorkoutSummarySetUi(1, "80", 8, oneRm(80f, 8)),
                 WorkoutSummarySetUi(2, "80", 7, oneRm(80f, 7)),
             ),

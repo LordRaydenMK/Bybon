@@ -22,9 +22,6 @@ fun LocalDate.toDisplayDate(): String = format(DISPLAY_DATE_FORMAT)
 
 fun LocalDate.toShortDisplayDate(): String = format(SHORT_DISPLAY_DATE_FORMAT)
 
-fun LocalDate.toDisplayDateWithRelative(today: LocalDate): String =
-    "${toDisplayDate()} (${toRelativeAgo(today)})"
-
 fun LocalDate.toDisplayDateDotRelative(today: LocalDate): String =
     "${toDisplayDate()} · ${toRelativeAgo(today)}"
 

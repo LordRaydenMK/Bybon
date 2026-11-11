@@ -55,7 +55,7 @@ private fun WorkSetRow(set: WorkoutSummarySetUi) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BodyCell("$number", Modifier.weight(0.7f), TextAlign.Start)
-        BodyCell(set.weightKg, Modifier.weight(1f), TextAlign.End)
+        BodyCell(set.weightKg ?: MISSING_LOAD_LABEL, Modifier.weight(1f), TextAlign.End)
         BodyCell("${set.reps}", Modifier.weight(0.8f), TextAlign.End)
         BodyCell(set.oneRm.toOneRmColumnLabel(), Modifier.weight(1f), TextAlign.End)
     }
