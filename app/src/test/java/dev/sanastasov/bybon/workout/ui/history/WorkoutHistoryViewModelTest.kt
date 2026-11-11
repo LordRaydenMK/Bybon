@@ -19,6 +19,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.lastSevenDaysSummary
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -145,6 +146,40 @@ class WorkoutHistoryViewModelTest {
             val actual = awaitAfterLoading() as WorkoutHistoryUiState.History
             assert(actual.sessions.size == 1)
             assert(actual.sessions.single().planName == "Full Body B")
+        }
+    }
+
+    @Test
+    fun `history includes a last 7 days summary for sessions in the window`() = runTest {
+        val previous = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 10, 20, 18, 0),
+            exercises = listOf(
+                completedExercise("bench-press", 70f to 8),
+                completedExercise("squat", 110f to 5),
+            ),
+        )
+        val inWindow = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = historyToday.atTime(18, 0),
+            exercises = listOf(
+                completedExercise("bench-press", 80f to 8),
+                completedExercise("squat", 100f to 5),
+                completedExercise("iso-lat-row", 50f to 10),
+            ),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(previous, inWindow))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            val actual = awaitAfterLoading() as WorkoutHistoryUiState.History
+            val expected = listOf(previous, inWindow).lastSevenDaysSummary(historyToday).toUi()
+            assert(actual.weekSummary == expected)
+            assert(actual.weekSummary.workoutCount == 1)
+            assert(actual.weekSummary.performance == LastSevenDaysPerformanceUi(1, 0, 1))
+            assert(actual.weekSummary.musclesTrained.containsAll(listOf("Chest", "Back", "Quads")))
         }
     }
 
@@ -550,7 +585,10 @@ class WorkoutHistoryViewModelTest {
         )
 
     private fun historyState(vararg sessions: WorkoutSessionHistoryUi) =
-        WorkoutHistoryUiState.History(sessions.toList().toHistoryPeriodSections(historyToday))
+        WorkoutHistoryUiState.History(
+            emptyList<WorkoutSession>().lastSevenDaysSummary(historyToday).toUi(),
+            sessions.toList().toHistoryPeriodSections(historyToday),
+        )
 }
 
 private suspend fun ReceiveTurbine<WorkoutHistoryUiState>.awaitAfterLoading(): WorkoutHistoryUiState {

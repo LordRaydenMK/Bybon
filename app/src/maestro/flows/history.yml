@@ -26,6 +26,7 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "854 working sets imported"
 - tapOn: "Done"
 - assertVisible: "History"
+- assertVisible: "Last 7 days"
 - assertVisible: "Upper body B"
 - assertVisible: "20 Aug 2026, started 17:59, duration 00:56"
 - assertVisible: "Exercise"

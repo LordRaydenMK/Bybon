@@ -4,11 +4,71 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import java.time.LocalDate
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Test
 
 class WorkoutHistoryUiTest {
 
     private val today = LocalDate.of(2026, 11, 5)
+
+    @Test
+    fun `last 7 days range omits the start month when it matches the end`() {
+        assert(
+            formatLastSevenDaysRange(
+                LocalDate.of(2026, 11, 5),
+                LocalDate.of(2026, 11, 11),
+            ) == "5–11 Nov 2026",
+        )
+    }
+
+    @Test
+    fun `last 7 days range keeps both months across a month boundary`() {
+        assert(
+            formatLastSevenDaysRange(
+                LocalDate.of(2026, 10, 30),
+                LocalDate.of(2026, 11, 5),
+            ) == "30 Oct–5 Nov 2026",
+        )
+    }
+
+    @Test
+    fun `last 7 days range keeps both years across a year boundary`() {
+        assert(
+            formatLastSevenDaysRange(
+                LocalDate.of(2025, 12, 30),
+                LocalDate.of(2026, 1, 5),
+            ) == "30 Dec 2025–5 Jan 2026",
+        )
+    }
+
+    @Test
+    fun `training time omits zero hours or minutes`() {
+        assert(0.seconds.formatTrainingTime() == "0m")
+        assert(18.minutes.formatTrainingTime() == "18m")
+        assert(2.hours.formatTrainingTime() == "2h")
+        assert((4.hours + 18.minutes).formatTrainingTime() == "4h 18m")
+    }
+
+    @Test
+    fun `last 7 days content description includes stats performance and muscles`() {
+        val summary = LastSevenDaysSummaryUi(
+            dateRange = "5–11 Nov 2026",
+            workoutCount = 3,
+            trainingTime = "4h 18m",
+            workingSetCount = 42,
+            totalReps = 386,
+            performance = LastSevenDaysPerformanceUi(8, 5, 2),
+            musclesTrained = listOf("Chest", "Back"),
+        )
+        assert(
+            summary.contentDescription() ==
+                "Last 7 days, 5–11 Nov 2026, 3 workouts, 4h 18m training time, " +
+                "42 working sets, 386 total reps, 8 improved, 5 maintained, 2 declined, " +
+                "muscles trained Chest, Back",
+        )
+    }
 
     @Test
     fun `top set content description names load and 1RM`() {

@@ -64,10 +64,15 @@ fun WorkoutHistoryTab(
     Box(modifier.fillMaxSize()) {
         when (uiState) {
             WorkoutHistoryUiState.Loading -> LoadingIndicator()
+
             WorkoutHistoryUiState.Empty -> EmptyHistory(onImportHistoryClick)
+
             WorkoutHistoryUiState.Importing -> ImportingIndicator()
+
             is WorkoutHistoryUiState.Summary -> ImportSummary(uiState.summary, onImportDone)
-            is WorkoutHistoryUiState.History -> HistoryList(uiState.sections, onSessionClick)
+
+            is WorkoutHistoryUiState.History ->
+                HistoryList(uiState.weekSummary, uiState.sections, onSessionClick)
         }
     }
 }
@@ -169,6 +174,7 @@ private fun ImportSummary(summary: ImportSummaryUi, onImportDone: () -> Unit) {
 
 @Composable
 private fun HistoryList(
+    weekSummary: LastSevenDaysSummaryUi,
     sections: List<WorkoutHistoryPeriodSection>,
     onSessionClick: (WorkoutSessionId) -> Unit,
 ) {
@@ -178,6 +184,9 @@ private fun HistoryList(
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        item(key = "last-7-days") {
+            LastSevenDaysSummaryCard(weekSummary)
+        }
         sections.forEach { section ->
             item(key = section.key) {
                 Text(
@@ -325,6 +334,7 @@ private fun WorkoutHistoryContentPreview() {
     Surface {
         WorkoutHistoryTab(
             uiState = WorkoutHistoryUiState.History(
+                previewWeekSummary(),
                 previewHistorySessions().toHistoryPeriodSections(LocalDate.now()),
             ),
             onSessionClick = {},
@@ -333,6 +343,28 @@ private fun WorkoutHistoryContentPreview() {
         )
     }
 }
+
+private fun previewWeekSummary() = LastSevenDaysSummaryUi(
+    dateRange = "5–11 Nov 2026",
+    workoutCount = 3,
+    trainingTime = "4h 18m",
+    workingSetCount = 42,
+    totalReps = 386,
+    performance = LastSevenDaysPerformanceUi(
+        improved = 8,
+        maintained = 5,
+        declined = 2,
+    ),
+    musclesTrained = listOf(
+        "Chest",
+        "Back",
+        "Quads",
+        "Hamstrings",
+        "Shoulders",
+        "Biceps",
+        "Triceps",
+    ),
+)
 
 private fun previewHistorySessions(): List<WorkoutSessionHistoryUi> {
     val today = LocalDate.now()
