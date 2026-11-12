@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeAccountAuth(
     initial: AccountUser? = null,
+    private val signInError: Throwable? = null,
 ) : AccountAuth {
 
     private val current = MutableStateFlow(initial)
@@ -16,6 +17,7 @@ class FakeAccountAuth(
     override fun user(): Flow<AccountUser?> = current
 
     override suspend fun signInWithIdToken(idToken: String) {
+        signInError?.let { throw it }
         current.value = AccountUser("$idToken@example.com")
     }
 

@@ -1,7 +1,10 @@
 package dev.sanastasov.bybon.account.data
 
 import com.google.firebase.FirebaseException
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import dev.sanastasov.bybon.account.domain.AccountAuth
@@ -28,14 +31,23 @@ class FirebaseAccountAuth(
         try {
             val credential = GoogleAuthProvider.getCredential(idToken, null)
             auth.signInWithCredential(credential).await()
-        } catch (_: FirebaseException) {
-            throw SignInFailure.Failed
+        } catch (e: FirebaseException) {
+            throw e.toSignInFailureOrRethrow()
         }
     }
 
     override suspend fun signOut() {
         auth.signOut()
     }
+}
+
+internal fun FirebaseException.toSignInFailureOrRethrow(): SignInFailure = when (this) {
+    is FirebaseAuthException,
+    is FirebaseNetworkException,
+    is FirebaseTooManyRequestsException,
+    -> SignInFailure.Failed(this)
+
+    else -> throw this
 }
 
 private fun FirebaseUser.toAccountUser(): AccountUser =
