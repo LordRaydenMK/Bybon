@@ -21,7 +21,6 @@ import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
 import dev.sanastasov.bybon.bodyweight.sync.WeightSyncInput
 import dev.sanastasov.bybon.bodyweight.sync.WeightSyncPlan
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
-import dev.sanastasov.bybon.bodyweight.sync.isSyncableWeight
 import dev.sanastasov.bybon.bodyweight.sync.reconcileWeights
 import dev.sanastasov.bybon.bodyweight.sync.toImportSummary
 import java.io.IOException
@@ -431,9 +430,10 @@ private fun BodyWeightEntry.toUpload(): WeightUpload = WeightUpload(
     deleted = false,
 )
 
-private fun List<RemoteWeight>.toLiveEntries(): List<BodyWeightEntry> =
-    filter { !it.deleted && it.weight.isSyncableWeight() }
-        .map { BodyWeightEntry(it.date, BodyWeight(it.weight)) }
+private fun List<RemoteWeight>.toLiveEntries(): List<BodyWeightEntry> = mapNotNull { remote ->
+    val weight = remote.weight
+    if (remote.deleted || weight == null) null else BodyWeightEntry(remote.date, weight)
+}
 
 private suspend fun WeightCloud.readOrNull(
     full: Boolean,

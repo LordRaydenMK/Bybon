@@ -1,7 +1,6 @@
 package dev.sanastasov.bybon.bodyweight.sync
 
 import dev.sanastasov.bybon.account.domain.UserId
-import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
@@ -10,13 +9,6 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
 import java.time.LocalDate
-
-data class RemoteWeight(
-    val date: LocalDate,
-    val weight: Int,
-    val deleted: Boolean,
-    val updatedAtMillis: Long,
-)
 
 data class WeightUpload(
     val date: LocalDate,
@@ -87,8 +79,6 @@ internal fun List<BodyWeightEntry>.toImportSummary(): WeightImportSummary? {
     )
 }
 
-internal fun Int.isSyncableWeight(): Boolean = this > 0 && this % 5 == 0 && this < 50_000
-
 private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
     val live = liveEntries(input.remote)
     val pendingDeletes = input.pending
@@ -134,13 +124,14 @@ private fun clashes(
     val byDate = remote.associateBy { it.date }
     return local.mapNotNull { entry ->
         val doc = byDate[entry.date] ?: return@mapNotNull null
+        val backup = doc.weight
         when {
             doc.deleted -> WeightDateClash(entry.date, entry.weight, CloudWeight.Deleted)
 
-            doc.weight != entry.weight.value -> WeightDateClash(
+            backup != null && backup != entry.weight -> WeightDateClash(
                 date = entry.date,
                 onThisPhone = entry.weight,
-                inBackup = CloudWeight.Value(BodyWeight(doc.weight)),
+                inBackup = CloudWeight.Value(backup),
             )
 
             else -> null
@@ -149,8 +140,10 @@ private fun clashes(
 }
 
 private fun liveEntries(remote: List<RemoteWeight>): List<BodyWeightEntry> =
-    remote.filter { !it.deleted && it.weight.isSyncableWeight() }
-        .map { BodyWeightEntry(it.date, BodyWeight(it.weight)) }
+    remote.mapNotNull { doc ->
+        val weight = doc.weight
+        if (doc.deleted || weight == null) null else BodyWeightEntry(doc.date, weight)
+    }
 
 private fun adds(
     local: List<BodyWeightEntry>,
