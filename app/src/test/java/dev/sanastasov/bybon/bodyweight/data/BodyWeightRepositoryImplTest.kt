@@ -27,7 +27,7 @@ class BodyWeightRepositoryImplTest {
 
         val stored = repository.entries().first().single()
         assert(stored.weight.value == 6550)
-        val op = syncDao.ops().single()
+        val op = syncDao.observeOps().first().single()
         assert(op.date == date)
         assert(op.kind == WeightSyncOpEntity.UPSERT)
         assert(op.weight == 6550)
@@ -44,7 +44,7 @@ class BodyWeightRepositoryImplTest {
         repository.deleteEntry(entry)
 
         assert(repository.entries().first().isEmpty())
-        val op = syncDao.ops().single()
+        val op = syncDao.observeOps().first().single()
         assert(op.date == entry.date)
         assert(op.kind == WeightSyncOpEntity.DELETE)
         assert(op.weight == null)
@@ -55,7 +55,6 @@ class BodyWeightRepositoryImplTest {
         FakeDietPhaseDao(),
         syncDao,
         UnusedWeightCloud,
-        "stg",
     )
 }
 

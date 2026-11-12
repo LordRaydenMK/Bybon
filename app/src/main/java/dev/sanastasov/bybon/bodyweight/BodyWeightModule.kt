@@ -11,18 +11,15 @@ interface BodyWeightModule : DbModule {
 
     companion object {
 
-        fun create(
-            dbModule: DbModule,
-            databaseName: String,
-            cloud: WeightCloud,
-        ): BodyWeightModule = object : BodyWeightModule, DbModule by dbModule {
-            override val bodyWeightRepository: BodyWeightRepository = BodyWeightRepositoryImpl(
-                dbModule.bybonDb.weightEntryDao(),
-                dbModule.bybonDb.dietPhaseDao(),
-                dbModule.bybonDb.weightSyncDao(),
-                cloud,
-                databaseName,
-            )
-        }
+        fun create(dbModule: DbModule, cloud: WeightCloud): BodyWeightModule =
+            object : BodyWeightModule, DbModule by dbModule {
+                override val bodyWeightRepository: BodyWeightRepository =
+                    BodyWeightRepositoryImpl(
+                        dbModule.bybonDb.weightEntryDao(),
+                        dbModule.bybonDb.dietPhaseDao(),
+                        dbModule.bybonDb.weightSyncDao(),
+                        cloud,
+                    )
+            }
     }
 }

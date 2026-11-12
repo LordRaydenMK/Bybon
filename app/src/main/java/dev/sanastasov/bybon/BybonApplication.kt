@@ -17,8 +17,7 @@ class BybonApplication : Application() {
         MainModule.create(
             BodyWeightModule.create(
                 dbModule,
-                accountModule.firebaseEnvName,
-                FirestoreWeightCloud(accountModule.firebaseEnvName),
+                FirestoreWeightCloud(),
             ),
             WorkoutModule.create(dbModule, this),
             accountModule,

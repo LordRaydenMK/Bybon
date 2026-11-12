@@ -38,15 +38,14 @@ internal class WeightSyncEngine(
     private val weights: WeightDao,
     private val syncDao: WeightSyncDao,
     private val cloud: WeightCloud,
-    private val databaseName: String,
     private val clock: Clock,
 ) {
     private val gate = Mutex()
 
     fun status(): Flow<WeightBackupStatus> = combine(
         syncDao.observeOps(),
-        syncDao.observeState(databaseName),
-        syncDao.observeClashes(databaseName),
+        syncDao.observeState(),
+        syncDao.observeClashes(),
     ) { ops, state, clashes ->
         val conflict = conflictOf(state, clashes)
         val summary = state.toSummary()
@@ -70,7 +69,7 @@ internal class WeightSyncEngine(
 
     suspend fun dismissSummary() {
         gate.withLock {
-            val current = syncDao.state(databaseName) ?: return@withLock
+            val current = syncDao.observeState().first() ?: return@withLock
             syncDao.upsertState(
                 current.copy(
                     summaryCount = null,
@@ -82,8 +81,8 @@ internal class WeightSyncEngine(
     }
 
     private suspend fun pull(command: WeightSyncCommand.Pull): WeightSyncResult {
-        val state = syncDao.state(databaseName)
-        val stored = conflictOf(state, syncDao.clashes(databaseName))
+        val state = syncDao.observeState().first()
+        val stored = conflictOf(state, syncDao.observeClashes().first())
         return if (stored != null) {
             WeightSyncResult.NeedsChoice(stored)
         } else {
@@ -172,8 +171,8 @@ internal class WeightSyncEngine(
     }
 
     private suspend fun resolve(choice: WeightConflictChoice): WeightSyncResult {
-        val state = syncDao.state(databaseName)
-        if (conflictOf(state, syncDao.clashes(databaseName)) == null) {
+        val state = syncDao.observeState().first()
+        if (conflictOf(state, syncDao.observeClashes().first()) == null) {
             error("No weight conflict to resolve")
         }
         return when (choice) {
@@ -259,7 +258,8 @@ internal class WeightSyncEngine(
     private suspend fun localEntries(): List<BodyWeightEntry> =
         weights.weightEntries().first().map { BodyWeightEntry(it.date, BodyWeight(it.weight)) }
 
-    private suspend fun pendingOps(): List<WeightSyncOp> = syncDao.ops().map { it.toOp() }
+    private suspend fun pendingOps(): List<WeightSyncOp> =
+        syncDao.observeOps().first().map { it.toOp() }
 
     private suspend fun storeConflict(previous: WeightSyncStateEntity?, conflict: WeightConflict) {
         val base = previous ?: emptyState()
@@ -280,7 +280,7 @@ internal class WeightSyncEngine(
             cursorMillis,
             if (wrote || cursorMillis == null) now else null,
         ).max()
-        val pendingLeft = syncDao.ops().isNotEmpty()
+        val pendingLeft = syncDao.observeOps().first().isNotEmpty()
         val resolved = when {
             summary != null -> summary
             keepPreviousSummary -> previous.toSummary()
@@ -288,7 +288,6 @@ internal class WeightSyncEngine(
         }
         syncDao.replaceState(
             WeightSyncStateEntity(
-                databaseName = databaseName,
                 lastSyncedUid = uid.value,
                 cursorMillis = cursor,
                 lastSuccessMillis = if (pendingLeft) previous?.lastSuccessMillis else now,
@@ -304,7 +303,6 @@ internal class WeightSyncEngine(
     }
 
     private fun emptyState(): WeightSyncStateEntity = WeightSyncStateEntity(
-        databaseName = databaseName,
         lastSyncedUid = null,
         cursorMillis = null,
         lastSuccessMillis = null,
@@ -353,7 +351,6 @@ internal class WeightSyncEngine(
         is WeightConflict.OverlappingDates -> dates.map { clash ->
             val backup = clash.inBackup
             WeightSyncClashEntity(
-                databaseName = databaseName,
                 date = clash.date,
                 phoneWeight = clash.onThisPhone.value,
                 backupWeight = when (backup) {

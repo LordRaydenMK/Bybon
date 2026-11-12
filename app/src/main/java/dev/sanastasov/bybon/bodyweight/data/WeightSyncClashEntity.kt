@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.bodyweight.data
 
 import androidx.room3.Entity
 import androidx.room3.ForeignKey
+import dev.sanastasov.bybon.BuildConfig
 import java.time.LocalDate
 
 @Entity(
@@ -17,7 +18,7 @@ import java.time.LocalDate
     ],
 )
 data class WeightSyncClashEntity(
-    val databaseName: String,
+    val databaseName: String = BuildConfig.FIREBASE_ENV,
     val date: LocalDate,
     val phoneWeight: Int,
     val backupWeight: Int?,

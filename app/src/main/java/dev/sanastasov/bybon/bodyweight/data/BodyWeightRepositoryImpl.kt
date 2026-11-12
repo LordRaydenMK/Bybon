@@ -22,7 +22,6 @@ class BodyWeightRepositoryImpl(
     private val dietPhaseDao: DietPhaseDao,
     private val weightSyncDao: WeightSyncDao,
     cloud: WeightCloud,
-    databaseName: String,
     clock: Clock = Clock.systemUTC(),
 ) : BodyWeightRepository {
 
@@ -30,7 +29,6 @@ class BodyWeightRepositoryImpl(
         weights = weightEntryDao,
         syncDao = weightSyncDao,
         cloud = cloud,
-        databaseName = databaseName,
         clock = clock,
     )
 

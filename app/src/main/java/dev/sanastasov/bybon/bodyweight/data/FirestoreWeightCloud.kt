@@ -7,6 +7,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import dev.sanastasov.bybon.BuildConfig
 import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloudException
@@ -18,10 +19,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 
 class FirestoreWeightCloud(
-    databaseName: String,
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(
         FirebaseApp.getInstance(),
-        databaseName,
+        BuildConfig.FIREBASE_ENV,
     ),
 ) : WeightCloud {
 
