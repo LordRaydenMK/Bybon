@@ -2,12 +2,11 @@ package dev.sanastasov.bybon.bodyweight.data
 
 import androidx.room3.Entity
 import androidx.room3.PrimaryKey
-import dev.sanastasov.bybon.BuildConfig
 import java.time.LocalDate
 
 @Entity(tableName = "weight_sync_state")
 data class WeightSyncStateEntity(
-    @PrimaryKey val databaseName: String = BuildConfig.FIREBASE_ENV,
+    @PrimaryKey val id: Int = 0,
     val lastSyncedUid: String?,
     val cursorMillis: Long?,
     val lastSuccessMillis: Long?,

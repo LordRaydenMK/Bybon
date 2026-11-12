@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "a4225f7cc2e243fcfe42c754d2ffefe5",
+    "identityHash": "799760b5aac8c7979533b016623e82d4",
     "entities": [
       {
         "tableName": "weight_entry",
@@ -749,12 +749,12 @@
       },
       {
         "tableName": "weight_sync_state",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`databaseName` TEXT NOT NULL, `lastSyncedUid` TEXT, `cursorMillis` INTEGER, `lastSuccessMillis` INTEGER, `conflictKind` TEXT, `conflictSignedInUid` TEXT, `conflictPreviousUid` TEXT, `summaryCount` INTEGER, `summaryEarliest` TEXT, `summaryLatest` TEXT, PRIMARY KEY(`databaseName`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `lastSyncedUid` TEXT, `cursorMillis` INTEGER, `lastSuccessMillis` INTEGER, `conflictKind` TEXT, `conflictSignedInUid` TEXT, `conflictPreviousUid` TEXT, `summaryCount` INTEGER, `summaryEarliest` TEXT, `summaryLatest` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
-            "fieldPath": "databaseName",
-            "columnName": "databaseName",
-            "affinity": "TEXT",
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -806,14 +806,14 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "databaseName"
+            "id"
           ]
         }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a4225f7cc2e243fcfe42c754d2ffefe5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '799760b5aac8c7979533b016623e82d4')"
     ]
   }
 }
