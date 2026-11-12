@@ -12,9 +12,9 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightSyncResult
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
 import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
-import dev.sanastasov.bybon.bodyweight.sync.WeightCloudException
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.workout.data.FakeWeightDao
+import java.io.IOException
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -275,19 +275,19 @@ private class FakeWeightCloud : WeightCloud {
     var updatedReads = 0
 
     override suspend fun readAll(uid: String): List<RemoteWeight> {
-        if (fail) throw WeightCloudException(IllegalStateException("offline"))
+        if (fail) throw IOException("offline")
         reads += 1
         return all
     }
 
     override suspend fun readUpdatedAfter(uid: String, cursorMillis: Long): List<RemoteWeight> {
-        if (fail) throw WeightCloudException(IllegalStateException("offline"))
+        if (fail) throw IOException("offline")
         updatedReads += 1
         return updated
     }
 
     override suspend fun write(uid: String, documents: List<WeightUpload>) {
-        if (fail) throw WeightCloudException(IllegalStateException("offline"))
+        if (fail) throw IOException("offline")
         writes += documents
     }
 }

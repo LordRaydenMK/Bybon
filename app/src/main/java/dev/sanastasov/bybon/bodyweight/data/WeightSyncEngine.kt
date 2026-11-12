@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.bodyweight.data
 
+import com.google.firebase.FirebaseException
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
@@ -17,13 +18,13 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightSyncResult
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
 import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
-import dev.sanastasov.bybon.bodyweight.sync.WeightCloudException
 import dev.sanastasov.bybon.bodyweight.sync.WeightSyncInput
 import dev.sanastasov.bybon.bodyweight.sync.WeightSyncPlan
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.bodyweight.sync.isSyncableWeight
 import dev.sanastasov.bybon.bodyweight.sync.reconcileWeights
 import dev.sanastasov.bybon.bodyweight.sync.toImportSummary
+import java.io.IOException
 import java.time.Clock
 import java.time.Instant
 import kotlinx.coroutines.CancellationException
@@ -442,7 +443,9 @@ private suspend fun WeightCloud.readOrNull(
     if (full || cursor == null) readAll(uid) else readUpdatedAfter(uid, cursor)
 } catch (cancelled: CancellationException) {
     throw cancelled
-} catch (_: WeightCloudException) {
+} catch (_: FirebaseException) {
+    null
+} catch (_: IOException) {
     null
 }
 
@@ -452,6 +455,8 @@ private suspend fun WeightCloud.writeOrFalse(uid: String, documents: List<Weight
         true
     } catch (cancelled: CancellationException) {
         throw cancelled
-    } catch (_: WeightCloudException) {
+    } catch (_: FirebaseException) {
+        false
+    } catch (_: IOException) {
         false
     }
