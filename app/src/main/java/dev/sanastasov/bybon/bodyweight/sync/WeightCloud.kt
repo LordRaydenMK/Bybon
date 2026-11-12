@@ -10,11 +10,6 @@ interface WeightCloud {
     suspend fun write(uid: String, documents: List<WeightUpload>)
 }
 
-/** A remote read or write did not finish. */
-class WeightCloudException(
-    cause: Throwable,
-) : Exception(cause)
-
 fun parseWeightDocument(
     id: String,
     weight: Long?,

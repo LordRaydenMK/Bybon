@@ -1,8 +1,6 @@
 package dev.sanastasov.bybon.bodyweight.data
 
-import com.google.android.gms.tasks.Task
 import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseException
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
@@ -10,12 +8,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import dev.sanastasov.bybon.BuildConfig
 import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
-import dev.sanastasov.bybon.bodyweight.sync.WeightCloudException
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.bodyweight.sync.parseWeightDocument
-import java.io.IOException
 import java.util.Date
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 
 class FirestoreWeightCloud(
@@ -26,13 +21,13 @@ class FirestoreWeightCloud(
 ) : WeightCloud {
 
     override suspend fun readAll(uid: String): List<RemoteWeight> =
-        weights(uid).get().awaitCloud().documents.mapNotNull { it.toRemote() }
+        weights(uid).get().await().documents.mapNotNull { it.toRemote() }
 
     override suspend fun readUpdatedAfter(uid: String, cursorMillis: Long): List<RemoteWeight> =
         weights(uid)
             .whereGreaterThan("updatedAt", Timestamp(Date(cursorMillis)))
             .get()
-            .awaitCloud()
+            .await()
             .documents
             .mapNotNull { it.toRemote() }
 
@@ -48,7 +43,7 @@ class FirestoreWeightCloud(
                 upload.weight?.let { data["weight"] = it }
                 batch.set(weights(uid).document(upload.date.toString()), data)
             }
-            batch.commit().awaitCloud()
+            batch.commit().await()
         }
     }
 
@@ -58,16 +53,6 @@ class FirestoreWeightCloud(
     private companion object {
         const val WRITE_CHUNK = 400
     }
-}
-
-private suspend fun <T> Task<T>.awaitCloud(): T = try {
-    await()
-} catch (cancelled: CancellationException) {
-    throw cancelled
-} catch (failure: FirebaseException) {
-    throw WeightCloudException(failure)
-} catch (failure: IOException) {
-    throw WeightCloudException(failure)
 }
 
 private fun DocumentSnapshot.toRemote(): RemoteWeight? = parseWeightDocument(
