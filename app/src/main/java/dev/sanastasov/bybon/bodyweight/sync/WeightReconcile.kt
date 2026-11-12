@@ -2,9 +2,7 @@ package dev.sanastasov.bybon.bodyweight.sync
 
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
-import dev.sanastasov.bybon.bodyweight.domain.WeightDateClash
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
@@ -61,14 +59,12 @@ private fun differentAccount(input: WeightSyncInput): Boolean {
     return previous != null && previous != input.signedInUid && input.local.isNotEmpty()
 }
 
-private fun askOrApply(input: WeightSyncInput): WeightSyncPlan {
-    val dates = clashes(input.local, input.remote)
-    return if (dates.isEmpty()) {
-        planChanges(input)
+private fun askOrApply(input: WeightSyncInput): WeightSyncPlan =
+    if (hasDateClash(input.local, input.remote)) {
+        WeightSyncPlan.Ask(WeightConflict.OverlappingDates)
     } else {
-        WeightSyncPlan.Ask(WeightConflict.OverlappingDates(dates))
+        planChanges(input)
     }
-}
 
 internal fun List<BodyWeightEntry>.toImportSummary(): WeightImportSummary? {
     if (isEmpty()) return null
@@ -117,26 +113,13 @@ private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
     }
 }
 
-private fun clashes(
-    local: List<BodyWeightEntry>,
-    remote: List<RemoteWeight>,
-): List<WeightDateClash> {
+private fun hasDateClash(local: List<BodyWeightEntry>, remote: List<RemoteWeight>): Boolean {
     val byDate = remote.associateBy { it.date }
-    return local.mapNotNull { entry ->
-        val doc = byDate[entry.date] ?: return@mapNotNull null
+    return local.any { entry ->
+        val doc = byDate[entry.date] ?: return@any false
         val backup = doc.weight
-        when {
-            doc.deleted -> WeightDateClash(entry.date, entry.weight, CloudWeight.Deleted)
-
-            backup != null && backup != entry.weight -> WeightDateClash(
-                date = entry.date,
-                onThisPhone = entry.weight,
-                inBackup = CloudWeight.Value(backup),
-            )
-
-            else -> null
-        }
-    }.sortedBy { it.date }
+        doc.deleted || (backup != null && backup != entry.weight)
+    }
 }
 
 private fun liveEntries(remote: List<RemoteWeight>): List<BodyWeightEntry> =

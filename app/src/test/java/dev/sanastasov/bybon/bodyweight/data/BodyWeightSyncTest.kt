@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.bodyweight.data
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
 import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
@@ -88,11 +87,9 @@ class BodyWeightSyncTest {
 
         val result = repository.sync(WeightSyncCommand.Pull(UserId("uid"), WeightSyncStart.SignIn))
 
-        val clash = (
-            (result as WeightSyncResult.NeedsChoice).conflict as WeightConflict.OverlappingDates
-            ).dates.single()
-        assert(clash.onThisPhone.value == 6500)
-        assert((clash.inBackup as CloudWeight.Value).weight.value == 6600)
+        assert(
+            (result as WeightSyncResult.NeedsChoice).conflict == WeightConflict.OverlappingDates,
+        )
         assert(cloud.writes.isEmpty())
         assert(repository.entries().first().single().weight.value == 6500)
         assert(
@@ -180,16 +177,6 @@ class BodyWeightSyncTest {
         val syncDao = FakeWeightSyncDao()
         val cloud = FakeWeightCloud()
         syncDao.upsertState(state(conflictKind = WeightSyncStateEntity.DATES))
-        syncDao.insertClashes(
-            listOf(
-                WeightSyncClashEntity(
-                    date = jan1,
-                    phoneWeight = 6500,
-                    backupWeight = 7000,
-                    backupDeleted = false,
-                ),
-            ),
-        )
         val repository = repository(syncDao, cloud)
         repository.insert(entry(jan1, 6500))
         cloud.all = listOf(

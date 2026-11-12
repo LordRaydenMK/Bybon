@@ -39,21 +39,6 @@ sealed interface WeightSyncCommand {
     ) : WeightSyncCommand
 }
 
-/** A live backup value, or a tombstone for that date. */
-sealed interface CloudWeight {
-    data class Value(
-        val weight: BodyWeight,
-    ) : CloudWeight
-
-    data object Deleted : CloudWeight
-}
-
-data class WeightDateClash(
-    val date: LocalDate,
-    val onThisPhone: BodyWeight,
-    val inBackup: CloudWeight,
-)
-
 /** Why a sync stopped before changing the phone or the backup. */
 sealed class WeightConflict {
     data class DifferentAccount(
@@ -65,13 +50,7 @@ sealed class WeightConflict {
         }
     }
 
-    data class OverlappingDates(
-        val dates: List<WeightDateClash>,
-    ) : WeightConflict() {
-        init {
-            require(dates.isNotEmpty()) { "Date conflict needs a date" }
-        }
-    }
+    data object OverlappingDates : WeightConflict()
 }
 
 /**
