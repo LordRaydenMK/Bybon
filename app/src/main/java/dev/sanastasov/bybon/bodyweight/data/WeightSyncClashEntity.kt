@@ -1,25 +1,12 @@
 package dev.sanastasov.bybon.bodyweight.data
 
 import androidx.room3.Entity
-import androidx.room3.ForeignKey
-import dev.sanastasov.bybon.BuildConfig
+import androidx.room3.PrimaryKey
 import java.time.LocalDate
 
-@Entity(
-    tableName = "weight_sync_clash",
-    primaryKeys = ["databaseName", "date"],
-    foreignKeys = [
-        ForeignKey(
-            entity = WeightSyncStateEntity::class,
-            parentColumns = ["databaseName"],
-            childColumns = ["databaseName"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-    ],
-)
+@Entity(tableName = "weight_sync_clash")
 data class WeightSyncClashEntity(
-    val databaseName: String = BuildConfig.FIREBASE_ENV,
-    val date: LocalDate,
+    @PrimaryKey val date: LocalDate,
     val phoneWeight: Int,
     val backupWeight: Int?,
     val backupDeleted: Boolean,

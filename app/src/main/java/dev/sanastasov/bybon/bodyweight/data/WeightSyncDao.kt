@@ -32,14 +32,10 @@ interface WeightSyncDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertState(state: WeightSyncStateEntity)
 
-    @Query(
-        "SELECT * FROM weight_sync_clash WHERE databaseName = '${BuildConfig.FIREBASE_ENV}'",
-    )
+    @Query("SELECT * FROM weight_sync_clash")
     fun observeClashes(): Flow<List<WeightSyncClashEntity>>
 
-    @Query(
-        "DELETE FROM weight_sync_clash WHERE databaseName = '${BuildConfig.FIREBASE_ENV}'",
-    )
+    @Query("DELETE FROM weight_sync_clash")
     suspend fun deleteClashes()
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
