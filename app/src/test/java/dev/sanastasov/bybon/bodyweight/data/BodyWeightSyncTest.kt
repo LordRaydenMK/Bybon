@@ -77,7 +77,14 @@ class BodyWeightSyncTest {
         val cloud = FakeWeightCloud()
         val repository = repository(FakeWeightSyncDao(), cloud)
         repository.insert(entry(jan1, 6500))
-        cloud.all = listOf(RemoteWeight(jan1, 6600, deleted = false, updatedAtMillis = 5))
+        cloud.all = listOf(
+            RemoteWeight(
+                date = jan1,
+                weight = BodyWeight(6600),
+                deleted = false,
+                updatedAtMillis = 5,
+            ),
+        )
 
         val result = repository.sync(WeightSyncCommand.Pull(UserId("uid"), WeightSyncStart.SignIn))
 
@@ -144,7 +151,14 @@ class BodyWeightSyncTest {
         )
         val repository = repository(syncDao, cloud)
         repository.insert(entry(jan1, 6500))
-        cloud.all = listOf(RemoteWeight(feb1, 7000, deleted = false, updatedAtMillis = 9))
+        cloud.all = listOf(
+            RemoteWeight(
+                date = feb1,
+                weight = BodyWeight(7000),
+                deleted = false,
+                updatedAtMillis = 9,
+            ),
+        )
 
         val result = repository.sync(
             WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.UseBackup(UserId("uid"))),
@@ -178,7 +192,14 @@ class BodyWeightSyncTest {
         )
         val repository = repository(syncDao, cloud)
         repository.insert(entry(jan1, 6500))
-        cloud.all = listOf(RemoteWeight(feb1, 7000, deleted = false, updatedAtMillis = 4))
+        cloud.all = listOf(
+            RemoteWeight(
+                date = feb1,
+                weight = BodyWeight(7000),
+                deleted = false,
+                updatedAtMillis = 4,
+            ),
+        )
 
         val result = repository.sync(
             WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.ReplaceBackup(UserId("uid"))),

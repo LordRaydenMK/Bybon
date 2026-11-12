@@ -167,7 +167,7 @@ class WeightReconcileTest {
 
     @Test
     fun `parse skips invalid documents and keeps tombstones`() {
-        assert(parseWeightDocument("2026-01-01", 6500, false, 10)?.weight == 6500)
+        assert(parseWeightDocument("2026-01-01", 6500, false, 10)?.weight == BodyWeight(6500))
         assert(parseWeightDocument("nope", 6500, false, 10) == null)
         assert(parseWeightDocument("2026-01-01", 6501, false, 10) == null)
         assert(parseWeightDocument("2026-01-01", 6500, false, null) == null)
@@ -181,7 +181,12 @@ class WeightReconcileTest {
         weight: Int,
         deleted: Boolean = false,
         updatedAt: Long = 1,
-    ) = RemoteWeight(date, weight, deleted, updatedAt)
+    ) = RemoteWeight(
+        date = date,
+        weight = if (deleted) null else BodyWeight(weight),
+        deleted = deleted,
+        updatedAtMillis = updatedAt,
+    )
 
     private fun input(
         local: List<BodyWeightEntry> = emptyList(),
