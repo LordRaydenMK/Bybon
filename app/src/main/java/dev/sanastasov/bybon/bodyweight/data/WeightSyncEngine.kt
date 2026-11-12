@@ -4,12 +4,10 @@ import com.google.firebase.FirebaseException
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
 import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightBackupStatus
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
-import dev.sanastasov.bybon.bodyweight.domain.WeightDateClash
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
@@ -45,9 +43,8 @@ internal class WeightSyncEngine(
     fun status(): Flow<WeightBackupStatus> = combine(
         syncDao.observeOps(),
         syncDao.observeState(),
-        syncDao.observeClashes(),
-    ) { ops, state, clashes ->
-        val conflict = conflictOf(state, clashes)
+    ) { ops, state ->
+        val conflict = conflictOf(state)
         val summary = state.toSummary()
         WeightBackupStatus(
             pending = ops.isNotEmpty(),
@@ -82,7 +79,7 @@ internal class WeightSyncEngine(
 
     private suspend fun pull(command: WeightSyncCommand.Pull): WeightSyncResult {
         val state = syncDao.observeState().first()
-        val stored = conflictOf(state, syncDao.observeClashes().first())
+        val stored = conflictOf(state)
         return if (stored != null) {
             WeightSyncResult.NeedsChoice(stored)
         } else {
@@ -172,7 +169,7 @@ internal class WeightSyncEngine(
 
     private suspend fun resolve(choice: WeightConflictChoice): WeightSyncResult {
         val state = syncDao.observeState().first()
-        if (conflictOf(state, syncDao.observeClashes().first()) == null) {
+        if (conflictOf(state) == null) {
             error("No weight conflict to resolve")
         }
         return when (choice) {
@@ -188,7 +185,7 @@ internal class WeightSyncEngine(
     private suspend fun keepPhone(state: WeightSyncStateEntity?): WeightSyncResult {
         syncDao.clearOps()
         val current = state ?: emptyState()
-        syncDao.replaceState(current.withoutConflict(), emptyList())
+        syncDao.upsertState(current.withoutConflict())
         return WeightSyncResult.Completed
     }
 
@@ -263,7 +260,7 @@ internal class WeightSyncEngine(
 
     private suspend fun storeConflict(previous: WeightSyncStateEntity?, conflict: WeightConflict) {
         val base = previous ?: emptyState()
-        syncDao.replaceState(base.withConflict(conflict), conflict.toClashes())
+        syncDao.upsertState(base.withConflict(conflict))
     }
 
     private suspend fun saveFinished(
@@ -286,7 +283,7 @@ internal class WeightSyncEngine(
             keepPreviousSummary -> previous.toSummary()
             else -> null
         }
-        syncDao.replaceState(
+        syncDao.upsertState(
             WeightSyncStateEntity(
                 lastSyncedUid = uid.value,
                 cursorMillis = cursor,
@@ -298,7 +295,6 @@ internal class WeightSyncEngine(
                 summaryEarliest = resolved?.span?.earliest,
                 summaryLatest = resolved?.span?.latest,
             ),
-            emptyList(),
         )
     }
 
@@ -344,29 +340,9 @@ internal class WeightSyncEngine(
         summaryEarliest = null,
         summaryLatest = null,
     )
-
-    private fun WeightConflict.toClashes(): List<WeightSyncClashEntity> = when (this) {
-        is WeightConflict.DifferentAccount -> emptyList()
-
-        is WeightConflict.OverlappingDates -> dates.map { clash ->
-            val backup = clash.inBackup
-            WeightSyncClashEntity(
-                date = clash.date,
-                phoneWeight = clash.onThisPhone.value,
-                backupWeight = when (backup) {
-                    is CloudWeight.Value -> backup.weight.value
-                    CloudWeight.Deleted -> null
-                },
-                backupDeleted = backup is CloudWeight.Deleted,
-            )
-        }
-    }
 }
 
-private fun conflictOf(
-    state: WeightSyncStateEntity?,
-    clashes: List<WeightSyncClashEntity>,
-): WeightConflict? {
+private fun conflictOf(state: WeightSyncStateEntity?): WeightConflict? {
     val kind = state?.conflictKind ?: return null
     return when (kind) {
         WeightSyncStateEntity.ACCOUNT -> WeightConflict.DifferentAccount(
@@ -380,22 +356,10 @@ private fun conflictOf(
             ),
         )
 
-        WeightSyncStateEntity.DATES -> {
-            if (clashes.isEmpty()) error("Stored date conflict has no dates")
-            WeightConflict.OverlappingDates(clashes.map { it.toClash() }.sortedBy { it.date })
-        }
+        WeightSyncStateEntity.DATES -> WeightConflict.OverlappingDates
 
         else -> error("Unknown weight conflict '$kind'")
     }
-}
-
-private fun WeightSyncClashEntity.toClash(): WeightDateClash {
-    val backup = if (backupDeleted) {
-        CloudWeight.Deleted
-    } else {
-        CloudWeight.Value(BodyWeight(checkNotNull(backupWeight)))
-    }
-    return WeightDateClash(date, BodyWeight(phoneWeight), backup)
 }
 
 private fun WeightSyncStateEntity?.toSummary(): WeightImportSummary? {

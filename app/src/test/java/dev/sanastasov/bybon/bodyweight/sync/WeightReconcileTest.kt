@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.bodyweight.sync
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
@@ -109,12 +108,7 @@ class WeightReconcileTest {
             ),
         )
 
-        val clash = (
-            (plan as WeightSyncPlan.Ask).conflict as WeightConflict.OverlappingDates
-            ).dates.single()
-        assert(clash.date == jan1)
-        assert(clash.onThisPhone.value == 6500)
-        assert((clash.inBackup as CloudWeight.Value).weight.value == 6550)
+        assert((plan as WeightSyncPlan.Ask).conflict == WeightConflict.OverlappingDates)
     }
 
     @Test
@@ -127,11 +121,7 @@ class WeightReconcileTest {
             ),
         )
 
-        val clash = (
-            (plan as WeightSyncPlan.Ask).conflict as WeightConflict.OverlappingDates
-            ).dates.single()
-        assert(clash.date == jan1)
-        assert(clash.inBackup == CloudWeight.Deleted)
+        assert((plan as WeightSyncPlan.Ask).conflict == WeightConflict.OverlappingDates)
     }
 
     @Test

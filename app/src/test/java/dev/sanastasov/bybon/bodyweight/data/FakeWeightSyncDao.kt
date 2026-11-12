@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.update
 class FakeWeightSyncDao : WeightSyncDao {
     private val ops = MutableStateFlow<List<WeightSyncOpEntity>>(emptyList())
     private val state = MutableStateFlow<WeightSyncStateEntity?>(null)
-    private val clashes = MutableStateFlow<List<WeightSyncClashEntity>>(emptyList())
 
     override fun observeOps(): Flow<List<WeightSyncOpEntity>> = ops
 
@@ -28,15 +27,5 @@ class FakeWeightSyncDao : WeightSyncDao {
 
     override suspend fun upsertState(state: WeightSyncStateEntity) {
         this.state.value = state
-    }
-
-    override fun observeClashes(): Flow<List<WeightSyncClashEntity>> = clashes
-
-    override suspend fun deleteClashes() {
-        clashes.value = emptyList()
-    }
-
-    override suspend fun insertClashes(clashes: List<WeightSyncClashEntity>) {
-        this.clashes.update { current -> current + clashes }
     }
 }
