@@ -17,10 +17,10 @@ class FakeGoogleSignIn(
     }
 
     companion object {
-        fun canceled(): FakeGoogleSignIn =
-            FakeGoogleSignIn(Result.failure(SignInFailure.Canceled()))
+        fun canceled(): FakeGoogleSignIn = FakeGoogleSignIn(
+            Result.failure(SignInFailure.Canceled()),
+        )
 
-        fun failed(): FakeGoogleSignIn =
-            FakeGoogleSignIn(Result.failure(SignInFailure.Failed()))
+        fun failed(): FakeGoogleSignIn = FakeGoogleSignIn(Result.failure(SignInFailure.Failed()))
     }
 }
