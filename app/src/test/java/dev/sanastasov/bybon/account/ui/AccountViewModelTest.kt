@@ -15,6 +15,7 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
 import dev.sanastasov.bybon.test.BackgroundFailures
+import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
@@ -148,25 +149,31 @@ class AccountViewModelTest {
     @Test
     fun `pending backup shows pending and the last success time`() = runTest {
         val weights = FakeBodyWeightRepository()
-        weights.backup.value = WeightBackupStatus(pending = true, lastSuccessMillis = 50)
+        weights.backup.value = WeightBackupStatus(
+            pending = true,
+            lastSuccess = Instant.ofEpochMilli(50),
+        )
         val viewModel = viewModel(weights = weights)
 
         val state = viewModel.uiState.first { it.backupPending }
 
         assert(state.backupPending)
-        assert(state.lastBackupMillis == 50L)
+        assert(state.lastBackup == Instant.ofEpochMilli(50))
     }
 
     @Test
     fun `finished sync shows the last success time without pending`() = runTest {
         val weights = FakeBodyWeightRepository()
-        weights.backup.value = WeightBackupStatus(pending = false, lastSuccessMillis = 99)
+        weights.backup.value = WeightBackupStatus(
+            pending = false,
+            lastSuccess = Instant.ofEpochMilli(99),
+        )
         val viewModel = viewModel(weights = weights)
 
-        val state = viewModel.uiState.first { it.lastBackupMillis == 99L }
+        val state = viewModel.uiState.first { it.lastBackup == Instant.ofEpochMilli(99) }
 
         assert(!state.backupPending)
-        assert(state.lastBackupMillis == 99L)
+        assert(state.lastBackup == Instant.ofEpochMilli(99))
     }
 
     @Test

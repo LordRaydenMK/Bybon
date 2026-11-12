@@ -5,6 +5,7 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateClash
 import dev.sanastasov.bybon.domain.toDisplayDate
+import java.time.Instant
 
 data class AccountUiState(
     val environmentName: String,
@@ -13,7 +14,7 @@ data class AccountUiState(
     val confirmSignOut: Boolean = false,
     val signingIn: Boolean = false,
     val backupPending: Boolean = false,
-    val lastBackupMillis: Long? = null,
+    val lastBackup: Instant? = null,
     val notice: WeightBackupNotice? = null,
 ) {
     val signedIn: Boolean

@@ -24,6 +24,8 @@ import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.bodyweight.sync.isSyncableWeight
 import dev.sanastasov.bybon.bodyweight.sync.reconcileWeights
 import dev.sanastasov.bybon.bodyweight.sync.toImportSummary
+import java.time.Clock
+import java.time.Instant
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -37,7 +39,7 @@ internal class WeightSyncEngine(
     private val syncDao: WeightSyncDao,
     private val cloud: WeightCloud,
     private val databaseName: String,
-    private val clock: () -> Long,
+    private val clock: Clock,
 ) {
     private val gate = Mutex()
 
@@ -50,7 +52,7 @@ internal class WeightSyncEngine(
         val summary = state.toSummary()
         WeightBackupStatus(
             pending = ops.isNotEmpty(),
-            lastSuccessMillis = state?.lastSuccessMillis,
+            lastSuccess = state?.lastSuccessMillis?.let(Instant::ofEpochMilli),
             notice = when {
                 conflict != null -> WeightBackupNotice.Conflict(conflict)
                 summary != null -> WeightBackupNotice.Imported(summary)
@@ -272,7 +274,7 @@ internal class WeightSyncEngine(
         summary: WeightImportSummary?,
         keepPreviousSummary: Boolean,
     ) {
-        val now = clock()
+        val now = clock.instant().toEpochMilli()
         val cursor = listOfNotNull(
             previous?.cursorMillis,
             cursorMillis,

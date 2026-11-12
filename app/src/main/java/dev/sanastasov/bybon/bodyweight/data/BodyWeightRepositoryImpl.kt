@@ -13,6 +13,7 @@ import dev.sanastasov.bybon.bodyweight.domain.durationWeeksOrNull
 import dev.sanastasov.bybon.bodyweight.domain.kind
 import dev.sanastasov.bybon.bodyweight.domain.requireValid
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
+import java.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -22,7 +23,7 @@ class BodyWeightRepositoryImpl(
     private val weightSyncDao: WeightSyncDao,
     cloud: WeightCloud,
     databaseName: String,
-    clock: () -> Long = { System.currentTimeMillis() },
+    clock: Clock = Clock.systemUTC(),
 ) : BodyWeightRepository {
 
     private val syncEngine = WeightSyncEngine(

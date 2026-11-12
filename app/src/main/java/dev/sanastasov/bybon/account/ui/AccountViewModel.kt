@@ -38,7 +38,7 @@ class AccountViewModel(
             confirmSignOut = sessionUi.confirmSignOut,
             signingIn = sessionUi.signingIn,
             backupPending = backupStatus.pending,
-            lastBackupMillis = backupStatus.lastSuccessMillis,
+            lastBackup = backupStatus.lastSuccess,
             notice = backupStatus.notice,
         )
     }.stateInWhileInForeground(
