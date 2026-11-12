@@ -4,10 +4,13 @@ import dev.sanastasov.bybon.account.FakeAccountAuth
 import dev.sanastasov.bybon.account.FakeGoogleSignIn
 import dev.sanastasov.bybon.account.domain.AccountUser
 import dev.sanastasov.bybon.account.domain.SignInFailure
+import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
+import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightBackupStatus
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
+import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
@@ -114,7 +117,7 @@ class AccountViewModelTest {
 
     @Test
     fun `sign-out asks first and dismissing keeps the session`() = runTest {
-        val viewModel = viewModel(FakeAccountAuth(AccountUser("uid", "stolea@gmail.com")))
+        val viewModel = viewModel(FakeAccountAuth(AccountUser(UserId("uid"), "stolea@gmail.com")))
 
         viewModel.uiState.first { it.email == "stolea@gmail.com" }
         viewModel.onAction(AccountAction.OnSignOutClicked)
@@ -127,7 +130,7 @@ class AccountViewModelTest {
 
     @Test
     fun `confirming sign-out returns to signed out`() = runTest {
-        val auth = FakeAccountAuth(AccountUser("uid", "stolea@gmail.com"))
+        val auth = FakeAccountAuth(AccountUser(UserId("uid"), "stolea@gmail.com"))
         val googleSignIn = FakeGoogleSignIn()
         val viewModel = viewModel(auth, googleSignIn)
 
@@ -169,16 +172,19 @@ class AccountViewModelTest {
     @Test
     fun `conflict offers use, replace, and keep this phone`() = runTest {
         val weights = FakeBodyWeightRepository()
-        val conflict = WeightConflict.DifferentAccount(signedInUid = "uid", previousUid = "old")
-        weights.backup.value = WeightBackupStatus(conflict = conflict)
+        val conflict = WeightConflict.DifferentAccount(
+            signedIn = UserId("uid"),
+            previous = UserId("old"),
+        )
+        weights.backup.value = WeightBackupStatus(notice = WeightBackupNotice.Conflict(conflict))
         val viewModel = viewModel(
-            auth = FakeAccountAuth(AccountUser("uid", "stolea@gmail.com")),
+            auth = FakeAccountAuth(AccountUser(UserId("uid"), "stolea@gmail.com")),
             weights = weights,
         )
 
-        val state = viewModel.uiState.first { it.conflict != null }
+        val state = viewModel.uiState.first { it.notice != null }
 
-        assert(state.conflict == conflict)
+        assert(state.notice == WeightBackupNotice.Conflict(conflict))
         assert(conflict.detail() == "This phone has weights from another account.")
         assert(
             state.conflictChoices == listOf(
@@ -193,14 +199,19 @@ class AccountViewModelTest {
     fun `opening account while signed in syncs without a full sign-in read`() = runTest {
         val weights = FakeBodyWeightRepository()
         val viewModel = viewModel(
-            auth = FakeAccountAuth(AccountUser("uid", "stolea@gmail.com")),
+            auth = FakeAccountAuth(AccountUser(UserId("uid"), "stolea@gmail.com")),
             weights = weights,
         )
 
         viewModel.uiState.first { it.email == "stolea@gmail.com" }
         yield()
 
-        assert(weights.syncs.single() == WeightSyncCommand.Pull("uid", WeightSyncStart.Incremental))
+        assert(
+            weights.syncs.single() == WeightSyncCommand.Pull(
+                UserId("uid"),
+                WeightSyncStart.Incremental,
+            ),
+        )
     }
 
     @Test
@@ -213,12 +224,17 @@ class AccountViewModelTest {
         viewModel.uiState.first { it.email == "token@example.com" }
         yield()
 
-        assert(weights.syncs.single() == WeightSyncCommand.Pull("token", WeightSyncStart.SignIn))
+        assert(
+            weights.syncs.single() == WeightSyncCommand.Pull(
+                UserId("token"),
+                WeightSyncStart.SignIn,
+            ),
+        )
     }
 
     @Test
     fun `keep this phone signs out`() = runTest {
-        val auth = FakeAccountAuth(AccountUser("uid", "stolea@gmail.com"))
+        val auth = FakeAccountAuth(AccountUser(UserId("uid"), "stolea@gmail.com"))
         val weights = FakeBodyWeightRepository()
         val viewModel = viewModel(auth, weights = weights)
 
@@ -240,18 +256,18 @@ class AccountViewModelTest {
         val weights = FakeBodyWeightRepository()
         val summary = WeightImportSummary(
             count = 2,
-            earliest = LocalDate.of(2026, 1, 1),
-            latest = LocalDate.of(2026, 2, 1),
+            span = WeightDateSpan(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 1)),
         )
-        weights.backup.value = WeightBackupStatus(summary = summary)
+        weights.backup.value = WeightBackupStatus(notice = WeightBackupNotice.Imported(summary))
         val viewModel = viewModel(weights = weights)
 
-        val showing = viewModel.uiState.first { it.importSummary != null }
-        assert(showing.importSummary?.count == 2)
+        val showing = viewModel.uiState.first { it.notice is WeightBackupNotice.Imported }
+        val imported = showing.notice as WeightBackupNotice.Imported
+        assert(imported.summary.count == 2)
 
         viewModel.onAction(AccountAction.DismissImportSummary)
-        val dismissed = viewModel.uiState.first { it.importSummary == null }
-        assert(dismissed.importSummary == null)
+        val dismissed = viewModel.uiState.first { it.notice == null }
+        assert(dismissed.notice == null)
     }
 
     private fun kotlinx.coroutines.test.TestScope.viewModel(

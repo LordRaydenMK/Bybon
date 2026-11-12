@@ -1,13 +1,14 @@
 package dev.sanastasov.bybon.bodyweight.sync
 
+import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateClash
+import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
-import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOpKind
 import java.time.LocalDate
 
 data class RemoteWeight(
@@ -28,8 +29,8 @@ data class WeightSyncInput(
     val remote: List<RemoteWeight>,
     val pending: List<WeightSyncOp>,
     val fullSnapshot: Boolean,
-    val signedInUid: String,
-    val lastSyncedUid: String?,
+    val signedInUid: UserId,
+    val lastSyncedUid: UserId?,
     val conflictPending: Boolean,
 )
 
@@ -55,8 +56,8 @@ fun reconcileWeights(input: WeightSyncInput): WeightSyncPlan = when {
 
     differentAccount(input) -> WeightSyncPlan.Ask(
         WeightConflict.DifferentAccount(
-            signedInUid = input.signedInUid,
-            previousUid = checkNotNull(input.lastSyncedUid),
+            signedIn = input.signedInUid,
+            previous = checkNotNull(input.lastSyncedUid),
         ),
     )
 
@@ -82,8 +83,7 @@ internal fun List<BodyWeightEntry>.toImportSummary(): WeightImportSummary? {
     val dates = map { it.date }
     return WeightImportSummary(
         count = size,
-        earliest = dates.min(),
-        latest = dates.max(),
+        span = WeightDateSpan(dates.min(), dates.max()),
     )
 }
 
@@ -92,7 +92,7 @@ internal fun Int.isSyncableWeight(): Boolean = this > 0 && this % 5 == 0 && this
 private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
     val live = liveEntries(input.remote)
     val pendingDeletes = input.pending
-        .filter { it.kind == WeightSyncOpKind.Delete }
+        .filterIsInstance<WeightSyncOp.Delete>()
         .map { it.date }
         .toSet()
     val cursor = input.remote.maxOfOrNull { it.updatedAtMillis }
@@ -101,7 +101,7 @@ private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
         input.fullSnapshot && live.isEmpty() -> WeightSyncPlan.Apply(
             replaceLocal = null,
             addLocal = emptyList(),
-            uploads = input.pending.filter { it.kind == WeightSyncOpKind.Delete }.toUploads(),
+            uploads = input.pending.filterIsInstance<WeightSyncOp.Delete>().toUploads(),
             uploadAllLocal = input.local.isNotEmpty(),
             summary = null,
             cursorMillis = cursor,
@@ -162,14 +162,14 @@ private fun adds(
 }
 
 private fun List<WeightSyncOp>.toUploads(): List<WeightUpload> = map { op ->
-    when (op.kind) {
-        WeightSyncOpKind.Upsert -> WeightUpload(
+    when (op) {
+        is WeightSyncOp.Upsert -> WeightUpload(
             date = op.date,
-            weight = op.weight,
+            weight = op.weight.value,
             deleted = false,
         )
 
-        WeightSyncOpKind.Delete -> WeightUpload(
+        is WeightSyncOp.Delete -> WeightUpload(
             date = op.date,
             weight = null,
             deleted = true,

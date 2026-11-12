@@ -39,8 +39,7 @@ class AccountViewModel(
             signingIn = sessionUi.signingIn,
             backupPending = backupStatus.pending,
             lastBackupMillis = backupStatus.lastSuccessMillis,
-            conflict = backupStatus.conflict,
-            importSummary = backupStatus.summary,
+            notice = backupStatus.notice,
         )
     }.stateInWhileInForeground(
         coroutineScope,
@@ -93,14 +92,16 @@ class AccountViewModel(
     private fun useBackup() {
         coroutineScope.launch {
             val uid = accountAuth.user().first()?.uid ?: return@launch
-            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.UseBackup(uid)))
+            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.UseBackup(uid)))
         }
     }
 
     private fun replaceBackup() {
         coroutineScope.launch {
             val uid = accountAuth.user().first()?.uid ?: return@launch
-            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.ReplaceBackup(uid)))
+            repository.sync(
+                WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.ReplaceBackup(uid)),
+            )
         }
     }
 

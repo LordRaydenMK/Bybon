@@ -1,16 +1,18 @@
 package dev.sanastasov.bybon.bodyweight.data
 
+import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
+import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightBackupStatus
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateClash
+import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
-import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOpKind
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncResult
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
 import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
@@ -44,11 +46,16 @@ internal class WeightSyncEngine(
         syncDao.observeState(databaseName),
         syncDao.observeClashes(databaseName),
     ) { ops, state, clashes ->
+        val conflict = conflictOf(state, clashes)
+        val summary = state.toSummary()
         WeightBackupStatus(
             pending = ops.isNotEmpty(),
             lastSuccessMillis = state?.lastSuccessMillis,
-            conflict = conflictOf(state, clashes),
-            summary = state.toSummary(),
+            notice = when {
+                conflict != null -> WeightBackupNotice.Conflict(conflict)
+                summary != null -> WeightBackupNotice.Imported(summary)
+                else -> null
+            },
         )
     }
 
@@ -86,11 +93,12 @@ internal class WeightSyncEngine(
         command: WeightSyncCommand.Pull,
         state: WeightSyncStateEntity?,
     ): WeightSyncResult {
-        val uidChanged = state?.lastSyncedUid != null && state.lastSyncedUid != command.uid
+        val previous = state?.lastSyncedUid?.let(::UserId)
+        val uidChanged = previous != null && previous != command.uid
         val full = command.start == WeightSyncStart.SignIn ||
             state?.cursorMillis == null ||
             uidChanged
-        val remote = cloud.readOrNull(full, command.uid, state?.cursorMillis)
+        val remote = cloud.readOrNull(full, command.uid.value, state?.cursorMillis)
         val local = localEntries()
         return if (remote == null) {
             WeightSyncResult.Unavailable
@@ -100,7 +108,7 @@ internal class WeightSyncEngine(
     }
 
     private suspend fun applyPlan(
-        uid: String,
+        uid: UserId,
         local: List<BodyWeightEntry>,
         state: WeightSyncStateEntity?,
         remote: List<RemoteWeight>,
@@ -113,7 +121,7 @@ internal class WeightSyncEngine(
                 pending = pendingOps(),
                 fullSnapshot = full,
                 signedInUid = uid,
-                lastSyncedUid = state?.lastSyncedUid,
+                lastSyncedUid = state?.lastSyncedUid?.let(::UserId),
                 conflictPending = false,
             ),
         )
@@ -130,7 +138,7 @@ internal class WeightSyncEngine(
     }
 
     private suspend fun writePlan(
-        uid: String,
+        uid: UserId,
         local: List<BodyWeightEntry>,
         state: WeightSyncStateEntity?,
         plan: WeightSyncPlan.Apply,
@@ -141,7 +149,7 @@ internal class WeightSyncEngine(
             if (plan.uploadAllLocal) addAll(local.map { it.toUpload() })
             addAll(plan.uploads)
         }
-        return if (cloud.writeOrFalse(uid, uploads)) {
+        return if (cloud.writeOrFalse(uid.value, uploads)) {
             if (plan.uploadAllLocal) {
                 syncDao.clearOps()
             } else if (plan.uploads.isNotEmpty()) {
@@ -168,8 +176,11 @@ internal class WeightSyncEngine(
         }
         return when (choice) {
             WeightConflictChoice.KeepThisPhone -> keepPhone(state)
-            is WeightConflictChoice.UseBackup -> useBackup(choice.uid, state)
-            is WeightConflictChoice.ReplaceBackup -> replaceBackup(choice.uid, state)
+
+            is WeightConflictChoice.Cloud -> when (choice) {
+                is WeightConflictChoice.Cloud.UseBackup -> useBackup(choice.uid, state)
+                is WeightConflictChoice.Cloud.ReplaceBackup -> replaceBackup(choice.uid, state)
+            }
         }
     }
 
@@ -180,8 +191,8 @@ internal class WeightSyncEngine(
         return WeightSyncResult.Completed
     }
 
-    private suspend fun useBackup(uid: String, previous: WeightSyncStateEntity?): WeightSyncResult {
-        val remote = cloud.readOrNull(full = true, uid = uid, cursor = null)
+    private suspend fun useBackup(uid: UserId, previous: WeightSyncStateEntity?): WeightSyncResult {
+        val remote = cloud.readOrNull(full = true, uid = uid.value, cursor = null)
         return if (remote == null) {
             WeightSyncResult.Unavailable
         } else {
@@ -201,10 +212,10 @@ internal class WeightSyncEngine(
     }
 
     private suspend fun replaceBackup(
-        uid: String,
+        uid: UserId,
         previous: WeightSyncStateEntity?,
     ): WeightSyncResult {
-        val remote = cloud.readOrNull(full = true, uid = uid, cursor = null)
+        val remote = cloud.readOrNull(full = true, uid = uid.value, cursor = null)
         return if (remote == null) {
             WeightSyncResult.Unavailable
         } else {
@@ -213,7 +224,7 @@ internal class WeightSyncEngine(
     }
 
     private suspend fun replaceCloud(
-        uid: String,
+        uid: UserId,
         previous: WeightSyncStateEntity?,
         remote: List<RemoteWeight>,
     ): WeightSyncResult {
@@ -222,7 +233,7 @@ internal class WeightSyncEngine(
         val uploads = local.map { it.toUpload() } + remote
             .filter { !it.deleted && it.date !in localDates }
             .map { WeightUpload(it.date, weight = null, deleted = true) }
-        return if (cloud.writeOrFalse(uid, uploads)) {
+        return if (cloud.writeOrFalse(uid.value, uploads)) {
             syncDao.clearOps()
             saveFinished(
                 uid = uid,
@@ -254,7 +265,7 @@ internal class WeightSyncEngine(
     }
 
     private suspend fun saveFinished(
-        uid: String,
+        uid: UserId,
         previous: WeightSyncStateEntity?,
         cursorMillis: Long?,
         wrote: Boolean,
@@ -276,15 +287,15 @@ internal class WeightSyncEngine(
         syncDao.replaceState(
             WeightSyncStateEntity(
                 databaseName = databaseName,
-                lastSyncedUid = uid,
+                lastSyncedUid = uid.value,
                 cursorMillis = cursor,
                 lastSuccessMillis = if (pendingLeft) previous?.lastSuccessMillis else now,
                 conflictKind = null,
                 conflictSignedInUid = null,
                 conflictPreviousUid = null,
                 summaryCount = resolved?.count,
-                summaryEarliest = resolved?.earliest,
-                summaryLatest = resolved?.latest,
+                summaryEarliest = resolved?.span?.earliest,
+                summaryLatest = resolved?.span?.latest,
             ),
             emptyList(),
         )
@@ -308,8 +319,8 @@ internal class WeightSyncEngine(
     ): WeightSyncStateEntity = when (conflict) {
         is WeightConflict.DifferentAccount -> copy(
             conflictKind = WeightSyncStateEntity.ACCOUNT,
-            conflictSignedInUid = conflict.signedInUid,
-            conflictPreviousUid = conflict.previousUid,
+            conflictSignedInUid = conflict.signedIn.value,
+            conflictPreviousUid = conflict.previous.value,
             summaryCount = null,
             summaryEarliest = null,
             summaryLatest = null,
@@ -338,12 +349,16 @@ internal class WeightSyncEngine(
         is WeightConflict.DifferentAccount -> emptyList()
 
         is WeightConflict.OverlappingDates -> dates.map { clash ->
+            val backup = clash.inBackup
             WeightSyncClashEntity(
                 databaseName = databaseName,
                 date = clash.date,
                 phoneWeight = clash.onThisPhone.value,
-                backupWeight = (clash.inBackup as? CloudWeight.Value)?.weight?.value,
-                backupDeleted = clash.inBackup is CloudWeight.Deleted,
+                backupWeight = when (backup) {
+                    is CloudWeight.Value -> backup.weight.value
+                    CloudWeight.Deleted -> null
+                },
+                backupDeleted = backup is CloudWeight.Deleted,
             )
         }
     }
@@ -356,10 +371,14 @@ private fun conflictOf(
     val kind = state?.conflictKind ?: return null
     return when (kind) {
         WeightSyncStateEntity.ACCOUNT -> WeightConflict.DifferentAccount(
-            signedInUid = state.conflictSignedInUid
-                ?: error("Stored account conflict is missing the signed-in account"),
-            previousUid = state.conflictPreviousUid
-                ?: error("Stored account conflict is missing the previous account"),
+            signedIn = UserId(
+                state.conflictSignedInUid
+                    ?: error("Stored account conflict is missing the signed-in account"),
+            ),
+            previous = UserId(
+                state.conflictPreviousUid
+                    ?: error("Stored account conflict is missing the previous account"),
+            ),
         )
 
         WeightSyncStateEntity.DATES -> {
@@ -389,19 +408,20 @@ private fun WeightSyncStateEntity?.toSummary(): WeightImportSummary? {
     } else if (count < 1) {
         null
     } else {
-        WeightImportSummary(count, earliest, latest)
+        WeightImportSummary(count, WeightDateSpan(earliest, latest))
     }
 }
 
-private fun WeightSyncOpEntity.toOp(): WeightSyncOp = WeightSyncOp(
-    date = date,
-    kind = if (kind == WeightSyncOpEntity.DELETE) {
-        WeightSyncOpKind.Delete
-    } else {
-        WeightSyncOpKind.Upsert
-    },
-    weight = weight,
-)
+private fun WeightSyncOpEntity.toOp(): WeightSyncOp = when (kind) {
+    WeightSyncOpEntity.DELETE -> WeightSyncOp.Delete(date)
+
+    WeightSyncOpEntity.UPSERT -> WeightSyncOp.Upsert(
+        date = date,
+        weight = BodyWeight(checkNotNull(weight) { "Upsert is missing its weight" }),
+    )
+
+    else -> error("Unknown weight sync op '$kind'")
+}
 
 private fun BodyWeightEntry.toEntity(): WeightEntryEntity = WeightEntryEntity(date, weight.value)
 

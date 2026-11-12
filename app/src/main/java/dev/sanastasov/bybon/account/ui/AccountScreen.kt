@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.account.data.CredentialManagerGoogleSignIn
+import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.domain.toDisplayDate
@@ -102,11 +103,10 @@ fun AccountScreenContent(
             },
         )
     }
-    val conflict = uiState.conflict
-    if (conflict != null) {
-        WeightConflictDialog(conflict, onAction)
-    } else {
-        uiState.importSummary?.let { summary -> WeightImportDialog(summary, onAction) }
+    when (val notice = uiState.notice) {
+        is WeightBackupNotice.Conflict -> WeightConflictDialog(notice.conflict, onAction)
+        is WeightBackupNotice.Imported -> WeightImportDialog(notice.summary, onAction)
+        null -> Unit
     }
 }
 
@@ -150,7 +150,7 @@ private fun WeightImportDialog(summary: WeightImportSummary, onAction: (AccountA
         text = {
             Text(
                 "Imported ${summary.count} $noun, from " +
-                    "${summary.earliest.toDisplayDate()} to ${summary.latest.toDisplayDate()}.",
+                    "${summary.span.earliest.toDisplayDate()} to ${summary.span.latest.toDisplayDate()}.",
             )
         },
         confirmButton = {

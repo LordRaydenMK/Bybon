@@ -1,9 +1,9 @@
 package dev.sanastasov.bybon.account.ui
 
 import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
+import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateClash
-import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.domain.toDisplayDate
 
 data class AccountUiState(
@@ -14,21 +14,20 @@ data class AccountUiState(
     val signingIn: Boolean = false,
     val backupPending: Boolean = false,
     val lastBackupMillis: Long? = null,
-    val conflict: WeightConflict? = null,
-    val importSummary: WeightImportSummary? = null,
+    val notice: WeightBackupNotice? = null,
 ) {
     val signedIn: Boolean
         get() = email != null
 
     val conflictChoices: List<AccountAction>
-        get() = if (conflict == null) {
-            emptyList()
-        } else {
+        get() = if (notice is WeightBackupNotice.Conflict) {
             listOf(
                 AccountAction.UseTheBackup,
                 AccountAction.ReplaceTheBackup,
                 AccountAction.KeepThisPhone,
             )
+        } else {
+            emptyList()
         }
 }
 
