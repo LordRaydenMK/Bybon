@@ -43,7 +43,7 @@ fun List<WorkoutSession>.lastSevenDaysSummary(today: LocalDate): LastSevenDaysSu
             session.exercises.sumOf { exercise -> exercise.sets.sumOf { it.reps } }
         },
         performance = performanceChange(inWindow, beforeWindow),
-        musclesTrained = inWindow.musclesTrained(),
+        musclesTrained = inWindow.flatMap { it.exercises }.trainedMuscles(),
     )
 }
 

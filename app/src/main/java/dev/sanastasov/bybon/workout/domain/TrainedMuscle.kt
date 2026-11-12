@@ -89,6 +89,3 @@ internal fun Iterable<WorkoutExercise>.trainedMuscles(): List<TrainedMuscle> =
     flatMap { it.exerciseDefinition.trainedMuscles() }
         .toSet()
         .sortedBy { it.ordinal }
-
-internal fun List<WorkoutSession>.musclesTrained(): List<TrainedMuscle> =
-    flatMap { it.exercises }.trainedMuscles()

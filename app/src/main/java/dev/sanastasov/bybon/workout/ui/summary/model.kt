@@ -16,14 +16,13 @@ import dev.sanastasov.bybon.workout.domain.averageWeight
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.latestCompletedExerciseOccurrence
-import dev.sanastasov.bybon.workout.domain.volumeLoadKg
+import dev.sanastasov.bybon.workout.domain.volumeLoad
 import dev.sanastasov.bybon.workout.domain.withPreviousFrom
 import dev.sanastasov.bybon.workout.domain.workoutSessionSummary
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
 import dev.sanastasov.bybon.workout.ui.details.toPersonalRecordUi
-import dev.sanastasov.bybon.workout.ui.formatOneRmKg
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
@@ -164,7 +163,7 @@ internal fun WorkoutSessionSummary.toUi(
     exerciseCount = exerciseCount,
     workingSetCount = workingSetCount,
     totalReps = totalReps,
-    volumeLoadLabel = "${formatOneRmKg(volumeLoadKg)} kg",
+    volumeLoadLabel = volumeLoad.toVolumeLoadLabel(),
     setPerformance = setPerformance.toUi(),
     exercisePerformance = exercisePerformance.map { it.toUi() },
     musclesTrained = musclesTrained.map { it.label },
@@ -199,7 +198,7 @@ private fun WorkoutExercise.toSummaryExerciseUi(
         id = id,
         name = exerciseDefinition.name,
         sets = warmups + work,
-        volumeLoadLabel = matched.sets.volumeLoadLabel(),
+        volumeLoadLabel = matched.sets.volumeLoad().toVolumeLoadLabel(),
         notes = notes,
         personalRecord = performance.personalRecord?.toPersonalRecordUi(),
         oneRmTrend = performance.recentSessions.toOneRmTrend(),
@@ -221,7 +220,7 @@ private fun CompletedExerciseOccurrence.toPreviousUi(
     )
 }
 
-private fun List<ExerciseSet>.volumeLoadLabel(): String = "${formatOneRmKg(volumeLoadKg())} kg"
+private fun Weight?.toVolumeLoadLabel(): String = "${this?.kilograms ?: "0"} kg"
 
 private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = null,

@@ -26,7 +26,7 @@ class WorkoutSessionSummaryTest {
         assert(summary.exerciseCount == 2)
         assert(summary.workingSetCount == 5)
         assert(summary.totalReps == 15 + 13 + 11 + 12 + 12)
-        assert(summary.volumeLoadKg == 17.5f * 39 + 45f * 24)
+        assert(summary.volumeLoad == Weight.kilograms(17.5f * 39 + 45f * 24))
         assert(summary.setPerformance == ExercisePerformanceChange(0, 0, 0))
         assert(summary.exercisePerformance.isEmpty())
     }
@@ -54,7 +54,7 @@ class WorkoutSessionSummaryTest {
 
         assert(summary.workingSetCount == 2)
         assert(summary.totalReps == 15)
-        assert(summary.volumeLoadKg == 80f * 8 + 80f * 7)
+        assert(summary.volumeLoad == Weight.kilograms(80f * 8 + 80f * 7))
     }
 
     @Test

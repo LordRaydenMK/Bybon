@@ -6,7 +6,7 @@ data class WorkoutSessionSummary(
     val exerciseCount: Int,
     val workingSetCount: Int,
     val totalReps: Int,
-    val volumeLoadKg: Float,
+    val volumeLoad: Weight?,
     val setPerformance: ExercisePerformanceChange,
     val exercisePerformance: List<ExerciseAverageOneRmChange>,
     val musclesTrained: List<TrainedMuscle>,
@@ -31,7 +31,7 @@ fun WorkoutSession.workoutSessionSummary(
         exerciseCount = matched.size,
         workingSetCount = workingSets.size,
         totalReps = workingSets.sumOf { it.reps },
-        volumeLoadKg = workingSets.volumeLoadKg(),
+        volumeLoad = workingSets.volumeLoad(),
         setPerformance = workingSets.setPerformance(),
         exercisePerformance = matched.mapNotNull { exercise ->
             exercise.averageOneRmChange(completedSessions, startedAt)
