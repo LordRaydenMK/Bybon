@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "3186b730f778631a387b760aafc813c9",
+    "identityHash": "616ae3e633fd4a33c6cd18c05f6ac624",
     "entities": [
       {
         "tableName": "weight_entry",
@@ -812,14 +812,8 @@
       },
       {
         "tableName": "weight_sync_clash",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`databaseName` TEXT NOT NULL, `date` TEXT NOT NULL, `phoneWeight` INTEGER NOT NULL, `backupWeight` INTEGER, `backupDeleted` INTEGER NOT NULL, PRIMARY KEY(`databaseName`, `date`), FOREIGN KEY(`databaseName`) REFERENCES `weight_sync_state`(`databaseName`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`date` TEXT NOT NULL, `phoneWeight` INTEGER NOT NULL, `backupWeight` INTEGER, `backupDeleted` INTEGER NOT NULL, PRIMARY KEY(`date`))",
         "fields": [
-          {
-            "fieldPath": "databaseName",
-            "columnName": "databaseName",
-            "affinity": "TEXT",
-            "notNull": true
-          },
           {
             "fieldPath": "date",
             "columnName": "date",
@@ -847,28 +841,14 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "databaseName",
             "date"
           ]
-        },
-        "foreignKeys": [
-          {
-            "table": "weight_sync_state",
-            "onDelete": "CASCADE",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "databaseName"
-            ],
-            "referencedColumns": [
-              "databaseName"
-            ]
-          }
-        ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3186b730f778631a387b760aafc813c9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '616ae3e633fd4a33c6cd18c05f6ac624')"
     ]
   }
 }
