@@ -36,7 +36,6 @@ import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
-import dev.sanastasov.bybon.workout.ui.SessionMeta
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmTrendCard
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
@@ -169,8 +168,8 @@ private fun SummaryList(
             .padding(horizontal = 16.dp, vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item(key = "session-meta") {
-            SessionMeta(state.date, state.startTime, state.duration)
+        item(key = "session-summary") {
+            WorkoutSessionSummaryCard(state.sessionSummary)
         }
         state.note?.let { note ->
             item(key = "session-note") {
@@ -211,7 +210,21 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
     title = "Full Body B",
     date = "13 Aug 2026",
     startTime = "18:25",
-    duration = "00:47",
+    duration = "47m",
+    sessionSummary = WorkoutSessionSummaryUi(
+        subtitle = "Full Body B · 13 Aug 2026 · Start 18:25",
+        duration = "47m",
+        exerciseCount = 2,
+        workingSetCount = 5,
+        totalReps = 63,
+        volumeLoadLabel = "1762.5 kg",
+        setPerformance = SetPerformanceUi(improved = 5, maintained = 0, declined = 0),
+        exercisePerformance = listOf(
+            ExerciseAverageOneRmUi("Romanian Deadlift", "↑ 5.14 kg"),
+            ExerciseAverageOneRmUi("Incline Dumbbell Press", "↑ 0.58 kg"),
+        ),
+        musclesTrained = listOf("Chest", "Back", "Hamstrings", "Glutes"),
+    ),
     note = "Friday full body workout",
     exercises = listOf(
         WorkoutSummaryExerciseUi(

@@ -35,4 +35,20 @@ class WorkoutSummaryUiTest {
         )
         assert(formatOneRmVsPrevious(Weight.kilograms(25f), Weight.kilograms(25f)) == null)
     }
+
+    @Test
+    fun `average e1RM change omits vs previous and names no change`() {
+        assert(
+            formatAverageOneRmChange(Weight.kilograms(26.25f), Weight.kilograms(25.67f)) ==
+                "↑ 0.58 kg",
+        )
+        assert(
+            formatAverageOneRmChange(Weight.kilograms(24f), Weight.kilograms(25f)) ==
+                "↓ 1 kg",
+        )
+        assert(
+            formatAverageOneRmChange(Weight.kilograms(25f), Weight.kilograms(25f)) ==
+                "No change",
+        )
+    }
 }

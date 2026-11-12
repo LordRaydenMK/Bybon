@@ -33,9 +33,22 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "kg x reps"
 - assertVisible: "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM"
 - tapOn: "Upper body B"
+- assertVisible: "Workout completed!"
+- scrollUntilVisible:
+    element: "Full body B without legs"
+    direction: DOWN
 - assertVisible: "Full body B without legs"
+- scrollUntilVisible:
+    element: "Rep range 11-15"
+    direction: DOWN
 - assertVisible: "Rep range 11-15"
+- scrollUntilVisible:
+    element: "Top-set e1RM, 29.33 kg, ↑ 0.66 kg vs previous"
+    direction: DOWN
 - assertVisible: "Top-set e1RM, 29.33 kg, ↑ 0.66 kg vs previous"
+- scrollUntilVisible:
+    element: "1. 20 kg × 14, 29.33 kg e1RM"
+    direction: DOWN
 - assertVisible: "1. 20 kg × 14, 29.33 kg e1RM"
 - back
 - assertVisible: "History"

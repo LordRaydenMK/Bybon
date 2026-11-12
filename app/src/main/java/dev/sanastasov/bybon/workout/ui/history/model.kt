@@ -11,13 +11,13 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
+import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
-import kotlin.time.Duration
 
 sealed class WorkoutHistoryUiState {
     data object Loading : WorkoutHistoryUiState()
@@ -162,17 +162,6 @@ internal fun formatLastSevenDaysRange(start: LocalDate, end: LocalDate): String 
             "${start.toShortDisplayDate()}$dash${end.toShortDisplayDate()} ${end.year}"
 
         else -> "${start.dayOfMonth}$dash${end.toShortDisplayDate()} ${end.year}"
-    }
-}
-
-internal fun Duration.formatTrainingTime(): String {
-    val totalMinutes = inWholeMinutes.coerceAtLeast(0)
-    val hours = totalMinutes / 60
-    val minutes = totalMinutes % 60
-    return when {
-        hours == 0L -> "${minutes}m"
-        minutes == 0L -> "${hours}h"
-        else -> "${hours}h ${minutes}m"
     }
 }
 

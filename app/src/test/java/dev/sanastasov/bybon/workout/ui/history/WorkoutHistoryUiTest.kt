@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.history
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import java.time.LocalDate
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes

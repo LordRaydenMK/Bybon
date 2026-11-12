@@ -71,3 +71,10 @@ internal fun oneRmFor(
 } else {
     loggedWeight?.let { estimatedOneRm(it, reps) }
 }
+
+internal fun List<ExerciseSet>.volumeLoad(): Weight? {
+    val kilograms = sumOf { set ->
+        (set.weight?.kilogramsValue ?: 0f).toDouble() * set.reps
+    }.toFloat()
+    return Weight.kilogramsOrNull(kilograms)
+}
