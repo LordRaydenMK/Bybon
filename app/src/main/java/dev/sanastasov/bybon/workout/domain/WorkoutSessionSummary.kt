@@ -7,18 +7,10 @@ data class WorkoutSessionSummary(
     val workingSetCount: Int,
     val totalReps: Int,
     val volumeLoadKg: Float,
-    val setPerformance: PerformanceChange,
+    val setPerformance: ExercisePerformanceChange,
     val exercisePerformance: List<ExerciseAverageOneRmChange>,
     val musclesTrained: List<TrainedMuscle>,
 )
-
-data class PerformanceChange(
-    val improved: Int,
-    val maintained: Int,
-    val declined: Int,
-) {
-    val comparableCount: Int get() = improved + maintained + declined
-}
 
 data class ExerciseAverageOneRmChange(
     val exerciseId: String,
@@ -44,18 +36,11 @@ fun WorkoutSession.workoutSessionSummary(
         exercisePerformance = matched.mapNotNull { exercise ->
             exercise.averageOneRmChange(completedSessions, startedAt)
         },
-        musclesTrained = matched
-            .flatMap { it.exerciseDefinition.trainedMuscles() }
-            .toSet()
-            .sortedBy { it.ordinal },
+        musclesTrained = matched.trainedMuscles(),
     )
 }
 
-private fun List<ExerciseSet>.volumeLoadKg(): Float = sumOf { set ->
-    (set.weight?.kilogramsValue ?: 0f).toDouble() * set.reps
-}.toFloat()
-
-private fun List<ExerciseSet>.setPerformance(): PerformanceChange {
+private fun List<ExerciseSet>.setPerformance(): ExercisePerformanceChange {
     var improved = 0
     var maintained = 0
     var declined = 0
@@ -68,7 +53,7 @@ private fun List<ExerciseSet>.setPerformance(): PerformanceChange {
             else -> maintained++
         }
     }
-    return PerformanceChange(improved, maintained, declined)
+    return ExercisePerformanceChange(improved, maintained, declined)
 }
 
 private fun WorkoutExercise.averageOneRmChange(
@@ -87,9 +72,4 @@ private fun WorkoutExercise.averageOneRmChange(
         currentAverage = currentAverage,
         previousAverage = previousAverage,
     )
-}
-
-private fun List<Weight>.averageWeight(): Weight? {
-    if (isEmpty()) return null
-    return Weight.kilograms(map { it.kilogramsValue.toDouble() }.average().toFloat())
 }

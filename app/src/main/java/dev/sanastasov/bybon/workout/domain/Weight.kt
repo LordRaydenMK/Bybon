@@ -47,3 +47,8 @@ value class Weight(
         fun parseString(value: String): Weight = kilograms(value.toFloat())
     }
 }
+
+internal fun List<Weight>.averageWeight(): Weight? {
+    if (isEmpty()) return null
+    return Weight.kilograms(map { it.kilogramsValue.toDouble() }.average().toFloat())
+}

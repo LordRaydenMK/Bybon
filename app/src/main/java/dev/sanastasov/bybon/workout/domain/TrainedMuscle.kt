@@ -84,3 +84,11 @@ private val PRIMARY_MUSCLE_TO_TRAINED = mapOf(
     "forearm_flexors" to TrainedMuscle.Forearms,
     "forearm_extensors" to TrainedMuscle.Forearms,
 )
+
+internal fun Iterable<WorkoutExercise>.trainedMuscles(): List<TrainedMuscle> =
+    flatMap { it.exerciseDefinition.trainedMuscles() }
+        .toSet()
+        .sortedBy { it.ordinal }
+
+internal fun List<WorkoutSession>.musclesTrained(): List<TrainedMuscle> =
+    flatMap { it.exercises }.trainedMuscles()

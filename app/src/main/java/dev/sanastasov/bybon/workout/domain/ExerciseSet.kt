@@ -71,3 +71,7 @@ internal fun oneRmFor(
 } else {
     loggedWeight?.let { estimatedOneRm(it, reps) }
 }
+
+internal fun List<ExerciseSet>.volumeLoadKg(): Float = sumOf { set ->
+    (set.weight?.kilogramsValue ?: 0f).toDouble() * set.reps
+}.toFloat()

@@ -4,17 +4,19 @@ import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.domain.toDisplayDateDotRelative
 import dev.sanastasov.bybon.workout.domain.CompletedExerciseOccurrence
 import dev.sanastasov.bybon.workout.domain.ExerciseAverageOneRmChange
+import dev.sanastasov.bybon.workout.domain.ExercisePerformanceChange
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
-import dev.sanastasov.bybon.workout.domain.PerformanceChange
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionSummary
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.averageWeight
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.latestCompletedExerciseOccurrence
+import dev.sanastasov.bybon.workout.domain.volumeLoadKg
 import dev.sanastasov.bybon.workout.domain.withPreviousFrom
 import dev.sanastasov.bybon.workout.domain.workoutSessionSummary
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
@@ -168,9 +170,10 @@ internal fun WorkoutSessionSummary.toUi(
     musclesTrained = musclesTrained.map { it.label },
 )
 
-private fun PerformanceChange.toUi(): SetPerformanceUi? = takeIf { comparableCount > 0 }?.let {
-    SetPerformanceUi(it.improved, it.maintained, it.declined)
-}
+private fun ExercisePerformanceChange.toUi(): SetPerformanceUi? =
+    takeIf { comparableCount > 0 }?.let {
+        SetPerformanceUi(it.improved, it.maintained, it.declined)
+    }
 
 private fun ExerciseAverageOneRmChange.toUi(): ExerciseAverageOneRmUi = ExerciseAverageOneRmUi(
     name = name,
@@ -218,17 +221,7 @@ private fun CompletedExerciseOccurrence.toPreviousUi(
     )
 }
 
-private fun List<Weight>.averageWeight(): Weight? {
-    if (isEmpty()) return null
-    return Weight.kilograms(map { it.kilogramsValue.toDouble() }.average().toFloat())
-}
-
-private fun List<ExerciseSet>.volumeLoadLabel(): String {
-    val kilograms = sumOf { set ->
-        (set.weight?.kilogramsValue ?: 0f).toDouble() * set.reps
-    }
-    return "${formatOneRmKg(kilograms.toFloat())} kg"
-}
+private fun List<ExerciseSet>.volumeLoadLabel(): String = "${formatOneRmKg(volumeLoadKg())} kg"
 
 private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummarySetUi(
     number = null,

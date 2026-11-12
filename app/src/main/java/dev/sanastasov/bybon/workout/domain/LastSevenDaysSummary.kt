@@ -86,8 +86,3 @@ private fun List<WorkoutSession>.latestTopSetOneRm(exerciseId: String): Weight? 
 
 private fun WorkoutSession.exerciseOrNull(exerciseId: String): WorkoutExercise? =
     exercises.firstOrNull { it.id == exerciseId }
-
-private fun List<WorkoutSession>.musclesTrained(): List<TrainedMuscle> =
-    flatMap { session -> session.exercises.flatMap { it.exerciseDefinition.trainedMuscles() } }
-        .toSet()
-        .sortedBy { it.ordinal }

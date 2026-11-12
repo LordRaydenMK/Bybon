@@ -27,7 +27,7 @@ class WorkoutSessionSummaryTest {
         assert(summary.workingSetCount == 5)
         assert(summary.totalReps == 15 + 13 + 11 + 12 + 12)
         assert(summary.volumeLoadKg == 17.5f * 39 + 45f * 24)
-        assert(summary.setPerformance == PerformanceChange(0, 0, 0))
+        assert(summary.setPerformance == ExercisePerformanceChange(0, 0, 0))
         assert(summary.exercisePerformance.isEmpty())
     }
 
@@ -84,7 +84,7 @@ class WorkoutSessionSummaryTest {
         val summary = session.workoutSessionSummary(listOf(previous, session))
 
         assert(
-            summary.setPerformance == PerformanceChange(
+            summary.setPerformance == ExercisePerformanceChange(
                 improved = 3,
                 maintained = 1,
                 declined = 1,
@@ -131,7 +131,7 @@ class WorkoutSessionSummaryTest {
 
         val summary = session.workoutSessionSummary(listOf(session))
 
-        assert(summary.setPerformance == PerformanceChange(0, 0, 0))
+        assert(summary.setPerformance == ExercisePerformanceChange(0, 0, 0))
         assert(summary.exercisePerformance.isEmpty())
     }
 
