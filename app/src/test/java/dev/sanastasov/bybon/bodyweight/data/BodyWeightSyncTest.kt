@@ -66,9 +66,9 @@ class BodyWeightSyncTest {
         assert(result == WeightSyncResult.Completed)
         assert(cloud.writes.single().single().date == jan1)
         assert(!cloud.writes.single().single().deleted)
-        assert(syncDao.ops().isEmpty())
-        assert(syncDao.state("stg")?.lastSyncedUid == "uid")
-        assert(syncDao.state("stg")?.conflictKind == null)
+        assert(syncDao.observeOps().first().isEmpty())
+        assert(syncDao.observeState().first()?.lastSyncedUid == "uid")
+        assert(syncDao.observeState().first()?.conflictKind == null)
         assert(repository.backupStatus().first().lastSuccess == Instant.ofEpochMilli(1_000))
     }
 
@@ -154,7 +154,7 @@ class BodyWeightSyncTest {
         val stored = repository.entries().first().single()
         assert(stored.date == feb1)
         assert(stored.weight.value == 7000)
-        assert(syncDao.ops().isEmpty())
+        assert(syncDao.observeOps().first().isEmpty())
         val status = repository.backupStatus().first()
         val imported = status.notice as WeightBackupNotice.Imported
         assert(imported.summary.count == 1)
@@ -169,7 +169,6 @@ class BodyWeightSyncTest {
         syncDao.insertClashes(
             listOf(
                 WeightSyncClashEntity(
-                    databaseName = "stg",
                     date = jan1,
                     phoneWeight = 6500,
                     backupWeight = 7000,
@@ -210,7 +209,7 @@ class BodyWeightSyncTest {
 
         assert(result == WeightSyncResult.Completed)
         assert(cloud.writes.isEmpty())
-        assert(syncDao.ops().isEmpty())
+        assert(syncDao.observeOps().first().isEmpty())
         assert(repository.entries().first().single().date == jan1)
         assert(repository.backupStatus().first().notice == null)
     }
@@ -239,7 +238,6 @@ class BodyWeightSyncTest {
         EmptyDietPhaseDao(),
         syncDao,
         cloud,
-        "stg",
         Clock.fixed(Instant.ofEpochMilli(1_000), ZoneOffset.UTC),
     )
 
@@ -250,7 +248,6 @@ class BodyWeightSyncTest {
         lastSyncedUid: String? = null,
         conflictKind: String? = null,
     ) = WeightSyncStateEntity(
-        databaseName = "stg",
         lastSyncedUid = lastSyncedUid,
         cursorMillis = cursorMillis,
         lastSuccessMillis = null,
