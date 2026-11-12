@@ -133,9 +133,9 @@ private fun BackupStatus(uiState: AccountUiState) {
     if (uiState.backupPending) {
         Text("Backup pending", style = MaterialTheme.typography.bodyMedium)
     }
-    uiState.lastBackupMillis?.let { millis ->
+    uiState.lastBackup?.let { instant ->
         Text(
-            "Last backup ${formatLastBackup(millis)}",
+            "Last backup ${formatLastBackup(instant)}",
             style = MaterialTheme.typography.bodyMedium,
         )
     }
@@ -159,10 +159,10 @@ private fun WeightImportDialog(summary: WeightImportSummary, onAction: (AccountA
     )
 }
 
-private fun formatLastBackup(millis: Long): String {
+private fun formatLastBackup(instant: Instant): String {
     val formatter = DateTimeFormatter.ofPattern("d MMM yyyy, HH:mm", Locale.US)
         .withZone(ZoneId.systemDefault())
-    return formatter.format(Instant.ofEpochMilli(millis))
+    return formatter.format(instant)
 }
 
 @Preview

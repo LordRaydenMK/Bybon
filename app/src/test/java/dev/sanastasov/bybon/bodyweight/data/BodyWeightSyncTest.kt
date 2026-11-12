@@ -15,7 +15,10 @@ import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloudException
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.workout.data.FakeWeightDao
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlin.test.assertFailsWith
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -66,7 +69,7 @@ class BodyWeightSyncTest {
         assert(syncDao.ops().isEmpty())
         assert(syncDao.state("stg")?.lastSyncedUid == "uid")
         assert(syncDao.state("stg")?.conflictKind == null)
-        assert(repository.backupStatus().first().lastSuccessMillis == 1_000L)
+        assert(repository.backupStatus().first().lastSuccess == Instant.ofEpochMilli(1_000))
     }
 
     @Test
@@ -237,7 +240,8 @@ class BodyWeightSyncTest {
         syncDao,
         cloud,
         "stg",
-    ) { 1_000 }
+        Clock.fixed(Instant.ofEpochMilli(1_000), ZoneOffset.UTC),
+    )
 
     private fun entry(date: LocalDate, weight: Int) = BodyWeightEntry(date, BodyWeight(weight))
 

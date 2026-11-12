@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.bodyweight.domain
 
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
+import java.time.Instant
 import java.time.LocalDate
 
 /** SignIn reads the whole cloud. Incremental uses the cursor. */
@@ -120,7 +121,7 @@ sealed class WeightBackupNotice {
 
 data class WeightBackupStatus(
     val pending: Boolean = false,
-    val lastSuccessMillis: Long? = null,
+    val lastSuccess: Instant? = null,
     val notice: WeightBackupNotice? = null,
 )
 
