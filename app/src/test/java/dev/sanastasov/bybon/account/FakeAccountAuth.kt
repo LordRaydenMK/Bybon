@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.account
 
 import dev.sanastasov.bybon.account.domain.AccountAuth
 import dev.sanastasov.bybon.account.domain.AccountUser
+import dev.sanastasov.bybon.account.domain.UserId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -18,7 +19,7 @@ class FakeAccountAuth(
 
     override suspend fun signInWithIdToken(idToken: String) {
         signInError?.let { throw it }
-        current.value = AccountUser(idToken, "$idToken@example.com")
+        current.value = AccountUser(UserId(idToken), "$idToken@example.com")
     }
 
     override suspend fun signOut() {

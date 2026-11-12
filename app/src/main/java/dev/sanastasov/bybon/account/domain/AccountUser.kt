@@ -1,6 +1,6 @@
 package dev.sanastasov.bybon.account.domain
 
 data class AccountUser(
-    val uid: String,
+    val uid: UserId,
     val email: String,
 )

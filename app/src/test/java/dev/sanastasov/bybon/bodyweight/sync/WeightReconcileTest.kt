@@ -1,12 +1,13 @@
 package dev.sanastasov.bybon.bodyweight.sync
 
+import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
+import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
-import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOpKind
 import java.time.LocalDate
 import org.junit.Test
 
@@ -31,7 +32,7 @@ class WeightReconcileTest {
         assert(apply.addLocal.isEmpty())
         assert(!apply.uploadAllLocal)
         assert(apply.uploads.isEmpty())
-        assert(apply.summary == WeightImportSummary(2, jan1, feb1))
+        assert(apply.summary == WeightImportSummary(2, WeightDateSpan(jan1, feb1)))
     }
 
     @Test
@@ -51,14 +52,14 @@ class WeightReconcileTest {
         val plan = reconcileWeights(
             input(
                 local = listOf(entry(jan1, 6500)),
-                signedInUid = "other",
-                lastSyncedUid = "uid",
+                signedInUid = UserId("other"),
+                lastSyncedUid = UserId("uid"),
             ),
         )
 
         val conflict = (plan as WeightSyncPlan.Ask).conflict as WeightConflict.DifferentAccount
-        assert(conflict.signedInUid == "other")
-        assert(conflict.previousUid == "uid")
+        assert(conflict.signedIn == UserId("other"))
+        assert(conflict.previous == UserId("uid"))
     }
 
     @Test
@@ -66,8 +67,8 @@ class WeightReconcileTest {
         val plan = reconcileWeights(
             input(
                 remote = listOf(remote(jan1, 6500)),
-                signedInUid = "other",
-                lastSyncedUid = "uid",
+                signedInUid = UserId("other"),
+                lastSyncedUid = UserId("uid"),
             ),
         )
 
@@ -85,7 +86,7 @@ class WeightReconcileTest {
                     remote(jan1, 6500, updatedAt = 1),
                     remote(feb1, 6600, updatedAt = 2),
                 ),
-                lastSyncedUid = "uid",
+                lastSyncedUid = UserId("uid"),
             ),
         )
 
@@ -94,7 +95,7 @@ class WeightReconcileTest {
         assert(apply.replaceLocal == null)
         assert(!apply.uploadAllLocal)
         assert(apply.uploads.isEmpty())
-        assert(apply.summary == WeightImportSummary(1, feb1, feb1))
+        assert(apply.summary == WeightImportSummary(1, WeightDateSpan(feb1, feb1)))
     }
 
     @Test
@@ -103,8 +104,8 @@ class WeightReconcileTest {
             input(
                 local = listOf(entry(jan1, 6500)),
                 remote = listOf(remote(jan1, 6550)),
-                pending = listOf(WeightSyncOp(jan1, WeightSyncOpKind.Upsert, 6500)),
-                lastSyncedUid = "uid",
+                pending = listOf(WeightSyncOp.Upsert(jan1, BodyWeight(6500))),
+                lastSyncedUid = UserId("uid"),
             ),
         )
 
@@ -122,7 +123,7 @@ class WeightReconcileTest {
             input(
                 local = listOf(entry(jan1, 6500)),
                 remote = listOf(remote(jan1, 6500, deleted = true)),
-                lastSyncedUid = "uid",
+                lastSyncedUid = UserId("uid"),
             ),
         )
 
@@ -139,7 +140,7 @@ class WeightReconcileTest {
             input(
                 local = listOf(entry(jan1, 6500)),
                 remote = listOf(remote(feb1, 6600)),
-                pending = listOf(WeightSyncOp(jan1, WeightSyncOpKind.Upsert, 6500)),
+                pending = listOf(WeightSyncOp.Upsert(jan1, BodyWeight(6500))),
                 conflictPending = true,
             ),
         )
@@ -152,8 +153,8 @@ class WeightReconcileTest {
         val plan = reconcileWeights(
             input(
                 remote = listOf(remote(jan1, 6500), remote(feb1, 6600)),
-                pending = listOf(WeightSyncOp(jan1, WeightSyncOpKind.Delete, null)),
-                lastSyncedUid = "uid",
+                pending = listOf(WeightSyncOp.Delete(jan1)),
+                lastSyncedUid = UserId("uid"),
             ),
         )
 
@@ -187,8 +188,8 @@ class WeightReconcileTest {
         remote: List<RemoteWeight> = emptyList(),
         pending: List<WeightSyncOp> = emptyList(),
         fullSnapshot: Boolean = true,
-        signedInUid: String = "uid",
-        lastSyncedUid: String? = null,
+        signedInUid: UserId = UserId("uid"),
+        lastSyncedUid: UserId? = null,
         conflictPending: Boolean = false,
     ) = WeightSyncInput(
         local = local,

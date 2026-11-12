@@ -1,8 +1,10 @@
 package dev.sanastasov.bybon.bodyweight.data
 
+import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.domain.CloudWeight
+import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
@@ -39,14 +41,14 @@ class BodyWeightSyncTest {
         val repository = repository(syncDao, cloud)
         repository.insert(entry(jan1, 6500))
 
-        val result = repository.sync(WeightSyncCommand.Pull("uid", WeightSyncStart.SignIn))
+        val result = repository.sync(WeightSyncCommand.Pull(UserId("uid"), WeightSyncStart.SignIn))
 
         val conflict = (result as WeightSyncResult.NeedsChoice).conflict as WeightConflict.DifferentAccount
-        assert(conflict.previousUid == "old")
+        assert(conflict.previous == UserId("old"))
         assert(cloud.reads == 0)
         assert(cloud.writes.isEmpty())
         assert(repository.backupStatus().first().pending)
-        assert(repository.backupStatus().first().conflict == conflict)
+        assert(repository.backupStatus().first().notice == WeightBackupNotice.Conflict(conflict))
     }
 
     @Test
@@ -56,7 +58,7 @@ class BodyWeightSyncTest {
         val repository = repository(syncDao, cloud)
         repository.insert(entry(jan1, 6500))
 
-        val result = repository.sync(WeightSyncCommand.Pull("uid", WeightSyncStart.SignIn))
+        val result = repository.sync(WeightSyncCommand.Pull(UserId("uid"), WeightSyncStart.SignIn))
 
         assert(result == WeightSyncResult.Completed)
         assert(cloud.writes.single().single().date == jan1)
@@ -74,7 +76,7 @@ class BodyWeightSyncTest {
         repository.insert(entry(jan1, 6500))
         cloud.all = listOf(RemoteWeight(jan1, 6600, deleted = false, updatedAtMillis = 5))
 
-        val result = repository.sync(WeightSyncCommand.Pull("uid", WeightSyncStart.SignIn))
+        val result = repository.sync(WeightSyncCommand.Pull(UserId("uid"), WeightSyncStart.SignIn))
 
         val clash = (
             (result as WeightSyncResult.NeedsChoice).conflict as WeightConflict.OverlappingDates
@@ -83,7 +85,10 @@ class BodyWeightSyncTest {
         assert((clash.inBackup as CloudWeight.Value).weight.value == 6600)
         assert(cloud.writes.isEmpty())
         assert(repository.entries().first().single().weight.value == 6500)
-        assert(repository.backupStatus().first().conflict == result.conflict)
+        assert(
+            repository.backupStatus().first().notice ==
+                WeightBackupNotice.Conflict(result.conflict),
+        )
     }
 
     @Test
@@ -93,7 +98,7 @@ class BodyWeightSyncTest {
         syncDao.upsertState(state(cursorMillis = 10, lastSyncedUid = "uid"))
         val repository = repository(syncDao, cloud)
 
-        repository.sync(WeightSyncCommand.Pull("uid", WeightSyncStart.Incremental))
+        repository.sync(WeightSyncCommand.Pull(UserId("uid"), WeightSyncStart.Incremental))
 
         assert(cloud.reads == 0)
         assert(cloud.updatedReads == 1)
@@ -106,7 +111,7 @@ class BodyWeightSyncTest {
         val repository = repository(FakeWeightSyncDao(), cloud)
         repository.insert(entry(jan1, 6500))
 
-        val result = repository.sync(WeightSyncCommand.Pull("uid", WeightSyncStart.SignIn))
+        val result = repository.sync(WeightSyncCommand.Pull(UserId("uid"), WeightSyncStart.SignIn))
 
         assert(result == WeightSyncResult.Unavailable)
         assert(repository.backupStatus().first().pending)
@@ -139,7 +144,7 @@ class BodyWeightSyncTest {
         cloud.all = listOf(RemoteWeight(feb1, 7000, deleted = false, updatedAtMillis = 9))
 
         val result = repository.sync(
-            WeightSyncCommand.Resolve(WeightConflictChoice.UseBackup("uid")),
+            WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.UseBackup(UserId("uid"))),
         )
 
         assert(result == WeightSyncResult.Completed)
@@ -148,9 +153,9 @@ class BodyWeightSyncTest {
         assert(stored.weight.value == 7000)
         assert(syncDao.ops().isEmpty())
         val status = repository.backupStatus().first()
-        assert(status.conflict == null)
-        assert(status.summary?.count == 1)
-        assert(status.summary?.earliest == feb1)
+        val imported = status.notice as WeightBackupNotice.Imported
+        assert(imported.summary.count == 1)
+        assert(imported.summary.span.earliest == feb1)
     }
 
     @Test
@@ -174,14 +179,14 @@ class BodyWeightSyncTest {
         cloud.all = listOf(RemoteWeight(feb1, 7000, deleted = false, updatedAtMillis = 4))
 
         val result = repository.sync(
-            WeightSyncCommand.Resolve(WeightConflictChoice.ReplaceBackup("uid")),
+            WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.ReplaceBackup(UserId("uid"))),
         )
 
         assert(result == WeightSyncResult.Completed)
         val writes = cloud.writes.single()
         assert(writes.any { it.date == jan1 && it.weight == 6500 && !it.deleted })
         assert(writes.any { it.date == feb1 && it.deleted })
-        assert(repository.backupStatus().first().conflict == null)
+        assert(repository.backupStatus().first().notice == null)
         assert(repository.entries().first().single().date == jan1)
     }
 
@@ -204,7 +209,7 @@ class BodyWeightSyncTest {
         assert(cloud.writes.isEmpty())
         assert(syncDao.ops().isEmpty())
         assert(repository.entries().first().single().date == jan1)
-        assert(repository.backupStatus().first().conflict == null)
+        assert(repository.backupStatus().first().notice == null)
     }
 
     @Test
@@ -219,10 +224,11 @@ class BodyWeightSyncTest {
         )
         val repository = repository(syncDao, FakeWeightCloud())
 
-        assert(repository.backupStatus().first().summary?.count == 1)
+        val imported = repository.backupStatus().first().notice as WeightBackupNotice.Imported
+        assert(imported.summary.count == 1)
         repository.dismissSummary()
 
-        assert(repository.backupStatus().first().summary == null)
+        assert(repository.backupStatus().first().notice == null)
     }
 
     private fun repository(syncDao: WeightSyncDao, cloud: WeightCloud) = BodyWeightRepositoryImpl(

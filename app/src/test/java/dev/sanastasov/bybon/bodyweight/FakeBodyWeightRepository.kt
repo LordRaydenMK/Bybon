@@ -41,7 +41,7 @@ class FakeBodyWeightRepository(
     }
 
     override suspend fun dismissSummary() {
-        backup.update { it.copy(summary = null) }
+        backup.update { it.copy(notice = null) }
     }
 
     override fun phases(): Flow<List<DietPhaseRecord>> = records.map { all ->

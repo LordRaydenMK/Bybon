@@ -1,27 +1,35 @@
 package dev.sanastasov.bybon.bodyweight.domain
 
+import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import java.time.LocalDate
 
 /** SignIn reads the whole cloud. Incremental uses the cursor. */
 enum class WeightSyncStart { SignIn, Incremental }
 
-/** The answer to a stored conflict. Cloud choices name the account they write. */
-sealed interface WeightConflictChoice {
-    data object KeepThisPhone : WeightConflictChoice
+/**
+ * The answer to a stored conflict.
+ * [Cloud] choices write the named account. Keep this phone writes nothing.
+ */
+sealed class WeightConflictChoice {
+    data object KeepThisPhone : WeightConflictChoice()
 
-    data class UseBackup(
-        val uid: String,
-    ) : WeightConflictChoice
+    sealed class Cloud(
+        open val uid: UserId,
+    ) : WeightConflictChoice() {
+        data class UseBackup(
+            override val uid: UserId,
+        ) : Cloud(uid)
 
-    data class ReplaceBackup(
-        val uid: String,
-    ) : WeightConflictChoice
+        data class ReplaceBackup(
+            override val uid: UserId,
+        ) : Cloud(uid)
+    }
 }
 
 sealed interface WeightSyncCommand {
     data class Pull(
-        val uid: String,
+        val uid: UserId,
         val start: WeightSyncStart,
     ) : WeightSyncCommand
 
@@ -46,15 +54,23 @@ data class WeightDateClash(
 )
 
 /** Why a sync stopped before changing the phone or the backup. */
-sealed interface WeightConflict {
+sealed class WeightConflict {
     data class DifferentAccount(
-        val signedInUid: String,
-        val previousUid: String,
-    ) : WeightConflict
+        val signedIn: UserId,
+        val previous: UserId,
+    ) : WeightConflict() {
+        init {
+            require(signedIn != previous) { "Account conflict needs two accounts" }
+        }
+    }
 
     data class OverlappingDates(
         val dates: List<WeightDateClash>,
-    ) : WeightConflict
+    ) : WeightConflict() {
+        init {
+            require(dates.isNotEmpty()) { "Date conflict needs a date" }
+        }
+    }
 }
 
 /**
@@ -72,23 +88,52 @@ sealed interface WeightSyncResult {
     data object Unavailable : WeightSyncResult
 }
 
-data class WeightImportSummary(
-    val count: Int,
+/** The dates an import covers. Earliest is never after latest. */
+data class WeightDateSpan(
     val earliest: LocalDate,
     val latest: LocalDate,
-)
+) {
+    init {
+        require(!earliest.isAfter(latest)) { "Earliest date is after the latest" }
+    }
+}
+
+data class WeightImportSummary(
+    val count: Int,
+    val span: WeightDateSpan,
+) {
+    init {
+        require(count > 0) { "Import summary needs at least one weight" }
+    }
+}
+
+/** One thing for the screen to show. A conflict and an import summary do not coexist. */
+sealed class WeightBackupNotice {
+    data class Conflict(
+        val conflict: WeightConflict,
+    ) : WeightBackupNotice()
+
+    data class Imported(
+        val summary: WeightImportSummary,
+    ) : WeightBackupNotice()
+}
 
 data class WeightBackupStatus(
     val pending: Boolean = false,
     val lastSuccessMillis: Long? = null,
-    val conflict: WeightConflict? = null,
-    val summary: WeightImportSummary? = null,
+    val notice: WeightBackupNotice? = null,
 )
 
-data class WeightSyncOp(
-    val date: LocalDate,
-    val kind: WeightSyncOpKind,
-    val weight: Int?,
-)
+/** A date waiting to be written. An upsert carries the weight. A delete does not. */
+sealed class WeightSyncOp {
+    abstract val date: LocalDate
 
-enum class WeightSyncOpKind { Upsert, Delete }
+    data class Upsert(
+        override val date: LocalDate,
+        val weight: BodyWeight,
+    ) : WeightSyncOp()
+
+    data class Delete(
+        override val date: LocalDate,
+    ) : WeightSyncOp()
+}
