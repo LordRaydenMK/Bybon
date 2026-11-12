@@ -4,7 +4,6 @@ import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
-import dev.sanastasov.bybon.BuildConfig
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
@@ -23,9 +22,7 @@ interface WeightSyncDao {
     @Query("DELETE FROM weight_sync_op WHERE date IN (:dates)")
     suspend fun deleteOps(dates: List<LocalDate>)
 
-    @Query(
-        "SELECT * FROM weight_sync_state WHERE databaseName = '${BuildConfig.FIREBASE_ENV}'",
-    )
+    @Query("SELECT * FROM weight_sync_state WHERE id = 0")
     fun observeState(): Flow<WeightSyncStateEntity?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
