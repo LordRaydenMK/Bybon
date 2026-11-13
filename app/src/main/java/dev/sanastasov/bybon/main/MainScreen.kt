@@ -40,6 +40,7 @@ import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardTab
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardUiState
 import dev.sanastasov.bybon.bodyweight.dashboard.WeightDashboardViewModel
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
+import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.ui.icons.FontAwesomeWeight
 import dev.sanastasov.bybon.ui.icons.MaterialSymbolsExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
@@ -73,12 +74,12 @@ fun MainModule.MainScreen(
     var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val weightViewModel = retain {
-        WeightDashboardViewModel(bodyWeightRepository, it.coroutineScope)
+        WeightDashboardViewModel(bodyWeightRepository, it.defaultScope())
     }
     val weightState by weightViewModel.uiState.collectAsStateWithLifecycle()
 
     val workoutPlansViewModel = retain {
-        WorkoutPlansViewModel(workoutsRepository, it.coroutineScope)
+        WorkoutPlansViewModel(workoutsRepository, it.defaultScope())
     }
     val plansState by workoutPlansViewModel.uiState.collectAsStateWithLifecycle()
     workoutPlansViewModel.effects.collectEffectWithLifecycle { effect ->
@@ -93,7 +94,7 @@ fun MainModule.MainScreen(
     val historyViewModel = retain {
         WorkoutHistoryViewModel(
             workoutsRepository,
-            it.coroutineScope,
+            it.defaultScope(),
             AndroidContentResolverReader(contentResolver),
         )
     }

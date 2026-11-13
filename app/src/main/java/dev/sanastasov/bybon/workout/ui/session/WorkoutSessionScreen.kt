@@ -38,6 +38,7 @@ import androidx.navigation3.runtime.result.ResultEffect
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.WorkoutSessionService
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -70,7 +71,7 @@ fun WorkoutModule.WorkoutSessionScreen(
         WorkoutSessionViewModel(
             planId,
             workoutsRepository,
-            it.coroutineScope,
+            it.defaultScope(),
             restPromoteScheduler,
         )
     }

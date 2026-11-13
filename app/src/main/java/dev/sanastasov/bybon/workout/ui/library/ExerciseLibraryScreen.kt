@@ -47,6 +47,7 @@ import coil3.compose.AsyncImage
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.ui.icons.icon
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.BodyPart
@@ -67,7 +68,7 @@ fun WorkoutModule.ExerciseLibraryScreen(
         ExerciseLibraryViewModel(
             existingExerciseIds,
             workoutsRepository,
-            it.coroutineScope,
+            it.defaultScope(),
             picker,
         )
     }
