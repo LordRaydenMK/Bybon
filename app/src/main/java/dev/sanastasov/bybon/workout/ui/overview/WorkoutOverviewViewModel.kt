@@ -24,6 +24,8 @@ import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeightFromField
 import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
+import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -95,11 +97,11 @@ class WorkoutOverviewViewModel(
 
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
                 withContext(defaultDispatcher) {
-                    val now = java.time.LocalDateTime.now()
+                    val now = LocalDateTime.now()
                     repository.updateWorkout(
                         requireOverviewSession().startWorkout(
                             now = now,
-                            snapshot = repository.sevenDayBodyWeight(now.toLocalDate()),
+                            snapshot = repository.sevenDayBodyWeight(LocalDate.now()),
                         ),
                     )
                     _effects.trySend(WorkoutOverviewEffect.NavigateToSession)

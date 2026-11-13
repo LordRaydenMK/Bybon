@@ -28,19 +28,17 @@ class WorkoutPlansViewModel(
     private val showArchived = MutableStateFlow(false)
 
     val uiState = combine(
-        combine(
-            repository.workoutPlans(WorkoutPlansFilter.AllPlans),
-            repository.workoutSessions(),
-        ) { plans, sessions ->
-            plans.map { it.toUi(sessions) }
-        }.flowOn(defaultDispatcher),
+        repository.workoutPlans(WorkoutPlansFilter.AllPlans),
+        repository.workoutSessions(),
         showArchived,
-    ) { plans, includeArchived ->
+    ) { plans, sessions, includeArchived ->
         WorkoutPlansUiState(
-            plans = plans,
+            plans = plans.map { it.toUi(sessions) },
             showArchived = includeArchived,
         )
-    }.stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
+    }
+        .flowOn(defaultDispatcher)
+        .stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {
