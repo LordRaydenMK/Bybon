@@ -390,13 +390,16 @@ class WorkoutSessionViewModelExerciseEditingTest {
             viewModel.onAction(WorkoutSessionAction.OnMoveExerciseDown(session.exercises.first()))
             val updated = awaitItem()!!
             assert(updated.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
+            assert(updated.exercises.first().id == "squat")
+            assert(updated.exercises.first().state == ExerciseState.InProgress)
+            assert(
+                updated.exercises.first { it.id == "bench-press" }.state ==
+                    ExerciseState.NotStarted,
+            )
             viewModel.onAction(WorkoutSessionAction.OnMoveExerciseUp(updated.exercises[1]))
             val restored = awaitItem()!!
             assert(restored.exercises.map { it.id }.take(2) == listOf("bench-press", "squat"))
-            assert(
-                updated.exercises.first { it.id == "bench-press" }.state ==
-                    ExerciseState.InProgress,
-            )
+            assert(restored.exercises.first().state == ExerciseState.InProgress)
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
         }
     }
@@ -409,7 +412,20 @@ class WorkoutSessionViewModelExerciseEditingTest {
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
             viewModel.onAction(WorkoutSessionAction.OnMoveExerciseDown(session.exercises.first()))
-            assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(1))
+            assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(0))
+            expectNoEvents()
+        }
+    }
+
+    @Test
+    fun `moving a later exercise scrolls to its new page`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.effects.test {
+            val session = viewModel.uiState.first { it != null }!!
+            viewModel.onAction(WorkoutSessionAction.OnMoveExerciseDown(session.exercises[2]))
+            assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(3))
             expectNoEvents()
         }
     }

@@ -123,12 +123,13 @@ class WorkoutSessionViewModel(
                         )
 
                     else -> {
+                        val session = checkNotNull(uiState.value) { "No active session" }
                         val history = repository.workoutSessions().first()
-                        val updated = repository.updateWorkout(planId) { session ->
-                            reduce(session, action, history)
+                        val updated = repository.updateWorkout(planId) { current ->
+                            reduce(current, action, history)
                         }
                         emitAfterSetCompleted(updated, action)
-                        emitAfterMove(updated, action)
+                        emitAfterMove(session, updated, action)
                     }
                 }
             }
@@ -176,16 +177,27 @@ class WorkoutSessionViewModel(
         }
     }
 
-    private fun emitAfterMove(updated: WorkoutSession, action: WorkoutSessionAction) {
+    private fun emitAfterMove(
+        before: WorkoutSession,
+        updated: WorkoutSession,
+        action: WorkoutSessionAction,
+    ) {
         val exerciseId = when (action) {
             is WorkoutSessionAction.OnMoveExerciseUp -> action.exercise.id
             is WorkoutSessionAction.OnMoveExerciseDown -> action.exercise.id
             else -> return
         }
-        val page = updated.exercises.indexOfFirst { it.id == exerciseId }
-        if (page >= 0) {
-            _effects.trySend(WorkoutSessionEffect.ScrollToExercise(page))
+        val movedTo = updated.exercises.indexOfFirst { it.id == exerciseId }
+        if (movedTo < 0) return
+        val currentId = before.currentExerciseIndex?.let { before.exercises[it].id }
+        val page = if (action is WorkoutSessionAction.OnMoveExerciseDown &&
+            currentId == exerciseId
+        ) {
+            requireNotNull(updated.currentExerciseIndex) { "No current exercise" }
+        } else {
+            movedTo
         }
+        _effects.trySend(WorkoutSessionEffect.ScrollToExercise(page))
     }
 
     private fun syncRestPromoteAlarm(

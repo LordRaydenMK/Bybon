@@ -78,8 +78,98 @@ class WorkoutSessionReorderTest {
         val actual = session.moveExerciseDown("bench-press")
 
         assert(actual.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
-        assert(actual.exercises.first { it.id == "bench-press" }.state == ExerciseState.InProgress)
-        assert(actual.exercises.first().state == ExerciseState.NotStarted)
+        assert(actual.exercises.first().state == ExerciseState.InProgress)
+        assert(
+            checkNotNull(actual.exercises.first().warmupSets).first().setState ==
+                SetState.InProgress,
+        )
+        assert(
+            actual.exercises.first { it.id == "bench-press" }.state == ExerciseState.NotStarted,
+        )
+        assert(actual.currentExerciseIndex == 0)
+    }
+
+    @Test
+    fun `moving the active exercise down starts the exercise that takes its place`() {
+        val session = fullBodyA.toWorkoutSession()
+            .withExerciseCompleted("bench-press")
+            .startWorkout()
+
+        val actual = session.moveExerciseDown("squat")
+
+        assert(
+            actual.exercises.map { it.id }.take(3) ==
+                listOf("bench-press", "assisted-pull-ups", "squat"),
+        )
+        assert(actual.currentExerciseIndex == 1)
+        assert(actual.exercises[1].id == "assisted-pull-ups")
+        assert(
+            checkNotNull(actual.exercises[1].warmupSets).first().setState == SetState.InProgress,
+        )
+        assert(
+            checkNotNull(actual.exercises.first { it.id == "squat" }.warmupSets)
+                .all { it.setState == SetState.NotStated },
+        )
+    }
+
+    @Test
+    fun `moving the next exercise up starts it in the active slot`() {
+        val session = fullBodyA.toWorkoutSession()
+            .withExerciseCompleted("bench-press")
+            .startWorkout()
+
+        val actual = session.moveExerciseUp("assisted-pull-ups")
+
+        assert(
+            actual.exercises.map { it.id }.take(3) ==
+                listOf("bench-press", "assisted-pull-ups", "squat"),
+        )
+        assert(actual.currentExerciseIndex == 1)
+        assert(
+            checkNotNull(actual.exercises[1].warmupSets).first().setState == SetState.InProgress,
+        )
+        assert(actual.exercises.first { it.id == "squat" }.state == ExerciseState.NotStarted)
+    }
+
+    @Test
+    fun `reordering later exercises keeps the current in-progress set`() {
+        val session = fullBodyA.toWorkoutSession()
+
+        val actual = session.moveExerciseDown("assisted-pull-ups")
+
+        assert(actual.exercises.first().id == "bench-press")
+        assert(
+            checkNotNull(actual.exercises.first().warmupSets).first().setState ==
+                SetState.InProgress,
+        )
+        assert(
+            actual.exercises.map { it.id }.drop(2).take(2) ==
+                listOf("seated-leg-curl", "assisted-pull-ups"),
+        )
+    }
+
+    @Test
+    fun `completing a replacement exercise resumes the skipped one at the next set`() {
+        val started = fullBodyA.toWorkoutSession()
+        val afterWarmup = started.completeSet(started.exercises.first(), 0, isWarmup = true)
+        val skipped = afterWarmup.moveExerciseDown("bench-press")
+        val replacement = skipped.exercises.first()
+        val warmupCount = checkNotNull(replacement.warmupSets).size
+        val afterReplacement = (0 until warmupCount).fold(skipped) { session, index ->
+            session.completeSet(session.exercises.first(), index, isWarmup = true)
+        }.let { warmed ->
+            warmed.exercises.first().sets.indices.fold(warmed) { session, index ->
+                session.completeSet(session.exercises.first(), index)
+            }
+        }
+
+        val bench = afterReplacement.exercises.first { it.id == "bench-press" }
+        val warmupSets = checkNotNull(bench.warmupSets)
+        assert(afterReplacement.exercises.first().id == "squat")
+        assert(afterReplacement.exercises.first().state == ExerciseState.Completed)
+        assert(warmupSets[0].setState is SetState.Completed)
+        assert(warmupSets[1].setState == SetState.InProgress)
+        assert(warmupSets[2].setState == SetState.NotStated)
     }
 
     @Test
