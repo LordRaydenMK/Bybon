@@ -8,36 +8,10 @@ import java.time.LocalDate
 /** SignIn reads the whole cloud. Incremental uses the cursor. */
 enum class WeightSyncStart { SignIn, Incremental }
 
-/**
- * The answer to a stored conflict.
- * [Cloud] choices write the named account. Keep this phone writes nothing.
- */
-sealed class WeightConflictChoice {
-    data object KeepThisPhone : WeightConflictChoice()
-
-    sealed class Cloud(
-        open val uid: UserId,
-    ) : WeightConflictChoice() {
-        data class UseBackup(
-            override val uid: UserId,
-        ) : Cloud(uid)
-
-        data class ReplaceBackup(
-            override val uid: UserId,
-        ) : Cloud(uid)
-    }
-}
-
-sealed interface WeightSyncCommand {
-    data class Pull(
-        val uid: UserId,
-        val start: WeightSyncStart,
-    ) : WeightSyncCommand
-
-    data class Resolve(
-        val choice: WeightConflictChoice,
-    ) : WeightSyncCommand
-}
+data class WeightSyncCommand(
+    val uid: UserId,
+    val start: WeightSyncStart,
+)
 
 /** Why a sync stopped before changing the phone or the backup. */
 sealed class WeightConflict {
@@ -55,13 +29,13 @@ sealed class WeightConflict {
 
 /**
  * Completed: this call finished.
- * NeedsChoice: nothing was applied. [conflict] is stored.
+ * Conflict: nothing was applied. The phone and the backup stay as they are.
  * Unavailable: the remote read or write did not finish. Pending ops stay.
  */
 sealed interface WeightSyncResult {
     data object Completed : WeightSyncResult
 
-    data class NeedsChoice(
+    data class Conflict(
         val conflict: WeightConflict,
     ) : WeightSyncResult
 
@@ -87,21 +61,10 @@ data class WeightImportSummary(
     }
 }
 
-/** One thing for the screen to show. A conflict and an import summary do not coexist. */
-sealed class WeightBackupNotice {
-    data class Conflict(
-        val conflict: WeightConflict,
-    ) : WeightBackupNotice()
-
-    data class Imported(
-        val summary: WeightImportSummary,
-    ) : WeightBackupNotice()
-}
-
 data class WeightBackupStatus(
     val pending: Boolean = false,
     val lastSuccess: Instant? = null,
-    val notice: WeightBackupNotice? = null,
+    val summary: WeightImportSummary? = null,
 )
 
 /** A date waiting to be written. An upsert carries the weight. A delete does not. */

@@ -19,6 +19,7 @@ class FakeBodyWeightRepository(
     private val records = MutableStateFlow(listOfNotNull(initialPhase))
     val backup = MutableStateFlow(WeightBackupStatus())
     val syncs = mutableListOf<WeightSyncCommand>()
+    var nextSyncResult: WeightSyncResult = WeightSyncResult.Completed
     private var nextId = (initialPhase?.id ?: 0L) + 1
 
     override fun entries(): Flow<List<BodyWeightEntry>> = entries
@@ -37,11 +38,11 @@ class FakeBodyWeightRepository(
 
     override suspend fun sync(command: WeightSyncCommand): WeightSyncResult {
         syncs += command
-        return WeightSyncResult.Completed
+        return nextSyncResult
     }
 
     override suspend fun dismissSummary() {
-        backup.update { it.copy(notice = null) }
+        backup.update { it.copy(summary = null) }
     }
 
     override fun phases(): Flow<List<DietPhaseRecord>> = records.map { all ->

@@ -21,8 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.account.data.CredentialManagerGoogleSignIn
-import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
-import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.main.MainModule
@@ -69,6 +67,9 @@ fun AccountScreenContent(
         ) {
             Text(uiState.environmentName, style = MaterialTheme.typography.titleMedium)
             BackupStatus(uiState)
+            uiState.conflict?.let { conflict ->
+                Text(conflict.detail(), style = MaterialTheme.typography.bodyMedium)
+            }
             if (uiState.signedIn) {
                 Text(uiState.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                 OutlinedButton(
@@ -103,29 +104,7 @@ fun AccountScreenContent(
             },
         )
     }
-    when (val notice = uiState.notice) {
-        is WeightBackupNotice.Conflict -> WeightConflictDialog(notice.conflict, onAction)
-        is WeightBackupNotice.Imported -> WeightImportDialog(notice.summary, onAction)
-        null -> Unit
-    }
-}
-
-@Composable
-private fun WeightConflictDialog(conflict: WeightConflict, onAction: (AccountAction) -> Unit) {
-    AlertDialog(
-        onDismissRequest = {},
-        title = { Text("Weights differ") },
-        text = { Text(conflict.detail()) },
-        confirmButton = {
-            Column {
-                TextButton({ onAction(AccountAction.UseTheBackup) }) { Text("Use the backup") }
-                TextButton({ onAction(AccountAction.ReplaceTheBackup) }) {
-                    Text("Replace the backup")
-                }
-                TextButton({ onAction(AccountAction.KeepThisPhone) }) { Text("Keep this phone") }
-            }
-        },
-    )
+    uiState.summary?.let { summary -> WeightImportDialog(summary, onAction) }
 }
 
 @Composable

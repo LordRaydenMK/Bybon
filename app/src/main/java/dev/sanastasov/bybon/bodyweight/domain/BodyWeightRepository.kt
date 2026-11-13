@@ -16,9 +16,8 @@ interface BodyWeightRepository {
     fun backupStatus(): Flow<WeightBackupStatus>
 
     /**
-     * Pull and upload, or apply the choice for a stored conflict.
-     * A pull that finds a stored conflict returns that choice request and does not read the cloud.
-     * Resolve throws when nothing is stored.
+     * Pull, then upload when the phone and the backup agree.
+     * A conflict applies nothing.
      * A known remote failure returns [WeightSyncResult.Unavailable]. Anything else throws.
      */
     suspend fun sync(command: WeightSyncCommand): WeightSyncResult

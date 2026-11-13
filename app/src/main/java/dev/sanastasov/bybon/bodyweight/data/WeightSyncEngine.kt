@@ -4,10 +4,7 @@ import com.google.firebase.FirebaseException
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
-import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightBackupStatus
-import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
-import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
@@ -20,7 +17,6 @@ import dev.sanastasov.bybon.bodyweight.sync.WeightSyncInput
 import dev.sanastasov.bybon.bodyweight.sync.WeightSyncPlan
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.bodyweight.sync.reconcileWeights
-import dev.sanastasov.bybon.bodyweight.sync.toImportSummary
 import java.io.IOException
 import java.time.Clock
 import java.time.Instant
@@ -31,7 +27,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
-@Suppress("TooManyFunctions")
 internal class WeightSyncEngine(
     private val weights: WeightDao,
     private val syncDao: WeightSyncDao,
@@ -44,24 +39,15 @@ internal class WeightSyncEngine(
         syncDao.observeOps(),
         syncDao.observeState(),
     ) { ops, state ->
-        val conflict = conflictOf(state)
-        val summary = state.toSummary()
         WeightBackupStatus(
             pending = ops.isNotEmpty(),
             lastSuccess = state?.lastSuccessMillis?.let(Instant::ofEpochMilli),
-            notice = when {
-                conflict != null -> WeightBackupNotice.Conflict(conflict)
-                summary != null -> WeightBackupNotice.Imported(summary)
-                else -> null
-            },
+            summary = state.toSummary(),
         )
     }
 
     suspend fun sync(command: WeightSyncCommand): WeightSyncResult = gate.withLock {
-        when (command) {
-            is WeightSyncCommand.Pull -> pull(command)
-            is WeightSyncCommand.Resolve -> resolve(command.choice)
-        }
+        pull(command)
     }
 
     suspend fun dismissSummary() {
@@ -77,20 +63,8 @@ internal class WeightSyncEngine(
         }
     }
 
-    private suspend fun pull(command: WeightSyncCommand.Pull): WeightSyncResult {
+    private suspend fun pull(command: WeightSyncCommand): WeightSyncResult {
         val state = syncDao.observeState().first()
-        val stored = conflictOf(state)
-        return if (stored != null) {
-            WeightSyncResult.NeedsChoice(stored)
-        } else {
-            pullRemote(command, state)
-        }
-    }
-
-    private suspend fun pullRemote(
-        command: WeightSyncCommand.Pull,
-        state: WeightSyncStateEntity?,
-    ): WeightSyncResult {
         val previous = state?.lastSyncedUid?.let(::UserId)
         val uidChanged = previous != null && previous != command.uid
         val full = command.start == WeightSyncStart.SignIn ||
@@ -120,17 +94,10 @@ internal class WeightSyncEngine(
                 fullSnapshot = full,
                 signedInUid = uid,
                 lastSyncedUid = state?.lastSyncedUid?.let(::UserId),
-                conflictPending = false,
             ),
         )
         return when (plan) {
-            WeightSyncPlan.Blocked -> error("Weight sync blocked without a stored conflict")
-
-            is WeightSyncPlan.Ask -> {
-                storeConflict(state, plan.conflict)
-                WeightSyncResult.NeedsChoice(plan.conflict)
-            }
-
+            is WeightSyncPlan.Conflict -> WeightSyncResult.Conflict(plan.conflict)
             is WeightSyncPlan.Apply -> writePlan(uid, local, state, plan)
         }
     }
@@ -167,86 +134,6 @@ internal class WeightSyncEngine(
         }
     }
 
-    private suspend fun resolve(choice: WeightConflictChoice): WeightSyncResult {
-        val state = syncDao.observeState().first()
-        if (conflictOf(state) == null) {
-            error("No weight conflict to resolve")
-        }
-        return when (choice) {
-            WeightConflictChoice.KeepThisPhone -> keepPhone(state)
-
-            is WeightConflictChoice.Cloud -> when (choice) {
-                is WeightConflictChoice.Cloud.UseBackup -> useBackup(choice.uid, state)
-                is WeightConflictChoice.Cloud.ReplaceBackup -> replaceBackup(choice.uid, state)
-            }
-        }
-    }
-
-    private suspend fun keepPhone(state: WeightSyncStateEntity?): WeightSyncResult {
-        syncDao.clearOps()
-        val current = state ?: emptyState()
-        syncDao.upsertState(current.withoutConflict())
-        return WeightSyncResult.Completed
-    }
-
-    private suspend fun useBackup(uid: UserId, previous: WeightSyncStateEntity?): WeightSyncResult {
-        val remote = cloud.readOrNull(full = true, uid = uid.value, cursor = null)
-        return if (remote == null) {
-            WeightSyncResult.Unavailable
-        } else {
-            val live = remote.toLiveEntries()
-            replaceWeights(live)
-            syncDao.clearOps()
-            saveFinished(
-                uid = uid,
-                previous = previous,
-                cursorMillis = remote.maxOfOrNull { it.updatedAtMillis },
-                wrote = false,
-                summary = live.toImportSummary(),
-                keepPreviousSummary = false,
-            )
-            WeightSyncResult.Completed
-        }
-    }
-
-    private suspend fun replaceBackup(
-        uid: UserId,
-        previous: WeightSyncStateEntity?,
-    ): WeightSyncResult {
-        val remote = cloud.readOrNull(full = true, uid = uid.value, cursor = null)
-        return if (remote == null) {
-            WeightSyncResult.Unavailable
-        } else {
-            replaceCloud(uid, previous, remote)
-        }
-    }
-
-    private suspend fun replaceCloud(
-        uid: UserId,
-        previous: WeightSyncStateEntity?,
-        remote: List<RemoteWeight>,
-    ): WeightSyncResult {
-        val local = localEntries()
-        val localDates = local.map { it.date }.toSet()
-        val uploads = local.map { it.toUpload() } + remote
-            .filter { !it.deleted && it.date !in localDates }
-            .map { WeightUpload(it.date, weight = null, deleted = true) }
-        return if (cloud.writeOrFalse(uid.value, uploads)) {
-            syncDao.clearOps()
-            saveFinished(
-                uid = uid,
-                previous = previous,
-                cursorMillis = remote.maxOfOrNull { it.updatedAtMillis },
-                wrote = uploads.isNotEmpty(),
-                summary = null,
-                keepPreviousSummary = false,
-            )
-            WeightSyncResult.Completed
-        } else {
-            WeightSyncResult.Unavailable
-        }
-    }
-
     private suspend fun replaceWeights(entries: List<BodyWeightEntry>) {
         weights.deleteAllWeights()
         if (entries.isNotEmpty()) weights.insertWeights(entries.map { it.toEntity() })
@@ -257,11 +144,6 @@ internal class WeightSyncEngine(
 
     private suspend fun pendingOps(): List<WeightSyncOp> =
         syncDao.observeOps().first().map { it.toOp() }
-
-    private suspend fun storeConflict(previous: WeightSyncStateEntity?, conflict: WeightConflict) {
-        val base = previous ?: emptyState()
-        syncDao.upsertState(base.withConflict(conflict))
-    }
 
     private suspend fun saveFinished(
         uid: UserId,
@@ -288,77 +170,11 @@ internal class WeightSyncEngine(
                 lastSyncedUid = uid.value,
                 cursorMillis = cursor,
                 lastSuccessMillis = if (pendingLeft) previous?.lastSuccessMillis else now,
-                conflictKind = null,
-                conflictSignedInUid = null,
-                conflictPreviousUid = null,
                 summaryCount = resolved?.count,
                 summaryEarliest = resolved?.span?.earliest,
                 summaryLatest = resolved?.span?.latest,
             ),
         )
-    }
-
-    private fun emptyState(): WeightSyncStateEntity = WeightSyncStateEntity(
-        lastSyncedUid = null,
-        cursorMillis = null,
-        lastSuccessMillis = null,
-        conflictKind = null,
-        conflictSignedInUid = null,
-        conflictPreviousUid = null,
-        summaryCount = null,
-        summaryEarliest = null,
-        summaryLatest = null,
-    )
-
-    private fun WeightSyncStateEntity.withConflict(
-        conflict: WeightConflict,
-    ): WeightSyncStateEntity = when (conflict) {
-        is WeightConflict.DifferentAccount -> copy(
-            conflictKind = WeightSyncStateEntity.ACCOUNT,
-            conflictSignedInUid = conflict.signedIn.value,
-            conflictPreviousUid = conflict.previous.value,
-            summaryCount = null,
-            summaryEarliest = null,
-            summaryLatest = null,
-        )
-
-        is WeightConflict.OverlappingDates -> copy(
-            conflictKind = WeightSyncStateEntity.DATES,
-            conflictSignedInUid = null,
-            conflictPreviousUid = null,
-            summaryCount = null,
-            summaryEarliest = null,
-            summaryLatest = null,
-        )
-    }
-
-    private fun WeightSyncStateEntity.withoutConflict(): WeightSyncStateEntity = copy(
-        conflictKind = null,
-        conflictSignedInUid = null,
-        conflictPreviousUid = null,
-        summaryCount = null,
-        summaryEarliest = null,
-        summaryLatest = null,
-    )
-}
-
-private fun conflictOf(state: WeightSyncStateEntity?): WeightConflict? {
-    val kind = state?.conflictKind ?: return null
-    return when (kind) {
-        WeightSyncStateEntity.ACCOUNT -> WeightConflict.DifferentAccount(
-            signedIn = UserId(
-                state.conflictSignedInUid
-                    ?: error("Stored account conflict is missing the signed-in account"),
-            ),
-            previous = UserId(
-                state.conflictPreviousUid
-                    ?: error("Stored account conflict is missing the previous account"),
-            ),
-        )
-
-        WeightSyncStateEntity.DATES -> WeightConflict.OverlappingDates
-
-        else -> error("Unknown weight conflict '$kind'")
     }
 }
 
@@ -393,11 +209,6 @@ private fun BodyWeightEntry.toUpload(): WeightUpload = WeightUpload(
     weight = weight.value,
     deleted = false,
 )
-
-private fun List<RemoteWeight>.toLiveEntries(): List<BodyWeightEntry> = mapNotNull { remote ->
-    val weight = remote.weight
-    if (remote.deleted || weight == null) null else BodyWeightEntry(remote.date, weight)
-}
 
 private suspend fun WeightCloud.readOrNull(
     full: Boolean,
