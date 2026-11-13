@@ -1,13 +1,14 @@
 package dev.sanastasov.bybon.bodyweight.sync
 
 import dev.sanastasov.bybon.bodyweight.BodyWeight
+import java.time.Instant
 import java.time.LocalDate
 
 data class RemoteWeight(
     val date: LocalDate,
     val weight: BodyWeight?,
     val deleted: Boolean,
-    val updatedAtMillis: Long,
+    val updatedAt: Instant,
 ) {
     init {
         require(deleted || weight != null) { "A live backup weight is missing" }
@@ -18,24 +19,24 @@ fun parseWeightDocument(
     id: String,
     weight: Long?,
     deleted: Boolean,
-    updatedAtMillis: Long?,
+    updatedAt: Instant?,
 ): RemoteWeight? {
     val date = runCatching { LocalDate.parse(id) }.getOrNull()
-    if (date == null || updatedAtMillis == null) return null
+    if (date == null || updatedAt == null) return null
     val parsed = weight?.toIntExactOrNull()?.let(BodyWeight::parseOrNull)
     return when {
         deleted -> RemoteWeight(
             date = date,
             weight = null,
             deleted = true,
-            updatedAtMillis = updatedAtMillis,
+            updatedAt = updatedAt,
         )
 
         parsed != null -> RemoteWeight(
             date = date,
             weight = parsed,
             deleted = false,
-            updatedAtMillis = updatedAtMillis,
+            updatedAt = updatedAt,
         )
 
         else -> null

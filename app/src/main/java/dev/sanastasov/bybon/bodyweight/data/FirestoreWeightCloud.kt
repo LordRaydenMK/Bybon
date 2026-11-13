@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.bodyweight.sync.parseWeightDocument
+import java.time.Instant
 import java.util.Date
 import kotlinx.coroutines.tasks.await
 
@@ -23,9 +24,9 @@ class FirestoreWeightCloud(
     override suspend fun readAll(uid: String): List<RemoteWeight> =
         weights(uid).get().await().documents.mapNotNull { it.toRemote() }
 
-    override suspend fun readUpdatedAfter(uid: String, cursorMillis: Long): List<RemoteWeight> =
+    override suspend fun readUpdatedAfter(uid: String, cursor: Instant): List<RemoteWeight> =
         weights(uid)
-            .whereGreaterThan("updatedAt", Timestamp(Date(cursorMillis)))
+            .whereGreaterThan("updatedAt", Timestamp(Date.from(cursor)))
             .get()
             .await()
             .documents
@@ -59,5 +60,5 @@ private fun DocumentSnapshot.toRemote(): RemoteWeight? = parseWeightDocument(
     id = id,
     weight = getLong("weight"),
     deleted = getBoolean("deleted") ?: false,
-    updatedAtMillis = getTimestamp("updatedAt")?.toDate()?.time,
+    updatedAt = getTimestamp("updatedAt")?.toDate()?.toInstant(),
 )

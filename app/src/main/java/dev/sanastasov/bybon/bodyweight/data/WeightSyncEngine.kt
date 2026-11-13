@@ -67,10 +67,11 @@ internal class WeightSyncEngine(
         val state = syncDao.observeState().first()
         val previous = state?.lastSyncedUid?.let(::UserId)
         val uidChanged = previous != null && previous != command.uid
+        val cursor = state?.cursorMillis?.let(Instant::ofEpochMilli)
         val full = command.start == WeightSyncStart.SignIn ||
-            state?.cursorMillis == null ||
+            cursor == null ||
             uidChanged
-        val remote = cloud.readOrNull(full, command.uid.value, state?.cursorMillis)
+        val remote = cloud.readOrNull(full, command.uid.value, cursor)
         val local = localEntries()
         return if (remote == null) {
             WeightSyncResult.Unavailable
@@ -123,7 +124,7 @@ internal class WeightSyncEngine(
             saveFinished(
                 uid = uid,
                 previous = state,
-                cursorMillis = plan.cursorMillis,
+                cursor = plan.cursor,
                 wrote = uploads.isNotEmpty(),
                 summary = plan.summary,
                 keepPreviousSummary = plan.summary == null,
@@ -148,17 +149,17 @@ internal class WeightSyncEngine(
     private suspend fun saveFinished(
         uid: UserId,
         previous: WeightSyncStateEntity?,
-        cursorMillis: Long?,
+        cursor: Instant?,
         wrote: Boolean,
         summary: WeightImportSummary?,
         keepPreviousSummary: Boolean,
     ) {
-        val now = clock.instant().toEpochMilli()
-        val cursor = listOfNotNull(
-            previous?.cursorMillis,
-            cursorMillis,
-            if (wrote || cursorMillis == null) now else null,
-        ).max()
+        val now = clock.instant()
+        val cursorMillis = listOfNotNull(
+            previous?.cursorMillis?.let(Instant::ofEpochMilli),
+            cursor,
+            if (wrote || cursor == null) now else null,
+        ).max().toEpochMilli()
         val pendingLeft = syncDao.observeOps().first().isNotEmpty()
         val resolved = when {
             summary != null -> summary
@@ -168,8 +169,8 @@ internal class WeightSyncEngine(
         syncDao.upsertState(
             WeightSyncStateEntity(
                 lastSyncedUid = uid.value,
-                cursorMillis = cursor,
-                lastSuccessMillis = if (pendingLeft) previous?.lastSuccessMillis else now,
+                cursorMillis = cursorMillis,
+                lastSuccessMillis = if (pendingLeft) previous?.lastSuccessMillis else now.toEpochMilli(),
                 summaryCount = resolved?.count,
                 summaryEarliest = resolved?.span?.earliest,
                 summaryLatest = resolved?.span?.latest,
@@ -213,7 +214,7 @@ private fun BodyWeightEntry.toUpload(): WeightUpload = WeightUpload(
 private suspend fun WeightCloud.readOrNull(
     full: Boolean,
     uid: String,
-    cursor: Long?,
+    cursor: Instant?,
 ): List<RemoteWeight>? = try {
     if (full || cursor == null) readAll(uid) else readUpdatedAfter(uid, cursor)
 } catch (cancelled: CancellationException) {
