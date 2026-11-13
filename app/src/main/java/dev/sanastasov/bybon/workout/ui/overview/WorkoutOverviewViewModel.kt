@@ -24,7 +24,11 @@ import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeightFromField
 import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
+import java.time.LocalDate
+import java.time.LocalDateTime
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,15 +37,18 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class WorkoutOverviewViewModel(
     val planId: WorkoutPlanId,
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val actions = Channel<WorkoutOverviewAction>(Channel.UNLIMITED)
     private val _effects = Channel<WorkoutOverviewEffect>(Channel.BUFFERED)
@@ -69,29 +76,36 @@ class WorkoutOverviewViewModel(
                     state.copy(session = reduce(state.session, action, state.history))
                 }
             }
+            .flowOn(defaultDispatcher)
             .stateInWhileInForeground(coroutineScope, null)
 
     fun onAction(action: WorkoutOverviewAction) {
         when (action) {
             WorkoutOverviewAction.OnSaveDraft -> coroutineScope.launch {
-                repository.updateWorkout(requireOverviewSession().asOverviewDraft())
+                withContext(defaultDispatcher) {
+                    repository.updateWorkout(requireOverviewSession().asOverviewDraft())
+                }
             }
 
             WorkoutOverviewAction.OnDiscardDraft -> coroutineScope.launch {
-                val draft = repository.workoutSession(planId).first().first { it.isDraft }
-                repository.deleteWorkout(draft.id)
-                _effects.trySend(WorkoutOverviewEffect.NavigateBack)
+                withContext(defaultDispatcher) {
+                    val draft = repository.workoutSession(planId).first().first { it.isDraft }
+                    repository.deleteWorkout(draft.id)
+                    _effects.trySend(WorkoutOverviewEffect.NavigateBack)
+                }
             }
 
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
-                val now = java.time.LocalDateTime.now()
-                repository.updateWorkout(
-                    requireOverviewSession().startWorkout(
-                        now = now,
-                        snapshot = repository.sevenDayBodyWeight(now.toLocalDate()),
-                    ),
-                )
-                _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
+                withContext(defaultDispatcher) {
+                    val now = LocalDateTime.now()
+                    repository.updateWorkout(
+                        requireOverviewSession().startWorkout(
+                            now = now,
+                            snapshot = repository.sevenDayBodyWeight(LocalDate.now()),
+                        ),
+                    )
+                    _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
+                }
             }
 
             WorkoutOverviewAction.OnAddExercise -> {
@@ -105,11 +119,13 @@ class WorkoutOverviewViewModel(
                 _effects.trySend(WorkoutOverviewEffect.OpenExerciseDetails(action.exerciseId))
 
             is WorkoutOverviewAction.OnExercisePicked -> coroutineScope.launch {
-                val exercise = repository.requireExercise(action.exerciseId)
-                uiState.filterNotNull().first()
-                val previous = repository.workoutSessions().first()
-                    .latestCompletedExercise(action.exerciseId)
-                emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise, previous))
+                withContext(defaultDispatcher) {
+                    val exercise = repository.requireExercise(action.exerciseId)
+                    uiState.filterNotNull().first()
+                    val previous = repository.workoutSessions().first()
+                        .latestCompletedExercise(action.exerciseId)
+                    emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise, previous))
+                }
             }
 
             is WorkoutOverviewAction.OnRemoveExercise -> {

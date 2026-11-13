@@ -30,7 +30,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `adjustments stay in memory until start persists the session`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -76,7 +76,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `converting set one to warmup stays in memory until start`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -139,7 +139,7 @@ class WorkoutOverviewViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(previous),
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -192,7 +192,7 @@ class WorkoutOverviewViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(previous),
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -252,7 +252,7 @@ class WorkoutOverviewViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(previous),
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -276,7 +276,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `overview session exposes rest timers on work sets only`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -302,7 +302,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `moving an exercise stays in memory until start persists the session`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -338,7 +338,7 @@ class WorkoutOverviewViewModelTest {
 
     @Test
     fun `add exercise opens the library with session exercise ids`() = runTest {
-        val viewModel = WorkoutOverviewViewModel(
+        val viewModel = overviewViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
             backgroundScope,
@@ -360,7 +360,7 @@ class WorkoutOverviewViewModelTest {
 
     @Test
     fun `opening details emits the exercise id`() = runTest {
-        val viewModel = WorkoutOverviewViewModel(
+        val viewModel = overviewViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
             backgroundScope,
@@ -388,7 +388,7 @@ class WorkoutOverviewViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -428,7 +428,7 @@ class WorkoutOverviewViewModelTest {
             initialSessions = listOf(previousCurl),
             initialExercises = catalogExercises,
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -449,7 +449,7 @@ class WorkoutOverviewViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.onAction(WorkoutOverviewAction.OnExercisePicked("incline-db-curl"))
 
@@ -471,7 +471,7 @@ class WorkoutOverviewViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -494,7 +494,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `removed exercise stays in memory until start and does not change the plan`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -520,7 +520,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `removing the last remaining exercise is rejected`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -543,7 +543,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `unknown picked exercise is rejected`() = runTest {
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutOverviewViewModel(
+        val viewModel = overviewViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),
@@ -560,7 +560,7 @@ class WorkoutOverviewViewModelTest {
     @Test
     fun `picked exercise already in the session is rejected`() = runTest {
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutOverviewViewModel(
+        val viewModel = overviewViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),
@@ -576,7 +576,7 @@ class WorkoutOverviewViewModelTest {
 
     @Test
     fun `removing an unknown exercise is rejected`() = runTest {
-        val viewModel = WorkoutOverviewViewModel(
+        val viewModel = overviewViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
             backgroundScope,
@@ -599,7 +599,7 @@ class WorkoutOverviewViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(older, newer),
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -630,7 +630,7 @@ class WorkoutOverviewViewModelTest {
                 initialSessions = listOf(lastPlanRun, otherPlanBench),
                 initialExercises = catalogExercises,
             )
-            val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+            val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
             viewModel.uiState.test {
                 assert(awaitItem() == null)

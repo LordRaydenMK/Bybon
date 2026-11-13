@@ -50,7 +50,7 @@ class WorkoutOverviewPreviousTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(previous),
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)

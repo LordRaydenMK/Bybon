@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -41,14 +40,13 @@ class WorkoutHistoryViewModel(
         combine(
             repository.workoutSessions(),
             importPhase,
-        ) { sessions, phase -> sessions to phase }
-            .map { (sessions, phase) ->
-                when (phase) {
-                    ImportPhase.Importing -> WorkoutHistoryUiState.Importing
-                    is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
-                    ImportPhase.Idle -> sessions.toUiState()
-                }
+        ) { sessions, phase ->
+            when (phase) {
+                ImportPhase.Importing -> WorkoutHistoryUiState.Importing
+                is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
+                ImportPhase.Idle -> sessions.toUiState()
             }
+        }
             .flowOn(defaultDispatcher)
             .stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
 
@@ -64,20 +62,21 @@ class WorkoutHistoryViewModel(
         coroutineScope.launch {
             try {
                 val csv = withContext(ioDispatcher) { contentResolverReader.read(uri) }
-                val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
-                val existingExercises = repository.exercises().first()
-                val mapped = withContext(defaultDispatcher) {
-                    StrongCsvParser.parse(csv).toStrongImport(
+                val summary = withContext(defaultDispatcher) {
+                    val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+                    val existingExercises = repository.exercises().first()
+                    val mapped = StrongCsvParser.parse(csv).toStrongImport(
                         plans = existingPlans,
                         exerciseCatalog = existingExercises,
                     )
+                    val imported = repository.importHistory(
+                        mapped.plans,
+                        mapped.sessionHistory,
+                        mapped.exercises,
+                    )
+                    imported.toSummaryUi()
                 }
-                val imported = repository.importHistory(
-                    mapped.plans,
-                    mapped.sessionHistory,
-                    mapped.exercises,
-                )
-                importPhase.value = ImportPhase.Summary(imported.toSummaryUi())
+                importPhase.value = ImportPhase.Summary(summary)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: IOException) {

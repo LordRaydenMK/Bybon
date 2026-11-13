@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
+import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
@@ -86,8 +87,7 @@ class WorkoutSummaryViewModelTest {
             ),
         )
         viewModel.uiState.test {
-            assert(awaitItem() == WorkoutSummaryUiState.Loading)
-            assert(awaitItem() == expected)
+            assert(awaitContent() == expected)
         }
     }
 
@@ -106,11 +106,10 @@ class WorkoutSummaryViewModelTest {
             exercises = listOf(completedExercise("bench-press", 80f to 8)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(other, matching))
-        val viewModel = WorkoutSummaryViewModel(matching.id, repository, backgroundScope)
+        val viewModel = workoutSummaryViewModel(matching.id, repository, backgroundScope)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val actual = awaitItem() as WorkoutSummaryUiState.Content
+            val actual = awaitContent()
             assert(actual.title == "Full Body B")
             assert(actual.date == "13 Aug 2026")
             assert(actual.startTime == "18:00")
@@ -134,11 +133,10 @@ class WorkoutSummaryViewModelTest {
             exercises = listOf(completedExercise("romanian-deadlift", 50f to 10)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(original))
-        val viewModel = WorkoutSummaryViewModel(original.id, repository, backgroundScope)
+        val viewModel = workoutSummaryViewModel(original.id, repository, backgroundScope)
 
         viewModel.uiState.test {
-            assert(awaitItem() == WorkoutSummaryUiState.Loading)
-            assert(awaitItem() is WorkoutSummaryUiState.Content)
+            awaitContent()
             repository.emitSessions(listOf(updated))
             val content = awaitItem() as WorkoutSummaryUiState.Content
             assert(content.exercises.single().sets.single().weightKg == "50")
@@ -455,8 +453,7 @@ class WorkoutSummaryViewModelTest {
         val viewModel = summaryViewModel(session)
 
         viewModel.uiState.test {
-            skipItems(1)
-            val actual = awaitItem() as WorkoutSummaryUiState.Content
+            val actual = awaitContent()
             assert(actual.note == "Friday full body workout")
             assert(actual.exercises.first().notes.isEmpty())
             assert(
@@ -493,7 +490,7 @@ class WorkoutSummaryViewModelTest {
             exercises = listOf(completedExercise("romanian-deadlift", 45f to 12)),
         )
         val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
-        val viewModel = WorkoutSummaryViewModel(session.id, repository, backgroundScope)
+        val viewModel = workoutSummaryViewModel(session.id, repository, backgroundScope)
 
         viewModel.effects.test {
             viewModel.uiState.first { it is WorkoutSummaryUiState.Content }
@@ -540,7 +537,7 @@ class WorkoutSummaryViewModelTest {
         )
         val inProgress = fullBodyA.toWorkoutSession(startedAt = now.minusDays(1))
         val completed = listOf(olderPr, earlierRecent, summarySession)
-        val viewModel = WorkoutSummaryViewModel(
+        val viewModel = workoutSummaryViewModel(
             summarySession.id,
             FakeWorkoutsRepository(initialSessions = completed + inProgress),
             backgroundScope,
@@ -548,8 +545,7 @@ class WorkoutSummaryViewModelTest {
         )
 
         viewModel.uiState.test {
-            skipItems(1)
-            val actual = awaitItem() as WorkoutSummaryUiState.Content
+            val actual = awaitContent()
             val bench = actual.exercises.first()
             val pullUp = actual.exercises.last()
             val expectedPerformance = completed.exercisePerformance("bench-press", now)
@@ -592,10 +588,16 @@ class WorkoutSummaryViewModelTest {
         )
     }
 
-    private fun TestScope.summaryViewModel(session: WorkoutSession) = WorkoutSummaryViewModel(
+    private fun TestScope.summaryViewModel(session: WorkoutSession) = workoutSummaryViewModel(
         session.id,
         FakeWorkoutsRepository(initialSessions = listOf(session)),
         backgroundScope,
         now = { session.startedAt },
     )
+}
+
+private suspend fun ReceiveTurbine<WorkoutSummaryUiState>.awaitContent(): WorkoutSummaryUiState.Content {
+    val item = awaitItem()
+    val content = if (item == WorkoutSummaryUiState.Loading) awaitItem() else item
+    return content as WorkoutSummaryUiState.Content
 }
