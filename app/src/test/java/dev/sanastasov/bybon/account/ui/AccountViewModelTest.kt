@@ -3,6 +3,9 @@ package dev.sanastasov.bybon.account.ui
 import dev.sanastasov.bybon.account.FakeAccountAuth
 import dev.sanastasov.bybon.account.FakeGoogleSignIn
 import dev.sanastasov.bybon.account.domain.AccountUser
+import dev.sanastasov.bybon.account.domain.SignInFailure
+import dev.sanastasov.bybon.test.BackgroundFailures
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -56,6 +59,51 @@ class AccountViewModelTest {
     }
 
     @Test
+    fun `failed firebase sign-in stays signed out and shows a short message`() = runTest {
+        val cause = IllegalStateException("auth rejected")
+        val viewModel = viewModel(
+            FakeAccountAuth(signInError = SignInFailure.Failed(cause)),
+        )
+
+        viewModel.uiState.first { !it.signingIn }
+        viewModel.onAction(AccountAction.OnSignInClicked)
+
+        val state = viewModel.uiState.first { it.message != null }
+        assert(state.email == null)
+        assert(state.message == "Sign-in failed")
+    }
+
+    @Test
+    fun `misconfigured google sign-in crashes instead of showing failed`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = viewModel(
+            googleSignIn = FakeGoogleSignIn(
+                Result.failure(IllegalStateException("Missing default_web_client_id")),
+            ),
+            coroutineScope = failures.scope,
+        )
+
+        viewModel.uiState.first { !it.signingIn }
+        failures.expectFailure("Missing default_web_client_id") {
+            viewModel.onAction(AccountAction.OnSignInClicked)
+        }
+    }
+
+    @Test
+    fun `misconfigured firebase sign-in crashes instead of showing failed`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = viewModel(
+            FakeAccountAuth(signInError = IllegalStateException("FirebaseApp not initialized")),
+            coroutineScope = failures.scope,
+        )
+
+        viewModel.uiState.first { !it.signingIn }
+        failures.expectFailure("FirebaseApp not initialized") {
+            viewModel.onAction(AccountAction.OnSignInClicked)
+        }
+    }
+
+    @Test
     fun `sign-out asks first and dismissing keeps the session`() = runTest {
         val viewModel = viewModel(FakeAccountAuth(AccountUser("stolea@gmail.com")))
 
@@ -89,5 +137,6 @@ class AccountViewModelTest {
         auth: FakeAccountAuth = FakeAccountAuth(),
         googleSignIn: FakeGoogleSignIn = FakeGoogleSignIn(),
         environmentName: String = "prd",
-    ) = AccountViewModel(auth, googleSignIn, environmentName, backgroundScope)
+        coroutineScope: CoroutineScope = backgroundScope,
+    ) = AccountViewModel(auth, googleSignIn, environmentName, coroutineScope)
 }
