@@ -96,4 +96,18 @@ class WorkoutSessionEditingTest {
         assert(actual.exercises.first().sets.size == 2)
         actual.assertOnlyInProgress("bench-press", index = 0, isWarmup = true)
     }
+
+    @Test
+    fun `removeLastSet on a later exercise keeps the current set in progress`() {
+        val session = fullBodyA.toWorkoutSession()
+        val later = session.exercises.first { it.id == "seated-leg-curl" }
+
+        val actual = session.removeLastSet(later)
+
+        assert(
+            actual.exercises.first { it.id == "seated-leg-curl" }.sets.size ==
+                later.sets.size - 1,
+        )
+        actual.assertOnlyInProgress("bench-press", index = 0, isWarmup = true)
+    }
 }
