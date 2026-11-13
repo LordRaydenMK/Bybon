@@ -52,6 +52,17 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `completing a work set starts the next work set`() {
+        val session = fullBodyA.toWorkoutSession().completeWarmups(0)
+        session.assertOnlyInProgress("bench-press", index = 0, isWarmup = false)
+
+        val actual = session.completeSet(session.exercises.first(), 0)
+
+        assert(actual.exercises.first().sets.first().setState is SetState.Completed)
+        actual.assertOnlyInProgress("bench-press", index = 1, isWarmup = false)
+    }
+
+    @Test
     fun `currentExerciseIndex is the first exercise that is not completed`() {
         val started = fullBodyA.toWorkoutSession()
         assert(started.currentExerciseIndex == 0)
