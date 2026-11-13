@@ -6,7 +6,9 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Workout Plans"
 - assertVisible: "History"
 - assertVisible: "Weight Tracking"
-- assertVisible: "Full Body A"
+- extendedWaitUntil:
+    visible: "Full Body A"
+    timeout: 30000
 - tapOn: "Overflow menu"
 - tapOn: "Account"
 - assertVisible: "stg"
