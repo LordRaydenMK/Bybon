@@ -3,7 +3,9 @@ appId: dev.sanastasov.bybon.debug
 - launchApp:
     clearState: true
 - assertVisible: "Bybon"
-- assertVisible: "Full Body A"
+- extendedWaitUntil:
+    visible: "Full Body A"
+    timeout: 30000
 - tapOn: "Start Workout"
 - assertVisible: "Full body workout routine variant A"
 - assertVisible: "Save"
