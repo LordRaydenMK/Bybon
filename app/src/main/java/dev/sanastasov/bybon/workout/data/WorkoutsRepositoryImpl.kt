@@ -22,14 +22,18 @@ import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.sevenDayBodyWeightAverage
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import java.time.LocalDate
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 private val builtInPlans = listOf(fullBodyA, fullBodyB, upperBodyA)
 
@@ -40,6 +44,7 @@ class WorkoutsRepositoryImpl internal constructor(
     private val weightDao: WeightDao,
     private val catalog: List<ExerciseDefinition> = catalogExercises,
     private val repdbCommit: String = repdbCatalogCommit,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : WorkoutsRepository {
 
     private val seedLock = Mutex()
@@ -50,7 +55,7 @@ class WorkoutsRepositoryImpl internal constructor(
     override fun exercises(): Flow<List<ExerciseDefinition>> = flow {
         ensureCatalog()
         emitAll(exerciseDao.observeAll().map { entities -> entities.map { it.toDefinition() } })
-    }
+    }.flowOn(defaultDispatcher)
 
     override fun workoutPlans(filter: WorkoutPlansFilter): Flow<List<WorkoutPlan>> = flow {
         ensureCatalog()
@@ -67,12 +72,14 @@ class WorkoutsRepositoryImpl internal constructor(
                 }
             },
         )
-    }
+    }.flowOn(defaultDispatcher)
 
     override suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean) {
-        seedLock.withLock {
-            seedLocked()
-            workoutPlanDao.setArchived(planId.id, archived)
+        withContext(defaultDispatcher) {
+            seedLock.withLock {
+                seedLocked()
+                workoutPlanDao.setArchived(planId.id, archived)
+            }
         }
     }
 
@@ -80,43 +87,49 @@ class WorkoutsRepositoryImpl internal constructor(
         planId: WorkoutPlanId,
         transform: (WorkoutPlan) -> WorkoutPlan,
     ) {
-        seedLock.withLock {
-            seedLocked()
-            val entity = requireNotNull(workoutPlanDao.planById(planId.id)) {
-                "Plan ${planId.id} does not exist"
+        withContext(defaultDispatcher) {
+            seedLock.withLock {
+                seedLocked()
+                val entity = requireNotNull(workoutPlanDao.planById(planId.id)) {
+                    "Plan ${planId.id} does not exist"
+                }
+                val lines = workoutPlanDao.exercisesForPlan(planId.id)
+                val exercises = exerciseDao.observeAll().first()
+                    .map { it.toDefinition() }
+                    .associateBy { it.id }
+                val current = entity.toDomain(lines, exercises)
+                val updated = transform(current)
+                workoutPlanDao.replacePlan(updated.toEntity(), updated.toExerciseEntities())
             }
-            val lines = workoutPlanDao.exercisesForPlan(planId.id)
-            val exercises = exerciseDao.observeAll().first()
-                .map { it.toDefinition() }
-                .associateBy { it.id }
-            val current = entity.toDomain(lines, exercises)
-            val updated = transform(current)
-            workoutPlanDao.replacePlan(updated.toEntity(), updated.toExerciseEntities())
         }
     }
 
     override suspend fun updateWorkout(session: WorkoutSession) {
-        seedLock.withLock {
-            seedLocked()
-            val existing = workoutSessionDao.openSessionForPlan(session.planId.id)
-            if (existing != null) {
-                val current = existing.toDomainSession()
-                if (session.state is WorkoutState.NotStarted &&
-                    current.state is WorkoutState.InProgress
-                ) {
-                    return
+        withContext(defaultDispatcher) {
+            seedLock.withLock {
+                seedLocked()
+                val existing = workoutSessionDao.openSessionForPlan(session.planId.id)
+                if (existing != null) {
+                    val current = existing.toDomainSession()
+                    if (session.state is WorkoutState.NotStarted &&
+                        current.state is WorkoutState.InProgress
+                    ) {
+                        return@withContext
+                    }
+                    workoutSessionDao.replaceSessionTree(existing.id, session.toWrite(existing.id))
+                } else {
+                    workoutSessionDao.insertSessionTree(session.toWrite(sessionId = 0))
                 }
-                workoutSessionDao.replaceSessionTree(existing.id, session.toWrite(existing.id))
-            } else {
-                workoutSessionDao.insertSessionTree(session.toWrite(sessionId = 0))
             }
         }
     }
 
     override suspend fun deleteWorkout(sessionId: WorkoutSessionId) {
-        seedLock.withLock {
-            seedLocked()
-            workoutSessionDao.deleteSession(sessionId.planId.id, sessionId.startedAt)
+        withContext(defaultDispatcher) {
+            seedLock.withLock {
+                seedLocked()
+                workoutSessionDao.deleteSession(sessionId.planId.id, sessionId.startedAt)
+            }
         }
     }
 
@@ -133,7 +146,7 @@ class WorkoutsRepositoryImpl internal constructor(
                 sessions.toDomainSessions(lines, sets, exercises, weights)
             },
         )
-    }
+    }.flowOn(defaultDispatcher)
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = flow {
         ensureCatalog()
@@ -148,13 +161,13 @@ class WorkoutsRepositoryImpl internal constructor(
                 sessions.toDomainSessions(lines, sets, exercises, weights)
             },
         )
-    }
+    }.flowOn(defaultDispatcher)
 
     override suspend fun importHistory(
         plans: List<WorkoutPlan>,
         sessions: List<WorkoutSession>,
         exercises: List<ExerciseDefinition>,
-    ): ImportHistoryResult {
+    ): ImportHistoryResult = withContext(defaultDispatcher) {
         seedLock.withLock {
             seedLocked()
             val addedExercises = exercises.withoutExistingIds(exerciseDao.ids().toSet()) { it.id }
@@ -169,7 +182,7 @@ class WorkoutsRepositoryImpl internal constructor(
                 planExercises = addedPlans.flatMap { it.toExerciseEntities() },
                 sessions = addedSessions.map { it.toWrite(sessionId = 0) },
             )
-            return ImportHistoryResult(
+            ImportHistoryResult(
                 plans = addedPlans,
                 sessions = addedSessions,
                 exercises = addedExercises,
@@ -221,7 +234,9 @@ class WorkoutsRepositoryImpl internal constructor(
     }
 
     override suspend fun sevenDayBodyWeight(on: LocalDate): Weight? =
-        sevenDayBodyWeightAverage(bodyWeightEntries().first(), on)
+        withContext(defaultDispatcher) {
+            sevenDayBodyWeightAverage(bodyWeightEntries().first(), on)
+        }
 
     private fun bodyWeightEntries(): Flow<List<BodyWeightEntry>> =
         weightDao.weightEntries().map { entities ->

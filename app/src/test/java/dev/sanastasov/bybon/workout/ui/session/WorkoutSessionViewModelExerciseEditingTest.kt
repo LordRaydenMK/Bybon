@@ -27,7 +27,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `add exercise opens the library with session exercise ids`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -43,7 +43,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `opening details emits the exercise id`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -64,7 +64,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -104,7 +104,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             initialSessions = listOf(previousCurl),
             initialExercises = catalogExercises,
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -122,7 +122,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `unknown picked exercise is rejected`() = runTest {
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),
@@ -139,7 +139,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `duplicate picked exercise is rejected`() = runTest {
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),
@@ -156,7 +156,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `removing an incomplete exercise persists the session without it`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -175,7 +175,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `removing the in-progress exercise starts the next one`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -196,7 +196,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             secondState = SetState.InProgress,
         )
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),
@@ -213,7 +213,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `removing an unknown exercise is rejected`() = runTest {
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
             failures.scope,
@@ -246,7 +246,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
         )
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),
@@ -263,7 +263,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `removing a later exercise scrolls to the previous page`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -279,7 +279,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `removing the last exercise scrolls to the previous page`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -297,7 +297,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `removing the first exercise stays on the first page`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -318,7 +318,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(session),
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val current = viewModel.uiState.first { it != null }!!
@@ -338,7 +338,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             initialPlans = listOf(fullBodyA),
             initialExercises = catalogExercises,
         )
-        val first = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val first = sessionViewModel(fullBodyA.id, repository, backgroundScope)
         first.uiState.first { it != null }
         first.onAction(WorkoutSessionAction.OnExercisePicked("incline-db-curl"))
         val added = first.uiState.first { session ->
@@ -366,7 +366,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             ),
         )
 
-        val next = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val next = sessionViewModel(fullBodyA.id, repository, backgroundScope)
         val created = next.uiState.first { session ->
             session != null && session.id != edited.id
         }!!
@@ -380,7 +380,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `moving an incomplete exercise persists the new order`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -407,7 +407,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `moving an exercise scrolls to its new page`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -437,7 +437,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             secondState = SetState.InProgress,
         )
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),
@@ -458,7 +458,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
             secondState = SetState.InProgress,
         )
         val failures = BackgroundFailures(this)
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             FakeWorkoutsRepository(
                 initialPlans = listOf(fullBodyA),

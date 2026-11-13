@@ -10,7 +10,7 @@ import dev.sanastasov.bybon.workout.domain.upperBodyA
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewAction
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewViewModel
 import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionAction
-import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionViewModel
+import dev.sanastasov.bybon.workout.ui.session.sessionViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -116,7 +116,7 @@ class WorkoutPlansViewModelTest {
         overview.onAction(WorkoutOverviewAction.OnStartWorkout)
         overview.effects.first()
 
-        val sessionVm = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val sessionVm = sessionViewModel(fullBodyA.id, repository, backgroundScope)
         val session = sessionVm.uiState.first { it != null }!!
         val bench = session.exercises.first()
         sessionVm.onAction(WorkoutSessionAction.OnCompleteSet(bench, 0, isWarmup = true))
@@ -134,7 +134,7 @@ class WorkoutPlansViewModelTest {
     @Test
     fun `canceling a workout clears the active plan`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val sessionVm = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val sessionVm = sessionViewModel(fullBodyA.id, repository, backgroundScope)
         sessionVm.uiState.first { it != null }
         val plans = WorkoutPlansViewModel(repository, backgroundScope)
         plans.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }

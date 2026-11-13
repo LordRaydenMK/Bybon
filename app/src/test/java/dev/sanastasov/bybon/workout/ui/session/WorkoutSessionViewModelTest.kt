@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import app.cash.turbine.test
+import dev.sanastasov.bybon.test.ImmediateDispatcher
 import dev.sanastasov.bybon.workout.REST_PROMOTE_LEAD
 import dev.sanastasov.bybon.workout.RestPromoteScheduler
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
@@ -32,7 +33,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `creates a session from the plan with planned warmup sets`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -58,7 +59,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `converting set one to warmup persists in the repository`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -81,7 +82,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `add set adds a work set and remove last drops the last not completed set`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -108,7 +109,7 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(previous),
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -153,7 +154,7 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(previous),
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -170,9 +171,40 @@ class WorkoutSessionViewModelTest {
     }
 
     @Test
+    fun `completing a set updates objects and ui state on the default dispatcher`() = runTest {
+        val dispatcher = ImmediateDispatcher()
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = sessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            defaultDispatcher = dispatcher,
+        )
+
+        viewModel.uiState.test {
+            val session = awaitItem() ?: awaitItem()!!
+            val beforeComplete = dispatcher.dispatchCount
+            assert(beforeComplete > 0)
+
+            viewModel.onAction(
+                WorkoutSessionAction.OnCompleteSet(
+                    session.exercises.first(),
+                    0,
+                    isWarmup = true,
+                ),
+            )
+            val updated = awaitItem()!!
+            assert(dispatcher.dispatchCount > beforeComplete)
+            assert(
+                updated.exercises.first().warmupSets!!.first().setState is SetState.Completed,
+            )
+        }
+    }
+
+    @Test
     fun `completing warmups then work sets walks onto the next exercise warmup`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -206,7 +238,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `session rest timers match compound isolation and default durations`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -254,7 +286,7 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(paused),
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -270,7 +302,7 @@ class WorkoutSessionViewModelTest {
     fun `canceling a workout deletes it and navigates back`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val scheduler = FakeRestPromoteScheduler()
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             repository,
             backgroundScope,
@@ -311,7 +343,7 @@ class WorkoutSessionViewModelTest {
             initialSessions = listOf(session),
         )
         val scheduler = FakeRestPromoteScheduler()
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             repository,
             backgroundScope,
@@ -341,7 +373,7 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(session),
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val current = viewModel.uiState.first { it != null }!!
@@ -357,7 +389,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `completing a warmup does not scroll to the next exercise`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -378,7 +410,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `completing a non-last work set does not scroll to the next exercise`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.effects.test {
             var session = viewModel.uiState.first { it != null }!!
@@ -406,7 +438,7 @@ class WorkoutSessionViewModelTest {
     @Test
     fun `keeps the live session when a snapshot omits it`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -436,7 +468,7 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(live),
         )
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -503,7 +535,7 @@ class LiveSessionOrLastTest {
     fun `completing a rest-starting set schedules rest promote 3s early`() = runTest {
         val scheduler = FakeRestPromoteScheduler()
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(
+        val viewModel = sessionViewModel(
             fullBodyA.id,
             repository,
             backgroundScope,
