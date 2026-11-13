@@ -24,7 +24,11 @@ import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -518,13 +522,15 @@ class WorkoutsRepositoryImplTest {
         )
     }
 
-    private fun repository(
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun TestScope.repository(
         exerciseDao: ExerciseDao = FakeExerciseDao(),
         workoutPlanDao: WorkoutPlanDao = FakeWorkoutPlanDao(),
         workoutSessionDao: WorkoutSessionDao = FakeWorkoutSessionDao(exerciseDao, workoutPlanDao),
         weightDao: WeightDao = FakeWeightDao(),
         catalog: List<ExerciseDefinition> = catalogExercises,
         repdbCommit: String = repdbCatalogCommit,
+        defaultDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
     ): WorkoutsRepository = WorkoutsRepositoryImpl(
         exerciseDao = exerciseDao,
         workoutPlanDao = workoutPlanDao,
@@ -532,5 +538,6 @@ class WorkoutsRepositoryImplTest {
         weightDao = weightDao,
         catalog = catalog,
         repdbCommit = repdbCommit,
+        defaultDispatcher = defaultDispatcher,
     )
 }
