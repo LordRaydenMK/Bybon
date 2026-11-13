@@ -34,4 +34,21 @@ class WorkoutSessionEditingTest {
         assert(actual.exercises.first().state == ExerciseState.Completed)
         actual.assertOnlyInProgress("squat", index = 0, isWarmup = true)
     }
+
+    @Test
+    fun `addSet on a finished workout starts the new set`() {
+        val finished = fullBodyA.sets.indices.fold(fullBodyA.toWorkoutSession()) { session, index ->
+            session.completeExerciseAt(index)
+        }
+        assert(finished.state is WorkoutState.Completed)
+
+        val actual = finished.addSet(finished.exercises.last())
+        val last = actual.exercises.last()
+
+        assert(last.sets.size == finished.exercises.last().sets.size + 1)
+        assert(last.sets.dropLast(1).all { it.setState is SetState.Completed })
+        assert(actual.state is WorkoutState.InProgress)
+        assert(actual.duration == null)
+        actual.assertOnlyInProgress(last.id, index = last.sets.lastIndex, isWarmup = false)
+    }
 }
