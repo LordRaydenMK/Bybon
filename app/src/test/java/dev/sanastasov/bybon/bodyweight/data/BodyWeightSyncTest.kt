@@ -71,7 +71,7 @@ class BodyWeightSyncTest {
                 date = jan1,
                 weight = BodyWeight(6600),
                 deleted = false,
-                updatedAtMillis = 5,
+                updatedAt = Instant.ofEpochMilli(5),
             ),
         )
 
@@ -169,7 +169,7 @@ private class FakeWeightCloud : WeightCloud {
         return all
     }
 
-    override suspend fun readUpdatedAfter(uid: String, cursorMillis: Long): List<RemoteWeight> {
+    override suspend fun readUpdatedAfter(uid: String, cursor: Instant): List<RemoteWeight> {
         if (fail) throw IOException("offline")
         updatedReads += 1
         return updated

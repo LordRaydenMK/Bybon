@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
 import dev.sanastasov.bybon.workout.data.FakeWeightDao
+import java.time.Instant
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,7 +72,7 @@ private class FakeDietPhaseDao : DietPhaseDao {
 private object UnusedWeightCloud : WeightCloud {
     override suspend fun readAll(uid: String): List<RemoteWeight> = error("No cloud")
 
-    override suspend fun readUpdatedAfter(uid: String, cursorMillis: Long): List<RemoteWeight> =
+    override suspend fun readUpdatedAfter(uid: String, cursor: Instant): List<RemoteWeight> =
         error("No cloud")
 
     override suspend fun write(uid: String, documents: List<WeightUpload>) = error("No cloud")

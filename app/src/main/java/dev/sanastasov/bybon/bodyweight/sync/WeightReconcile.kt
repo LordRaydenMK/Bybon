@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
+import java.time.Instant
 import java.time.LocalDate
 
 data class WeightUpload(
@@ -34,7 +35,7 @@ sealed interface WeightSyncPlan {
         val uploads: List<WeightUpload>,
         val uploadAllLocal: Boolean,
         val summary: WeightImportSummary?,
-        val cursorMillis: Long?,
+        val cursor: Instant?,
     ) : WeightSyncPlan
 }
 
@@ -76,7 +77,7 @@ private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
         .filterIsInstance<WeightSyncOp.Delete>()
         .map { it.date }
         .toSet()
-    val cursor = input.remote.maxOfOrNull { it.updatedAtMillis }
+    val cursor = input.remote.maxOfOrNull { it.updatedAt }
     val added = adds(input.local, input.remote, pendingDeletes)
     return when {
         input.fullSnapshot && live.isEmpty() -> WeightSyncPlan.Apply(
@@ -85,7 +86,7 @@ private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
             uploads = input.pending.filterIsInstance<WeightSyncOp.Delete>().toUploads(),
             uploadAllLocal = input.local.isNotEmpty(),
             summary = null,
-            cursorMillis = cursor,
+            cursor = cursor,
         )
 
         input.fullSnapshot && input.local.isEmpty() -> WeightSyncPlan.Apply(
@@ -94,7 +95,7 @@ private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
             uploads = input.pending.toUploads(),
             uploadAllLocal = false,
             summary = added.toImportSummary(),
-            cursorMillis = cursor,
+            cursor = cursor,
         )
 
         else -> WeightSyncPlan.Apply(
@@ -103,7 +104,7 @@ private fun planChanges(input: WeightSyncInput): WeightSyncPlan.Apply {
             uploads = input.pending.toUploads(),
             uploadAllLocal = false,
             summary = added.toImportSummary(),
-            cursorMillis = cursor,
+            cursor = cursor,
         )
     }
 }

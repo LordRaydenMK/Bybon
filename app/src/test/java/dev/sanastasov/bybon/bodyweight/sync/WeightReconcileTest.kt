@@ -7,6 +7,7 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncOp
+import java.time.Instant
 import java.time.LocalDate
 import org.junit.Test
 
@@ -143,11 +144,13 @@ class WeightReconcileTest {
 
     @Test
     fun `parse skips invalid documents and keeps tombstones`() {
-        assert(parseWeightDocument("2026-01-01", 6500, false, 10)?.weight == BodyWeight(6500))
-        assert(parseWeightDocument("nope", 6500, false, 10) == null)
-        assert(parseWeightDocument("2026-01-01", 6501, false, 10) == null)
+        val updatedAt = Instant.ofEpochMilli(10)
+        val parsed = parseWeightDocument("2026-01-01", 6500, false, updatedAt)
+        assert(parsed?.weight == BodyWeight(6500))
+        assert(parseWeightDocument("nope", 6500, false, updatedAt) == null)
+        assert(parseWeightDocument("2026-01-01", 6501, false, updatedAt) == null)
         assert(parseWeightDocument("2026-01-01", 6500, false, null) == null)
-        assert(parseWeightDocument("2026-01-01", null, true, 10)?.deleted == true)
+        assert(parseWeightDocument("2026-01-01", null, true, updatedAt)?.deleted == true)
     }
 
     private fun entry(date: LocalDate, weight: Int) = BodyWeightEntry(date, BodyWeight(weight))
@@ -161,7 +164,7 @@ class WeightReconcileTest {
         date = date,
         weight = if (deleted) null else BodyWeight(weight),
         deleted = deleted,
-        updatedAtMillis = updatedAt,
+        updatedAt = Instant.ofEpochMilli(updatedAt),
     )
 
     private fun input(
