@@ -86,4 +86,14 @@ class WorkoutSessionEditingTest {
         assert(added.sets.last().setState == SetState.NotStated)
         actual.assertOnlyInProgress("bench-press", index = 0, isWarmup = true)
     }
+
+    @Test
+    fun `removeLastSet of a pending set keeps the current set in progress`() {
+        val session = fullBodyA.toWorkoutSession()
+
+        val actual = session.removeLastSet(session.exercises.first())
+
+        assert(actual.exercises.first().sets.size == 2)
+        actual.assertOnlyInProgress("bench-press", index = 0, isWarmup = true)
+    }
 }
