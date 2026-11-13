@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "799760b5aac8c7979533b016623e82d4",
+    "identityHash": "a8d32c5445a509fd91fa06c0c05b7386",
     "entities": [
       {
         "tableName": "weight_entry",
@@ -749,7 +749,7 @@
       },
       {
         "tableName": "weight_sync_state",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `lastSyncedUid` TEXT, `cursorMillis` INTEGER, `lastSuccessMillis` INTEGER, `conflictKind` TEXT, `conflictSignedInUid` TEXT, `conflictPreviousUid` TEXT, `summaryCount` INTEGER, `summaryEarliest` TEXT, `summaryLatest` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `lastSyncedUid` TEXT, `cursorMillis` INTEGER, `lastSuccessMillis` INTEGER, `summaryCount` INTEGER, `summaryEarliest` TEXT, `summaryLatest` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -771,21 +771,6 @@
             "fieldPath": "lastSuccessMillis",
             "columnName": "lastSuccessMillis",
             "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "conflictKind",
-            "columnName": "conflictKind",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "conflictSignedInUid",
-            "columnName": "conflictSignedInUid",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "conflictPreviousUid",
-            "columnName": "conflictPreviousUid",
-            "affinity": "TEXT"
           },
           {
             "fieldPath": "summaryCount",
@@ -813,7 +798,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '799760b5aac8c7979533b016623e82d4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a8d32c5445a509fd91fa06c0c05b7386')"
     ]
   }
 }

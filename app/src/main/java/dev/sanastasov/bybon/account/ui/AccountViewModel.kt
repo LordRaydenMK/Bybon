@@ -4,9 +4,11 @@ import androidx.credentials.exceptions.ClearCredentialException
 import dev.sanastasov.bybon.account.domain.AccountAuth
 import dev.sanastasov.bybon.account.domain.GoogleSignIn
 import dev.sanastasov.bybon.account.domain.SignInFailure
+import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.domain.BodyWeightRepository
-import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
+import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
+import dev.sanastasov.bybon.bodyweight.domain.WeightSyncResult
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import kotlinx.coroutines.CoroutineScope
@@ -25,12 +27,14 @@ class AccountViewModel(
 ) {
 
     private val session = MutableStateFlow(SessionUi())
+    private val conflict = MutableStateFlow<WeightConflict?>(null)
 
     val uiState = combine(
         accountAuth.user(),
         session,
         repository.backupStatus(),
-    ) { user, sessionUi, backupStatus ->
+        conflict,
+    ) { user, sessionUi, backupStatus, weightConflict ->
         AccountUiState(
             environmentName = environmentName,
             email = user?.email,
@@ -39,7 +43,8 @@ class AccountViewModel(
             signingIn = sessionUi.signingIn,
             backupPending = backupStatus.pending,
             lastBackup = backupStatus.lastSuccess,
-            notice = backupStatus.notice,
+            summary = backupStatus.summary,
+            conflict = weightConflict,
         )
     }.stateInWhileInForeground(
         coroutineScope,
@@ -49,7 +54,7 @@ class AccountViewModel(
     init {
         coroutineScope.launch {
             val uid = accountAuth.user().first()?.uid ?: return@launch
-            repository.sync(WeightSyncCommand.Pull(uid, WeightSyncStart.Incremental))
+            syncWeights(uid, WeightSyncStart.Incremental)
         }
     }
 
@@ -59,9 +64,6 @@ class AccountViewModel(
             AccountAction.OnSignOutClicked -> session.update { it.copy(confirmSignOut = true) }
             AccountAction.OnSignOutConfirmed -> signOut()
             AccountAction.OnSignOutDismissed -> session.update { it.copy(confirmSignOut = false) }
-            AccountAction.UseTheBackup -> useBackup()
-            AccountAction.ReplaceTheBackup -> replaceBackup()
-            AccountAction.KeepThisPhone -> keepThisPhone()
             AccountAction.DismissImportSummary -> dismissSummary()
         }
     }
@@ -73,9 +75,7 @@ class AccountViewModel(
             try {
                 accountAuth.signInWithIdToken(googleSignIn.idToken())
                 val uid = accountAuth.user().first()?.uid
-                if (uid != null) {
-                    repository.sync(WeightSyncCommand.Pull(uid, WeightSyncStart.SignIn))
-                }
+                if (uid != null) syncWeights(uid, WeightSyncStart.SignIn)
                 session.update { it.copy(signingIn = false, message = null) }
             } catch (_: SignInFailure.Canceled) {
                 session.update { it.copy(signingIn = false, message = "Sign-in canceled") }
@@ -89,31 +89,16 @@ class AccountViewModel(
         coroutineScope.launch { endSession() }
     }
 
-    private fun useBackup() {
-        coroutineScope.launch {
-            val uid = accountAuth.user().first()?.uid ?: return@launch
-            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.UseBackup(uid)))
-        }
-    }
-
-    private fun replaceBackup() {
-        coroutineScope.launch {
-            val uid = accountAuth.user().first()?.uid ?: return@launch
-            repository.sync(
-                WeightSyncCommand.Resolve(WeightConflictChoice.Cloud.ReplaceBackup(uid)),
-            )
-        }
-    }
-
-    private fun keepThisPhone() {
-        coroutineScope.launch {
-            repository.sync(WeightSyncCommand.Resolve(WeightConflictChoice.KeepThisPhone))
-            endSession()
-        }
-    }
-
     private fun dismissSummary() {
         coroutineScope.launch { repository.dismissSummary() }
+    }
+
+    private suspend fun syncWeights(uid: UserId, start: WeightSyncStart) {
+        when (val result = repository.sync(WeightSyncCommand(uid, start))) {
+            is WeightSyncResult.Conflict -> conflict.value = result.conflict
+            WeightSyncResult.Completed -> conflict.value = null
+            WeightSyncResult.Unavailable -> Unit
+        }
     }
 
     private suspend fun endSession() {
@@ -123,6 +108,7 @@ class AccountViewModel(
         } catch (_: ClearCredentialException) {
             // Firebase session already ended.
         }
+        conflict.value = null
         session.value = SessionUi()
     }
 

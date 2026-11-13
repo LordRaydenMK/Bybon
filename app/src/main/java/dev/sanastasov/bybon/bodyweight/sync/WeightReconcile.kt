@@ -21,13 +21,10 @@ data class WeightSyncInput(
     val fullSnapshot: Boolean,
     val signedInUid: UserId,
     val lastSyncedUid: UserId?,
-    val conflictPending: Boolean,
 )
 
 sealed interface WeightSyncPlan {
-    data object Blocked : WeightSyncPlan
-
-    data class Ask(
+    data class Conflict(
         val conflict: WeightConflict,
     ) : WeightSyncPlan
 
@@ -42,16 +39,14 @@ sealed interface WeightSyncPlan {
 }
 
 fun reconcileWeights(input: WeightSyncInput): WeightSyncPlan = when {
-    input.conflictPending -> WeightSyncPlan.Blocked
-
-    differentAccount(input) -> WeightSyncPlan.Ask(
+    differentAccount(input) -> WeightSyncPlan.Conflict(
         WeightConflict.DifferentAccount(
             signedIn = input.signedInUid,
             previous = checkNotNull(input.lastSyncedUid),
         ),
     )
 
-    else -> askOrApply(input)
+    else -> conflictOrChanges(input)
 }
 
 private fun differentAccount(input: WeightSyncInput): Boolean {
@@ -59,9 +54,9 @@ private fun differentAccount(input: WeightSyncInput): Boolean {
     return previous != null && previous != input.signedInUid && input.local.isNotEmpty()
 }
 
-private fun askOrApply(input: WeightSyncInput): WeightSyncPlan =
+private fun conflictOrChanges(input: WeightSyncInput): WeightSyncPlan =
     if (hasDateClash(input.local, input.remote)) {
-        WeightSyncPlan.Ask(WeightConflict.OverlappingDates)
+        WeightSyncPlan.Conflict(WeightConflict.OverlappingDates)
     } else {
         planChanges(input)
     }

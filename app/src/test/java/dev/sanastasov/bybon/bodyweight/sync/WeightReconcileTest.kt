@@ -47,7 +47,7 @@ class WeightReconcileTest {
     }
 
     @Test
-    fun `a different uid asks even when that cloud is empty`() {
+    fun `a different uid is a conflict even when that cloud is empty`() {
         val plan = reconcileWeights(
             input(
                 local = listOf(entry(jan1, 6500)),
@@ -56,7 +56,7 @@ class WeightReconcileTest {
             ),
         )
 
-        val conflict = (plan as WeightSyncPlan.Ask).conflict as WeightConflict.DifferentAccount
+        val conflict = (plan as WeightSyncPlan.Conflict).conflict as WeightConflict.DifferentAccount
         assert(conflict.signedIn == UserId("other"))
         assert(conflict.previous == UserId("uid"))
     }
@@ -98,7 +98,7 @@ class WeightReconcileTest {
     }
 
     @Test
-    fun `a changed cloud weight asks and uploads nothing`() {
+    fun `a changed cloud weight is a conflict`() {
         val plan = reconcileWeights(
             input(
                 local = listOf(entry(jan1, 6500)),
@@ -108,11 +108,11 @@ class WeightReconcileTest {
             ),
         )
 
-        assert((plan as WeightSyncPlan.Ask).conflict == WeightConflict.OverlappingDates)
+        assert((plan as WeightSyncPlan.Conflict).conflict == WeightConflict.OverlappingDates)
     }
 
     @Test
-    fun `a tombstone for a phone weight asks`() {
+    fun `a tombstone for a phone weight is a conflict`() {
         val plan = reconcileWeights(
             input(
                 local = listOf(entry(jan1, 6500)),
@@ -121,21 +121,7 @@ class WeightReconcileTest {
             ),
         )
 
-        assert((plan as WeightSyncPlan.Ask).conflict == WeightConflict.OverlappingDates)
-    }
-
-    @Test
-    fun `an unanswered conflict blocks upload and cloud changes`() {
-        val plan = reconcileWeights(
-            input(
-                local = listOf(entry(jan1, 6500)),
-                remote = listOf(remote(feb1, 6600)),
-                pending = listOf(WeightSyncOp.Upsert(jan1, BodyWeight(6500))),
-                conflictPending = true,
-            ),
-        )
-
-        assert(plan == WeightSyncPlan.Blocked)
+        assert((plan as WeightSyncPlan.Conflict).conflict == WeightConflict.OverlappingDates)
     }
 
     @Test
@@ -185,7 +171,6 @@ class WeightReconcileTest {
         fullSnapshot: Boolean = true,
         signedInUid: UserId = UserId("uid"),
         lastSyncedUid: UserId? = null,
-        conflictPending: Boolean = false,
     ) = WeightSyncInput(
         local = local,
         remote = remote,
@@ -193,6 +178,5 @@ class WeightReconcileTest {
         fullSnapshot = fullSnapshot,
         signedInUid = signedInUid,
         lastSyncedUid = lastSyncedUid,
-        conflictPending = conflictPending,
     )
 }

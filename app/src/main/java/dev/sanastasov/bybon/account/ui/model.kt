@@ -1,7 +1,7 @@
 package dev.sanastasov.bybon.account.ui
 
-import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
+import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import java.time.Instant
 
 data class AccountUiState(
@@ -12,21 +12,11 @@ data class AccountUiState(
     val signingIn: Boolean = false,
     val backupPending: Boolean = false,
     val lastBackup: Instant? = null,
-    val notice: WeightBackupNotice? = null,
+    val summary: WeightImportSummary? = null,
+    val conflict: WeightConflict? = null,
 ) {
     val signedIn: Boolean
         get() = email != null
-
-    val conflictChoices: List<AccountAction>
-        get() = if (notice is WeightBackupNotice.Conflict) {
-            listOf(
-                AccountAction.UseTheBackup,
-                AccountAction.ReplaceTheBackup,
-                AccountAction.KeepThisPhone,
-            )
-        } else {
-            emptyList()
-        }
 }
 
 fun WeightConflict.detail(): String = when (this) {
@@ -39,8 +29,5 @@ sealed interface AccountAction {
     data object OnSignOutClicked : AccountAction
     data object OnSignOutConfirmed : AccountAction
     data object OnSignOutDismissed : AccountAction
-    data object UseTheBackup : AccountAction
-    data object ReplaceTheBackup : AccountAction
-    data object KeepThisPhone : AccountAction
     data object DismissImportSummary : AccountAction
 }

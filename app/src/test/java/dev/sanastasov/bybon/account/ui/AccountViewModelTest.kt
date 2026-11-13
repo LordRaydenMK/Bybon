@@ -6,13 +6,12 @@ import dev.sanastasov.bybon.account.domain.AccountUser
 import dev.sanastasov.bybon.account.domain.SignInFailure
 import dev.sanastasov.bybon.account.domain.UserId
 import dev.sanastasov.bybon.bodyweight.FakeBodyWeightRepository
-import dev.sanastasov.bybon.bodyweight.domain.WeightBackupNotice
 import dev.sanastasov.bybon.bodyweight.domain.WeightBackupStatus
 import dev.sanastasov.bybon.bodyweight.domain.WeightConflict
-import dev.sanastasov.bybon.bodyweight.domain.WeightConflictChoice
 import dev.sanastasov.bybon.bodyweight.domain.WeightDateSpan
 import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncCommand
+import dev.sanastasov.bybon.bodyweight.domain.WeightSyncResult
 import dev.sanastasov.bybon.bodyweight.domain.WeightSyncStart
 import dev.sanastasov.bybon.test.BackgroundFailures
 import java.time.Instant
@@ -177,29 +176,19 @@ class AccountViewModelTest {
     }
 
     @Test
-    fun `conflict offers use, replace, and keep this phone`() = runTest {
+    fun `a conflict is shown without a choice`() = runTest {
         val weights = FakeBodyWeightRepository()
-        val conflict = WeightConflict.DifferentAccount(
-            signedIn = UserId("uid"),
-            previous = UserId("old"),
-        )
-        weights.backup.value = WeightBackupStatus(notice = WeightBackupNotice.Conflict(conflict))
+        val conflict = WeightConflict.OverlappingDates
+        weights.nextSyncResult = WeightSyncResult.Conflict(conflict)
         val viewModel = viewModel(
             auth = FakeAccountAuth(AccountUser(UserId("uid"), "stolea@gmail.com")),
             weights = weights,
         )
 
-        val state = viewModel.uiState.first { it.notice != null }
+        val state = viewModel.uiState.first { it.conflict != null }
 
-        assert(state.notice == WeightBackupNotice.Conflict(conflict))
-        assert(conflict.detail() == "This phone has weights from another account.")
-        assert(
-            state.conflictChoices == listOf(
-                AccountAction.UseTheBackup,
-                AccountAction.ReplaceTheBackup,
-                AccountAction.KeepThisPhone,
-            ),
-        )
+        assert(state.conflict == conflict)
+        assert(conflict.detail() == "The backup and this phone have different weights.")
     }
 
     @Test
@@ -214,7 +203,7 @@ class AccountViewModelTest {
         yield()
 
         assert(
-            weights.syncs.single() == WeightSyncCommand.Pull(
+            weights.syncs.single() == WeightSyncCommand(
                 UserId("uid"),
                 WeightSyncStart.Incremental,
             ),
@@ -232,28 +221,9 @@ class AccountViewModelTest {
         yield()
 
         assert(
-            weights.syncs.single() == WeightSyncCommand.Pull(
+            weights.syncs.single() == WeightSyncCommand(
                 UserId("token"),
                 WeightSyncStart.SignIn,
-            ),
-        )
-    }
-
-    @Test
-    fun `keep this phone signs out`() = runTest {
-        val auth = FakeAccountAuth(AccountUser(UserId("uid"), "stolea@gmail.com"))
-        val weights = FakeBodyWeightRepository()
-        val viewModel = viewModel(auth, weights = weights)
-
-        viewModel.uiState.first { it.email == "stolea@gmail.com" }
-        viewModel.onAction(AccountAction.KeepThisPhone)
-
-        val signedOut = viewModel.uiState.first { it.email == null }
-        assert(signedOut.email == null)
-        assert(auth.signedOut)
-        assert(
-            weights.syncs.contains(
-                WeightSyncCommand.Resolve(WeightConflictChoice.KeepThisPhone),
             ),
         )
     }
@@ -265,16 +235,15 @@ class AccountViewModelTest {
             count = 2,
             span = WeightDateSpan(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 2, 1)),
         )
-        weights.backup.value = WeightBackupStatus(notice = WeightBackupNotice.Imported(summary))
+        weights.backup.value = WeightBackupStatus(summary = summary)
         val viewModel = viewModel(weights = weights)
 
-        val showing = viewModel.uiState.first { it.notice is WeightBackupNotice.Imported }
-        val imported = showing.notice as WeightBackupNotice.Imported
-        assert(imported.summary.count == 2)
+        val showing = viewModel.uiState.first { it.summary != null }
+        assert(showing.summary?.count == 2)
 
         viewModel.onAction(AccountAction.DismissImportSummary)
-        val dismissed = viewModel.uiState.first { it.notice == null }
-        assert(dismissed.notice == null)
+        val dismissed = viewModel.uiState.first { it.summary == null }
+        assert(dismissed.summary == null)
     }
 
     private fun kotlinx.coroutines.test.TestScope.viewModel(
