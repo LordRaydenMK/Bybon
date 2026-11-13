@@ -39,18 +39,17 @@ class WorkoutHistoryViewModel(
 
     val uiState: StateFlow<WorkoutHistoryUiState> =
         combine(
-            repository.workoutSessions(),
+            repository.workoutSessions()
+                .map { it.toUiState() }
+                .flowOn(defaultDispatcher),
             importPhase,
-        ) { sessions, phase -> sessions to phase }
-            .map { (sessions, phase) ->
-                when (phase) {
-                    ImportPhase.Importing -> WorkoutHistoryUiState.Importing
-                    is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
-                    ImportPhase.Idle -> sessions.toUiState()
-                }
+        ) { sessionState, phase ->
+            when (phase) {
+                ImportPhase.Importing -> WorkoutHistoryUiState.Importing
+                is ImportPhase.Summary -> WorkoutHistoryUiState.Summary(phase.summary)
+                ImportPhase.Idle -> sessionState
             }
-            .flowOn(defaultDispatcher)
-            .stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
+        }.stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
 
     fun onAction(action: WorkoutHistoryAction) {
         when (action) {
