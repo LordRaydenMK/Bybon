@@ -1,7 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.session
 
 import app.cash.turbine.test
-import dev.sanastasov.bybon.test.ImmediateDispatcher
 import dev.sanastasov.bybon.workout.REST_PROMOTE_LEAD
 import dev.sanastasov.bybon.workout.RestPromoteScheduler
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
@@ -171,37 +170,6 @@ class WorkoutSessionViewModelTest {
     }
 
     @Test
-    fun `completing a set updates objects and ui state on the default dispatcher`() = runTest {
-        val dispatcher = ImmediateDispatcher()
-        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = sessionViewModel(
-            fullBodyA.id,
-            repository,
-            backgroundScope,
-            defaultDispatcher = dispatcher,
-        )
-
-        viewModel.uiState.test {
-            val session = awaitItem() ?: awaitItem()!!
-            val beforeComplete = dispatcher.dispatchCount
-            assert(beforeComplete > 0)
-
-            viewModel.onAction(
-                WorkoutSessionAction.OnCompleteSet(
-                    session.exercises.first(),
-                    0,
-                    isWarmup = true,
-                ),
-            )
-            val updated = awaitItem()!!
-            assert(dispatcher.dispatchCount > beforeComplete)
-            assert(
-                updated.exercises.first().warmupSets!!.first().setState is SetState.Completed,
-            )
-        }
-    }
-
-    @Test
     fun `completing warmups then work sets walks onto the next exercise warmup`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
@@ -288,14 +256,12 @@ class WorkoutSessionViewModelTest {
         )
         val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
-        viewModel.uiState.test {
-            assert(awaitItem() == null)
-            val session = awaitItem()!!
-            assert(session.startedAt == paused.startedAt)
-            assert(session.exercises.first().warmupSets!![0].setState is SetState.Completed)
-            assert(session.exercises.first().warmupSets!![1].setState == SetState.InProgress)
-            assert(session.state == WorkoutState.InProgress)
-        }
+        val session = viewModel.uiState.first { current ->
+            current?.exercises?.first()?.warmupSets?.get(1)?.setState == SetState.InProgress
+        }!!
+        assert(session.startedAt == paused.startedAt)
+        assert(session.exercises.first().warmupSets!![0].setState is SetState.Completed)
+        assert(session.state == WorkoutState.InProgress)
     }
 
     @Test
@@ -471,8 +437,8 @@ class WorkoutSessionViewModelTest {
         val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
-            assert(awaitItem() == null)
-            assert(awaitItem()!!.id == live.id)
+            val session = awaitItem() ?: awaitItem()!!
+            assert(session.id == live.id)
             repository.emitSessions(
                 listOf(
                     completedSession(

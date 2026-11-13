@@ -69,81 +69,80 @@ class WorkoutSessionViewModel(
             .stateInWhileInForeground(coroutineScope, null)
 
     init {
-        launchOnDefault {
-            val sessions = repository.workoutSessions().first()
-            val existing = sessions.firstOrNull { session ->
-                session.planId == planId && session.state !is WorkoutState.Completed
-            }
-            when {
-                existing == null -> {
-                    val plan = repository.workoutPlans()
-                        .first()
-                        .first { it.id == planId }
-                    val now = LocalDateTime.now()
-                    val session = plan.toWorkoutSession(
-                        previousHistory = sessions,
-                        startedAt = now,
-                        bodyWeight = repository.sevenDayBodyWeight(now.toLocalDate()),
-                    )
-                    repository.updateWorkout(session)
-                }
+        coroutineScope.launch {
+            withContext(defaultDispatcher) {
+                mutations.withLock {
+                    val sessions = repository.workoutSessions().first()
+                    val existing = sessions.firstOrNull { session ->
+                        session.planId == planId && session.state !is WorkoutState.Completed
+                    }
+                    when {
+                        existing == null -> {
+                            val plan = repository.workoutPlans()
+                                .first()
+                                .first { it.id == planId }
+                            val now = LocalDateTime.now()
+                            val session = plan.toWorkoutSession(
+                                previousHistory = sessions,
+                                startedAt = now,
+                                bodyWeight = repository.sevenDayBodyWeight(now.toLocalDate()),
+                            )
+                            repository.updateWorkout(session)
+                        }
 
-                existing.state !is WorkoutState.InProgress ||
-                    existing.workoutSets.none { it.setState == SetState.InProgress } -> {
-                    repository.updateWorkout(existing.startWorkout())
+                        existing.state !is WorkoutState.InProgress ||
+                            existing.workoutSets.none { it.setState == SetState.InProgress } -> {
+                            repository.updateWorkout(existing.startWorkout())
+                        }
+                    }
                 }
             }
         }
     }
 
     fun onAction(action: WorkoutSessionAction) {
-        launchOnDefault {
-            when (action) {
-                WorkoutSessionAction.OnCancelWorkout -> {
-                    val session = uiState.value
-                    if (session != null) {
-                        restPromoteScheduler.cancel()
-                        repository.deleteWorkout(session.id)
-                        _effects.trySend(WorkoutSessionEffect.StopService)
-                        _effects.trySend(WorkoutSessionEffect.NavigateBack)
-                    }
-                }
-
-                WorkoutSessionAction.OnAddExercise -> {
-                    val session = checkNotNull(uiState.value) { "No active session" }
-                    _effects.trySend(
-                        WorkoutSessionEffect.OpenExerciseLibrary(
-                            session.exercises.map { it.id },
-                        ),
-                    )
-                }
-
-                is WorkoutSessionAction.OnExercisePicked -> addPickedExercise(action.exerciseId)
-
-                is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
-
-                is WorkoutSessionAction.OnOpenExerciseDetails ->
-                    _effects.trySend(
-                        WorkoutSessionEffect.OpenExerciseDetails(action.exerciseId),
-                    )
-
-                else -> {
-                    val session = checkNotNull(uiState.value) { "No active session" }
-                    val history = repository.workoutSessions().first()
-                    val updated = repository.updateWorkout(planId) { current ->
-                        reduce(current, action, history)
-                    }
-                    emitAfterSetCompleted(updated, action)
-                    emitAfterMove(session, updated, action)
-                }
-            }
-        }
-    }
-
-    private inline fun launchOnDefault(crossinline block: suspend () -> Unit) {
         coroutineScope.launch {
             withContext(defaultDispatcher) {
-                mutations.withLock { block() }
+                mutations.withLock {
+                    when (action) {
+                        WorkoutSessionAction.OnCancelWorkout -> {
+                            val session = uiState.value ?: return@withLock
+                            restPromoteScheduler.cancel()
+                            repository.deleteWorkout(session.id)
+                            _effects.trySend(WorkoutSessionEffect.StopService)
+                            _effects.trySend(WorkoutSessionEffect.NavigateBack)
+                        }
+
+                        WorkoutSessionAction.OnAddExercise -> {
+                            val session = checkNotNull(uiState.value) { "No active session" }
+                            _effects.trySend(
+                                WorkoutSessionEffect.OpenExerciseLibrary(
+                                    session.exercises.map { it.id },
+                                ),
+                            )
+                        }
+
+                        is WorkoutSessionAction.OnExercisePicked ->
+                            addPickedExercise(action.exerciseId)
+
+                        is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
+
+                        is WorkoutSessionAction.OnOpenExerciseDetails ->
+                            _effects.trySend(
+                                WorkoutSessionEffect.OpenExerciseDetails(action.exerciseId),
+                            )
+
+                        else -> {
+                            val session = checkNotNull(uiState.value) { "No active session" }
+                            val history = repository.workoutSessions().first()
+                            val updated = repository.updateWorkout(planId) { current ->
+                                reduce(current, action, history)
+                            }
+                            emitAfterSetCompleted(updated, action)
+                            emitAfterMove(session, updated, action)
+                        }
+                    }
+                }
             }
         }
     }

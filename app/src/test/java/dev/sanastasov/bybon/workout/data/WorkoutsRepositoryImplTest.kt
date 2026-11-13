@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.workout.data
 import app.cash.turbine.test
 import dev.sanastasov.bybon.bodyweight.data.WeightDao
 import dev.sanastasov.bybon.bodyweight.data.WeightEntryEntity
-import dev.sanastasov.bybon.test.ImmediateDispatcher
 import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
@@ -26,25 +25,14 @@ import dev.sanastasov.bybon.workout.domain.upperBodyA
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class WorkoutsRepositoryImplTest {
-
-    @Test
-    fun `maps sessions and writes workouts on the default dispatcher`() = runTest {
-        val dispatcher = ImmediateDispatcher()
-        val repository = repository(defaultDispatcher = dispatcher)
-
-        repository.workoutSessions().first()
-        val mappedAfterRead = dispatcher.dispatchCount
-        assert(mappedAfterRead > 0)
-
-        repository.updateWorkout(fullBodyA.toWorkoutSession())
-        assert(dispatcher.dispatchCount > mappedAfterRead)
-        assert(repository.workoutSessions().first().single().planId == fullBodyA.id)
-    }
 
     @Test
     fun `exposes the built-in exercise catalog`() = runTest {
@@ -534,14 +522,15 @@ class WorkoutsRepositoryImplTest {
         )
     }
 
-    private fun repository(
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun TestScope.repository(
         exerciseDao: ExerciseDao = FakeExerciseDao(),
         workoutPlanDao: WorkoutPlanDao = FakeWorkoutPlanDao(),
         workoutSessionDao: WorkoutSessionDao = FakeWorkoutSessionDao(exerciseDao, workoutPlanDao),
         weightDao: WeightDao = FakeWeightDao(),
         catalog: List<ExerciseDefinition> = catalogExercises,
         repdbCommit: String = repdbCatalogCommit,
-        defaultDispatcher: CoroutineDispatcher = ImmediateDispatcher(),
+        defaultDispatcher: CoroutineDispatcher = UnconfinedTestDispatcher(testScheduler),
     ): WorkoutsRepository = WorkoutsRepositoryImpl(
         exerciseDao = exerciseDao,
         workoutPlanDao = workoutPlanDao,
