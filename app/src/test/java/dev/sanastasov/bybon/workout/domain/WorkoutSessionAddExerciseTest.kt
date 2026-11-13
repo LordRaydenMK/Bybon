@@ -78,6 +78,24 @@ class WorkoutSessionAddExerciseTest {
     }
 
     @Test
+    fun `addExercise on a completed workout starts the new exercise`() {
+        val completed = fullBodyA.sets.indices.fold(
+            fullBodyA.toWorkoutSession(),
+        ) { session, index ->
+            session.completeExerciseAt(index)
+        }
+        assert(completed.state is WorkoutState.Completed)
+        assert(completed.duration != null)
+
+        val actual = completed.addExercise(catalogExercise("incline-db-curl"))
+
+        assert(actual.exercises.last().id == "incline-db-curl")
+        assert(actual.state is WorkoutState.InProgress)
+        assert(actual.duration == null)
+        actual.assertOnlyInProgress("incline-db-curl", index = 0, isWarmup = false)
+    }
+
+    @Test
     fun `addExercise does not start the new exercise`() {
         val session = fullBodyA.toWorkoutSession()
         val curl = catalogExercise("incline-db-curl")

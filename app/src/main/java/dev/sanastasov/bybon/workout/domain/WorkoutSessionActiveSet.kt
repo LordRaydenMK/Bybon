@@ -6,7 +6,7 @@ internal fun WorkoutSession.withSingleInProgressSet(): WorkoutSession {
     val aligned = open != null &&
         workoutSets.count { it.setState == SetState.InProgress } == 1 &&
         setAt(open).setState == SetState.InProgress
-    return when {
+    val session = when {
         draft || aligned -> this
 
         open == null -> withDurationIfCompleted()
@@ -17,6 +17,11 @@ internal fun WorkoutSession.withSingleInProgressSet(): WorkoutSession {
                 it.copy(setState = SetState.InProgress)
             }
         }
+    }
+    return if (session.duration != null && session.state !is WorkoutState.Completed) {
+        session.copy(duration = null)
+    } else {
+        session
     }
 }
 

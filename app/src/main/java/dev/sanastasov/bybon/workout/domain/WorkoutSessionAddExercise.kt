@@ -8,6 +8,7 @@ fun WorkoutSession.addExercise(
         "Exercise ${exercise.id} is already in the session"
     }
     return copy(exercises = exercises + exercise.toAddedWorkoutExercise(previous))
+        .withSingleInProgressSet()
 }
 
 @Suppress("ReturnCount")
