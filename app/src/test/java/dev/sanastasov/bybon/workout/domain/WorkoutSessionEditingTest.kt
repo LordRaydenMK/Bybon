@@ -73,4 +73,17 @@ class WorkoutSessionEditingTest {
         assert(actual.exercises.first().sets.last().setState == SetState.NotStated)
         actual.assertOnlyInProgress("bench-press", bench.sets.lastIndex, isWarmup = false)
     }
+
+    @Test
+    fun `addSet on a later exercise keeps the current set in progress`() {
+        val session = fullBodyA.toWorkoutSession()
+        val later = session.exercises.first { it.id == "seated-leg-curl" }
+
+        val actual = session.addSet(later)
+        val added = actual.exercises.first { it.id == "seated-leg-curl" }
+
+        assert(added.sets.size == later.sets.size + 1)
+        assert(added.sets.last().setState == SetState.NotStated)
+        actual.assertOnlyInProgress("bench-press", index = 0, isWarmup = true)
+    }
 }
