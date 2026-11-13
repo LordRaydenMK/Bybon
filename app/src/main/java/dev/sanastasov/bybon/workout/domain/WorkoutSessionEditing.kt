@@ -2,20 +2,13 @@ package dev.sanastasov.bybon.workout.domain
 
 fun WorkoutSession.addSet(exercise: WorkoutExercise): WorkoutSession =
     updateExercise(exercise.id) { current ->
-        val lastWorkSet = current.sets.lastOrNull()
-        val template =
-            lastWorkSet ?: current.warmupSets?.lastOrNull() ?: return@updateExercise current
-        val newSetState = if (lastWorkSet?.setState is SetState.Completed ||
-            (lastWorkSet == null && template.setState is SetState.Completed)
-        ) {
-            SetState.InProgress
-        } else {
-            SetState.NotStated
-        }
+        val template = current.sets.lastOrNull()
+            ?: current.warmupSets?.lastOrNull()
+            ?: return@updateExercise current
         current.copy(
-            sets = current.sets + template.copy(setState = newSetState, previous = null),
+            sets = current.sets + template.copy(setState = SetState.NotStated, previous = null),
         )
-    }
+    }.withSingleInProgressSet()
 
 @Suppress("ReturnCount")
 fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
