@@ -21,4 +21,17 @@ class WorkoutSessionEditingTest {
                 .all { it.setState == SetState.NotStated },
         )
     }
+
+    @Test
+    fun `removeLastSet of a reopened exercise resumes the later exercise`() {
+        val reopened = fullBodyA.toWorkoutSession()
+            .completeExerciseAt(0)
+            .let { session -> session.addSet(session.exercises.first()) }
+
+        val actual = reopened.removeLastSet(reopened.exercises.first())
+
+        assert(actual.exercises.first().sets.size == 3)
+        assert(actual.exercises.first().state == ExerciseState.Completed)
+        actual.assertOnlyInProgress("squat", index = 0, isWarmup = true)
+    }
 }
