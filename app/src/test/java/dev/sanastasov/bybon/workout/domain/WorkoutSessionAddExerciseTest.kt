@@ -165,6 +165,17 @@ class WorkoutSessionAddExerciseTest {
     }
 
     @Test
+    fun `removeExercise during a warmup starts the next exercise at its first set`() {
+        val started = fullBodyA.toWorkoutSession()
+        val session = started.completeSet(started.exercises.first(), 0, isWarmup = true)
+        session.assertOnlyInProgress("bench-press", index = 1, isWarmup = true)
+
+        val actual = session.removeExercise("bench-press")
+
+        actual.assertOnlyInProgress("squat", index = 0, isWarmup = true)
+    }
+
+    @Test
     fun `removeExercise throws when the exercise is completed`() {
         val session = twoExerciseSession(
             firstState = SetState.Completed(),
