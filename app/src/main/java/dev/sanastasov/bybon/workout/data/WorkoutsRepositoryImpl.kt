@@ -36,6 +36,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 private val builtInPlans = listOf(fullBodyA, fullBodyB, upperBodyA)
+private val builtInPlanExerciseIds = builtInPlans
+    .flatMap { plan -> plan.sets.map { planned -> planned.exercise.id } }
+    .toSet()
 
 class WorkoutsRepositoryImpl internal constructor(
     private val exerciseDao: ExerciseDao,
@@ -198,19 +201,29 @@ class WorkoutsRepositoryImpl internal constructor(
 
     private suspend fun seedLocked() {
         if (seededCommit == repdbCommit) return
-        if (exerciseDao.catalogCommit() != repdbCommit) {
-            val protectedIds = exerciseDao.idsWhereSourceIsNot(ExerciseSource.SHIPPED).toSet()
-            val rows = catalog
-                .map { it.toEntity(source = ExerciseSource.SHIPPED) }
-                .filter { it.id !in protectedIds }
-            if (rows.isNotEmpty()) {
-                exerciseDao.upsertAll(rows)
-            }
-            exerciseDao.insertCatalog(RepdbCatalogEntity(commit = repdbCommit))
-        }
         val existingPlans = workoutPlanDao.ids().toSet()
         val newPlans = builtInPlans.filter { it.id.id !in existingPlans }
-        if (newPlans.isNotEmpty()) {
+        if (exerciseDao.catalogCommit() != repdbCommit) {
+            val protectedIds = exerciseDao.idsWhereSourceIsNot(ExerciseSource.SHIPPED).toSet()
+            val shipped = catalog
+                .map { it.toEntity(source = ExerciseSource.SHIPPED) }
+                .filter { it.id !in protectedIds }
+            val planExercises = shipped.filter { it.id in builtInPlanExerciseIds }
+            val remainingCatalog = shipped.filter { it.id !in builtInPlanExerciseIds }
+            if (planExercises.isNotEmpty()) {
+                exerciseDao.upsertAll(planExercises)
+            }
+            if (newPlans.isNotEmpty()) {
+                workoutPlanDao.insertPlansWithExercises(
+                    newPlans.map { it.toEntity() },
+                    newPlans.flatMap { it.toExerciseEntities() },
+                )
+            }
+            if (remainingCatalog.isNotEmpty()) {
+                exerciseDao.upsertAll(remainingCatalog)
+            }
+            exerciseDao.insertCatalog(RepdbCatalogEntity(commit = repdbCommit))
+        } else if (newPlans.isNotEmpty()) {
             workoutPlanDao.insertPlansWithExercises(
                 newPlans.map { it.toEntity() },
                 newPlans.flatMap { it.toExerciseEntities() },

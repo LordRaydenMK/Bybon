@@ -38,7 +38,18 @@ class WorkoutsRepositoryImplTest {
     fun `exposes the built-in exercise catalog`() = runTest {
         val repository: WorkoutsRepository = repository()
 
-        assert(repository.exercises().first() == catalogExercises)
+        assert(repository.exercises().first() == catalogAfterBuiltInPlans())
+    }
+
+    @Test
+    fun `seeds built-in plan exercises before the rest of the catalog`() = runTest {
+        val stored = repository().exercises().first().map { it.id }
+        val planExerciseIds = listOf(fullBodyA, fullBodyB, upperBodyA)
+            .flatMap { plan -> plan.sets.map { planned -> planned.exercise.id } }
+            .toSet()
+
+        assert(stored.take(planExerciseIds.size).toSet() == planExerciseIds)
+        assert(stored.drop(planExerciseIds.size).none { it in planExerciseIds })
     }
 
     @Test
@@ -372,8 +383,8 @@ class WorkoutsRepositoryImplTest {
         repository.workoutPlans().first()
 
         assert(dao.catalogCommit() == "commit-a")
-        assert(dao.observeAll().first().map { it.toDefinition() } == catalogExercises)
-        assert(repository.exercises().first() == catalogExercises)
+        assert(dao.observeAll().first().map { it.toDefinition() } == catalogAfterBuiltInPlans())
+        assert(repository.exercises().first() == catalogAfterBuiltInPlans())
     }
 
     @Test
@@ -540,4 +551,13 @@ class WorkoutsRepositoryImplTest {
         repdbCommit = repdbCommit,
         defaultDispatcher = defaultDispatcher,
     )
+
+    private fun catalogAfterBuiltInPlans(
+        catalog: List<ExerciseDefinition> = catalogExercises,
+    ): List<ExerciseDefinition> {
+        val planIds = listOf(fullBodyA, fullBodyB, upperBodyA)
+            .flatMap { plan -> plan.sets.map { planned -> planned.exercise.id } }
+            .toSet()
+        return catalog.filter { it.id in planIds } + catalog.filter { it.id !in planIds }
+    }
 }
