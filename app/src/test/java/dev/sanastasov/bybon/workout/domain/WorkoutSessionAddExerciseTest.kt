@@ -176,6 +176,18 @@ class WorkoutSessionAddExerciseTest {
     }
 
     @Test
+    fun `removeExercise of the active work exercise starts the next work set`() {
+        val session = (0 until 3).fold(fullBodyA.toWorkoutSession()) { current, index ->
+            current.completeExerciseAt(index)
+        }
+        session.assertOnlyInProgress("seated-leg-curl", index = 0, isWarmup = false)
+
+        val actual = session.removeExercise("seated-leg-curl")
+
+        actual.assertOnlyInProgress("dumbbell-upright-row", index = 0, isWarmup = false)
+    }
+
+    @Test
     fun `removeExercise throws when the exercise is completed`() {
         val session = twoExerciseSession(
             firstState = SetState.Completed(),
