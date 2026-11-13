@@ -34,16 +34,15 @@ fun WorkoutSession.moveExercise(exerciseId: String, direction: ReorderDirection)
     ).withInProgressOnCurrentExercise()
 }
 
-@Suppress("ReturnCount")
 private fun WorkoutSession.withInProgressOnCurrentExercise(): WorkoutSession {
-    val current = exercises.getOrNull(currentExerciseIndex ?: return this) ?: return this
+    val current = exercises[requireNotNull(currentExerciseIndex) { "No current exercise" }]
     if (workoutSets.none { it.setState == SetState.InProgress } ||
         current.orderedSets.any { it.setState == SetState.InProgress }
     ) {
         return this
     }
     val cleared = copy(exercises = exercises.map { it.withInProgressCleared() })
-    val next = cleared.firstNotStartedSet() ?: return cleared
+    val next = requireNotNull(cleared.firstNotStartedSet()) { "No unfinished set" }
     val nextExercise = cleared.exercises.first { it.id == next.exerciseId }
     return cleared.updateExerciseSet(nextExercise, next.index, next.isWarmup) {
         it.copy(setState = SetState.InProgress)
