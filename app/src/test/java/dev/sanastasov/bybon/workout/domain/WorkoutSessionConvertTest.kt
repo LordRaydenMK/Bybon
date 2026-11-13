@@ -6,6 +6,23 @@ import org.junit.Test
 class WorkoutSessionConvertTest {
 
     @Test
+    fun `converting the in-progress work set to warmup keeps it active`() {
+        val session = fullBodyA.toWorkoutSession().let { started ->
+            val warmupCount = checkNotNull(started.exercises.first().warmupSets).size
+            (0 until warmupCount).fold(started) { current, index ->
+                current.completeSet(current.exercises.first(), index, isWarmup = true)
+            }
+        }
+        session.assertOnlyInProgress("bench-press", index = 0, isWarmup = false)
+
+        val actual = session.convertFirstWorkSetToWarmup(session.exercises.first())
+
+        assert(actual.exercises.first().warmupSets?.size == 4)
+        assert(actual.exercises.first().sets.size == 2)
+        actual.assertOnlyInProgress("bench-press", index = 3, isWarmup = true)
+    }
+
+    @Test
     fun `converting the last remaining work set to warmup is a no-op`() {
         val session = fullBodyA.toOverviewSession().let { draft ->
             draft.updateExercise(draft.exercises.first().id) { exercise ->
