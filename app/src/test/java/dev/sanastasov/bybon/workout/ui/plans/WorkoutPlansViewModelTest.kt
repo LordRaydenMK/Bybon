@@ -8,7 +8,7 @@ import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewAction
-import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewViewModel
+import dev.sanastasov.bybon.workout.ui.overview.overviewViewModel
 import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionAction
 import dev.sanastasov.bybon.workout.ui.session.sessionViewModel
 import kotlinx.coroutines.flow.first
@@ -20,7 +20,7 @@ class WorkoutPlansViewModelTest {
     @Test
     fun `starting an inactive plan opens the overview`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { it.unarchivedPlans.isNotEmpty() }
         viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
@@ -33,7 +33,7 @@ class WorkoutPlansViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(fullBodyA.toOverviewSession()),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isDraft } }
         assert(state.unarchivedPlans.single().isDraft)
@@ -48,7 +48,7 @@ class WorkoutPlansViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(fullBodyA.toOverviewSession()),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isDraft } }
         viewModel.onAction(WorkoutPlansAction.OnDiscardDraft(fullBodyA))
@@ -64,7 +64,7 @@ class WorkoutPlansViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(fullBodyA.toWorkoutSession()),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { state -> state.unarchivedPlans.any { it.isActive } }
         viewModel.onAction(WorkoutPlansAction.OnStartPlan(fullBodyA))
@@ -98,7 +98,7 @@ class WorkoutPlansViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(paused),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
         assert(state.unarchivedPlans.single().isActive)
@@ -109,8 +109,8 @@ class WorkoutPlansViewModelTest {
     @Test
     fun `completing sets from a started workout keeps the plan active`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val plans = WorkoutPlansViewModel(repository, backgroundScope)
-        val overview = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val plans = plansViewModel(repository, backgroundScope)
+        val overview = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         overview.uiState.first { it != null }
         overview.onAction(WorkoutOverviewAction.OnStartWorkout)
@@ -136,7 +136,7 @@ class WorkoutPlansViewModelTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val sessionVm = sessionViewModel(fullBodyA.id, repository, backgroundScope)
         sessionVm.uiState.first { it != null }
-        val plans = WorkoutPlansViewModel(repository, backgroundScope)
+        val plans = plansViewModel(repository, backgroundScope)
         plans.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
 
         sessionVm.onAction(WorkoutSessionAction.OnCancelWorkout)
@@ -150,7 +150,7 @@ class WorkoutPlansViewModelTest {
     @Test
     fun `editing a plan opens the edit screen`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { it.unarchivedPlans.isNotEmpty() }
         viewModel.onAction(WorkoutPlansAction.OnEditPlan(fullBodyA))
@@ -163,7 +163,7 @@ class WorkoutPlansViewModelTest {
             initialPlans = listOf(fullBodyA, fullBodyB),
             initialSessions = listOf(fullBodyB.toWorkoutSession()),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         val state = viewModel.uiState.first { s -> s.unarchivedPlans.any { it.isActive } }
         assert(state.unarchivedPlans.map { it.plan.id } == listOf(fullBodyB.id, fullBodyA.id))
@@ -176,7 +176,7 @@ class WorkoutPlansViewModelTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA, fullBodyB, upperBodyA),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         val state = viewModel.uiState.first { it.unarchivedPlans.isNotEmpty() }
         assert(state.unarchivedPlans.map { it.plan } == listOf(fullBodyA, fullBodyB))
@@ -192,7 +192,7 @@ class WorkoutPlansViewModelTest {
     @Test
     fun `archiving a plan moves it to archived`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { it.unarchivedPlans.size == 2 }
         viewModel.onAction(WorkoutPlansAction.OnArchivePlan(fullBodyA))
@@ -208,7 +208,7 @@ class WorkoutPlansViewModelTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA, fullBodyB, upperBodyA),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { it.hasArchivedPlans }
         viewModel.onAction(WorkoutPlansAction.OnShowArchivedPlans)
@@ -226,7 +226,7 @@ class WorkoutPlansViewModelTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA, upperBodyA),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { it.hasArchivedPlans }
         viewModel.onAction(WorkoutPlansAction.OnShowArchivedPlans)
@@ -242,7 +242,7 @@ class WorkoutPlansViewModelTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA, upperBodyA),
         )
-        val viewModel = WorkoutPlansViewModel(repository, backgroundScope)
+        val viewModel = plansViewModel(repository, backgroundScope)
 
         viewModel.uiState.first { it.hasArchivedPlans }
         viewModel.onAction(WorkoutPlansAction.OnShowArchivedPlans)

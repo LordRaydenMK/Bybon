@@ -64,20 +64,21 @@ class WorkoutHistoryViewModel(
         coroutineScope.launch {
             try {
                 val csv = withContext(ioDispatcher) { contentResolverReader.read(uri) }
-                val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
-                val existingExercises = repository.exercises().first()
-                val mapped = withContext(defaultDispatcher) {
-                    StrongCsvParser.parse(csv).toStrongImport(
+                val summary = withContext(defaultDispatcher) {
+                    val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+                    val existingExercises = repository.exercises().first()
+                    val mapped = StrongCsvParser.parse(csv).toStrongImport(
                         plans = existingPlans,
                         exerciseCatalog = existingExercises,
                     )
+                    val imported = repository.importHistory(
+                        mapped.plans,
+                        mapped.sessionHistory,
+                        mapped.exercises,
+                    )
+                    imported.toSummaryUi()
                 }
-                val imported = repository.importHistory(
-                    mapped.plans,
-                    mapped.sessionHistory,
-                    mapped.exercises,
-                )
-                importPhase.value = ImportPhase.Summary(imported.toSummaryUi())
+                importPhase.value = ImportPhase.Summary(summary)
             } catch (e: CancellationException) {
                 throw e
             } catch (_: IOException) {

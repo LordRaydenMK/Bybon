@@ -3,18 +3,23 @@ package dev.sanastasov.bybon.workout.ui.plans
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class WorkoutPlansViewModel(
     private val repository: WorkoutsRepository,
     private val coroutineScope: CoroutineScope,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
 
     private val _effects = Channel<WorkoutPlanEffect>(Channel.BUFFERED)
@@ -31,7 +36,9 @@ class WorkoutPlansViewModel(
             plans = plans.map { it.toUi(sessions) },
             showArchived = includeArchived,
         )
-    }.stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
+    }
+        .flowOn(defaultDispatcher)
+        .stateInWhileInForeground(coroutineScope, WorkoutPlansUiState())
 
     fun onAction(action: WorkoutPlansAction) {
         when (action) {
@@ -52,11 +59,15 @@ class WorkoutPlansViewModel(
             }
 
             is WorkoutPlansAction.OnArchivePlan -> coroutineScope.launch {
-                repository.archivePlan(action.plan.id, archived = true)
+                withContext(defaultDispatcher) {
+                    repository.archivePlan(action.plan.id, archived = true)
+                }
             }
 
             is WorkoutPlansAction.OnUnarchivePlan -> coroutineScope.launch {
-                repository.archivePlan(action.plan.id, archived = false)
+                withContext(defaultDispatcher) {
+                    repository.archivePlan(action.plan.id, archived = false)
+                }
             }
 
             WorkoutPlansAction.OnShowArchivedPlans -> {
@@ -68,9 +79,11 @@ class WorkoutPlansViewModel(
             }
 
             is WorkoutPlansAction.OnDiscardDraft -> coroutineScope.launch {
-                val draft = repository.workoutSession(action.plan.id).first()
-                    .first { it.isDraft }
-                repository.deleteWorkout(draft.id)
+                withContext(defaultDispatcher) {
+                    val draft = repository.workoutSession(action.plan.id).first()
+                        .first { it.isDraft }
+                    repository.deleteWorkout(draft.id)
+                }
             }
         }
     }

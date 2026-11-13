@@ -23,7 +23,6 @@ import dev.sanastasov.bybon.workout.domain.lastSevenDaysSummary
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import java.time.LocalDate
 import java.time.LocalDateTime
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -580,7 +579,7 @@ class WorkoutHistoryViewModelTest {
             coroutineScope = backgroundScope,
             contentResolverReader = FakeContentResolverReader(csv),
             ioDispatcher = UnconfinedTestDispatcher(testScheduler),
-            defaultDispatcher = Dispatchers.Default, // flowOn() + UnconfinedTestDispatcher deadlocks
+            defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
             today = { historyToday },
         )
 

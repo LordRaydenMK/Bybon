@@ -15,7 +15,7 @@ class WorkoutOverviewDraftTest {
     @Test
     fun `save persists a not-started draft that overview reloads`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
@@ -35,7 +35,7 @@ class WorkoutOverviewDraftTest {
             cancelAndIgnoreRemainingEvents()
         }
 
-        val reloaded = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val reloaded = overviewViewModel(fullBodyA.id, repository, backgroundScope)
         val loaded = reloaded.uiState.first { it != null }!!
         assert(
             loaded.exercises.first().sets.first().reps ==
@@ -48,7 +48,7 @@ class WorkoutOverviewDraftTest {
     @Test
     fun `saved draft is kept when the plan later changes`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
         val originalCount = fullBodyA.sets.size
 
         viewModel.uiState.first { it != null }
@@ -62,7 +62,7 @@ class WorkoutOverviewDraftTest {
             plans.first { it.id == fullBodyA.id }.sets.size == 1
         }
 
-        val reloaded = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val reloaded = overviewViewModel(fullBodyA.id, repository, backgroundScope)
         val loaded = reloaded.uiState.first { it != null }!!
         assert(loaded.exercises.size == originalCount)
         assert(repository.workoutPlans().first().single { it.id == fullBodyA.id }.sets.size == 1)
@@ -71,7 +71,7 @@ class WorkoutOverviewDraftTest {
     @Test
     fun `discarding a saved draft deletes it and leaves overview`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         viewModel.uiState.first { it != null }
         viewModel.onAction(WorkoutOverviewAction.OnSaveDraft)
@@ -86,7 +86,7 @@ class WorkoutOverviewDraftTest {
     @Test
     fun `discard is offered only when a draft is already saved`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         assert(!viewModel.uiState.first { it != null }!!.canDiscardDraft)
 
@@ -102,7 +102,7 @@ class WorkoutOverviewDraftTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(fullBodyA.toOverviewSession()),
         )
-        val viewModel = WorkoutOverviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         assert(viewModel.uiState.first { it != null }!!.canDiscardDraft)
     }
