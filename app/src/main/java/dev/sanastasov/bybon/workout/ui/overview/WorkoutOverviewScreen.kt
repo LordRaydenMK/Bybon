@@ -47,6 +47,7 @@ import androidx.navigation3.runtime.result.ResultEffect
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
 import dev.sanastasov.bybon.workout.domain.SetState
@@ -72,7 +73,7 @@ fun WorkoutModule.WorkoutOverviewScreen(
     onNavigateToExerciseDetails: (String) -> Unit,
 ) {
     val viewModel = retain {
-        WorkoutOverviewViewModel(planId, workoutsRepository, it.coroutineScope)
+        WorkoutOverviewViewModel(planId, workoutsRepository, it.defaultScope())
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resultBus = LocalResultEventBus.current

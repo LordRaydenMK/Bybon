@@ -36,6 +36,7 @@ import dev.sanastasov.bybon.bodyweight.BodyWeight
 import dev.sanastasov.bybon.bodyweight.BodyWeightModule
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.ui.icons.SavedLocally
 import java.time.LocalDate
 
@@ -45,7 +46,7 @@ private val FiftyGrams = BodyWeight(5)
 @Composable
 fun BodyWeightModule.WeightInputScreen(onNavigateBack: () -> Unit) {
     val viewModel = retain {
-        WeightInputViewModel(bodyWeightRepository, it.coroutineScope)
+        WeightInputViewModel(bodyWeightRepository, it.defaultScope())
     }
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {

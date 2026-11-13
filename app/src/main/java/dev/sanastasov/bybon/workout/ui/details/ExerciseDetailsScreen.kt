@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.catalogExercise
@@ -26,7 +27,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercise
 @Composable
 fun WorkoutModule.ExerciseDetailsScreen(exerciseId: String, onNavigateBack: () -> Unit) {
     val viewModel = retain {
-        ExerciseDetailsViewModel(exerciseId, workoutsRepository, it.coroutineScope)
+        ExerciseDetailsViewModel(exerciseId, workoutsRepository, it.defaultScope())
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ExerciseDetailsContent(uiState, onNavigateBack)

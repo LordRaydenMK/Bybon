@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
+import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
@@ -47,7 +48,7 @@ fun WorkoutModule.WorkoutSummaryScreen(
     onNavigateToExerciseDetails: (String) -> Unit,
 ) {
     val viewModel = retain {
-        WorkoutSummaryViewModel(sessionId, workoutsRepository, it.coroutineScope)
+        WorkoutSummaryViewModel(sessionId, workoutsRepository, it.defaultScope())
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     viewModel.effects.collectEffectWithLifecycle { effect ->
