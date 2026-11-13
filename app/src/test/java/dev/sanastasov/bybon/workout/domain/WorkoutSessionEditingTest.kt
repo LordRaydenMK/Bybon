@@ -23,6 +23,25 @@ class WorkoutSessionEditingTest {
     }
 
     @Test
+    fun `addSet on an earlier completed exercise pulls in-progress back`() {
+        val session = fullBodyA.toWorkoutSession()
+            .completeExerciseAt(0)
+            .completeExerciseAt(1)
+        session.assertOnlyInProgress("assisted-pull-ups", index = 0, isWarmup = true)
+
+        val actual = session.addSet(session.exercises.first())
+        val bench = actual.exercises.first()
+
+        assert(actual.exercises[1].state == ExerciseState.Completed)
+        assert(bench.sets.dropLast(1).all { it.setState is SetState.Completed })
+        actual.assertOnlyInProgress("bench-press", bench.sets.lastIndex, isWarmup = false)
+        assert(
+            actual.exercises.first { it.id == "assisted-pull-ups" }.orderedSets
+                .all { it.setState == SetState.NotStated },
+        )
+    }
+
+    @Test
     fun `removeLastSet of a reopened exercise resumes the later exercise`() {
         val reopened = fullBodyA.toWorkoutSession()
             .completeExerciseAt(0)
