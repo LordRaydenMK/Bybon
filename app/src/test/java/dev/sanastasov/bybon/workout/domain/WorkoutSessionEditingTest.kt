@@ -110,4 +110,21 @@ class WorkoutSessionEditingTest {
         )
         actual.assertOnlyInProgress("bench-press", index = 0, isWarmup = true)
     }
+
+    @Test
+    fun `removeLastSet of the in-progress set starts the next work set`() {
+        val ready = (0 until 3).fold(fullBodyA.toWorkoutSession()) { session, index ->
+            session.completeExerciseAt(index)
+        }.withLastWorkSetInProgress(3)
+        val curl = ready.exercises.first { it.id == "seated-leg-curl" }
+        ready.assertOnlyInProgress("seated-leg-curl", curl.sets.lastIndex, isWarmup = false)
+
+        val actual = ready.removeLastSet(ready.exercises.first { it.id == "seated-leg-curl" })
+
+        assert(
+            actual.exercises.first { it.id == "seated-leg-curl" }.state ==
+                ExerciseState.Completed,
+        )
+        actual.assertOnlyInProgress("dumbbell-upright-row", index = 0, isWarmup = false)
+    }
 }
