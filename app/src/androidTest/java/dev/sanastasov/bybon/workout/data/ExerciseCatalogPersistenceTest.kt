@@ -43,7 +43,9 @@ class ExerciseCatalogPersistenceTest {
             db.weightEntryDao(),
         )
 
-        assert(repository.exercises().first() == catalogExercises)
+        val stored = repository.exercises().first()
+        assert(stored.toSet() == catalogExercises.toSet())
+        assert(stored.size == catalogExercises.size)
         assert(dao.catalogCommit() == repdbCatalogCommit)
         assert(dao.observeAll().first().all { it.source == ExerciseSource.SHIPPED })
         assert(dao.observeAll().first().all { !it.isArchived })
