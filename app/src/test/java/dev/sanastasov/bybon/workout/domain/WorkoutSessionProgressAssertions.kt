@@ -1,5 +1,16 @@
 package dev.sanastasov.bybon.workout.domain
 
+internal fun WorkoutSession.withLastWorkSetInProgress(exerciseIndex: Int): WorkoutSession {
+    val warmupCount = exercises[exerciseIndex].warmupSets?.size ?: 0
+    val warmed = (0 until warmupCount).fold(this) { session, index ->
+        session.completeSet(session.exercises[exerciseIndex], index, isWarmup = true)
+    }
+    val lastWorkIndex = warmed.exercises[exerciseIndex].sets.lastIndex
+    return (0 until lastWorkIndex).fold(warmed) { session, index ->
+        session.completeSet(session.exercises[exerciseIndex], index)
+    }
+}
+
 internal fun WorkoutSession.completeExerciseAt(exerciseIndex: Int): WorkoutSession {
     val warmed = (0 until (exercises[exerciseIndex].warmupSets?.size ?: 0))
         .fold(this) { session, index ->
