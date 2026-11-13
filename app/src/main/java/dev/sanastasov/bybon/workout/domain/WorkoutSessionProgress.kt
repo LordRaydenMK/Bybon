@@ -65,11 +65,7 @@ private fun nextSetAfterWork(exercise: WorkoutExercise, setIndex: Int): SetRef? 
 private fun WorkoutSession.firstSetOfNextExercise(exerciseId: String): SetRef? {
     val nextExercise = exercises.getOrNull(exercises.indexOfFirst { it.id == exerciseId } + 1)
         ?: return null
-    return when {
-        nextExercise.warmupSets != null -> SetRef(nextExercise.id, 0, isWarmup = true)
-        nextExercise.sets.isNotEmpty() -> SetRef(nextExercise.id, 0, isWarmup = false)
-        else -> null
-    }
+    return nextExercise.firstNotStartedSet()
 }
 
 fun WorkoutSession.withDurationIfCompleted(
@@ -82,15 +78,18 @@ fun WorkoutSession.withDurationIfCompleted(
 fun elapsedSince(startedAt: LocalDateTime, now: LocalDateTime = LocalDateTime.now()): Duration =
     java.time.Duration.between(startedAt, now).toKotlinDuration().coerceAtLeast(Duration.ZERO)
 
-fun WorkoutSession.firstNotStartedSet(): SetRef? = exercises.firstNotNullOfOrNull { exercise ->
-    val warmupIndex = exercise.warmupSets?.indexOfFirst { it.setState == SetState.NotStated }
-    when {
+fun WorkoutSession.firstNotStartedSet(): SetRef? =
+    exercises.firstNotNullOfOrNull { it.firstNotStartedSet() }
+
+private fun WorkoutExercise.firstNotStartedSet(): SetRef? {
+    val warmupIndex = warmupSets?.indexOfFirst { it.setState == SetState.NotStated }
+    return when {
         warmupIndex != null && warmupIndex >= 0 ->
-            SetRef(exercise.id, warmupIndex, isWarmup = true)
+            SetRef(id, warmupIndex, isWarmup = true)
 
         else -> {
-            val workIndex = exercise.sets.indexOfFirst { it.setState == SetState.NotStated }
-            if (workIndex >= 0) SetRef(exercise.id, workIndex, isWarmup = false) else null
+            val workIndex = sets.indexOfFirst { it.setState == SetState.NotStated }
+            if (workIndex >= 0) SetRef(id, workIndex, isWarmup = false) else null
         }
     }
 }

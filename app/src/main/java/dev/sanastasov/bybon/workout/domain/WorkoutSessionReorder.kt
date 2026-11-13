@@ -31,8 +31,32 @@ fun WorkoutSession.moveExercise(exerciseId: String, direction: ReorderDirection)
         exercises = exercises.toMutableList().apply {
             add(toIndex, removeAt(fromIndex))
         },
-    )
+    ).withInProgressOnCurrentExercise()
 }
+
+@Suppress("ReturnCount")
+private fun WorkoutSession.withInProgressOnCurrentExercise(): WorkoutSession {
+    val current = exercises.getOrNull(currentExerciseIndex ?: return this) ?: return this
+    if (workoutSets.none { it.setState == SetState.InProgress } ||
+        current.orderedSets.any { it.setState == SetState.InProgress }
+    ) {
+        return this
+    }
+    val cleared = copy(exercises = exercises.map { it.withInProgressCleared() })
+    val next = cleared.firstNotStartedSet() ?: return cleared
+    val nextExercise = cleared.exercises.first { it.id == next.exerciseId }
+    return cleared.updateExerciseSet(nextExercise, next.index, next.isWarmup) {
+        it.copy(setState = SetState.InProgress)
+    }
+}
+
+private fun WorkoutExercise.withInProgressCleared(): WorkoutExercise = copy(
+    warmupSets = warmupSets?.map { it.withInProgressCleared() },
+    sets = sets.map { it.withInProgressCleared() },
+)
+
+private fun ExerciseSet.withInProgressCleared(): ExerciseSet =
+    if (setState == SetState.InProgress) copy(setState = SetState.NotStated) else this
 
 private fun WorkoutSession.requireExercise(exerciseId: String): WorkoutExercise =
     requireNotNull(exercises.firstOrNull { it.id == exerciseId }) {

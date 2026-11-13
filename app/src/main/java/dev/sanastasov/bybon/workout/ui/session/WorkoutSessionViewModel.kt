@@ -182,10 +182,15 @@ class WorkoutSessionViewModel(
             is WorkoutSessionAction.OnMoveExerciseDown -> action.exercise.id
             else -> return
         }
-        val page = updated.exercises.indexOfFirst { it.id == exerciseId }
-        if (page >= 0) {
-            _effects.trySend(WorkoutSessionEffect.ScrollToExercise(page))
-        }
+        val movedPage = updated.exercises.indexOfFirst { it.id == exerciseId }
+        if (movedPage < 0) return
+        val current = updated.currentExerciseIndex
+        val page = current?.takeIf {
+            action is WorkoutSessionAction.OnMoveExerciseDown &&
+                movedPage == it + 1 &&
+                updated.exercises[it].orderedSets.any { set -> set.setState == SetState.InProgress }
+        } ?: movedPage
+        _effects.trySend(WorkoutSessionEffect.ScrollToExercise(page))
     }
 
     private fun syncRestPromoteAlarm(
