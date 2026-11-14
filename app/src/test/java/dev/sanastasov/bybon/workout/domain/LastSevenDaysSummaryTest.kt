@@ -26,7 +26,7 @@ class LastSevenDaysSummaryTest {
     }
 
     @Test
-    fun `counts workouts working sets reps and training time in the window`() {
+    fun `counts workouts working sets weight and training time in the window`() {
         val first = completedSession(
             planId = "upper-body-a",
             planName = "Upper body A",
@@ -49,7 +49,7 @@ class LastSevenDaysSummaryTest {
 
         assert(summary.workoutCount == 2)
         assert(summary.workingSetCount == 6)
-        assert(summary.totalReps == 8 + 7 + 12 + 10 + 10 + 8)
+        assert(summary.volumeLoad == Weight.kilograms(60f * 15 + 20f * 12 + 40f * 28))
         assert(summary.trainingTime == 1.hours + 58.minutes + 20.seconds)
     }
 
@@ -70,7 +70,7 @@ class LastSevenDaysSummaryTest {
         val summary = listOf(session).lastSevenDaysSummary(today)
 
         assert(summary.workingSetCount == 1)
-        assert(summary.totalReps == 8)
+        assert(summary.volumeLoad == Weight.kilograms(80f * 8))
     }
 
     @Test
@@ -266,7 +266,7 @@ class LastSevenDaysSummaryTest {
 
         assert(summary.workoutCount == 0)
         assert(summary.workingSetCount == 0)
-        assert(summary.totalReps == 0)
+        assert(summary.volumeLoad == null)
         assert(summary.trainingTime == Duration.ZERO)
         assert(summary.performance == ExercisePerformanceChange(0, 0, 0))
         assert(summary.musclesTrained.isEmpty())

@@ -40,7 +40,7 @@ data class LastSevenDaysSummaryUi(
     val workoutCount: Int,
     val trainingTime: String,
     val workingSetCount: Int,
-    val totalReps: Int,
+    val totalWeight: String,
     val performance: LastSevenDaysPerformanceUi?,
     val musclesTrained: List<String>,
 )
@@ -145,12 +145,14 @@ internal fun LastSevenDaysSummary.toUi(): LastSevenDaysSummaryUi = LastSevenDays
     workoutCount = workoutCount,
     trainingTime = trainingTime.formatTrainingTime(),
     workingSetCount = workingSetCount,
-    totalReps = totalReps,
+    totalWeight = volumeLoad.toVolumeLoadLabel(),
     performance = performance.takeIf { it.comparableCount > 0 }?.let {
         LastSevenDaysPerformanceUi(it.improved, it.maintained, it.declined)
     },
     musclesTrained = musclesTrained.map { it.label },
 )
+
+private fun Weight?.toVolumeLoadLabel(): String = "${this?.kilograms ?: "0"} kg"
 
 internal fun formatLastSevenDaysRange(start: LocalDate, end: LocalDate): String {
     val dash = "–"

@@ -5,7 +5,6 @@ import java.time.LocalDateTime
 data class WorkoutSessionSummary(
     val exerciseCount: Int,
     val workingSetCount: Int,
-    val totalReps: Int,
     val volumeLoad: Weight?,
     val setPerformance: ExercisePerformanceChange,
     val exercisePerformance: List<ExerciseAverageOneRmChange>,
@@ -30,7 +29,6 @@ fun WorkoutSession.workoutSessionSummary(
     return WorkoutSessionSummary(
         exerciseCount = matched.size,
         workingSetCount = workingSets.size,
-        totalReps = workingSets.sumOf { it.reps },
         volumeLoad = workingSets.volumeLoad(),
         setPerformance = workingSets.setPerformance(),
         exercisePerformance = matched.mapNotNull { exercise ->

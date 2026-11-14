@@ -217,7 +217,6 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
         duration = "47m",
         exerciseCount = 2,
         workingSetCount = 5,
-        totalReps = 63,
         volumeLoadLabel = "1762.5 kg",
         setPerformance = SetPerformanceUi(improved = 5, maintained = 0, declined = 0),
         exercisePerformance = listOf(

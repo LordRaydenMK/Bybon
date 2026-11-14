@@ -90,7 +90,7 @@ private fun StatsGrid(summary: LastSevenDaysSummaryUi) {
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             StatCell(summary.workingSetCount.toString(), "Working sets", Modifier.weight(1f))
-            StatCell(summary.totalReps.toString(), "Total reps", Modifier.weight(1f))
+            StatCell(summary.totalWeight, "Total weight", Modifier.weight(1f))
         }
     }
 }
@@ -181,7 +181,7 @@ private fun MusclesSection(muscles: List<String>) {
 internal fun LastSevenDaysSummaryUi.contentDescription(): String = buildString {
     append("Last 7 days, $dateRange, ")
     append("$workoutCount workouts, $trainingTime training time, ")
-    append("$workingSetCount working sets, $totalReps total reps")
+    append("$workingSetCount working sets, $totalWeight total weight")
     performance?.let {
         append(", ${it.improved} improved, ${it.maintained} maintained, ${it.declined} declined")
     }

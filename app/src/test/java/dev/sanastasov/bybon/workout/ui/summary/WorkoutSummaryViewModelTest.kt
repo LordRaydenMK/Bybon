@@ -370,7 +370,6 @@ class WorkoutSummaryViewModelTest {
             session.toSummaryUi(sessions, session.startedAt).sessionSummary
         }
         assert(summary.workingSetCount == 3)
-        assert(summary.totalReps == 39)
         assert(summary.volumeLoadLabel == "682.5 kg")
         assert(summary.setPerformance == SetPerformanceUi(3, 0, 0))
         assert(summary.exercisePerformance.single().name == "Incline Dumbbell Press")

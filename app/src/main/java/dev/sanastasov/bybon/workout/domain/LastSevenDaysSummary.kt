@@ -9,7 +9,7 @@ data class LastSevenDaysSummary(
     val workoutCount: Int,
     val trainingTime: Duration,
     val workingSetCount: Int,
-    val totalReps: Int,
+    val volumeLoad: Weight?,
     val performance: ExercisePerformanceChange,
     val musclesTrained: List<TrainedMuscle>,
 )
@@ -39,9 +39,10 @@ fun List<WorkoutSession>.lastSevenDaysSummary(today: LocalDate): LastSevenDaysSu
         workingSetCount = inWindow.sumOf { session ->
             session.exercises.sumOf { it.sets.size }
         },
-        totalReps = inWindow.sumOf { session ->
-            session.exercises.sumOf { exercise -> exercise.sets.sumOf { it.reps } }
-        },
+        volumeLoad = inWindow
+            .flatMap { it.exercises }
+            .flatMap { it.sets }
+            .volumeLoad(),
         performance = performanceChange(inWindow, beforeWindow),
         musclesTrained = inWindow.flatMap { it.exercises }.trainedMuscles(),
     )
