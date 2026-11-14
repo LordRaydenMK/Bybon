@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -30,7 +29,6 @@ class WorkoutHistoryViewModel(
     private val coroutineScope: CoroutineScope,
     private val contentResolverReader: ContentResolverReader,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val today: () -> LocalDate = { LocalDate.now() },
 ) {
 
@@ -47,7 +45,6 @@ class WorkoutHistoryViewModel(
                 ImportPhase.Idle -> sessions.toUiState()
             }
         }
-            .flowOn(defaultDispatcher)
             .stateInWhileInForeground(coroutineScope, WorkoutHistoryUiState.Loading)
 
     fun onAction(action: WorkoutHistoryAction) {
@@ -62,20 +59,18 @@ class WorkoutHistoryViewModel(
         coroutineScope.launch {
             try {
                 val csv = withContext(ioDispatcher) { contentResolverReader.read(uri) }
-                val summary = withContext(defaultDispatcher) {
-                    val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
-                    val existingExercises = repository.exercises().first()
-                    val mapped = StrongCsvParser.parse(csv).toStrongImport(
-                        plans = existingPlans,
-                        exerciseCatalog = existingExercises,
-                    )
-                    val imported = repository.importHistory(
-                        mapped.plans,
-                        mapped.sessionHistory,
-                        mapped.exercises,
-                    )
-                    imported.toSummaryUi()
-                }
+                val existingPlans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+                val existingExercises = repository.exercises().first()
+                val mapped = StrongCsvParser.parse(csv).toStrongImport(
+                    plans = existingPlans,
+                    exerciseCatalog = existingExercises,
+                )
+                val imported = repository.importHistory(
+                    mapped.plans,
+                    mapped.sessionHistory,
+                    mapped.exercises,
+                )
+                val summary = imported.toSummaryUi()
                 importPhase.value = ImportPhase.Summary(summary)
             } catch (e: CancellationException) {
                 throw e
