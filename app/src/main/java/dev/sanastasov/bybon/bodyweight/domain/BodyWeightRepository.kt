@@ -13,6 +13,17 @@ interface BodyWeightRepository {
 
     suspend fun deleteEntry(entry: BodyWeightEntry)
 
+    fun backupStatus(): Flow<WeightBackupStatus>
+
+    /**
+     * Pull, then upload when the phone and the backup agree.
+     * A conflict applies nothing.
+     * A known remote failure returns [WeightSyncResult.Unavailable]. Anything else throws.
+     */
+    suspend fun sync(command: WeightSyncCommand): WeightSyncResult
+
+    suspend fun dismissSummary()
+
     fun phases(): Flow<List<DietPhaseRecord>>
 
     suspend fun updatePhase(record: DietPhaseRecord)

@@ -35,6 +35,12 @@ value class BodyWeight(
 
     companion object {
 
+        fun parseOrNull(value: Int): BodyWeight? = try {
+            BodyWeight(value)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+
         fun parseFromString(value: String): BodyWeight {
             val kilograms = value.toFloatOrNull()
                 ?: throw IllegalArgumentException("Invalid body weight: '$value'")

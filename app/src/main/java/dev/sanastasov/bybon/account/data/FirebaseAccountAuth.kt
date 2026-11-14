@@ -10,6 +10,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import dev.sanastasov.bybon.account.domain.AccountAuth
 import dev.sanastasov.bybon.account.domain.AccountUser
 import dev.sanastasov.bybon.account.domain.SignInFailure
+import dev.sanastasov.bybon.account.domain.UserId
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -50,5 +51,7 @@ internal fun FirebaseException.toSignInFailureOrRethrow(): SignInFailure = when 
     else -> throw this
 }
 
-private fun FirebaseUser.toAccountUser(): AccountUser =
-    AccountUser(requireNotNull(email) { "Signed-in user has no email" })
+private fun FirebaseUser.toAccountUser(): AccountUser = AccountUser(
+    uid = UserId(uid),
+    email = requireNotNull(email) { "Signed-in user has no email" },
+)
