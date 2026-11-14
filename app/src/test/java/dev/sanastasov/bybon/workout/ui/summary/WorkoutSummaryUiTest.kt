@@ -6,6 +6,22 @@ import org.junit.Test
 class WorkoutSummaryUiTest {
 
     @Test
+    fun `session summary content description names total weight`() {
+        val summary = WorkoutSessionSummaryUi(
+            subtitle = "Full Body B · 13 Aug 2026 · Start 18:25",
+            duration = "47m",
+            exerciseCount = 2,
+            workingSetCount = 5,
+            volumeLoadLabel = "1762.5 kg",
+        )
+        assert(
+            summary.contentDescription() ==
+                "Workout completed, Full Body B · 13 Aug 2026 · Start 18:25, " +
+                "duration 47m, 2 exercises, 5 working sets, 1762.5 kg total weight",
+        )
+    }
+
+    @Test
     fun `work set content description names load and e1RM`() {
         val set = WorkoutSummarySetUi(1, "20", 14, Weight.kilograms(29.33f))
         assert(set.contentDescription() == "1. 20 kg × 14, 29.33 kg e1RM")

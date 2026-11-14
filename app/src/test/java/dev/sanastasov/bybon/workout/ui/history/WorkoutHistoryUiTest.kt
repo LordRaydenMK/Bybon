@@ -2,7 +2,9 @@ package dev.sanastasov.bybon.workout.ui.history
 
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.lastSevenDaysSummary
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import java.time.LocalDate
 import kotlin.time.Duration.Companion.hours
@@ -53,20 +55,26 @@ class WorkoutHistoryUiTest {
     }
 
     @Test
+    fun `last 7 days with no workouts shows zero total weight`() {
+        val summary = emptyList<WorkoutSession>().lastSevenDaysSummary(today).toUi()
+        assert(summary.totalWeight == "0 kg")
+    }
+
+    @Test
     fun `last 7 days content description includes stats performance and muscles`() {
         val summary = LastSevenDaysSummaryUi(
             dateRange = "5–11 Nov 2026",
             workoutCount = 3,
             trainingTime = "4h 18m",
             workingSetCount = 42,
-            totalReps = 386,
+            totalWeight = "14820 kg",
             performance = LastSevenDaysPerformanceUi(8, 5, 2),
             musclesTrained = listOf("Chest", "Back"),
         )
         assert(
             summary.contentDescription() ==
                 "Last 7 days, 5–11 Nov 2026, 3 workouts, 4h 18m training time, " +
-                "42 working sets, 386 total reps, 8 improved, 5 maintained, 2 declined, " +
+                "42 working sets, 14820 kg total weight, 8 improved, 5 maintained, 2 declined, " +
                 "muscles trained Chest, Back",
         )
     }

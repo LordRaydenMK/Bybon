@@ -177,6 +177,7 @@ class WorkoutHistoryViewModelTest {
             val expected = listOf(previous, inWindow).lastSevenDaysSummary(historyToday).toUi()
             assert(actual.weekSummary == expected)
             assert(actual.weekSummary.workoutCount == 1)
+            assert(actual.weekSummary.totalWeight == "1640 kg")
             assert(actual.weekSummary.performance == LastSevenDaysPerformanceUi(1, 0, 1))
             assert(actual.weekSummary.musclesTrained.containsAll(listOf("Chest", "Back", "Quads")))
         }

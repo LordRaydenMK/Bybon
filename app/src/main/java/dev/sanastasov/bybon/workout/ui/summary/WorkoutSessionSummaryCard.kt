@@ -56,8 +56,6 @@ internal fun WorkoutSessionSummaryCard(
                 )
             }
             StatsGrid(summary)
-            HorizontalDivider()
-            VolumeSection(summary.volumeLoadLabel)
             summary.setPerformance?.let { performance ->
                 HorizontalDivider()
                 SetPerformanceSection(performance)
@@ -83,7 +81,7 @@ private fun StatsGrid(summary: WorkoutSessionSummaryUi) {
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             StatCell("Working sets", summary.workingSetCount.toString(), Modifier.weight(1f))
-            StatCell("Total reps", summary.totalReps.toString(), Modifier.weight(1f))
+            StatCell("Total weight", summary.volumeLoadLabel, Modifier.weight(1f))
         }
     }
 }
@@ -100,27 +98,6 @@ private fun StatCell(label: String, value: String, modifier: Modifier = Modifier
             value,
             style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"),
             fontWeight = FontWeight.Bold,
-        )
-    }
-}
-
-@Composable
-private fun VolumeSection(volumeLoadLabel: String) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            "Training volume",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            volumeLoadLabel,
-            style = MaterialTheme.typography.headlineMedium.copy(fontFeatureSettings = "tnum"),
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            "Working sets only",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
@@ -231,8 +208,7 @@ private fun ExerciseAverageOneRmUi.changeColor(): Color = when {
 internal fun WorkoutSessionSummaryUi.contentDescription(): String = buildString {
     append("Workout completed, $subtitle, ")
     append("duration $duration, $exerciseCount exercises, ")
-    append("$workingSetCount working sets, $totalReps total reps, ")
-    append("training volume $volumeLoadLabel")
+    append("$workingSetCount working sets, $volumeLoadLabel total weight")
     setPerformance?.let {
         append(", ${it.improved} improved, ${it.maintained} maintained, ${it.declined} declined")
     }

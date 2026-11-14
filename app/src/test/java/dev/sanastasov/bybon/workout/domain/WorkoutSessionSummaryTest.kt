@@ -10,7 +10,7 @@ class WorkoutSessionSummaryTest {
     private val startedAt = LocalDateTime.of(2026, 11, 11, 18, 0)
 
     @Test
-    fun `counts working sets reps volume and exercises`() {
+    fun `counts working sets volume and exercises`() {
         val session = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -25,7 +25,6 @@ class WorkoutSessionSummaryTest {
 
         assert(summary.exerciseCount == 2)
         assert(summary.workingSetCount == 5)
-        assert(summary.totalReps == 15 + 13 + 11 + 12 + 12)
         assert(summary.volumeLoad == Weight.kilograms(17.5f * 39 + 45f * 24))
         assert(summary.setPerformance == ExercisePerformanceChange(0, 0, 0))
         assert(summary.exercisePerformance.isEmpty())
@@ -53,7 +52,6 @@ class WorkoutSessionSummaryTest {
         val summary = session.workoutSessionSummary(listOf(session))
 
         assert(summary.workingSetCount == 2)
-        assert(summary.totalReps == 15)
         assert(summary.volumeLoad == Weight.kilograms(80f * 8 + 80f * 7))
     }
 
