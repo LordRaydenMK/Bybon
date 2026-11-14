@@ -14,7 +14,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "840288776102-1rhrh8mk9q3er0147c91co4o3mut4s4j.apps.googleusercontent.com",
+          "client_id": "840288776102-eh6dfp3o7f2c8t09dtj6ufn01eicben6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "dev.sanastasov.bybon.debug",
+            "certificate_hash": "ceebff73aa925d915d77f4bf6444e6ddfdd8933c"
+          }
+        },
+        {
+          "client_id": "840288776102-ce175hh4hihigniiv568gu9o7ou0oiaf.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
