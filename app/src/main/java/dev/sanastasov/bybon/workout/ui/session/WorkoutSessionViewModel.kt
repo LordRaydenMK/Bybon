@@ -32,28 +32,23 @@ import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
 import dev.sanastasov.bybon.workout.restPromoteWait
 import java.time.LocalDateTime
 import kotlin.time.Duration
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 
 class WorkoutSessionViewModel(
     val planId: WorkoutPlanId,
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
     private val restPromoteScheduler: RestPromoteScheduler = RestPromoteScheduler.NoOp,
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     private val _effects = Channel<WorkoutSessionEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutSessionEffect> = _effects.receiveAsFlow()
@@ -65,35 +60,32 @@ class WorkoutSessionViewModel(
                 liveSessionOrLast(planId, last, sessions)
             }
             .distinctUntilChanged()
-            .flowOn(defaultDispatcher)
             .stateInWhileInForeground(coroutineScope, null)
 
     init {
         coroutineScope.launch {
-            withContext(defaultDispatcher) {
-                mutations.withLock {
-                    val sessions = repository.workoutSessions().first()
-                    val existing = sessions.firstOrNull { session ->
-                        session.planId == planId && session.state !is WorkoutState.Completed
+            mutations.withLock {
+                val sessions = repository.workoutSessions().first()
+                val existing = sessions.firstOrNull { session ->
+                    session.planId == planId && session.state !is WorkoutState.Completed
+                }
+                when {
+                    existing == null -> {
+                        val plan = repository.workoutPlans()
+                            .first()
+                            .first { it.id == planId }
+                        val now = LocalDateTime.now()
+                        val session = plan.toWorkoutSession(
+                            previousHistory = sessions,
+                            startedAt = now,
+                            bodyWeight = repository.sevenDayBodyWeight(now.toLocalDate()),
+                        )
+                        repository.updateWorkout(session)
                     }
-                    when {
-                        existing == null -> {
-                            val plan = repository.workoutPlans()
-                                .first()
-                                .first { it.id == planId }
-                            val now = LocalDateTime.now()
-                            val session = plan.toWorkoutSession(
-                                previousHistory = sessions,
-                                startedAt = now,
-                                bodyWeight = repository.sevenDayBodyWeight(now.toLocalDate()),
-                            )
-                            repository.updateWorkout(session)
-                        }
 
-                        existing.state !is WorkoutState.InProgress ||
-                            existing.workoutSets.none { it.setState == SetState.InProgress } -> {
-                            repository.updateWorkout(existing.startWorkout())
-                        }
+                    existing.state !is WorkoutState.InProgress ||
+                        existing.workoutSets.none { it.setState == SetState.InProgress } -> {
+                        repository.updateWorkout(existing.startWorkout())
                     }
                 }
             }
@@ -102,45 +94,43 @@ class WorkoutSessionViewModel(
 
     fun onAction(action: WorkoutSessionAction) {
         coroutineScope.launch {
-            withContext(defaultDispatcher) {
-                mutations.withLock {
-                    when (action) {
-                        WorkoutSessionAction.OnCancelWorkout -> {
-                            val session = uiState.value ?: return@withLock
-                            restPromoteScheduler.cancel()
-                            repository.deleteWorkout(session.id)
-                            _effects.trySend(WorkoutSessionEffect.StopService)
-                            _effects.trySend(WorkoutSessionEffect.NavigateBack)
+            mutations.withLock {
+                when (action) {
+                    WorkoutSessionAction.OnCancelWorkout -> {
+                        val session = uiState.value ?: return@withLock
+                        restPromoteScheduler.cancel()
+                        repository.deleteWorkout(session.id)
+                        _effects.trySend(WorkoutSessionEffect.StopService)
+                        _effects.trySend(WorkoutSessionEffect.NavigateBack)
+                    }
+
+                    WorkoutSessionAction.OnAddExercise -> {
+                        val session = checkNotNull(uiState.value) { "No active session" }
+                        _effects.trySend(
+                            WorkoutSessionEffect.OpenExerciseLibrary(
+                                session.exercises.map { it.id },
+                            ),
+                        )
+                    }
+
+                    is WorkoutSessionAction.OnExercisePicked ->
+                        addPickedExercise(action.exerciseId)
+
+                    is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
+
+                    is WorkoutSessionAction.OnOpenExerciseDetails ->
+                        _effects.trySend(
+                            WorkoutSessionEffect.OpenExerciseDetails(action.exerciseId),
+                        )
+
+                    else -> {
+                        val session = checkNotNull(uiState.value) { "No active session" }
+                        val history = repository.workoutSessions().first()
+                        val updated = repository.updateWorkout(planId) { current ->
+                            reduce(current, action, history)
                         }
-
-                        WorkoutSessionAction.OnAddExercise -> {
-                            val session = checkNotNull(uiState.value) { "No active session" }
-                            _effects.trySend(
-                                WorkoutSessionEffect.OpenExerciseLibrary(
-                                    session.exercises.map { it.id },
-                                ),
-                            )
-                        }
-
-                        is WorkoutSessionAction.OnExercisePicked ->
-                            addPickedExercise(action.exerciseId)
-
-                        is WorkoutSessionAction.OnRemoveExercise -> removeSessionExercise(action)
-
-                        is WorkoutSessionAction.OnOpenExerciseDetails ->
-                            _effects.trySend(
-                                WorkoutSessionEffect.OpenExerciseDetails(action.exerciseId),
-                            )
-
-                        else -> {
-                            val session = checkNotNull(uiState.value) { "No active session" }
-                            val history = repository.workoutSessions().first()
-                            val updated = repository.updateWorkout(planId) { current ->
-                                reduce(current, action, history)
-                            }
-                            emitAfterSetCompleted(updated, action)
-                            emitAfterMove(session, updated, action)
-                        }
+                        emitAfterSetCompleted(updated, action)
+                        emitAfterMove(session, updated, action)
                     }
                 }
             }

@@ -579,7 +579,6 @@ class WorkoutHistoryViewModelTest {
             coroutineScope = backgroundScope,
             contentResolverReader = FakeContentResolverReader(csv),
             ioDispatcher = UnconfinedTestDispatcher(testScheduler),
-            defaultDispatcher = UnconfinedTestDispatcher(testScheduler),
             today = { historyToday },
         )
 
