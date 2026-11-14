@@ -13,12 +13,11 @@ import org.junit.Test
 class AccountViewModelTest {
 
     @Test
-    fun `signed out shows the environment name`() = runTest {
+    fun `signed out has no email`() = runTest {
         val viewModel = viewModel()
 
         val state = viewModel.uiState.first { !it.signingIn }
 
-        assert(state.environmentName == "prd")
         assert(state.email == null)
     }
 
@@ -136,7 +135,6 @@ class AccountViewModelTest {
     private fun kotlinx.coroutines.test.TestScope.viewModel(
         auth: FakeAccountAuth = FakeAccountAuth(),
         googleSignIn: FakeGoogleSignIn = FakeGoogleSignIn(),
-        environmentName: String = "prd",
         coroutineScope: CoroutineScope = backgroundScope,
-    ) = AccountViewModel(auth, googleSignIn, environmentName, coroutineScope)
+    ) = AccountViewModel(auth, googleSignIn, coroutineScope)
 }

@@ -3,8 +3,8 @@
 Backup and restore of `weight_entry` only. One row per calendar date. This step does not change
 exercises, plans, sessions, diet phases, or an in-progress workout.
 
-Cloud writes go to the Firestore database named by this build's environment, `stg` or `prd`, in
-`bybon-f343b`.
+Cloud writes go to the Firestore database of the Firebase project this build is configured with:
+`bybon-stg` for debug, `bybon-f343b` for release.
 
 ## Domain
 
@@ -39,8 +39,7 @@ Only that signed-in user can read and write their `users/{uid}` tree.
 
 ## Sync
 
-The phone stores, per signed-in user and per database (`stg` or `prd`), the latest `updatedAt` it
-has applied.
+The phone stores, per signed-in user, the latest `updatedAt` it has applied.
 
 A full read of `weights` runs only when that cursor is missing, and when sign-in finds no
 non-deleted documents. Every other sync uploads pending dates and queries documents whose

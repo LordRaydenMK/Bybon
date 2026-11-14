@@ -1,6 +1,4 @@
-import bybon.firebase.FirebaseEnv
 import bybon.repdb.GenerateRepdbCatalogTask
-import com.android.build.api.variant.BuildConfigField
 import dev.detekt.gradle.Detekt
 import java.util.*
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
@@ -27,22 +25,11 @@ val generateRepdbCatalog = tasks.register<GenerateRepdbCatalogTask>("generateRep
     cacheDirectory.set(repdbCacheDirectory)
 }
 
-val envOverride = providers.gradleProperty("env").orNull
-FirebaseEnv.validateOverride(envOverride)
-
 androidComponents {
     onVariants { variant ->
         variant.sources.kotlin?.addGeneratedSourceDirectory(
             generateRepdbCatalog,
             GenerateRepdbCatalogTask::outputDirectory,
-        )
-        val buildType = variant.buildType ?: error("Missing build type for ${variant.name}")
-        val env = FirebaseEnv.resolve(envOverride, buildType)
-        val buildConfigFields = variant.buildConfigFields
-            ?: error("BuildConfig is disabled for ${variant.name}")
-        buildConfigFields.put(
-            "FIREBASE_ENV",
-            BuildConfigField("String", "\"$env\"", "Firebase environment name"),
         )
     }
 }
@@ -114,7 +101,6 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
     testFixtures {
         enable = true

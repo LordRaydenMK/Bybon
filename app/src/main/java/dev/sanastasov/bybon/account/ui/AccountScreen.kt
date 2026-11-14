@@ -32,7 +32,6 @@ fun AccountModule.AccountScreen(onNavigateBack: () -> Unit) {
         AccountViewModel(
             accountAuth,
             CredentialManagerGoogleSignIn(context),
-            firebaseEnvName,
             it.coroutineScope,
         )
     }
@@ -58,7 +57,6 @@ fun AccountScreenContent(
                 .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(uiState.environmentName, style = MaterialTheme.typography.titleMedium)
             if (uiState.signedIn) {
                 Text(uiState.email.orEmpty(), style = MaterialTheme.typography.bodyLarge)
                 OutlinedButton(
@@ -100,7 +98,7 @@ fun AccountScreenContent(
 private fun AccountScreenSignedOutPreview() {
     BybonTheme {
         AccountScreenContent(
-            AccountUiState("prd"),
+            AccountUiState(),
             {},
             {},
         )
@@ -112,7 +110,7 @@ private fun AccountScreenSignedOutPreview() {
 private fun AccountScreenSignedInPreview() {
     BybonTheme {
         AccountScreenContent(
-            AccountUiState("prd", email = "stolea@gmail.com"),
+            AccountUiState(email = "stolea@gmail.com"),
             {},
             {},
         )

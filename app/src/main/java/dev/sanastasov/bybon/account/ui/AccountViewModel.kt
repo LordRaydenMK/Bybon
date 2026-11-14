@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 class AccountViewModel(
     private val accountAuth: AccountAuth,
     private val googleSignIn: GoogleSignIn,
-    environmentName: String,
     private val coroutineScope: CoroutineScope,
 ) {
 
@@ -22,7 +21,6 @@ class AccountViewModel(
 
     val uiState = combine(accountAuth.user(), session) { user, sessionUi ->
         AccountUiState(
-            environmentName = environmentName,
             email = user?.email,
             message = sessionUi.message,
             confirmSignOut = sessionUi.confirmSignOut,
@@ -30,7 +28,7 @@ class AccountViewModel(
         )
     }.stateInWhileInForeground(
         coroutineScope,
-        AccountUiState(environmentName),
+        AccountUiState(),
     )
 
     fun onAction(action: AccountAction) {

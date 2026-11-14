@@ -6,9 +6,8 @@ app stays local-first. Each slice is backed up on its own.
 A single-device step backs up and restores that slice. A conflict in a step changes that slice
 only. Two phones do not edit the same slice until that slice's multi-device step.
 
-The app uses one Firebase project, `bybon-f343b`, for Auth and Crashlytics. Later Firestore steps
-use `stg` and `prd` databases in that project. Two Firebase projects are not used: Google OAuth
-clients require the Android package name plus SHA-1 to be globally unique.
+Debug builds use the staging Firebase project, `bybon-stg`. Release builds use the production
+Firebase project, `bybon-f343b`.
 
 ## Steps
 
