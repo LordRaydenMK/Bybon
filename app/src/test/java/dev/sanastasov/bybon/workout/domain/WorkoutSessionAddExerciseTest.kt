@@ -78,6 +78,52 @@ class WorkoutSessionAddExerciseTest {
     }
 
     @Test
+    fun `addExercise on a completed workout starts the new exercise`() {
+        val completed = fullBodyA.sets.indices.fold(
+            fullBodyA.toWorkoutSession(),
+        ) { session, index ->
+            session.completeExerciseAt(index)
+        }
+        assert(completed.state is WorkoutState.Completed)
+        assert(completed.duration != null)
+
+        val actual = completed.addExercise(catalogExercise("incline-db-curl"))
+
+        assert(actual.exercises.last().id == "incline-db-curl")
+        assert(actual.state is WorkoutState.InProgress)
+        assert(actual.duration == null)
+        actual.assertOnlyInProgress("incline-db-curl", index = 0, isWarmup = false)
+    }
+
+    @Test
+    fun `completing the planned exercises starts an exercise added during the workout`() {
+        val withCurl = fullBodyA.toWorkoutSession()
+            .addExercise(catalogExercise("incline-db-curl"))
+        val finishedPlanned = withCurl.exercises.dropLast(1).indices
+            .fold(withCurl) { session, index ->
+                session.completeExerciseAt(index)
+            }
+
+        assert(finishedPlanned.exercises.last().id == "incline-db-curl")
+        finishedPlanned.assertOnlyInProgress("incline-db-curl", index = 0, isWarmup = false)
+    }
+
+    @Test
+    fun `completing an exercise added during the workout finishes the session`() {
+        val withCurl = fullBodyA.toWorkoutSession()
+            .addExercise(catalogExercise("incline-db-curl"))
+        val done = withCurl.exercises.indices.fold(withCurl) { session, index ->
+            session.completeExerciseAt(index)
+        }
+
+        assert(done.exercises.last().id == "incline-db-curl")
+        assert(done.exercises.all { it.state == ExerciseState.Completed })
+        assert(done.workoutSets.none { it.setState == SetState.InProgress })
+        assert(done.state is WorkoutState.Completed)
+        assert(done.duration != null)
+    }
+
+    @Test
     fun `addExercise does not start the new exercise`() {
         val session = fullBodyA.toWorkoutSession()
         val curl = catalogExercise("incline-db-curl")
@@ -144,6 +190,29 @@ class WorkoutSessionAddExerciseTest {
         assert(
             actual.exercises.first().warmupSets!!.first().setState == SetState.InProgress,
         )
+    }
+
+    @Test
+    fun `removeExercise during a warmup starts the next exercise at its first set`() {
+        val started = fullBodyA.toWorkoutSession()
+        val session = started.completeSet(started.exercises.first(), 0, isWarmup = true)
+        session.assertOnlyInProgress("bench-press", index = 1, isWarmup = true)
+
+        val actual = session.removeExercise("bench-press")
+
+        actual.assertOnlyInProgress("squat", index = 0, isWarmup = true)
+    }
+
+    @Test
+    fun `removeExercise of the active work exercise starts the next work set`() {
+        val session = (0 until 3).fold(fullBodyA.toWorkoutSession()) { current, index ->
+            current.completeExerciseAt(index)
+        }
+        session.assertOnlyInProgress("seated-leg-curl", index = 0, isWarmup = false)
+
+        val actual = session.removeExercise("seated-leg-curl")
+
+        actual.assertOnlyInProgress("dumbbell-upright-row", index = 0, isWarmup = false)
     }
 
     @Test
