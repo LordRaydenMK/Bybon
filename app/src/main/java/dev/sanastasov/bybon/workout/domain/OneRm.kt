@@ -15,16 +15,13 @@ fun estimatedOneRm(weight: Weight, reps: Int): Weight =
     Weight.kilograms(estimateOneRmKg(weight.kilogramsValue, reps))
 
 fun assistedEffectiveLoad(
-    bodyWeight: Weight?,
+    bodyWeight: Weight,
     assistance: Weight?,
     blankIsUnassisted: Boolean,
-): Weight? {
-    val knownBodyWeight = bodyWeight ?: return null
-    return when {
-        assistance != null -> knownBodyWeight.minusOrNull(assistance)
-        blankIsUnassisted -> knownBodyWeight
-        else -> null
-    }
+): Weight? = when {
+    assistance != null -> bodyWeight.minusOrNull(assistance)
+    blankIsUnassisted -> bodyWeight
+    else -> null
 }
 
 fun estimatedAssistedOneRm(
