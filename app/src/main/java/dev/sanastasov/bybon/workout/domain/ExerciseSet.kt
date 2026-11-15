@@ -39,19 +39,16 @@ data class ExerciseSet(
         get() = oneRmFor(weight, reps, blankIsUnassisted = setState is SetState.Completed)
 
     val effectiveLoad: Weight?
-        get() {
-            val equipment = exerciseDefinition.equipment ?: return weight
-            return if (equipment.isAssisted) {
-                bodyWeight?.let {
-                    assistedEffectiveLoad(
-                        bodyWeight = it,
-                        assistance = weight,
-                        blankIsUnassisted = setState is SetState.Completed,
-                    )
-                }
-            } else {
-                weight
+        get() = if (exerciseDefinition.equipment?.isAssisted == true) {
+            bodyWeight?.let {
+                assistedEffectiveLoad(
+                    bodyWeight = it,
+                    assistance = weight,
+                    blankIsUnassisted = setState is SetState.Completed,
+                )
             }
+        } else {
+            weight
         }
 
     val previousOneRm: Weight?
