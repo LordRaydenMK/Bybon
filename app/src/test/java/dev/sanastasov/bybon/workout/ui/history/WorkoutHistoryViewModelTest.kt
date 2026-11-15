@@ -373,7 +373,7 @@ class WorkoutHistoryViewModelTest {
     }
 
     @Test
-    fun `history assisted top set without body weight is the lowest assistance`() = runTest {
+    fun `history assisted top set without body weight has no 1RM`() = runTest {
         val session = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -393,8 +393,8 @@ class WorkoutHistoryViewModelTest {
         viewModel.uiState.test {
             val topSet = (awaitAfterLoading() as WorkoutHistoryUiState.History)
                 .sessions.single().exercises.single()
-            assert(topSet.weightKg == "-15")
-            assert(topSet.reps == 6)
+            assert(topSet.weightKg == "-25")
+            assert(topSet.reps == 10)
             assert(topSet.oneRm == null)
         }
     }

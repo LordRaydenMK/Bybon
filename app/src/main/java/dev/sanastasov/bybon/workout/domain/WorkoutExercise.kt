@@ -33,23 +33,15 @@ data class WorkoutExercise(
         }
 
     val topSet: ExerciseSet
-        get() = checkNotNull(sets.maxWithOrNull(topSetOrder)) {
-            "sets must contain at least one set"
-        }
-
-    private val topSetOrder: Comparator<ExerciseSet>
-        get() {
-            val reverseLoggedLoad = exerciseDefinition.equipment?.isAssisted == true
-            return compareBy<ExerciseSet> { it.oneRm }
-                .thenComparator { left, right ->
-                    if (reverseLoggedLoad) {
-                        compareValues(right.weight, left.weight)
-                    } else {
-                        compareValues(left.weight, right.weight)
-                    }
-                }
-                .thenBy { it.reps }
-        }
+        get() = checkNotNull(
+            sets.maxWithOrNull(
+                compareBy(
+                    { it.oneRm },
+                    { it.effectiveLoad },
+                    { it.reps },
+                ),
+            ),
+        ) { "sets must contain at least one set" }
 
     val canRemoveSet: Boolean
         get() {

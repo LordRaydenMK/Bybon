@@ -34,7 +34,7 @@ class ExercisePerformanceTest {
     }
 
     @Test
-    fun `assisted top set without body weight prefers the lowest assistance`() {
+    fun `assisted top set without body weight cannot rank by 1RM`() {
         val exercise = completedAssistedExercise(
             "assisted-dips",
             bodyWeightKg = null,
@@ -43,8 +43,9 @@ class ExercisePerformanceTest {
             null to 5,
         )
 
-        assert(exercise.topSet.weight == null)
-        assert(exercise.topSet.reps == 5)
+        assert(exercise.topSet.oneRm == null)
+        assert(exercise.topSet.effectiveLoad == null)
+        assert(exercise.topSet.reps == 10)
     }
 
     @Test
