@@ -4,6 +4,7 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import dev.sanastasov.bybon.strong.readStrongBackupSample
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.data.completedAssistedExercise
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
@@ -184,6 +185,33 @@ class WorkoutHistoryViewModelTest {
     }
 
     @Test
+    fun `last seven days total weight uses assisted effective load`() = runTest {
+        val previous = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = historyToday.minusDays(10).atTime(18, 0),
+            exercises = listOf(completedAssistedExercise("assisted-pull-ups", 80f, 25f to 8)),
+        )
+        val inWindow = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = historyToday.atTime(18, 0),
+            exercises = listOf(
+                completedAssistedExercise("assisted-pull-ups", 80f, 20f to 8),
+                completedAssistedExercise("assisted-dips", 80f, 15f to 10),
+            ),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(previous, inWindow))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            val actual = awaitAfterLoading() as WorkoutHistoryUiState.History
+            assert(actual.weekSummary.totalWeight == "1130 kg")
+            assert(actual.weekSummary.performance == LastSevenDaysPerformanceUi(1, 0, 0))
+        }
+    }
+
+    @Test
     fun `history sessions are grouped into period sections`() = runTest {
         val thisWeek = completedSession(
             planId = "full-body-b",
@@ -340,6 +368,33 @@ class WorkoutHistoryViewModelTest {
                 .sessions.single().exercises.single()
             assert(topSet.weightKg == "-")
             assert(topSet.reps == 8)
+            assert(topSet.oneRm == null)
+        }
+    }
+
+    @Test
+    fun `history assisted top set without body weight is the lowest assistance`() = runTest {
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
+            exercises = listOf(
+                completedAssistedExercise(
+                    "assisted-pull-ups",
+                    bodyWeightKg = null,
+                    25f to 10,
+                    15f to 6,
+                ),
+            ),
+        )
+        val repository = FakeWorkoutsRepository(initialSessions = listOf(session))
+        val viewModel = historyViewModel(repository)
+
+        viewModel.uiState.test {
+            val topSet = (awaitAfterLoading() as WorkoutHistoryUiState.History)
+                .sessions.single().exercises.single()
+            assert(topSet.weightKg == "-15")
+            assert(topSet.reps == 6)
             assert(topSet.oneRm == null)
         }
     }

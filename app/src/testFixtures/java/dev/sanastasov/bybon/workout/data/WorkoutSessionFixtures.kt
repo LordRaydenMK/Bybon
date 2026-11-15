@@ -45,3 +45,25 @@ fun completedExercise(
         notes = notes,
     )
 }
+
+fun completedAssistedExercise(
+    exerciseId: String,
+    bodyWeightKg: Float?,
+    vararg assistKgAndReps: Pair<Float?, Int>,
+): WorkoutExercise {
+    val definition = catalogExercise(exerciseId)
+    val bodyWeight = bodyWeightKg?.let { Weight.kilograms(it) }
+    return WorkoutExercise(
+        exerciseDefinition = definition,
+        repRange = 6..10,
+        sets = assistKgAndReps.map { (assistKg, reps) ->
+            ExerciseSet(
+                exerciseDefinition = definition,
+                weight = assistKg?.let { Weight.kilograms(it) },
+                reps = reps,
+                setState = SetState.Completed(),
+                bodyWeight = bodyWeight,
+            )
+        },
+    )
+}

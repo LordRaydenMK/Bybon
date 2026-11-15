@@ -4,6 +4,7 @@ import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
+import dev.sanastasov.bybon.workout.data.completedAssistedExercise
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
@@ -198,6 +199,51 @@ class WorkoutSummaryViewModelTest {
         assert(content.exercises.single().sets.single().reps == 8)
         assert(content.exercises.single().sets.single().oneRm == null)
         assert(content.exercises.single().sets.single().previousOneRm == null)
+        assert(content.exercises.single().volumeLoadLabel == "0 kg")
+        assert(content.sessionSummary.volumeLoadLabel == "0 kg")
+        assert(content.sessionSummary.setPerformance == null)
+        assert(content.sessionSummary.exercisePerformance.isEmpty())
+    }
+
+    @Test
+    fun `summary assisted volume and e1RM use body weight minus assistance`() {
+        val previous = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 6, 18, 0),
+            exercises = listOf(
+                completedAssistedExercise("assisted-pull-ups", 80f, 25f to 8),
+                completedAssistedExercise("assisted-dips", 80f, 20f to 8),
+            ),
+        )
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = LocalDateTime.of(2026, 8, 13, 18, 0),
+            exercises = listOf(
+                completedAssistedExercise("assisted-pull-ups", 80f, 20f to 8),
+                completedAssistedExercise("assisted-dips", 80f, 20f to 8),
+            ),
+        )
+
+        val content = session.toSummaryUi(listOf(previous, session))
+        val pullUps = content.exercises.first()
+        val dips = content.exercises.last()
+
+        assert(pullUps.volumeLoadLabel == "480 kg")
+        assert(dips.volumeLoadLabel == "480 kg")
+        assert(content.sessionSummary.volumeLoadLabel == "960 kg")
+        assert(pullUps.sets.single().oneRm == Weight.kilograms(estimateOneRmKg(60f, 8)))
+        assert(pullUps.topSetOneRm == Weight.kilograms(estimateOneRmKg(60f, 8)))
+        assert(content.sessionSummary.setPerformance == SetPerformanceUi(1, 1, 0))
+        assert(
+            content.sessionSummary.exercisePerformance.map { it.name } == listOf(
+                catalogExercise("assisted-pull-ups").name,
+                catalogExercise("assisted-dips").name,
+            ),
+        )
+        assert(content.sessionSummary.exercisePerformance.first().changeLabel.startsWith("↑"))
+        assert(content.sessionSummary.exercisePerformance.last().changeLabel == "No change")
     }
 
     @Test

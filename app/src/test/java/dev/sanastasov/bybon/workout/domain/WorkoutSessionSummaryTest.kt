@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
+import dev.sanastasov.bybon.workout.data.completedAssistedExercise
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import java.time.LocalDateTime
@@ -112,18 +113,7 @@ class WorkoutSessionSummaryTest {
             startedAt = startedAt,
             exercises = listOf(
                 completedExercise("bench-press", 80f to 8),
-                WorkoutExercise(
-                    exerciseDefinition = catalogExercise("assisted-pull-ups"),
-                    repRange = 6..10,
-                    sets = listOf(
-                        ExerciseSet(
-                            catalogExercise("assisted-pull-ups"),
-                            null,
-                            8,
-                            SetState.Completed(),
-                        ),
-                    ),
-                ),
+                completedAssistedExercise("assisted-pull-ups", bodyWeightKg = null, null to 8),
             ),
         )
 
@@ -131,6 +121,67 @@ class WorkoutSessionSummaryTest {
 
         assert(summary.setPerformance == ExercisePerformanceChange(0, 0, 0))
         assert(summary.exercisePerformance.isEmpty())
+        assert(summary.volumeLoad == Weight.kilograms(80f * 8))
+    }
+
+    @Test
+    fun `assisted volume is body weight minus assistance`() {
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = startedAt,
+            exercises = listOf(
+                completedAssistedExercise("assisted-pull-ups", 80f, 25f to 8, 20f to 7),
+                completedAssistedExercise("assisted-dips", 80f, 15f to 10),
+                completedExercise("bench-press", 60f to 5),
+            ),
+        )
+
+        val summary = session.workoutSessionSummary(listOf(session))
+
+        assert(summary.volumeLoad == Weight.kilograms(55f * 8 + 60f * 7 + 65f * 10 + 60f * 5))
+    }
+
+    @Test
+    fun `assisted set performance improves when assistance drops`() {
+        val previous = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = startedAt.minusDays(4),
+            exercises = listOf(
+                completedAssistedExercise("assisted-pull-ups", 80f, 25f to 8),
+                completedAssistedExercise("assisted-dips", 80f, 20f to 8),
+            ),
+        )
+        val session = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = startedAt,
+            exercises = listOf(
+                completedAssistedExercise("assisted-pull-ups", 80f, 20f to 8),
+                completedAssistedExercise("assisted-dips", 80f, 20f to 8),
+            ),
+        )
+
+        val summary = session.workoutSessionSummary(listOf(previous, session))
+
+        assert(
+            summary.setPerformance == ExercisePerformanceChange(
+                improved = 1,
+                maintained = 1,
+                declined = 0,
+            ),
+        )
+        assert(
+            summary.exercisePerformance.map { it.exerciseId } == listOf(
+                "assisted-pull-ups",
+                "assisted-dips",
+            ),
+        )
+        val pullUps = summary.exercisePerformance[0]
+        val dips = summary.exercisePerformance[1]
+        assert(pullUps.currentAverage > pullUps.previousAverage)
+        assert(dips.currentAverage == dips.previousAverage)
     }
 
     @Test
