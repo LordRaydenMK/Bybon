@@ -2,7 +2,6 @@ package dev.sanastasov.bybon.workout.domain
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 
 suspend fun WorkoutsRepository.requireExercise(exerciseId: String): ExerciseDefinition {
@@ -24,7 +23,4 @@ suspend fun WorkoutsRepository.updateWorkout(
     return updated
 }
 
-fun WorkoutsRepository.activeSession(): Flow<WorkoutSession?> =
-    workoutSessions().map { allSessions ->
-        allSessions.firstOrNull { it.state == WorkoutState.InProgress }
-    }
+fun WorkoutsRepository.activeSession(): Flow<WorkoutSession?> = activeWorkoutSession()

@@ -23,6 +23,8 @@ interface WorkoutsRepository {
 
     fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>>
 
+    fun activeWorkoutSession(): Flow<WorkoutSession?>
+
     suspend fun sevenDayBodyWeight(on: LocalDate): Weight?
 
     suspend fun importHistory(

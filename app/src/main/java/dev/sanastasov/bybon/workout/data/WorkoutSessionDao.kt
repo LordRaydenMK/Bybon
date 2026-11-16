@@ -24,6 +24,57 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_set ORDER BY rowid")
     fun observeSets(): Flow<List<WorkoutSetEntity>>
 
+    @Query(
+        """
+        SELECT * FROM workout_session
+        WHERE duration_seconds IS NULL
+          AND EXISTS (
+              SELECT 1 FROM workout_set s
+              JOIN workout_session_exercise e ON e.id = s.session_exercise_id
+              WHERE e.session_id = workout_session.id AND s.set_state != 'NotStated'
+          )
+          AND EXISTS (
+              SELECT 1 FROM workout_set s
+              JOIN workout_session_exercise e ON e.id = s.session_exercise_id
+              WHERE e.session_id = workout_session.id AND s.set_state != 'Completed'
+          )
+        ORDER BY started_at DESC
+        LIMIT 1
+        """,
+    )
+    fun observeActiveSession(): Flow<WorkoutSessionEntity?>
+
+    @Query(
+        "SELECT * FROM workout_session_exercise WHERE session_id = :sessionId ORDER BY position",
+    )
+    fun observeExercises(sessionId: Long): Flow<List<WorkoutSessionExerciseEntity>>
+
+    @Query(
+        """
+        SELECT * FROM workout_set
+        WHERE session_exercise_id IN (:sessionExerciseIds)
+        ORDER BY position
+        """,
+    )
+    fun observeSetsForExercises(sessionExerciseIds: List<Long>): Flow<List<WorkoutSetEntity>>
+
+    @Query(
+        """
+        SELECT e.exercise_id AS exerciseId,
+               s.started_at AS startedAt,
+               s.body_weight AS bodyWeightHundredths
+        FROM workout_session_exercise e
+        JOIN workout_session s ON s.id = e.session_id
+        WHERE s.duration_seconds IS NOT NULL
+          AND s.started_at < :before
+          AND e.exercise_id IN (:exerciseIds)
+        """,
+    )
+    suspend fun completedExerciseBodyWeights(
+        before: LocalDateTime,
+        exerciseIds: List<String>,
+    ): List<CompletedExerciseBodyWeight>
+
     @Query("SELECT plan_id, started_at FROM workout_session")
     suspend fun sessionIdentities(): List<WorkoutSessionIdentity>
 

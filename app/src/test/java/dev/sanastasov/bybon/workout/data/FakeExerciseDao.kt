@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeExerciseDao : ExerciseDao {
 
@@ -9,6 +10,11 @@ class FakeExerciseDao : ExerciseDao {
     private var catalogCommit: String? = null
 
     override fun observeAll(): Flow<List<ExerciseEntity>> = rows
+
+    override fun observeByIds(ids: List<String>): Flow<List<ExerciseEntity>> = rows.map { list ->
+        val wanted = ids.toSet()
+        list.filter { it.id in wanted }
+    }
 
     override suspend fun ids(): List<String> = rows.value.map { it.id }
 

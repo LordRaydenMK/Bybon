@@ -1,8 +1,11 @@
 package dev.sanastasov.bybon.workout.data
 
+import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.storedName
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 class FakeWorkoutSessionDao(
@@ -25,6 +28,47 @@ class FakeWorkoutSessionDao(
     override fun observeSessionExercises(): Flow<List<WorkoutSessionExerciseEntity>> = exercises
 
     override fun observeSets(): Flow<List<WorkoutSetEntity>> = sets
+
+    override fun observeActiveSession(): Flow<WorkoutSessionEntity?> = combine(
+        sessions,
+        exercises,
+        sets,
+    ) { sessionRows, lines, setRows ->
+        sessionRows.filter { it.isInProgress(lines, setRows) }.maxByOrNull { it.startedAt }
+    }
+
+    override fun observeExercises(sessionId: Long): Flow<List<WorkoutSessionExerciseEntity>> =
+        exercises.map { list ->
+            list.filter { it.sessionId == sessionId }.sortedBy { it.position }
+        }
+
+    override fun observeSetsForExercises(
+        sessionExerciseIds: List<Long>,
+    ): Flow<List<WorkoutSetEntity>> = sets.map { list ->
+        val ids = sessionExerciseIds.toSet()
+        list.filter { it.sessionExerciseId in ids }.sortedBy { it.position }
+    }
+
+    override suspend fun completedExerciseBodyWeights(
+        before: LocalDateTime,
+        exerciseIds: List<String>,
+    ): List<CompletedExerciseBodyWeight> {
+        val ids = exerciseIds.toSet()
+        return exercises.value.mapNotNull { line ->
+            val session = sessions.value.firstOrNull { it.id == line.sessionId }
+            if (session == null || line.exerciseId !in ids) {
+                null
+            } else if (session.durationSeconds == null || !session.startedAt.isBefore(before)) {
+                null
+            } else {
+                CompletedExerciseBodyWeight(
+                    exerciseId = line.exerciseId,
+                    startedAt = session.startedAt,
+                    bodyWeightHundredths = session.bodyWeightHundredths,
+                )
+            }
+        }
+    }
 
     override suspend fun sessionIdentities(): List<WorkoutSessionIdentity> =
         sessions.value.map { WorkoutSessionIdentity(it.planId, it.startedAt) }
@@ -80,6 +124,17 @@ class FakeWorkoutSessionDao(
                 ),
             )
         }
+    }
+
+    private fun WorkoutSessionEntity.isInProgress(
+        lines: List<WorkoutSessionExerciseEntity>,
+        setRows: List<WorkoutSetEntity>,
+    ): Boolean {
+        if (durationSeconds != null) return false
+        val lineIds = lines.filter { it.sessionId == id }.map { it.id }.toSet()
+        val sessionSets = setRows.filter { it.sessionExerciseId in lineIds }
+        return sessionSets.any { it.setState != SetState.NotStated.storedName } &&
+            sessionSets.any { it.setState != SetState.Completed().storedName }
     }
 
     override suspend fun deleteExercisesForSession(sessionId: Long) {
