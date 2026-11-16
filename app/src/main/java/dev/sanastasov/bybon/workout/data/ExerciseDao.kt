@@ -13,6 +13,9 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercise ORDER BY rowid")
     fun observeAll(): Flow<List<ExerciseEntity>>
 
+    @Query("SELECT * FROM exercise WHERE id IN (:exerciseIds) ORDER BY rowid")
+    fun observeExercisesByIds(exerciseIds: List<String>): Flow<List<ExerciseEntity>>
+
     @Query("SELECT id FROM exercise")
     suspend fun ids(): List<String>
 

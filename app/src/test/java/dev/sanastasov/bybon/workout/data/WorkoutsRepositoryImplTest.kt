@@ -10,6 +10,7 @@ import dev.sanastasov.bybon.workout.domain.Mechanic
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
+import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addWorkSet
@@ -21,6 +22,7 @@ import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.domain.updateWeight
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -532,6 +534,92 @@ class WorkoutsRepositoryImplTest {
                 Weight.kilograms(estimateOneRmKg(55f, 8)),
         )
     }
+
+    @Test
+    fun `activeWorkoutSession follows only the in-progress session`() = runTest {
+        val repository = repository()
+        val draft = fullBodyA.toOverviewSession()
+        repository.updateWorkout(draft)
+        assert(repository.activeWorkoutSession().first() == null)
+
+        val startedAt = LocalDateTime.of(2026, 10, 23, 18, 5, 12)
+        repository.updateWorkout(draft.startWorkout(now = startedAt))
+        val earlier = fullBodyB.toWorkoutSession(
+            startedAt = LocalDateTime.of(2026, 10, 22, 18, 0),
+        )
+        repository.updateWorkout(earlier)
+
+        repository.activeWorkoutSession().test {
+            val active = awaitItem()!!
+            assert(active.planId == fullBodyA.id)
+            assert(active == inProgressSession(repository, fullBodyA.id))
+
+            val bench = active.exercises.first()
+            repository.updateWorkout(
+                active.updateWeight(
+                    bench,
+                    setIndex = 0,
+                    weight = Weight.kilograms(40),
+                    isWarmup = true,
+                ),
+            )
+            var updated = awaitItem()
+            while (updated.firstWarmupWeight() != Weight.kilograms(40)) {
+                updated = awaitItem()
+            }
+            assert(updated == inProgressSession(repository, fullBodyA.id))
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `activeWorkoutSession stamps previous body weight from completed history`() = runTest {
+        val date = LocalDate.of(2026, 8, 20)
+        val repository = repository(
+            weightDao = FakeWeightDao(
+                listOf(
+                    WeightEntryEntity(date.minusDays(2), 8000),
+                    WeightEntryEntity(date.minusDays(1), 8000),
+                    WeightEntryEntity(date, 8000),
+                ),
+            ),
+        )
+        val completed = completedSession(
+            planId = "full-body-a",
+            planName = "Full Body A",
+            startedAt = date.atTime(18, 0),
+            exercises = listOf(completedExercise("assisted-pull-ups", 25f to 8)),
+        )
+        val current = fullBodyA.toWorkoutSession(
+            previousHistory = listOf(completed),
+            startedAt = date.plusDays(1).atTime(18, 0),
+            bodyWeight = Weight.kilograms(81),
+        )
+        repository.importHistory(
+            plans = emptyList(),
+            sessions = listOf(completed, current),
+            exercises = emptyList(),
+        )
+
+        val active = repository.activeWorkoutSession().first()!!
+        val stored = repository.workoutSessions().first().first { session ->
+            session.state is WorkoutState.InProgress
+        }
+        assert(active == stored)
+        val pullUp = active.exercises.first { it.id == "assisted-pull-ups" }
+        assert(pullUp.sets.first().previous?.bodyWeight == Weight.kilograms(80))
+        assert(pullUp.sets.first().bodyWeight == Weight.kilograms(81))
+    }
+
+    private suspend fun inProgressSession(
+        repository: WorkoutsRepository,
+        planId: WorkoutPlanId,
+    ): WorkoutSession = repository.workoutSessions().first().first { session ->
+        session.planId == planId && session.state is WorkoutState.InProgress
+    }
+
+    private fun WorkoutSession?.firstWarmupWeight(): Weight? =
+        this?.exercises?.first()?.warmupSets?.first()?.weight
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun TestScope.repository(

@@ -19,21 +19,31 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
+import dev.sanastasov.bybon.workout.domain.resolveBodyWeight
 import dev.sanastasov.bybon.workout.domain.sevenDayBodyWeightAverage
 import dev.sanastasov.bybon.workout.domain.upperBodyA
+import dev.sanastasov.bybon.workout.domain.withPreviousBodyWeights
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+
+private val noActiveSession: Flow<WorkoutSession?> = flowOf(null)
 
 private val builtInPlans = listOf(fullBodyA, fullBodyB, upperBodyA)
 private val builtInPlanExerciseIds = builtInPlans
@@ -150,6 +160,66 @@ class WorkoutsRepositoryImpl internal constructor(
             },
         )
     }.flowOn(defaultDispatcher)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun activeWorkoutSession(): Flow<WorkoutSession?> =
+        workoutSessionDao.observeActiveSession()
+            .onStart { ensureCatalog() }
+            .distinctUntilChanged()
+            .flatMapLatest { header ->
+                if (header == null) noActiveSession else observeOpenSession(header)
+            }
+            .distinctUntilChanged()
+            .flowOn(defaultDispatcher)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeOpenSession(header: WorkoutSessionEntity): Flow<WorkoutSession?> =
+        workoutSessionDao.observeExercises(header.id)
+            .distinctUntilChanged()
+            .flatMapLatest { lines ->
+                if (lines.isEmpty()) {
+                    noActiveSession
+                } else {
+                    val exerciseIds = lines.map { it.exerciseId }.distinct()
+                    val entries = bodyWeightEntries().first()
+                    val previous = previousBodyWeights(header.startedAt, exerciseIds, entries)
+                    combine(
+                        workoutSessionDao.observeSetsForExercises(lines.map { it.id }),
+                        exerciseDao.observeExercisesByIds(exerciseIds),
+                    ) { sets, definitions ->
+                        header.toActiveSession(lines, sets, definitions, entries, previous)
+                    }
+                }
+            }
+
+    private suspend fun previousBodyWeights(
+        before: LocalDateTime,
+        exerciseIds: List<String>,
+        entries: List<BodyWeightEntry>,
+    ): Map<String, Weight> {
+        require(exerciseIds.isNotEmpty()) { "exerciseIds must not be empty" }
+        return workoutSessionDao.completedExerciseBodyWeights(before, exerciseIds)
+            .groupBy { it.exerciseId }
+            .mapNotNull { (exerciseId, matches) ->
+                val latest = matches.maxBy { it.startedAt }
+                val weight = latest.bodyWeightHundredths?.toWeightOrNull()
+                    ?: sevenDayBodyWeightAverage(entries, latest.startedAt.toLocalDate())
+                weight?.let { exerciseId to it }
+            }
+            .toMap()
+    }
+
+    private fun WorkoutSessionEntity.toActiveSession(
+        lines: List<WorkoutSessionExerciseEntity>,
+        sets: List<WorkoutSetEntity>,
+        definitions: List<ExerciseEntity>,
+        entries: List<BodyWeightEntry>,
+        previousBodyWeights: Map<String, Weight>,
+    ): WorkoutSession? = toDomainOrNull(
+        lines,
+        sets.groupBy { it.sessionExerciseId },
+        definitions.associate { it.id to it.toDefinition() },
+    )?.resolveBodyWeight(entries)?.withPreviousBodyWeights(previousBodyWeights)
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = flow {
         ensureCatalog()

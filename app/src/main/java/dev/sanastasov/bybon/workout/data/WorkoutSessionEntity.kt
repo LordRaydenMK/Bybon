@@ -116,3 +116,9 @@ data class WorkoutSessionIdentity(
     @ColumnInfo(name = "plan_id") val planId: String,
     @ColumnInfo(name = "started_at") val startedAt: LocalDateTime,
 )
+
+data class CompletedExerciseBodyWeight(
+    val exerciseId: String,
+    val startedAt: LocalDateTime,
+    val bodyWeightHundredths: Int?,
+)

@@ -27,30 +27,29 @@ fun List<WorkoutSession>.resolveBodyWeights(entries: List<BodyWeightEntry>): Lis
 }
 
 private fun List<WorkoutSession>.withPreviousBodyWeights(): List<WorkoutSession> = map { session ->
-    session.copy(
-        exercises = session.exercises.map { exercise ->
-            val previousBodyWeight = latestCompletedSessionBodyWeight(
-                exercise.id,
-                before = session.startedAt,
-            )
+    val weights = session.exercises.mapNotNull { exercise ->
+        latestCompletedSessionBodyWeight(exercise.id, before = session.startedAt)
+            ?.let { exercise.id to it }
+    }.toMap()
+    session.withPreviousBodyWeights(weights)
+}
+
+internal fun WorkoutSession.withPreviousBodyWeights(weights: Map<String, Weight>): WorkoutSession =
+    copy(
+        exercises = exercises.map { exercise ->
+            val previousBodyWeight = weights[exercise.id] ?: return@map exercise
             exercise.copy(
                 warmupSets = exercise.warmupSets?.map { set ->
-                    set.copy(
-                        previous = set.previous?.copy(
-                            bodyWeight = previousBodyWeight ?: set.previous.bodyWeight,
-                        ),
-                    )
+                    set.withPreviousBodyWeight(previousBodyWeight)
                 },
-                sets = exercise.sets.map { set ->
-                    set.copy(
-                        previous = set.previous?.copy(
-                            bodyWeight = previousBodyWeight ?: set.previous.bodyWeight,
-                        ),
-                    )
-                },
+                sets = exercise.sets.map { it.withPreviousBodyWeight(previousBodyWeight) },
             )
         },
     )
+
+private fun ExerciseSet.withPreviousBodyWeight(previousBodyWeight: Weight): ExerciseSet {
+    val previous = previous ?: return this
+    return copy(previous = previous.copy(bodyWeight = previousBodyWeight))
 }
 
 private fun List<WorkoutSession>.latestCompletedSessionBodyWeight(

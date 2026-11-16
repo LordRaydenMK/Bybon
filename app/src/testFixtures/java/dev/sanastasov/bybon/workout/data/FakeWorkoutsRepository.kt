@@ -85,6 +85,10 @@ class FakeWorkoutsRepository(
 
     override fun workoutSessions(): Flow<List<WorkoutSession>> = sessions
 
+    override fun activeWorkoutSession(): Flow<WorkoutSession?> = sessions.map { list ->
+        list.filter { it.state == WorkoutState.InProgress }.maxByOrNull { it.startedAt }
+    }
+
     override fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>> =
         sessions.map { list -> list.filter { it.planId == planId } }
 
