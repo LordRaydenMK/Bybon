@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
+import dev.sanastasov.bybon.workout.data.completedAssistedExercise
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import java.time.LocalDate
@@ -152,23 +153,52 @@ class LastSevenDaysSummaryTest {
 
     @Test
     fun `skips exercises with no prior 1RM`() {
-        val missingLoad = WorkoutExercise(
-            exerciseDefinition = catalogExercise("assisted-pull-ups"),
-            repRange = 6..10,
-            sets = listOf(
-                ExerciseSet(
-                    catalogExercise("assisted-pull-ups"),
-                    null,
-                    8,
-                    SetState.Completed(),
-                ),
-            ),
+        val missingLoad = completedAssistedExercise(
+            "assisted-pull-ups",
+            bodyWeightKg = null,
+            null to 8,
         )
         val firstTime = sessionOn(today, completedExercise("bench-press", 60f to 8), missingLoad)
 
         val summary = listOf(firstTime).lastSevenDaysSummary(today)
 
         assert(summary.performance == ExercisePerformanceChange(0, 0, 0))
+        assert(summary.volumeLoad == Weight.kilograms(60f * 8))
+    }
+
+    @Test
+    fun `assisted volume is body weight minus assistance`() {
+        val session = sessionOn(
+            today,
+            completedAssistedExercise("assisted-pull-ups", 80f, 25f to 8, 20f to 6),
+            completedAssistedExercise("assisted-dips", 80f, 15f to 10),
+            completedExercise("bench-press", 60f to 5),
+        )
+
+        val summary = listOf(session).lastSevenDaysSummary(today)
+
+        assert(summary.volumeLoad == Weight.kilograms(55f * 8 + 60f * 6 + 65f * 10 + 60f * 5))
+    }
+
+    @Test
+    fun `assisted performance improves when assistance drops`() {
+        val previous = sessionOn(
+            today.minusDays(10),
+            completedAssistedExercise("assisted-pull-ups", 80f, 25f to 8),
+            completedAssistedExercise("assisted-dips", 80f, 20f to 8),
+        )
+        val current = sessionOn(
+            today,
+            completedAssistedExercise("assisted-pull-ups", 80f, 20f to 8),
+            completedAssistedExercise("assisted-dips", 80f, 20f to 8),
+        )
+
+        val summary = listOf(previous, current).lastSevenDaysSummary(today)
+
+        assert(summary.performance.improved == 1)
+        assert(summary.performance.maintained == 1)
+        assert(summary.performance.declined == 0)
+        assert(summary.volumeLoad == Weight.kilograms(60f * 8 + 60f * 8))
     }
 
     @Test

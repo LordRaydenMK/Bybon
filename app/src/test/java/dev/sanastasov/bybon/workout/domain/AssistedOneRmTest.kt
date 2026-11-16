@@ -94,4 +94,67 @@ class AssistedOneRmTest {
 
         assert(harder.oneRm!! > easier.oneRm!!)
     }
+
+    @Test
+    fun `assisted effective load is body weight minus assistance`() {
+        val set = ExerciseSet(
+            pullUp,
+            Weight.kilograms(25),
+            8,
+            SetState.Completed(),
+            bodyWeight = bodyWeight,
+        )
+
+        assert(set.effectiveLoad == Weight.kilograms(55))
+    }
+
+    @Test
+    fun `completed assisted set with no assist uses body weight as effective load`() {
+        val set = ExerciseSet(
+            pullUp,
+            null,
+            8,
+            SetState.Completed(),
+            bodyWeight = bodyWeight,
+        )
+
+        assert(set.effectiveLoad == bodyWeight)
+    }
+
+    @Test
+    fun `assisted effective load is missing without body weight`() {
+        val set = ExerciseSet(pullUp, Weight.kilograms(25), 8, SetState.Completed())
+
+        assert(set.effectiveLoad == null)
+    }
+
+    @Test
+    fun `volume uses effective load for assisted sets`() {
+        val assisted = ExerciseSet(
+            pullUp,
+            Weight.kilograms(25),
+            8,
+            SetState.Completed(),
+            bodyWeight = bodyWeight,
+        )
+        val dips = assisted.copy(exerciseDefinition = catalogExercise("assisted-dips"))
+        val bench = ExerciseSet(
+            catalogExercise("bench-press"),
+            Weight.kilograms(60),
+            5,
+            SetState.Completed(),
+            bodyWeight = bodyWeight,
+        )
+
+        assert(listOf(assisted).volumeLoad() == Weight.kilograms(55f * 8))
+        assert(listOf(dips).volumeLoad() == Weight.kilograms(55f * 8))
+        assert(listOf(assisted, bench).volumeLoad() == Weight.kilograms(55f * 8 + 60f * 5))
+    }
+
+    @Test
+    fun `volume ignores assisted sets without body weight`() {
+        val set = ExerciseSet(pullUp, Weight.kilograms(25), 8, SetState.Completed())
+
+        assert(listOf(set).volumeLoad() == null)
+    }
 }

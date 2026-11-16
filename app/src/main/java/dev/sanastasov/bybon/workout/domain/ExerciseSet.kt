@@ -38,6 +38,19 @@ data class ExerciseSet(
     val oneRm: Weight?
         get() = oneRmFor(weight, reps, blankIsUnassisted = setState is SetState.Completed)
 
+    val effectiveLoad: Weight?
+        get() = if (exerciseDefinition.equipment?.isAssisted == true) {
+            bodyWeight?.let {
+                assistedEffectiveLoad(
+                    bodyWeight = it,
+                    assistance = weight,
+                    blankIsUnassisted = setState is SetState.Completed,
+                )
+            }
+        } else {
+            weight
+        }
+
     val previousOneRm: Weight?
         get() {
             val previous = previous ?: return null
@@ -65,16 +78,18 @@ internal fun oneRmFor(
     reps: Int,
     bodyWeight: Weight?,
     blankIsUnassisted: Boolean,
-): Weight? = if (equipment.isAssisted) {
-    val knownBodyWeight = bodyWeight ?: return null
-    estimatedAssistedOneRm(knownBodyWeight, loggedWeight, reps, blankIsUnassisted)
-} else {
-    loggedWeight?.let { estimatedOneRm(it, reps) }
+): Weight? {
+    val load = if (equipment.isAssisted) {
+        bodyWeight?.let { assistedEffectiveLoad(it, loggedWeight, blankIsUnassisted) }
+    } else {
+        loggedWeight
+    } ?: return null
+    return estimatedOneRm(load, reps)
 }
 
 internal fun List<ExerciseSet>.volumeLoad(): Weight? {
     val kilograms = sumOf { set ->
-        (set.weight?.kilogramsValue ?: 0f).toDouble() * set.reps
+        (set.effectiveLoad?.kilogramsValue ?: 0f).toDouble() * set.reps
     }.toFloat()
     return Weight.kilogramsOrNull(kilograms)
 }

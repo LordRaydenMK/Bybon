@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.domain
 
+import dev.sanastasov.bybon.workout.data.completedAssistedExercise
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import java.time.LocalDateTime
@@ -17,6 +18,34 @@ class ExercisePerformanceTest {
         assert(exercise.topSet.weight == Weight.kilograms(45f))
         assert(exercise.topSet.reps == 12)
         assert(exercise.topSet.oneRm == Weight.kilograms(estimateOneRmKg(45f, 12)))
+    }
+
+    @Test
+    fun `assisted top set is the working set with the highest estimated 1RM`() {
+        val exercise = completedAssistedExercise(
+            "assisted-pull-ups",
+            80f,
+            25f to 8,
+            20f to 8,
+        )
+
+        assert(exercise.topSet.weight == Weight.kilograms(20))
+        assert(exercise.topSet.oneRm == Weight.kilograms(estimateOneRmKg(60f, 8)))
+    }
+
+    @Test
+    fun `assisted top set without body weight cannot rank by 1RM`() {
+        val exercise = completedAssistedExercise(
+            "assisted-dips",
+            bodyWeightKg = null,
+            25f to 10,
+            15f to 6,
+            null to 5,
+        )
+
+        assert(exercise.topSet.oneRm == null)
+        assert(exercise.topSet.effectiveLoad == null)
+        assert(exercise.topSet.reps == 10)
     }
 
     @Test

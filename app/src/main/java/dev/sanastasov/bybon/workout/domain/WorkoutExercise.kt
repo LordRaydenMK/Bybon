@@ -37,7 +37,7 @@ data class WorkoutExercise(
             sets.maxWithOrNull(
                 compareBy(
                     { it.oneRm },
-                    { it.weight },
+                    { it.effectiveLoad },
                     { it.reps },
                 ),
             ),
