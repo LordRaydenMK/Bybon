@@ -11,10 +11,11 @@ class FakeExerciseDao : ExerciseDao {
 
     override fun observeAll(): Flow<List<ExerciseEntity>> = rows
 
-    override fun observeByIds(ids: List<String>): Flow<List<ExerciseEntity>> = rows.map { list ->
-        val wanted = ids.toSet()
-        list.filter { it.id in wanted }
-    }
+    override fun observeExercisesByIds(exerciseIds: List<String>): Flow<List<ExerciseEntity>> =
+        rows.map { list ->
+            val wanted = exerciseIds.toSet()
+            list.filter { it.id in wanted }
+        }
 
     override suspend fun ids(): List<String> = rows.value.map { it.id }
 

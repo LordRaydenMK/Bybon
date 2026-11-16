@@ -185,7 +185,7 @@ class WorkoutsRepositoryImpl internal constructor(
                     val previous = previousBodyWeights(header.startedAt, exerciseIds, entries)
                     combine(
                         workoutSessionDao.observeSetsForExercises(lines.map { it.id }),
-                        exerciseDao.observeByIds(exerciseIds),
+                        exerciseDao.observeExercisesByIds(exerciseIds),
                     ) { sets, definitions ->
                         header.toActiveSession(lines, sets, definitions, entries, previous)
                     }
@@ -197,7 +197,7 @@ class WorkoutsRepositoryImpl internal constructor(
         exerciseIds: List<String>,
         entries: List<BodyWeightEntry>,
     ): Map<String, Weight> {
-        if (exerciseIds.isEmpty()) return emptyMap()
+        require(exerciseIds.isNotEmpty()) { "exerciseIds must not be empty" }
         return workoutSessionDao.completedExerciseBodyWeights(before, exerciseIds)
             .groupBy { it.exerciseId }
             .mapNotNull { (exerciseId, matches) ->
