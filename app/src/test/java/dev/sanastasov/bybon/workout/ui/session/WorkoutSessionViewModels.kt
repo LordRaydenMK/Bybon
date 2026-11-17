@@ -11,8 +11,10 @@ internal fun TestScope.sessionViewModel(
     repository: WorkoutsRepository,
     coroutineScope: CoroutineScope = backgroundScope,
     restPromoteScheduler: RestPromoteScheduler = RestPromoteScheduler.NoOp,
+    start: StartMode = StartMode.Create,
 ) = WorkoutSessionViewModel(
     planId,
+    start,
     repository,
     coroutineScope,
     restPromoteScheduler,

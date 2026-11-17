@@ -46,6 +46,7 @@ import kotlinx.coroutines.sync.withLock
 
 class WorkoutSessionViewModel(
     val planId: WorkoutPlanId,
+    val start: StartMode,
     val repository: WorkoutsRepository,
     val coroutineScope: CoroutineScope,
     private val restPromoteScheduler: RestPromoteScheduler = RestPromoteScheduler.NoOp,
@@ -65,29 +66,7 @@ class WorkoutSessionViewModel(
     init {
         coroutineScope.launch {
             mutations.withLock {
-                val sessions = repository.workoutSessions().first()
-                val existing = sessions.firstOrNull { session ->
-                    session.planId == planId && session.state !is WorkoutState.Completed
-                }
-                when {
-                    existing == null -> {
-                        val plan = repository.workoutPlans()
-                            .first()
-                            .first { it.id == planId }
-                        val now = LocalDateTime.now()
-                        val session = plan.toWorkoutSession(
-                            previousHistory = sessions,
-                            startedAt = now,
-                            bodyWeight = repository.sevenDayBodyWeight(now.toLocalDate()),
-                        )
-                        repository.updateWorkout(session)
-                    }
-
-                    existing.state !is WorkoutState.InProgress ||
-                        existing.workoutSets.none { it.setState == SetState.InProgress } -> {
-                        repository.updateWorkout(existing.startWorkout())
-                    }
-                }
+                repository.prepareSession(planId, start)
             }
         }
     }
@@ -292,6 +271,44 @@ class WorkoutSessionViewModel(
             session.resetExerciseToPrevious(action.exercise)
 
         else -> session
+    }
+}
+
+private suspend fun WorkoutsRepository.prepareSession(planId: WorkoutPlanId, start: StartMode) {
+    val sessions = workoutSessions().first()
+    when (start) {
+        StartMode.Create -> {
+            if (sessions.any { it.planId == planId && it.state !is WorkoutState.Completed }) return
+            val plan = workoutPlans().first().first { it.id == planId }
+            val now = LocalDateTime.now()
+            updateWorkout(
+                plan.toWorkoutSession(
+                    previousHistory = sessions,
+                    startedAt = now,
+                    bodyWeight = sevenDayBodyWeight(now.toLocalDate()),
+                ),
+            )
+        }
+
+        StartMode.Resume -> {
+            val existing = sessions.first { it.planId == planId && it.isResumable }
+            if (existing.workoutSets.none { it.setState == SetState.InProgress }) {
+                updateWorkout(existing.startWorkout())
+            }
+        }
+
+        StartMode.StartDraft -> {
+            val draft = sessions.firstOrNull { it.planId == planId && it.isDraft }
+            val session = draft ?: sessions.first { it.planId == planId && it.isResumable }
+            if (session.workoutSets.any { it.setState == SetState.InProgress }) return
+            val now = LocalDateTime.now()
+            updateWorkout(
+                session.startWorkout(
+                    now = now,
+                    snapshot = sevenDayBodyWeight(now.toLocalDate()),
+                ),
+            )
+        }
     }
 }
 

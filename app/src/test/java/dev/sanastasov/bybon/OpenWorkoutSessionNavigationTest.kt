@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon
 
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
+import dev.sanastasov.bybon.workout.ui.session.StartMode
 import org.junit.Test
 
 class OpenWorkoutSessionNavigationTest {
@@ -14,12 +15,17 @@ class OpenWorkoutSessionNavigationTest {
 
         openWorkoutSessionIfMissing(backStack, planId)
 
-        assert(backStack == listOf(Screen.MainScreen, Screen.WorkoutSession(planId)))
+        assert(
+            backStack == listOf(
+                Screen.MainScreen,
+                Screen.WorkoutSession(planId, StartMode.Resume),
+            ),
+        )
     }
 
     @Test
     fun `existing session is not pushed again`() {
-        val session = Screen.WorkoutSession(planId)
+        val session = Screen.WorkoutSession(planId, StartMode.Create)
         val backStack = mutableListOf(
             Screen.MainScreen,
             session,
@@ -41,11 +47,11 @@ class OpenWorkoutSessionNavigationTest {
     fun `session for another plan is still pushed`() {
         val backStack = mutableListOf<Screen>(
             Screen.MainScreen,
-            Screen.WorkoutSession(otherPlanId),
+            Screen.WorkoutSession(otherPlanId, StartMode.Resume),
         )
 
         openWorkoutSessionIfMissing(backStack, planId)
 
-        assert(backStack.last() == Screen.WorkoutSession(planId))
+        assert(backStack.last() == Screen.WorkoutSession(planId, StartMode.Resume))
     }
 }

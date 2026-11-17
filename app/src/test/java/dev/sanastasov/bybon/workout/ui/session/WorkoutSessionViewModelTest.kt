@@ -18,6 +18,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.restTimer
+import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
 import dev.sanastasov.bybon.workout.domain.updateExercise
 import java.time.LocalDateTime
@@ -254,7 +255,12 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(paused),
         )
-        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            start = StartMode.Resume,
+        )
 
         val session = viewModel.uiState.first { current ->
             current?.exercises?.first()?.warmupSets?.get(1)?.setState == SetState.InProgress
@@ -262,6 +268,70 @@ class WorkoutSessionViewModelTest {
         assert(session.startedAt == paused.startedAt)
         assert(session.exercises.first().warmupSets!![0].setState is SetState.Completed)
         assert(session.state == WorkoutState.InProgress)
+    }
+
+    @Test
+    fun `create leaves an existing open session in place`() = runTest {
+        val started = fullBodyA.toWorkoutSession(
+            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(started),
+        )
+        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
+
+        val session = viewModel.uiState.first { it != null }!!
+        assert(session.id == started.id)
+        assert(repository.workoutSessions().first().single().id == started.id)
+    }
+
+    @Test
+    fun `starts a saved draft and keeps its edits`() = runTest {
+        val draft = fullBodyA.toOverviewSession().let { session ->
+            session.updateExercise(session.exercises.first().id) { exercise ->
+                exercise.copy(sets = exercise.sets.map { set -> set.copy(reps = set.reps + 1) })
+            }
+        }
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(draft),
+        )
+        val viewModel = sessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            start = StartMode.StartDraft,
+        )
+
+        val session = viewModel.uiState.first { it?.state == WorkoutState.InProgress }!!
+        assert(session.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+        assert(
+            session.exercises.first().sets.first().reps ==
+                draft.exercises.first().sets.first().reps,
+        )
+        assert(repository.workoutSessions().first().single().id == session.id)
+    }
+
+    @Test
+    fun `start draft leaves a session that is already running`() = runTest {
+        val started = fullBodyA.toWorkoutSession(
+            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+        )
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(started),
+        )
+        val viewModel = sessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            start = StartMode.StartDraft,
+        )
+
+        val session = viewModel.uiState.first { it != null }!!
+        assert(session.startedAt == started.startedAt)
+        assert(session.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
     }
 
     @Test
@@ -314,6 +384,7 @@ class WorkoutSessionViewModelTest {
             repository,
             backgroundScope,
             scheduler,
+            start = StartMode.Resume,
         )
 
         viewModel.effects.test {
@@ -339,7 +410,12 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(session),
         )
-        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            start = StartMode.Resume,
+        )
 
         viewModel.effects.test {
             val current = viewModel.uiState.first { it != null }!!
@@ -434,7 +510,12 @@ class WorkoutSessionViewModelTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(live),
         )
-        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            start = StartMode.Resume,
+        )
 
         viewModel.uiState.test {
             val session = awaitItem() ?: awaitItem()!!

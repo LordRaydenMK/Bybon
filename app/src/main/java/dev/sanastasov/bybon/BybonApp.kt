@@ -24,6 +24,7 @@ import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
 import dev.sanastasov.bybon.workout.ui.library.ExerciseLibraryScreen
 import dev.sanastasov.bybon.workout.ui.overview.WorkoutOverviewScreen
 import dev.sanastasov.bybon.workout.ui.plans.EditPlanScreen
+import dev.sanastasov.bybon.workout.ui.session.StartMode
 import dev.sanastasov.bybon.workout.ui.session.WorkoutSessionScreen
 import dev.sanastasov.bybon.workout.ui.summary.WorkoutSummaryScreen
 
@@ -61,7 +62,9 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
                 Screen.MainScreen -> NavEntry(key) {
                     MainScreen(
                         onNavigateToWeightEntry = { backStack.add(Screen.WeightEntryScreen) },
-                        onNavigateToStartSession = { backStack.add(Screen.WorkoutSession(it.id)) },
+                        onNavigateToStartSession = {
+                            backStack.add(Screen.WorkoutSession(it.id, StartMode.Resume))
+                        },
                         onNavigateToOverview = { backStack.add(Screen.WorkoutOverview(it.id)) },
                         onNavigateToEditPlan = { backStack.add(Screen.EditPlan(it.id)) },
                         onNavigateToSummary = { sessionId ->
@@ -79,9 +82,9 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
                     WorkoutOverviewScreen(
                         planId = key.planId,
                         onBack = { backStack.removeLastOrNull() },
-                        onStartSession = {
+                        onStartSession = { start ->
                             backStack.removeLastOrNull()
-                            backStack.add(Screen.WorkoutSession(key.planId))
+                            backStack.add(Screen.WorkoutSession(key.planId, start))
                         },
                         onNavigateToExerciseLibrary = { existingExerciseIds ->
                             backStack.add(Screen.ExerciseLibrary(existingExerciseIds))
@@ -131,6 +134,7 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
                 is Screen.WorkoutSession -> NavEntry(key) {
                     WorkoutSessionScreen(
                         key.planId,
+                        key.start,
                         onBack = { backStack.removeLastOrNull() },
                         onWorkoutCompleted = { sessionId ->
                             backStack.removeLastOrNull()
@@ -172,8 +176,10 @@ fun MainModule.BybonApp(openSession: OpenSessionRequest = OpenSessionRequest.Non
 }
 
 internal fun openWorkoutSessionIfMissing(backStack: MutableList<Screen>, planId: WorkoutPlanId) {
-    val target = Screen.WorkoutSession(planId)
-    if (target !in backStack) {
-        backStack.add(target)
+    val alreadyOpen = backStack.any { screen ->
+        screen is Screen.WorkoutSession && screen.planId == planId
+    }
+    if (!alreadyOpen) {
+        backStack.add(Screen.WorkoutSession(planId, StartMode.Resume))
     }
 }

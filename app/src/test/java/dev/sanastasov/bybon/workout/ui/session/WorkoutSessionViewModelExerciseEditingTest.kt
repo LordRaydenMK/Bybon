@@ -203,6 +203,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
                 initialSessions = listOf(session),
             ),
             failures.scope,
+            start = StartMode.Resume,
         )
         val current = viewModel.uiState.first { it != null }!!
         failures.expectFailure("Cannot remove completed exercise bench-press") {
@@ -253,6 +254,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
                 initialSessions = listOf(session),
             ),
             failures.scope,
+            start = StartMode.Resume,
         )
         val current = viewModel.uiState.first { it != null }!!
         failures.expectFailure("Cannot remove last exercise from the session") {
@@ -318,7 +320,12 @@ class WorkoutSessionViewModelExerciseEditingTest {
             initialPlans = listOf(fullBodyA),
             initialSessions = listOf(session),
         )
-        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = sessionViewModel(
+            fullBodyA.id,
+            repository,
+            backgroundScope,
+            start = StartMode.Resume,
+        )
 
         viewModel.effects.test {
             val current = viewModel.uiState.first { it != null }!!
@@ -420,7 +427,12 @@ class WorkoutSessionViewModelExerciseEditingTest {
     @Test
     fun `moving a later exercise scrolls to its new page`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = WorkoutSessionViewModel(fullBodyA.id, repository, backgroundScope)
+        val viewModel = WorkoutSessionViewModel(
+            fullBodyA.id,
+            StartMode.Create,
+            repository,
+            backgroundScope,
+        )
 
         viewModel.effects.test {
             val session = viewModel.uiState.first { it != null }!!
@@ -444,6 +456,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
                 initialSessions = listOf(session),
             ),
             failures.scope,
+            start = StartMode.Resume,
         )
         val current = viewModel.uiState.first { it != null }!!
         failures.expectFailure("Cannot move completed exercise bench-press") {
@@ -465,6 +478,7 @@ class WorkoutSessionViewModelExerciseEditingTest {
                 initialSessions = listOf(session),
             ),
             failures.scope,
+            start = StartMode.Resume,
         )
         val current = viewModel.uiState.first { it != null }!!
         failures.expectFailure("Cannot move incline-db-curl up") {
