@@ -83,10 +83,18 @@ class FakeWorkoutsRepository(
         sessions.update { list -> list.filterNot { it.id == sessionId } }
     }
 
-    override fun workoutSessions(planId: WorkoutPlanId?): Flow<List<WorkoutSession>> =
-        when (planId) {
-            null -> sessions
-            else -> sessions.map { list -> list.filter { it.planId == planId } }
+    override fun workoutSessions(
+        planId: WorkoutPlanId?,
+        state: WorkoutState.Kind?,
+    ): Flow<List<WorkoutSession>> =
+        when {
+            planId == null && state == null -> sessions
+            else -> sessions.map { list ->
+                list.filter { session ->
+                    (planId == null || session.planId == planId) &&
+                        (state == null || session.matches(state))
+                }
+            }
         }
 
     override fun activeWorkoutSession(): Flow<WorkoutSession?> = sessions.map { list ->

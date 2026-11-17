@@ -146,15 +146,14 @@ class WorkoutsRepositoryImpl internal constructor(
         }
     }
 
-    override fun workoutSessions(planId: WorkoutPlanId?): Flow<List<WorkoutSession>> = flow {
+    override fun workoutSessions(
+        planId: WorkoutPlanId?,
+        state: WorkoutState.Kind?,
+    ): Flow<List<WorkoutSession>> = flow {
         ensureCatalog()
-        val observedSessions = when (planId) {
-            null -> workoutSessionDao.observeSessions()
-            else -> workoutSessionDao.observeSessionsForPlan(planId.id)
-        }
         emitAll(
             combine(
-                observedSessions,
+                workoutSessionDao.observeSessions(planId?.id, state?.name),
                 workoutSessionDao.observeSessionExercises(),
                 workoutSessionDao.observeSets(),
                 exerciseDao.observeAll(),

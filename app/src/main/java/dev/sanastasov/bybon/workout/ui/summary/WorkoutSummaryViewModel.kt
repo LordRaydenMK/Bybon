@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.summary
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +24,7 @@ class WorkoutSummaryViewModel(
     val effects: Flow<WorkoutSummaryEffect> = _effects.receiveAsFlow()
 
     val uiState: StateFlow<WorkoutSummaryUiState> =
-        repository.workoutSessions()
+        repository.workoutSessions(state = WorkoutState.Kind.Completed)
             .mapNotNull { sessions -> sessions.completedSummary(sessionId, now()) }
             .stateInWhileInForeground(coroutineScope, WorkoutSummaryUiState.Loading)
 

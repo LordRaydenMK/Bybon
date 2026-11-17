@@ -32,6 +32,12 @@ data class WorkoutSession(
     val isDraft: Boolean
         get() = state is WorkoutState.NotStarted
 
+    fun matches(kind: WorkoutState.Kind): Boolean = when (kind) {
+        WorkoutState.Kind.Draft -> isDraft
+        WorkoutState.Kind.InProgress -> state is WorkoutState.InProgress
+        WorkoutState.Kind.Completed -> state is WorkoutState.Completed
+    }
+
     val isResumable: Boolean
         get() = state is WorkoutState.InProgress
 

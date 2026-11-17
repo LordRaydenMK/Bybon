@@ -36,7 +36,7 @@ class WorkoutHistoryViewModel(
 
     val uiState: StateFlow<WorkoutHistoryUiState> =
         combine(
-            repository.workoutSessions(),
+            repository.workoutSessions(state = WorkoutState.Kind.Completed),
             importPhase,
         ) { sessions, phase ->
             when (phase) {

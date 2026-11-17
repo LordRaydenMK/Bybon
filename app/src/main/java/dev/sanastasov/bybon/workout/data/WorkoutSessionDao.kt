@@ -12,11 +12,58 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface WorkoutSessionDao {
 
-    @Query("SELECT * FROM workout_session ORDER BY rowid")
-    fun observeSessions(): Flow<List<WorkoutSessionEntity>>
-
-    @Query("SELECT * FROM workout_session WHERE plan_id = :planId ORDER BY rowid")
-    fun observeSessionsForPlan(planId: String): Flow<List<WorkoutSessionEntity>>
+    @Query(
+        """
+        SELECT * FROM workout_session
+        WHERE (:planId IS NULL OR plan_id = :planId)
+          AND (
+            :state IS NULL
+            OR (
+              :state = 'Draft'
+              AND NOT EXISTS (
+                SELECT 1 FROM workout_set s
+                JOIN workout_session_exercise e ON e.id = s.session_exercise_id
+                WHERE e.session_id = workout_session.id
+                  AND s.set_state != 'NotStated'
+              )
+            )
+            OR (
+              :state = 'InProgress'
+              AND EXISTS (
+                SELECT 1 FROM workout_set s
+                JOIN workout_session_exercise e ON e.id = s.session_exercise_id
+                WHERE e.session_id = workout_session.id
+                  AND s.set_state != 'NotStated'
+              )
+              AND EXISTS (
+                SELECT 1 FROM workout_set s
+                JOIN workout_session_exercise e ON e.id = s.session_exercise_id
+                WHERE e.session_id = workout_session.id
+                  AND s.set_state != 'Completed'
+              )
+            )
+            OR (
+              :state = 'Completed'
+              AND EXISTS (
+                SELECT 1 FROM workout_set s
+                JOIN workout_session_exercise e ON e.id = s.session_exercise_id
+                WHERE e.session_id = workout_session.id
+              )
+              AND NOT EXISTS (
+                SELECT 1 FROM workout_set s
+                JOIN workout_session_exercise e ON e.id = s.session_exercise_id
+                WHERE e.session_id = workout_session.id
+                  AND s.set_state != 'Completed'
+              )
+            )
+          )
+        ORDER BY rowid
+        """,
+    )
+    fun observeSessions(
+        planId: String? = null,
+        state: String? = null,
+    ): Flow<List<WorkoutSessionEntity>>
 
     @Query("SELECT * FROM workout_session_exercise ORDER BY rowid")
     fun observeSessionExercises(): Flow<List<WorkoutSessionExerciseEntity>>

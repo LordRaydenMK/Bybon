@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -69,8 +70,10 @@ class WorkoutPlansViewModel(
             }
 
             is WorkoutPlansAction.OnDiscardDraft -> coroutineScope.launch {
-                val draft = repository.workoutSessions(action.plan.id).first()
-                    .first { it.isDraft }
+                val draft = repository
+                    .workoutSessions(action.plan.id, WorkoutState.Kind.Draft)
+                    .first()
+                    .first()
                 repository.deleteWorkout(draft.id)
             }
         }

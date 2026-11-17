@@ -17,14 +17,16 @@ class ExerciseDetailsViewModel(
 ) {
 
     val uiState: StateFlow<ExerciseDetailsUiState> =
-        combine(repository.exercises(), repository.workoutSessions()) { exercises, sessions ->
+        combine(
+            repository.exercises(),
+            repository.workoutSessions(state = WorkoutState.Kind.Completed),
+        ) { exercises, sessions ->
             val exercise = checkNotNull(exercises.firstOrNull { it.id == exerciseId }) {
                 "Exercise $exerciseId is not in the repository"
             }
-            val completed = sessions.filter { it.state is WorkoutState.Completed }
             val currentTime = now()
             exercise.toDetailsUi(
-                completed.exercisePerformance(exerciseId, currentTime),
+                sessions.exercisePerformance(exerciseId, currentTime),
                 currentTime,
             )
         }.stateInWhileInForeground(coroutineScope, ExerciseDetailsUiState.Loading)

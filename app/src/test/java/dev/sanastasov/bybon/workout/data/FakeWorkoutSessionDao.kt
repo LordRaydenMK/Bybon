@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.data
 
 import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.storedName
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
@@ -20,10 +21,19 @@ class FakeWorkoutSessionDao(
     private var nextExerciseId = 1L
     private var nextSetId = 1L
 
-    override fun observeSessions(): Flow<List<WorkoutSessionEntity>> = sessions
-
-    override fun observeSessionsForPlan(planId: String): Flow<List<WorkoutSessionEntity>> =
-        sessions.map { list -> list.filter { it.planId == planId } }
+    override fun observeSessions(
+        planId: String?,
+        state: String?,
+    ): Flow<List<WorkoutSessionEntity>> = combine(
+        sessions,
+        exercises,
+        sets,
+    ) { sessionRows, lines, setRows ->
+        sessionRows.filter { session ->
+            (planId == null || session.planId == planId) &&
+                session.matchesState(state, lines, setRows)
+        }
+    }
 
     override fun observeSessionExercises(): Flow<List<WorkoutSessionExerciseEntity>> = exercises
 
@@ -123,6 +133,27 @@ class FakeWorkoutSessionDao(
                     bodyWeightHundredths = bodyWeightHundredths,
                 ),
             )
+        }
+    }
+
+    private fun WorkoutSessionEntity.matchesState(
+        state: String?,
+        lines: List<WorkoutSessionExerciseEntity>,
+        setRows: List<WorkoutSetEntity>,
+    ): Boolean = state == null || storedKind(lines, setRows) == state
+
+    private fun WorkoutSessionEntity.storedKind(
+        lines: List<WorkoutSessionExerciseEntity>,
+        setRows: List<WorkoutSetEntity>,
+    ): String {
+        val lineIds = lines.filter { it.sessionId == id }.map { it.id }.toSet()
+        val sessionSets = setRows.filter { it.sessionExerciseId in lineIds }
+        val anyStarted = sessionSets.any { it.setState != SetState.NotStated.storedName }
+        val anyOpen = sessionSets.any { it.setState != SetState.Completed().storedName }
+        return when {
+            !anyStarted -> WorkoutState.Kind.Draft.name
+            sessionSets.isNotEmpty() && !anyOpen -> WorkoutState.Kind.Completed.name
+            else -> WorkoutState.Kind.InProgress.name
         }
     }
 

@@ -135,7 +135,7 @@ class WorkoutSessionViewModel(
 
     private suspend fun addPickedExercise(exerciseId: String) {
         val exercise = repository.requireExercise(exerciseId)
-        val previous = repository.workoutSessions().first()
+        val previous = repository.workoutSessions(state = WorkoutState.Kind.Completed).first()
             .latestCompletedExercise(exerciseId)
         val session = checkNotNull(active.uiState.value) { "No active session" }
         active.publish(session.addExercise(exercise, previous))

@@ -169,6 +169,12 @@ class WorkoutsRepositoryImplTest {
         assert(storedDraft.state is WorkoutState.NotStarted)
         assert(storedDraft.isDraft)
         assert(repository.workoutSessions(fullBodyA.id).first() == listOf(storedDraft))
+        assert(
+            repository.workoutSessions(fullBodyA.id, WorkoutState.Kind.Draft).first() ==
+                listOf(storedDraft),
+        )
+        assert(repository.workoutSessions(state = WorkoutState.Kind.InProgress).first().isEmpty())
+        assert(repository.workoutSessions(state = WorkoutState.Kind.Completed).first().isEmpty())
 
         val startedAt = LocalDateTime.of(2026, 10, 23, 18, 5, 12)
         repository.updateWorkout(storedDraft.startWorkout(now = startedAt))
@@ -179,7 +185,17 @@ class WorkoutsRepositoryImplTest {
         assert(started.startedAt == startedAt)
         assert(started.id.startedAt == startedAt)
         assert(repository.workoutSessions(fullBodyA.id).first() == listOf(started))
-        assert(repository.workoutSessions(fullBodyB.id).first().isEmpty())
+        assert(
+            repository.workoutSessions(fullBodyA.id, WorkoutState.Kind.InProgress).first() ==
+                listOf(started),
+        )
+        assert(repository.workoutSessions(fullBodyA.id, WorkoutState.Kind.Draft).first().isEmpty())
+        assert(
+            repository.workoutSessions(
+                fullBodyB.id,
+                WorkoutState.Kind.InProgress,
+            ).first().isEmpty(),
+        )
     }
 
     @Test

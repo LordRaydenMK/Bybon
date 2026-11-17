@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.overview
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
+import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addExercise
 import dev.sanastasov.bybon.workout.domain.addSet
@@ -78,7 +79,10 @@ class WorkoutOverviewViewModel(
             }
 
             WorkoutOverviewAction.OnDiscardDraft -> coroutineScope.launch {
-                val draft = repository.workoutSessions(planId).first().first { it.isDraft }
+                val draft = repository.workoutSessions(
+                    planId,
+                    WorkoutState.Kind.Draft,
+                ).first().first()
                 repository.deleteWorkout(draft.id)
                 _effects.trySend(WorkoutOverviewEffect.NavigateBack)
             }
@@ -109,7 +113,9 @@ class WorkoutOverviewViewModel(
             is WorkoutOverviewAction.OnExercisePicked -> coroutineScope.launch {
                 val exercise = repository.requireExercise(action.exerciseId)
                 uiState.filterNotNull().first()
-                val previous = repository.workoutSessions().first()
+                val previous = repository
+                    .workoutSessions(state = WorkoutState.Kind.Completed)
+                    .first()
                     .latestCompletedExercise(action.exerciseId)
                 emitAction(WorkoutOverviewAction.OnExerciseAdded(exercise, previous))
             }
