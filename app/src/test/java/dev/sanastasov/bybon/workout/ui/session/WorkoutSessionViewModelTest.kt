@@ -4,8 +4,6 @@ import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.REST_PROMOTE_LEAD
 import dev.sanastasov.bybon.workout.RestPromoteScheduler
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
-import dev.sanastasov.bybon.workout.data.completedExercise
-import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.PreviousSetPerformance
@@ -14,6 +12,7 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
@@ -24,6 +23,8 @@ import dev.sanastasov.bybon.workout.domain.updateExercise
 import java.time.LocalDateTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -423,7 +424,9 @@ class WorkoutSessionViewModelTest {
             assert(awaitItem() == WorkoutSessionEffect.ScrollToExercise(1))
             expectNoEvents()
         }
-        val stored = repository.workoutSessions().first().single()
+        val stored = repository.workoutSessions().first { sessions ->
+            sessions.single().exercises.first().state == ExerciseState.Completed
+        }.single()
         assert(stored.exercises.first().state == ExerciseState.Completed)
         assert(stored.exercises[1].sets.first().setState == SetState.InProgress)
     }
@@ -478,104 +481,54 @@ class WorkoutSessionViewModelTest {
     }
 
     @Test
-    fun `keeps the live session when a snapshot omits it`() = runTest {
-        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
-        val viewModel = sessionViewModel(fullBodyA.id, repository, backgroundScope)
+    fun `a later edit is shown while an earlier save is still running`() = runTest {
+        val delegate = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val gate = UpdateGate(delegate)
+        val viewModel = sessionViewModel(fullBodyA.id, gate, backgroundScope)
 
         viewModel.uiState.test {
             assert(awaitItem() == null)
             val session = awaitItem()!!
-            repository.emitSessions(emptyList())
-            expectNoEvents()
-            repository.emitSessions(
-                listOf(
-                    completedSession(
-                        planId = fullBodyA.id.id,
-                        planName = fullBodyA.name,
-                        startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-                        exercises = listOf(completedExercise("bench-press", 50f to 8)),
-                    ),
-                ),
-            )
-            expectNoEvents()
-            repository.emitSessions(listOf(session.copy(note = "updated")))
-            assert(awaitItem()!!.note == "updated")
+            gate.enabled = true
+            viewModel.onAction(WorkoutSessionAction.OnAddSet(session.exercises.first()))
+            val added = awaitItem()!!
+            assert(added.exercises.first().sets.size == 4)
+            gate.awaitStarted()
+            assert(delegate.workoutSessions().first().single().exercises.first().sets.size == 3)
+
+            viewModel.onAction(WorkoutSessionAction.OnAddSet(added.exercises.first()))
+            val second = awaitItem()!!
+            assert(second.exercises.first().sets.size == 5)
+            assert(delegate.workoutSessions().first().single().exercises.first().sets.size == 3)
+            gate.release()
+            val stored = delegate.workoutSessions().first { sessions ->
+                sessions.single().exercises.first().sets.size == 5
+            }
+            assert(stored.single().exercises.first().sets.size == 5)
         }
     }
 
     @Test
-    fun `clears uiState when the same session is completed`() = runTest {
-        val live = twoExerciseSession(SetState.InProgress, SetState.NotStated)
-        val repository = FakeWorkoutsRepository(
-            initialPlans = listOf(fullBodyA),
-            initialSessions = listOf(live),
-        )
-        val viewModel = sessionViewModel(
-            fullBodyA.id,
-            repository,
-            backgroundScope,
-            start = StartMode.Resume,
-        )
-
-        viewModel.uiState.test {
-            val session = awaitItem() ?: awaitItem()!!
-            assert(session.id == live.id)
-            repository.emitSessions(
-                listOf(
-                    completedSession(
-                        planId = live.planId.id,
-                        planName = live.planName,
-                        startedAt = live.startedAt,
-                        exercises = listOf(completedExercise("bench-press", 50f to 8)),
-                    ),
-                ),
-            )
-            assert(awaitItem() == null)
+    fun `cancel during a save deletes the session and does not restore it`() = runTest {
+        val delegate = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val gate = UpdateGate(delegate)
+        val viewModel = sessionViewModel(fullBodyA.id, gate, backgroundScope)
+        val session = viewModel.uiState.first { it != null }!!
+        gate.enabled = true
+        viewModel.onAction(WorkoutSessionAction.OnAddSet(session.exercises.first()))
+        viewModel.uiState.first { current ->
+            current?.exercises?.first()?.sets?.size == 4
         }
-    }
-}
+        gate.awaitStarted()
+        viewModel.onAction(WorkoutSessionAction.OnCancelWorkout)
+        gate.release()
 
-class LiveSessionOrLastTest {
-
-    @Test
-    fun `prefers the live session in the snapshot`() {
-        val live = fullBodyA.toWorkoutSession()
-        val previous = live.copy(note = "stale")
-        assert(liveSessionOrLast(fullBodyA.id, previous, listOf(live)) == live)
-    }
-
-    @Test
-    fun `keeps the last live session when it is omitted`() {
-        val live = fullBodyA.toWorkoutSession()
-        assert(liveSessionOrLast(fullBodyA.id, live, emptyList()) == live)
-        assert(
-            liveSessionOrLast(
-                fullBodyA.id,
-                live,
-                listOf(
-                    completedSession(
-                        planId = fullBodyA.id.id,
-                        planName = fullBodyA.name,
-                        startedAt = LocalDateTime.of(2025, 1, 1, 12, 0),
-                        exercises = listOf(completedExercise("bench-press", 50f to 8)),
-                    ),
-                ),
-            ) == live,
-        )
-    }
-
-    @Test
-    fun `clears when the same session id is completed`() {
-        val live = fullBodyA.toWorkoutSession(
-            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
-        )
-        val done = completedSession(
-            planId = live.planId.id,
-            planName = live.planName,
-            startedAt = live.startedAt,
-            exercises = listOf(completedExercise("bench-press", 50f to 8)),
-        )
-        assert(liveSessionOrLast(fullBodyA.id, live, listOf(done)) == null)
+        viewModel.effects.test {
+            assert(awaitItem() == WorkoutSessionEffect.StopService)
+            assert(awaitItem() == WorkoutSessionEffect.NavigateBack)
+        }
+        assert(delegate.workoutSessions().first().isEmpty())
+        assert(viewModel.uiState.value != null)
     }
 
     @Test
@@ -608,6 +561,30 @@ class LiveSessionOrLastTest {
             val expected = rest.duration - REST_PROMOTE_LEAD
             assert(kotlin.math.abs((scheduled.wait - expected).inWholeNanoseconds) < 10_000_000)
         }
+    }
+}
+
+private class UpdateGate(
+    private val delegate: FakeWorkoutsRepository,
+) : WorkoutsRepository by delegate {
+    var enabled: Boolean = false
+    private val started = Channel<Unit>(Channel.UNLIMITED)
+    private val releaseSave = CompletableDeferred<Unit>()
+
+    suspend fun awaitStarted() {
+        started.receive()
+    }
+
+    fun release() {
+        releaseSave.complete(Unit)
+    }
+
+    override suspend fun updateWorkout(session: WorkoutSession) {
+        if (enabled) {
+            started.send(Unit)
+            releaseSave.await()
+        }
+        delegate.updateWorkout(session)
     }
 }
 

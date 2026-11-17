@@ -356,7 +356,11 @@ class WorkoutSessionViewModelExerciseEditingTest {
         first.uiState.first { session ->
             session?.exercises?.none { it.id == "seated-leg-curl" } == true
         }
-        val edited = repository.workoutSessions().first().single()
+        val edited = repository.workoutSessions().first { sessions ->
+            val session = sessions.singleOrNull() ?: return@first false
+            session.exercises.any { it.id == "incline-db-curl" } &&
+                session.exercises.none { it.id == "seated-leg-curl" }
+        }.single()
         repository.emitSessions(
             listOf(
                 edited.copy(
