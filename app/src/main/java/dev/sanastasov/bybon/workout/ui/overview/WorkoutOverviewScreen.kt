@@ -45,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.result.LocalResultEventBus
 import androidx.navigation3.runtime.result.ResultEffect
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.ClearFocusOnImeHidden
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.defaultScope
@@ -109,6 +110,7 @@ private fun OverviewScreenContent(
 ) {
     val session = state.session
     val imeVisible = WindowInsets.isImeVisible
+    ClearFocusOnImeHidden()
     Scaffold(
         topBar = { OverviewTopBar(state, onBack, onAction) },
     ) { contentPadding ->

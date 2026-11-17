@@ -36,6 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.result.LocalResultEventBus
 import androidx.navigation3.runtime.result.ResultEffect
 import dev.marcellogalhardo.retained.compose.retain
+import dev.sanastasov.bybon.ui.ClearFocusOnImeHidden
 import dev.sanastasov.bybon.ui.collectEffectWithLifecycle
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.defaultScope
@@ -130,6 +131,7 @@ private fun SessionScreenContent(
     onBack: () -> Unit,
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
+    ClearFocusOnImeHidden()
     Scaffold(
         topBar = {
             Column {
