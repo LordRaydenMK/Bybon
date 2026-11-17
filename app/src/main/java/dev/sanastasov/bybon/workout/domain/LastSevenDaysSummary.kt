@@ -11,7 +11,7 @@ data class LastSevenDaysSummary(
     val workingSetCount: Int,
     val volumeLoad: Weight?,
     val performance: ExercisePerformanceChange,
-    val musclesTrained: List<TrainedMuscle>,
+    val daysTrained: DaysTrained,
 )
 
 data class ExercisePerformanceChange(
@@ -44,7 +44,10 @@ fun List<WorkoutSession>.lastSevenDaysSummary(today: LocalDate): LastSevenDaysSu
             .flatMap { it.sets }
             .volumeLoad(),
         performance = performanceChange(inWindow, beforeWindow),
-        musclesTrained = inWindow.flatMap { it.exercises }.trainedMuscles(),
+        daysTrained = daysTrained(
+            today,
+            completed.map { it.startedAt.toLocalDate() }.toSet(),
+        ),
     )
 }
 

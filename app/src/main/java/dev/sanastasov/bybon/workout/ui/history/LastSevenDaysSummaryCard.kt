@@ -25,7 +25,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dev.sanastasov.bybon.workout.ui.TrainedMuscleChips
 
 private val ImprovedGreen = Color(0xFF2E7D32)
 private val DeclinedRed = Color(0xFFE57373)
@@ -53,10 +52,8 @@ internal fun LastSevenDaysSummaryCard(
                 HorizontalDivider()
                 PerformanceSection(summary.performance)
             }
-            if (summary.musclesTrained.isNotEmpty()) {
-                HorizontalDivider()
-                MusclesSection(summary.musclesTrained)
-            }
+            HorizontalDivider()
+            DaysTrainedSection(summary.daysTrained)
         }
     }
 }
@@ -166,18 +163,6 @@ private fun RowScope.BarSegment(count: Int, color: Color) {
     )
 }
 
-@Composable
-private fun MusclesSection(muscles: List<String>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            "Muscles trained",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        TrainedMuscleChips(muscles)
-    }
-}
-
 internal fun LastSevenDaysSummaryUi.contentDescription(): String = buildString {
     append("Last 7 days, $dateRange, ")
     append("$workoutCount workouts, $trainingTime training time, ")
@@ -185,7 +170,13 @@ internal fun LastSevenDaysSummaryUi.contentDescription(): String = buildString {
     performance?.let {
         append(", ${it.improved} improved, ${it.maintained} maintained, ${it.declined} declined")
     }
-    if (musclesTrained.isNotEmpty()) {
-        append(", muscles trained ${musclesTrained.joinToString()}")
-    }
+    append(", days trained ")
+    append(daysTrained.contentDescription())
+}
+
+internal fun DaysTrainedUi.contentDescription(): String = weeks.joinToString(", ") { week ->
+    val trainedDays = week.days.filter { it.trained }
+        .joinToString { it.date.dayOfMonth.toString() }
+        .ifEmpty { "none" }
+    "${week.label} $trainedDays"
 }

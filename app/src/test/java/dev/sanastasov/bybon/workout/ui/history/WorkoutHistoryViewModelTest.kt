@@ -180,7 +180,11 @@ class WorkoutHistoryViewModelTest {
             assert(actual.weekSummary.workoutCount == 1)
             assert(actual.weekSummary.totalWeight == "1640 kg")
             assert(actual.weekSummary.performance == LastSevenDaysPerformanceUi(1, 0, 1))
-            assert(actual.weekSummary.musclesTrained.containsAll(listOf("Chest", "Back", "Quads")))
+            val trainedDates = actual.weekSummary.daysTrained.weeks
+                .flatMap { week -> week.days }
+                .filter { it.trained }
+                .map { it.date }
+            assert(trainedDates == listOf(historyToday))
         }
     }
 

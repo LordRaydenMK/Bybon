@@ -217,80 +217,6 @@ class LastSevenDaysSummaryTest {
     }
 
     @Test
-    fun `maps primary muscles to chips and keeps display order`() {
-        val session = sessionOn(
-            today,
-            completedExercise("bench-press", 60f to 8),
-            completedExercise("iso-lat-row", 50f to 10),
-            completedExercise("squat-machine", 80f to 8),
-            completedExercise("seated-leg-curl", 40f to 12),
-            completedExercise("lateral-raise-machine", 20f to 12),
-            completedExercise("incline-db-curl", 10f to 12),
-            completedExercise("triceps-press-machine", 40f to 12),
-        )
-
-        val summary = listOf(session).lastSevenDaysSummary(today)
-
-        assert(
-            summary.musclesTrained == listOf(
-                TrainedMuscle.Chest,
-                TrainedMuscle.Back,
-                TrainedMuscle.Quads,
-                TrainedMuscle.Hamstrings,
-                TrainedMuscle.Glutes,
-                TrainedMuscle.Shoulders,
-                TrainedMuscle.Biceps,
-                TrainedMuscle.Triceps,
-            ),
-        )
-    }
-
-    @Test
-    fun `falls back to body part when primary muscles are missing`() {
-        val chest = sessionOn(
-            today,
-            completedExercise("bench-press", 60f to 8).withoutPrimaryMuscles(),
-        )
-        val upperArms = sessionOn(
-            today,
-            completedExercise("incline-db-curl", 10f to 12).withoutPrimaryMuscles(),
-        )
-        val fullBody = sessionOn(
-            today,
-            completedExercise("back-lever", 20f to 5).withoutPrimaryMuscles(),
-        )
-
-        assert(
-            listOf(chest).lastSevenDaysSummary(today).musclesTrained ==
-                listOf(TrainedMuscle.Chest),
-        )
-        assert(
-            listOf(upperArms).lastSevenDaysSummary(today).musclesTrained ==
-                listOf(TrainedMuscle.Biceps, TrainedMuscle.Triceps),
-        )
-        assert(
-            listOf(fullBody).lastSevenDaysSummary(today).musclesTrained ==
-                listOf(TrainedMuscle.FullBody),
-        )
-        assert(TrainedMuscle.FullBody.label == "Full body")
-    }
-
-    @Test
-    fun `maps every catalog primary muscle or documents it as ignored`() {
-        val ignored = setOf(
-            "abductors",
-            "adductors",
-            "hip_flexors",
-            "neck",
-            "sternocleidomastoid",
-        )
-        val unknown = catalogExercises.flatMap { it.primaryMuscles }.toSet()
-            .filter { it.toTrainedMuscle() == null && it !in ignored }
-
-        assert(unknown.isEmpty()) { "Unmapped primary muscles: $unknown" }
-    }
-
-    @Test
     fun `empty history yields zeros`() {
         val summary = emptyList<WorkoutSession>().lastSevenDaysSummary(today)
 
@@ -299,12 +225,8 @@ class LastSevenDaysSummaryTest {
         assert(summary.volumeLoad == null)
         assert(summary.trainingTime == Duration.ZERO)
         assert(summary.performance == ExercisePerformanceChange(0, 0, 0))
-        assert(summary.musclesTrained.isEmpty())
+        assert(summary.daysTrained.weeks.flatMap { it.days }.none { it.trained })
     }
-
-    private fun WorkoutExercise.withoutPrimaryMuscles() = copy(
-        exerciseDefinition = exerciseDefinition.copy(primaryMuscles = emptyList()),
-    )
 
     private fun sessionOn(date: LocalDate, vararg exercises: WorkoutExercise) = completedSession(
         planId = "plan",
