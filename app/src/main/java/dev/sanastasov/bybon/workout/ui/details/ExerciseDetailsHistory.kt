@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -23,11 +24,26 @@ import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 
 internal fun LazyListScope.detailsPersonalRecord(personalRecord: PersonalRecordUi) {
     item(key = "personal-record") {
-        DetailsSection("Personal record") {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    "Personal record",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    "Estimated 1RM",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    personalRecordOneRmLabel(personalRecord.oneRm),
-                    style = MaterialTheme.typography.bodyLarge,
+                    personalRecordOneRmLabel(personalRecord),
+                    style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
                 )
                 Text(
                     personalRecord.dateLabel,
@@ -118,4 +134,7 @@ internal fun historySetLoadLabel(set: ExerciseDetailsSetUi): String =
 internal fun historySetOneRmLabel(set: ExerciseDetailsSetUi): String =
     set.oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
 
-internal fun personalRecordOneRmLabel(oneRm: Weight): String = "${oneRm.kilograms} kg Estimated 1RM"
+internal fun personalRecordOneRmLabel(personalRecord: PersonalRecordUi): String {
+    val load = formatLoadedSet(personalRecord.weightKg, personalRecord.reps)
+    return "${personalRecord.oneRm.kilograms} kg · $load"
+}

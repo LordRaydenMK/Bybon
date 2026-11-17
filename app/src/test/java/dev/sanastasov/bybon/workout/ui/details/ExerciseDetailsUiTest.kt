@@ -93,11 +93,19 @@ class ExerciseDetailsUiTest {
     }
 
     @Test
-    fun `maps PR as estimated 1RM with a relative date`() {
+    fun `maps PR as estimated 1RM with load and a relative date`() {
         val ui = benchDetailsUi()
         val newerOneRm = Weight.kilograms(estimateOneRmKg(80f, 8))
-        assert(ui.personalRecord == PersonalRecordUi(newerOneRm, "1 Oct 2026 · 21 days ago"))
-        assert(personalRecordOneRmLabel(newerOneRm) == "${newerOneRm.kilograms} kg Estimated 1RM")
+        val personalRecord = PersonalRecordUi(
+            newerOneRm,
+            "1 Oct 2026 · 21 days ago",
+            "80",
+            8,
+        )
+        assert(ui.personalRecord == personalRecord)
+        assert(
+            personalRecordOneRmLabel(personalRecord) == "${newerOneRm.kilograms} kg · 80 kg x 8"
+        )
     }
 
     @Test

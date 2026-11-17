@@ -84,6 +84,8 @@ class ExercisePerformanceTest {
 
         assert(performance.personalRecordOneRm == Weight.kilograms(estimateOneRmKg(80f, 8)))
         assert(performance.personalRecord?.achievedAt == olderBetter.startedAt)
+        assert(performance.personalRecord?.set?.weight == Weight.kilograms(80f))
+        assert(performance.personalRecord?.set?.reps == 8)
         assert(performance.recentSessions.single().startedAt == recent.startedAt)
         assert(
             performance.recentSessions.single().topSetOneRm ==

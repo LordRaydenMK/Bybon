@@ -39,6 +39,8 @@ sealed class ExerciseDetailsUiState {
 data class PersonalRecordUi(
     val oneRm: Weight,
     val dateLabel: String,
+    val weightKg: String,
+    val reps: Int,
 )
 
 data class ExerciseOneRmPointUi(
@@ -99,6 +101,8 @@ internal fun PersonalRecord.toPersonalRecordUi(today: LocalDate? = null): Person
         } else {
             date.toDisplayDateDotRelative(today)
         },
+        weightKg = set.weight.toLoadLabel(set.exerciseDefinition.equipment),
+        reps = set.reps,
     )
 }
 
