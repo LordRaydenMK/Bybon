@@ -8,6 +8,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
+import dev.sanastasov.bybon.workout.ui.session.StartMode
 import java.time.LocalDateTime
 
 data class WorkoutOverviewUiState(
@@ -113,7 +114,9 @@ fun WorkoutSession.exerciseOverflow(
 }
 
 sealed class WorkoutOverviewEffect {
-    data object NavigateToSession : WorkoutOverviewEffect()
+    data class NavigateToSession(
+        val start: StartMode,
+    ) : WorkoutOverviewEffect()
     data object NavigateBack : WorkoutOverviewEffect()
     data class OpenExerciseLibrary(
         val existingExerciseIds: List<String>,

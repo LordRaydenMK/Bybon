@@ -61,6 +61,7 @@ import dev.sanastasov.bybon.workout.ui.ExerciseCardEvent
 import dev.sanastasov.bybon.workout.ui.ExerciseCardMode
 import dev.sanastasov.bybon.workout.ui.ExerciseOverflow
 import dev.sanastasov.bybon.workout.ui.library.EXERCISE_LIBRARY_RESULT_KEY
+import dev.sanastasov.bybon.workout.ui.session.StartMode
 import java.time.LocalDateTime
 import kotlin.time.Duration
 
@@ -68,7 +69,7 @@ import kotlin.time.Duration
 fun WorkoutModule.WorkoutOverviewScreen(
     planId: WorkoutPlanId,
     onBack: () -> Unit,
-    onStartSession: () -> Unit,
+    onStartSession: (StartMode) -> Unit,
     onNavigateToExerciseLibrary: (List<String>) -> Unit,
     onNavigateToExerciseDetails: (String) -> Unit,
 ) {
@@ -83,7 +84,7 @@ fun WorkoutModule.WorkoutOverviewScreen(
     }
     viewModel.effects.collectEffectWithLifecycle { effect ->
         when (effect) {
-            WorkoutOverviewEffect.NavigateToSession -> onStartSession()
+            is WorkoutOverviewEffect.NavigateToSession -> onStartSession(effect.start)
 
             WorkoutOverviewEffect.NavigateBack -> onBack()
 

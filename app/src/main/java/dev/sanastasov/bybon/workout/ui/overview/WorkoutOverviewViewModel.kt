@@ -19,13 +19,11 @@ import dev.sanastasov.bybon.workout.domain.removeLastSet
 import dev.sanastasov.bybon.workout.domain.requireExercise
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
-import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.updateReps
 import dev.sanastasov.bybon.workout.domain.updateWeightFromField
 import dev.sanastasov.bybon.workout.domain.withPreviousFromHistory
-import java.time.LocalDate
-import java.time.LocalDateTime
+import dev.sanastasov.bybon.workout.ui.session.StartMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -86,14 +84,16 @@ class WorkoutOverviewViewModel(
             }
 
             WorkoutOverviewAction.OnStartWorkout -> coroutineScope.launch {
-                val now = LocalDateTime.now()
-                repository.updateWorkout(
-                    requireOverviewSession().startWorkout(
-                        now = now,
-                        snapshot = repository.sevenDayBodyWeight(LocalDate.now()),
-                    ),
-                )
-                _effects.trySend(WorkoutOverviewEffect.NavigateToSession)
+                val state = requireNotNull(uiState.value) { "No overview session" }
+                val mode = if (
+                    state.canDiscardDraft || editedFromPlan(state.session, state.history)
+                ) {
+                    repository.updateWorkout(state.session.asOverviewDraft())
+                    StartMode.StartDraft
+                } else {
+                    StartMode.Create
+                }
+                _effects.trySend(WorkoutOverviewEffect.NavigateToSession(mode))
             }
 
             WorkoutOverviewAction.OnAddExercise -> {
@@ -126,6 +126,15 @@ class WorkoutOverviewViewModel(
 
     private fun requireOverviewSession(): WorkoutSession =
         requireNotNull(uiState.value?.session) { "No overview session" }
+
+    private suspend fun editedFromPlan(
+        session: WorkoutSession,
+        history: List<WorkoutSession>,
+    ): Boolean {
+        val plan = repository.workoutPlans().first().first { it.id == planId }
+        val fresh = plan.toOverviewSession(previousHistory = history)
+        return session.exercises != fresh.exercises || session.note != fresh.note
+    }
 
     private fun emitAction(action: WorkoutOverviewAction) {
         actions.trySend(action)

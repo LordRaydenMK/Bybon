@@ -62,6 +62,7 @@ import kotlin.time.Duration
 @Composable
 fun WorkoutModule.WorkoutSessionScreen(
     planId: WorkoutPlanId,
+    start: StartMode,
     onBack: () -> Unit,
     onWorkoutCompleted: (WorkoutSessionId) -> Unit,
     onNavigateToExerciseLibrary: (List<String>) -> Unit,
@@ -70,6 +71,7 @@ fun WorkoutModule.WorkoutSessionScreen(
     val viewModel = retain {
         WorkoutSessionViewModel(
             planId,
+            start,
             workoutsRepository,
             it.defaultScope(),
             restPromoteScheduler,

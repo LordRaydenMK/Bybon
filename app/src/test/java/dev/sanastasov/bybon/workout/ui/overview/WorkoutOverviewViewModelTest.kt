@@ -15,6 +15,7 @@ import dev.sanastasov.bybon.workout.domain.formatRestClock
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.ui.session.StartMode
 import java.time.LocalDateTime
 import kotlin.test.assertFailsWith
 import kotlin.time.Duration
@@ -26,6 +27,20 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class WorkoutOverviewViewModelTest {
+
+    @Test
+    fun `starting an untouched overview asks for a new session`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
+
+        assert(
+            viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession(StartMode.Create),
+        )
+        assert(repository.workoutSessions().first().isEmpty())
+    }
 
     @Test
     fun `adjustments stay in memory until start persists the session`() = runTest {
@@ -55,14 +70,14 @@ class WorkoutOverviewViewModelTest {
                 },
             )
 
-            val beforeStart = LocalDateTime.now()
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
-            assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
+            assert(
+                viewModel.effects.first() ==
+                    WorkoutOverviewEffect.NavigateToSession(StartMode.StartDraft),
+            )
             val saved = repository.workoutSessions().first().single()
-            assert(!saved.startedAt.isBefore(beforeStart))
-            assert(saved.state == WorkoutState.InProgress)
-            assert(saved.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
-            assert(saved.exercises.first().sets.first().setState == SetState.NotStated)
+            assert(saved.state is WorkoutState.NotStarted)
+            assert(saved.workoutSets.none { it.setState == SetState.InProgress })
             assert(
                 saved.exercises.first().sets.first().reps ==
                     increased.exercises.first().sets.first().reps,
@@ -320,10 +335,13 @@ class WorkoutOverviewViewModelTest {
             )
 
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
-            assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
+            assert(
+                viewModel.effects.first() ==
+                    WorkoutOverviewEffect.NavigateToSession(StartMode.StartDraft),
+            )
             val saved = repository.workoutSessions().first().single()
             assert(saved.exercises.map { it.id }.take(2) == listOf("squat", "bench-press"))
-            assert(saved.exercises.first().warmupSets!!.first().setState == SetState.InProgress)
+            assert(saved.workoutSets.none { it.setState == SetState.InProgress })
             assert(
                 saved.exercises.first { it.id == "bench-press" }
                     .warmupSets!!
@@ -405,7 +423,10 @@ class WorkoutOverviewViewModelTest {
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
 
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
-            assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
+            assert(
+                viewModel.effects.first() ==
+                    WorkoutOverviewEffect.NavigateToSession(StartMode.StartDraft),
+            )
             val saved = repository.workoutSessions().first().single()
             assert(saved.exercises.last().id == "incline-db-curl")
             assert(saved.exercises.last().sets.all { it.setState == SetState.NotStated })
@@ -509,7 +530,10 @@ class WorkoutOverviewViewModelTest {
             assert(repository.workoutPlans().first() == listOf(fullBodyA))
 
             viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
-            assert(viewModel.effects.first() == WorkoutOverviewEffect.NavigateToSession)
+            assert(
+                viewModel.effects.first() ==
+                    WorkoutOverviewEffect.NavigateToSession(StartMode.StartDraft),
+            )
             val saved = repository.workoutSessions().first().single()
             assert(saved.exercises.none { it.id == "seated-leg-curl" })
             assert(saved.exercises.size == draft.exercises.size - 1)

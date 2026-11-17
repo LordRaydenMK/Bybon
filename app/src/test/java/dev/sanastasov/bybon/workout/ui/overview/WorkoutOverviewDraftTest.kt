@@ -6,6 +6,7 @@ import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
+import dev.sanastasov.bybon.workout.ui.session.StartMode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -105,5 +106,23 @@ class WorkoutOverviewDraftTest {
         val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
 
         assert(viewModel.uiState.first { it != null }!!.canDiscardDraft)
+    }
+
+    @Test
+    fun `starting a saved draft asks the session screen to start it`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA),
+            initialSessions = listOf(fullBodyA.toOverviewSession()),
+        )
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(WorkoutOverviewAction.OnStartWorkout)
+
+        assert(
+            viewModel.effects.first() ==
+                WorkoutOverviewEffect.NavigateToSession(StartMode.StartDraft),
+        )
+        assert(repository.workoutSessions().first().single().isDraft)
     }
 }
