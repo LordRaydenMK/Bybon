@@ -104,7 +104,7 @@ class ExerciseDetailsUiTest {
         )
         assert(ui.personalRecord == personalRecord)
         assert(
-            personalRecordOneRmLabel(personalRecord) == "${newerOneRm.kilograms} kg · 80 kg x 8"
+            personalRecordOneRmLabel(personalRecord) == "${newerOneRm.kilograms} kg · 80 kg x 8",
         )
     }
 
