@@ -50,16 +50,17 @@ class WorkoutSessionViewModel(
 ) {
     private val _effects = Channel<WorkoutSessionEffect>(Channel.BUFFERED)
     val effects: Flow<WorkoutSessionEffect> = _effects.receiveAsFlow()
-    private val active = ActiveSession(planId, repository, coroutineScope)
+    private val active = ActiveSession(planId, repository)
     val uiState: StateFlow<WorkoutSession?> = active.uiState
 
     init {
         coroutineScope.launch { active.loadOrCreate() }
+        coroutineScope.launch { active.persistWrites() }
     }
 
     fun onAction(action: WorkoutSessionAction) {
         coroutineScope.launch {
-            val pending = active.exclusive {
+            val pending = active.mutations.withLock {
                 if (active.closed) {
                     null
                 } else {
@@ -311,9 +312,8 @@ class WorkoutSessionViewModel(
 private class ActiveSession(
     private val planId: WorkoutPlanId,
     private val repository: WorkoutsRepository,
-    private val scope: CoroutineScope,
 ) {
-    private val mutations = Mutex()
+    val mutations = Mutex()
     private val database = Mutex()
     private val writes = Channel<Unit>(Channel.CONFLATED)
     private val savedGeneration = MutableStateFlow(0)
@@ -329,12 +329,6 @@ private class ActiveSession(
     var closed: Boolean = false
         private set
 
-    init {
-        scope.launch { persistLoop() }
-    }
-
-    suspend fun <T> exclusive(block: suspend () -> T): T = mutations.withLock { block() }
-
     fun publish(updated: WorkoutSession) {
         state.value = updated
         generation += 1
@@ -346,7 +340,7 @@ private class ActiveSession(
     }
 
     suspend fun loadOrCreate() {
-        exclusive {
+        mutations.withLock {
             val sessions = repository.workoutSessions().first()
             history = sessions.filter { it.state is WorkoutState.Completed }
             val existing = sessions.firstOrNull { session ->
@@ -385,7 +379,7 @@ private class ActiveSession(
         database.withLock { repository.deleteWorkout(id) }
     }
 
-    private suspend fun persistLoop() {
+    suspend fun persistWrites() {
         while (true) {
             writes.receive()
             val captured = mutations.withLock {
