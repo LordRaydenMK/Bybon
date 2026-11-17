@@ -146,11 +146,15 @@ class WorkoutsRepositoryImpl internal constructor(
         }
     }
 
-    override fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>> = flow {
+    override fun workoutSessions(planId: WorkoutPlanId?): Flow<List<WorkoutSession>> = flow {
         ensureCatalog()
+        val observedSessions = when (planId) {
+            null -> workoutSessionDao.observeSessions()
+            else -> workoutSessionDao.observeSessionsForPlan(planId.id)
+        }
         emitAll(
             combine(
-                workoutSessionDao.observeSessionsForPlan(planId.id),
+                observedSessions,
                 workoutSessionDao.observeSessionExercises(),
                 workoutSessionDao.observeSets(),
                 exerciseDao.observeAll(),
@@ -220,21 +224,6 @@ class WorkoutsRepositoryImpl internal constructor(
         sets.groupBy { it.sessionExerciseId },
         definitions.associate { it.id to it.toDefinition() },
     )?.resolveBodyWeight(entries)?.withPreviousBodyWeights(previousBodyWeights)
-
-    override fun workoutSessions(): Flow<List<WorkoutSession>> = flow {
-        ensureCatalog()
-        emitAll(
-            combine(
-                workoutSessionDao.observeSessions(),
-                workoutSessionDao.observeSessionExercises(),
-                workoutSessionDao.observeSets(),
-                exerciseDao.observeAll(),
-                bodyWeightEntries(),
-            ) { sessions, lines, sets, exercises, weights ->
-                sessions.toDomainSessions(lines, sets, exercises, weights)
-            },
-        )
-    }.flowOn(defaultDispatcher)
 
     override suspend fun importHistory(
         plans: List<WorkoutPlan>,

@@ -19,9 +19,7 @@ interface WorkoutsRepository {
 
     suspend fun deleteWorkout(sessionId: WorkoutSessionId)
 
-    fun workoutSessions(): Flow<List<WorkoutSession>>
-
-    fun workoutSession(planId: WorkoutPlanId): Flow<List<WorkoutSession>>
+    fun workoutSessions(planId: WorkoutPlanId? = null): Flow<List<WorkoutSession>>
 
     fun activeWorkoutSession(): Flow<WorkoutSession?>
 

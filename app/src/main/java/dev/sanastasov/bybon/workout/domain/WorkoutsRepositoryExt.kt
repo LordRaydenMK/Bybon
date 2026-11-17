@@ -13,9 +13,9 @@ suspend fun WorkoutsRepository.updateWorkout(
     planId: WorkoutPlanId,
     update: (WorkoutSession) -> WorkoutSession,
 ): WorkoutSession {
-    val session = workoutSessions()
-        .mapNotNull { allSessions ->
-            allSessions.firstOrNull { it.planId == planId && it.state !is WorkoutState.Completed }
+    val session = workoutSessions(planId)
+        .mapNotNull { sessions ->
+            sessions.firstOrNull { it.state !is WorkoutState.Completed }
         }
         .first()
     val updated = update(session)

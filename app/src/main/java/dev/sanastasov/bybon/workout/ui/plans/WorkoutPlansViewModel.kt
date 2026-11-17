@@ -69,7 +69,7 @@ class WorkoutPlansViewModel(
             }
 
             is WorkoutPlansAction.OnDiscardDraft -> coroutineScope.launch {
-                val draft = repository.workoutSession(action.plan.id).first()
+                val draft = repository.workoutSessions(action.plan.id).first()
                     .first { it.isDraft }
                 repository.deleteWorkout(draft.id)
             }

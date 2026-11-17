@@ -78,7 +78,7 @@ class WorkoutOverviewViewModel(
             }
 
             WorkoutOverviewAction.OnDiscardDraft -> coroutineScope.launch {
-                val draft = repository.workoutSession(planId).first().first { it.isDraft }
+                val draft = repository.workoutSessions(planId).first().first { it.isDraft }
                 repository.deleteWorkout(draft.id)
                 _effects.trySend(WorkoutOverviewEffect.NavigateBack)
             }
