@@ -61,22 +61,64 @@ class WorkoutHistoryUiTest {
     }
 
     @Test
-    fun `last 7 days content description includes stats performance and muscles`() {
+    fun `last 7 days content description includes stats performance and days trained`() {
         val summary = LastSevenDaysSummaryUi(
-            dateRange = "5–11 Nov 2026",
+            dateRange = "11–17 Nov 2026",
             workoutCount = 3,
             trainingTime = "4h 18m",
             workingSetCount = 42,
             totalWeight = "14820 kg",
             performance = LastSevenDaysPerformanceUi(8, 5, 2),
-            musclesTrained = listOf("Chest", "Back"),
+            daysTrained = DaysTrainedUi(
+                weeks = listOf(
+                    TrainingWeekUi(
+                        label = "Last week",
+                        days = listOf(
+                            dayUi(LocalDate.of(2026, 11, 10), trained = true),
+                            dayUi(LocalDate.of(2026, 11, 12), trained = true),
+                        ),
+                    ),
+                    TrainingWeekUi(
+                        label = "This week",
+                        days = listOf(
+                            dayUi(LocalDate.of(2026, 11, 17), trained = true, isToday = true),
+                        ),
+                    ),
+                ),
+            ),
         )
         assert(
             summary.contentDescription() ==
-                "Last 7 days, 5–11 Nov 2026, 3 workouts, 4h 18m training time, " +
+                "Last 7 days, 11–17 Nov 2026, 3 workouts, 4h 18m training time, " +
                 "42 working sets, 14820 kg total weight, 8 improved, 5 maintained, 2 declined, " +
-                "muscles trained Chest, Back",
+                "days trained Last week 10, 12, This week 17",
         )
+    }
+
+    @Test
+    fun `days trained ui marks today future days and week labels`() {
+        val friday = LocalDate.of(2026, 11, 6)
+        val ui = emptyList<WorkoutSession>().lastSevenDaysSummary(friday).toUi()
+
+        assert(ui.daysTrained.weeks.map { it.label } == listOf("This week", "Next week"))
+        val today = ui.daysTrained.weeks[0].days.single { it.date == friday }
+        assert(today.isToday)
+        assert(!today.isFuture)
+        assert(ui.daysTrained.weeks[1].days.all { it.isFuture && !it.isToday })
+    }
+
+    @Test
+    fun `days trained content description uses none when a week has no workouts`() {
+        val daysTrained = DaysTrainedUi(
+            weeks = listOf(
+                TrainingWeekUi(
+                    "This week",
+                    listOf(dayUi(LocalDate.of(2026, 11, 21), trained = true)),
+                ),
+                TrainingWeekUi("Next week", listOf(dayUi(LocalDate.of(2026, 11, 24)))),
+            ),
+        )
+        assert(daysTrained.contentDescription() == "This week 21, Next week none")
     }
 
     @Test
@@ -161,6 +203,13 @@ class WorkoutHistoryUiTest {
 
         assert(sections.single().title == "August 2025")
     }
+
+    private fun dayUi(
+        date: LocalDate,
+        trained: Boolean = false,
+        isToday: Boolean = false,
+        isFuture: Boolean = false,
+    ) = TrainingDayUi(date, trained, isToday, isFuture)
 
     private fun historySession(
         date: LocalDate,

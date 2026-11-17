@@ -9,7 +9,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
-import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
@@ -42,7 +41,7 @@ data class LastSevenDaysSummaryUi(
     val workingSetCount: Int,
     val totalWeight: String,
     val performance: LastSevenDaysPerformanceUi?,
-    val musclesTrained: List<String>,
+    val daysTrained: DaysTrainedUi,
 )
 
 data class LastSevenDaysPerformanceUi(
@@ -149,7 +148,7 @@ internal fun LastSevenDaysSummary.toUi(): LastSevenDaysSummaryUi = LastSevenDays
     performance = performance.takeIf { it.comparableCount > 0 }?.let {
         LastSevenDaysPerformanceUi(it.improved, it.maintained, it.declined)
     },
-    musclesTrained = musclesTrained.map { it.label },
+    daysTrained = daysTrained.toUi(today = endDate),
 )
 
 private fun Weight?.toVolumeLoadLabel(): String = "${this?.kilograms ?: "0"} kg"

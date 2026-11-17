@@ -355,15 +355,41 @@ private fun previewWeekSummary() = LastSevenDaysSummaryUi(
         maintained = 5,
         declined = 2,
     ),
-    musclesTrained = listOf(
-        "Chest",
-        "Back",
-        "Quads",
-        "Hamstrings",
-        "Shoulders",
-        "Biceps",
-        "Triceps",
-    ),
+    daysTrained = previewDaysTrained(),
+)
+
+private fun previewDaysTrained(): DaysTrainedUi {
+    val today = LocalDate.of(2026, 11, 17)
+    val trained = setOf(
+        LocalDate.of(2026, 11, 10),
+        LocalDate.of(2026, 11, 12),
+        LocalDate.of(2026, 11, 14),
+        today,
+    )
+    return DaysTrainedUi(
+        weeks = listOf(
+            previewWeek("Last week", LocalDate.of(2026, 11, 10), today, trained),
+            previewWeek("This week", LocalDate.of(2026, 11, 17), today, trained),
+        ),
+    )
+}
+
+private fun previewWeek(
+    label: String,
+    start: LocalDate,
+    today: LocalDate,
+    trained: Set<LocalDate>,
+): TrainingWeekUi = TrainingWeekUi(
+    label = label,
+    days = List(7) { offset ->
+        val date = start.plusDays(offset.toLong())
+        TrainingDayUi(
+            date = date,
+            trained = date in trained,
+            isToday = date == today,
+            isFuture = date > today,
+        )
+    },
 )
 
 private fun previewHistorySessions(): List<WorkoutSessionHistoryUi> {
