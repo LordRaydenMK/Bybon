@@ -249,7 +249,7 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                 ),
             ),
             volumeLoadLabel = "1080 kg",
-            personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026"),
+            personalRecord = PersonalRecordUi(Weight.kilograms(63f), "13 Aug 2026", "45", 12),
             previous = WorkoutSummaryPreviousUi(
                 workoutLabel = "Previous workout: 6 Aug 2026 · 7 days ago",
                 topSetOneRm = Weight.kilograms(57.86f),
@@ -312,7 +312,7 @@ private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                 ),
             ),
             volumeLoadLabel = "682.5 kg",
-            personalRecord = PersonalRecordUi(Weight.kilograms(26.25f), "13 Aug 2026"),
+            personalRecord = PersonalRecordUi(Weight.kilograms(26.25f), "13 Aug 2026", "17.5", 15),
             previous = WorkoutSummaryPreviousUi(
                 workoutLabel = "Previous workout: 6 Nov 2026 · 4 days ago",
                 topSetOneRm = Weight.kilograms(25.67f),

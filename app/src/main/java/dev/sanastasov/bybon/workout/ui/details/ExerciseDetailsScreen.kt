@@ -106,7 +106,12 @@ private fun ExerciseDetailsContentPreview() {
     Surface {
         ExerciseDetailsContent(
             catalogExercise("bench-press").toDetailsUi().copy(
-                personalRecord = PersonalRecordUi(Weight.kilograms(78f), "20 Sep 2026"),
+                personalRecord = PersonalRecordUi(
+                    Weight.kilograms(78f),
+                    "20 Sep 2026",
+                    "60",
+                    8,
+                ),
                 oneRmTrend = listOf(
                     ExerciseOneRmPointUi(
                         "12 Jul",

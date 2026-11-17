@@ -11,9 +11,11 @@ data class ExercisePerformance(
 }
 
 data class PersonalRecord(
-    val oneRm: Weight,
+    val set: ExerciseSet,
     val achievedAt: LocalDateTime,
-)
+) {
+    val oneRm: Weight get() = checkNotNull(set.oneRm) { "PR set must have a 1RM" }
+}
 
 data class ExerciseSessionLog(
     val startedAt: LocalDateTime,
@@ -66,8 +68,11 @@ fun List<WorkoutSession>.exercisePerformance(
 
 private fun List<Pair<WorkoutSession, WorkoutExercise>>.personalRecord(): PersonalRecord? {
     val oneRm = flatMap { it.second.sets }.mapNotNull { it.oneRm }.maxOrNull() ?: return null
-    val achievedAt = filter { (_, exercise) ->
-        exercise.sets.any { set -> set.oneRm == oneRm }
-    }.minOf { it.first.startedAt }
-    return PersonalRecord(oneRm, achievedAt)
+    val (session, exercise) = filter { (_, candidate) ->
+        candidate.sets.any { set -> set.oneRm == oneRm }
+    }.minBy { it.first.startedAt }
+    return PersonalRecord(
+        set = exercise.sets.first { it.oneRm == oneRm },
+        achievedAt = session.startedAt,
+    )
 }
