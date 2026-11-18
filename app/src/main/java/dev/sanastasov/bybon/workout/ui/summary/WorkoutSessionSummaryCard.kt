@@ -19,10 +19,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.ui.TrainedMuscleChips
-import dev.sanastasov.bybon.workout.ui.formatOneRmKg
-import kotlin.math.abs
 
 private val ImprovedGreen = Color(0xFF1B7A3D)
 
@@ -222,12 +219,4 @@ internal fun WorkoutSessionSummaryUi.contentDescription(): String = buildString 
     if (musclesTrained.isNotEmpty()) {
         append(", muscle groups ${musclesTrained.joinToString()}")
     }
-}
-
-internal fun formatAverageOneRmChange(current: Weight, previous: Weight): String {
-    val deltaHundredths = oneRmDeltaHundredths(current, previous)
-    if (deltaHundredths == 0) return "No change"
-    val amount = formatOneRmKg(abs(deltaHundredths) / 100f)
-    val arrow = if (deltaHundredths > 0) "↑" else "↓"
-    return "$arrow $amount kg"
 }

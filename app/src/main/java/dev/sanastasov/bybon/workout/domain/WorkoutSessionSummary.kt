@@ -44,8 +44,8 @@ private fun List<ExerciseSet>.setPerformance(): ExercisePerformanceChange {
     var declined = 0
     forEach { set ->
         when (set.oneRmChange()) {
-            OneRmChange.Improved -> improved++
-            OneRmChange.Decreased -> declined++
+            is OneRmChange.Improved -> improved++
+            is OneRmChange.Decreased -> declined++
             OneRmChange.Unchanged -> maintained++
             null -> Unit
         }

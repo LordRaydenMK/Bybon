@@ -1,6 +1,8 @@
 package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import org.junit.Test
 
 class SetLoadFormatTest {
@@ -28,5 +30,25 @@ class SetLoadFormatTest {
         assert(formatOneRmDelta(null, Weight.kilograms(10f)) == "-")
         assert(formatOneRmDelta(Weight.kilograms(10f), null) == "-")
         assert(formatOneRmDelta(null, null) == "-")
+    }
+
+    @Test
+    fun `1RM change uses an arrow and names no change`() {
+        assert(
+            oneRmChange(Weight.kilograms(26.25f), Weight.kilograms(25.67f))?.toLabel() ==
+                "↑ 0.58 kg",
+        )
+        assert(
+            oneRmChange(Weight.kilograms(24f), Weight.kilograms(25f))?.toLabel() ==
+                "↓ 1 kg",
+        )
+        assert(oneRmChange(Weight.kilograms(25f), Weight.kilograms(25f))?.toLabel() == "No change")
+    }
+
+    @Test
+    fun `1RM change rounds estimated top sets the same way as the summary`() {
+        val current = Weight.kilograms(estimateOneRmKg(20f, 14))
+        val previous = Weight.kilograms(estimateOneRmKg(20f, 13))
+        assert(oneRmChange(current, previous)?.toLabel() == "↑ 0.66 kg")
     }
 }

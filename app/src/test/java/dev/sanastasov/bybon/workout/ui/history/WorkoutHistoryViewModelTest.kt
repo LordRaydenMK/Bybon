@@ -340,6 +340,7 @@ class WorkoutHistoryViewModelTest {
             assert(topSet.weightKg == "45")
             assert(topSet.reps == 12)
             assert(topSet.oneRm == Weight.kilograms(estimateOneRmKg(45f, 12)))
+            assert(topSet.oneRmChange == null)
         }
     }
 
@@ -373,6 +374,7 @@ class WorkoutHistoryViewModelTest {
             assert(topSet.weightKg == "-")
             assert(topSet.reps == 8)
             assert(topSet.oneRm == null)
+            assert(topSet.oneRmChange == null)
         }
     }
 
@@ -400,6 +402,7 @@ class WorkoutHistoryViewModelTest {
             assert(topSet.weightKg == "-25")
             assert(topSet.reps == 10)
             assert(topSet.oneRm == null)
+            assert(topSet.oneRmChange == null)
         }
     }
 
@@ -528,7 +531,7 @@ class WorkoutHistoryViewModelTest {
             assert(history.sessions.first().duration == "00:56")
             assert(
                 history.sessions.first().exercises.first().contentDescription() ==
-                    "Incline Dumbbell Press, 20 kg x 14, 29.33 kg 1RM",
+                    "Incline Dumbbell Press, 20 kg x 14, ↑ 0.66 kg",
             )
             assert(history.sessions.any { it.planName == "Full Body B" })
             assert(history.sessions.any { it.planName == "Full Body A" })
