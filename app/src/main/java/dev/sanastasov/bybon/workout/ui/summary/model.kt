@@ -14,6 +14,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionSummary
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.averageWeight
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
+import dev.sanastasov.bybon.workout.domain.isAssisted
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.latestCompletedExerciseOccurrence
 import dev.sanastasov.bybon.workout.domain.oneRmChange
@@ -24,6 +25,7 @@ import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
 import dev.sanastasov.bybon.workout.ui.details.toPersonalRecordUi
+import dev.sanastasov.bybon.workout.ui.formatAssistedAdjustedLoadLabel
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import dev.sanastasov.bybon.workout.ui.toLabel
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
@@ -98,6 +100,7 @@ data class WorkoutSummarySetUi(
     val oneRm: Weight?,
     val isWarmup: Boolean = false,
     val previousOneRm: Weight? = null,
+    val adjustedLoadLabel: String? = null,
 )
 
 sealed class WorkoutSummaryAction {
@@ -222,18 +225,44 @@ private fun CompletedExerciseOccurrence.toPreviousUi(
 
 private fun Weight?.toVolumeLoadLabel(): String = "${this?.kilograms ?: "0"} kg"
 
-private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = WorkoutSummarySetUi(
+private fun ExerciseSet.toWarmupSummaryUi(): WorkoutSummarySetUi = toSummarySetUi(
     number = null,
-    weightKg = weight?.toLoadLabel(exerciseDefinition.equipment),
-    reps = reps,
-    oneRm = null,
     isWarmup = true,
+    oneRm = null,
+    previousOneRm = null,
 )
 
-private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = WorkoutSummarySetUi(
+private fun ExerciseSet.toWorkSummaryUi(number: Int): WorkoutSummarySetUi = toSummarySetUi(
     number = number,
-    weightKg = weight?.toLoadLabel(exerciseDefinition.equipment),
-    reps = reps,
+    isWarmup = false,
     oneRm = oneRm,
     previousOneRm = previousOneRm,
 )
+
+private fun ExerciseSet.toSummarySetUi(
+    number: Int?,
+    isWarmup: Boolean,
+    oneRm: Weight?,
+    previousOneRm: Weight?,
+): WorkoutSummarySetUi {
+    val equipment = exerciseDefinition.equipment
+    val logged = if (equipment?.isAssisted == true) {
+        weight.toLoadLabel(equipment, blankAssistedAsZero = true)
+    } else {
+        weight?.toLoadLabel(equipment)
+    }
+    val adjusted = if (equipment?.isAssisted == true) {
+        formatAssistedAdjustedLoadLabel(bodyWeight, effectiveLoad)
+    } else {
+        null
+    }
+    return WorkoutSummarySetUi(
+        number = number,
+        weightKg = logged,
+        reps = reps,
+        oneRm = oneRm,
+        isWarmup = isWarmup,
+        previousOneRm = previousOneRm,
+        adjustedLoadLabel = adjusted,
+    )
+}

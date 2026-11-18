@@ -201,7 +201,10 @@ private fun WorkoutExercise.toTopSetUi(
         ?.oneRm
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
-        weightKg = topSet.weight.toLoadLabel(exerciseDefinition.equipment),
+        weightKg = topSet.weight.toLoadLabel(
+            exerciseDefinition.equipment,
+            blankAssistedAsZero = true,
+        ),
         reps = topSet.reps,
         oneRm = currentOneRm,
         oneRmChange = currentOneRm?.let { oneRmChange(it, previousOneRm) },

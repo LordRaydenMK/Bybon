@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.toOneRmColumnLabel
@@ -38,7 +39,7 @@ private fun WorkSetHeader() {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         HeaderCell("Set", Modifier.weight(0.7f), TextAlign.Start)
-        HeaderCell("Weight", Modifier.weight(1f), TextAlign.End)
+        HeaderCell("Weight", Modifier.weight(1.4f), TextAlign.End)
         HeaderCell("Reps", Modifier.weight(0.8f), TextAlign.End)
         HeaderCell("e1RM", Modifier.weight(1f), TextAlign.End)
     }
@@ -55,7 +56,11 @@ private fun WorkSetRow(set: WorkoutSummarySetUi) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BodyCell("$number", Modifier.weight(0.7f), TextAlign.Start)
-        BodyCell(set.weightKg ?: MISSING_LOAD_LABEL, Modifier.weight(1f), TextAlign.End)
+        WeightCell(
+            logged = set.weightKg ?: MISSING_LOAD_LABEL,
+            adjustedLoadLabel = set.adjustedLoadLabel,
+            modifier = Modifier.weight(1.4f),
+        )
         BodyCell("${set.reps}", Modifier.weight(0.8f), TextAlign.End)
         BodyCell(set.oneRm.toOneRmColumnLabel(), Modifier.weight(1f), TextAlign.End)
     }
@@ -80,12 +85,36 @@ private fun BodyCell(text: String, modifier: Modifier, textAlign: TextAlign) {
         modifier,
         textAlign = textAlign,
         style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
+        maxLines = 1,
+        overflow = TextOverflow.Clip,
     )
+}
+
+@Composable
+private fun WeightCell(logged: String, adjustedLoadLabel: String?, modifier: Modifier,) {
+    Column(modifier, horizontalAlignment = Alignment.End) {
+        Text(
+            logged,
+            textAlign = TextAlign.End,
+            style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
+            maxLines = 1,
+        )
+        if (adjustedLoadLabel != null) {
+            Text(
+                adjustedLoadLabel,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
 
 internal fun WorkoutSummarySetUi.contentDescription(): String {
     val number = checkNotNull(number)
-    val load = formatSummaryLoad(weightKg, reps)
+    val load = formatSummaryLoad(weightKg, reps, adjustedLoadLabel)
     val rm = oneRm?.let { "${it.kilograms} kg e1RM" } ?: MISSING_LOAD_LABEL
     return "$number. $load, $rm"
 }

@@ -345,7 +345,7 @@ class WorkoutHistoryViewModelTest {
     }
 
     @Test
-    fun `history renders dash when the top set has no load`() = runTest {
+    fun `history renders zero kilograms when an assisted top set has no load`() = runTest {
         val session = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -371,7 +371,7 @@ class WorkoutHistoryViewModelTest {
         viewModel.uiState.test {
             val topSet = (awaitAfterLoading() as WorkoutHistoryUiState.History)
                 .sessions.single().exercises.single()
-            assert(topSet.weightKg == "-")
+            assert(topSet.weightKg == "0")
             assert(topSet.reps == 8)
             assert(topSet.oneRm == null)
             assert(topSet.oneRmChange == null)

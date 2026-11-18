@@ -141,6 +141,12 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         topSet("incline-db-press", 20f, 14, OneRmChange.Improved(Weight.kilograms(0.66f))),
         topSet("chest-supported-db-row", 22f, 15, OneRmChange.Decreased(Weight.kilograms(0.42f))),
         topSet("incline-db-curl", 9f, 15, OneRmChange.Unchanged),
+        ExerciseTopSetUi(
+            name = catalogExercise("assisted-pull-ups").name,
+            weightKg = "0",
+            reps = 8,
+            oneRm = null,
+        ),
     ),
     historySession(
         planId = "full-body-a",

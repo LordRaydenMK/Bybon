@@ -11,8 +11,17 @@ const val MISSING_LOAD_LABEL = "-"
 
 fun formatOneRmKg(kg: Float): String = "%.2f".format(Locale.US, kg).trimEnd('0').trimEnd('.')
 
-fun Weight?.toLoadLabel(equipment: Equipment? = null): String {
-    val kilograms = this?.kilograms ?: return MISSING_LOAD_LABEL
+fun Weight?.toLoadLabel(
+    equipment: Equipment? = null,
+    blankAssistedAsZero: Boolean = false,
+): String {
+    val kilograms = this?.kilograms ?: return if (
+        blankAssistedAsZero && equipment?.isAssisted == true
+    ) {
+        "0"
+    } else {
+        MISSING_LOAD_LABEL
+    }
     return if (equipment?.isAssisted == true) "-$kilograms" else kilograms
 }
 

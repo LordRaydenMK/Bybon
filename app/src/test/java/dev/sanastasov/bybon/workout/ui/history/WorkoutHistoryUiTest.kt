@@ -147,14 +147,14 @@ class WorkoutHistoryUiTest {
     }
 
     @Test
-    fun `missing load content description uses dashes`() {
+    fun `missing assisted load content description uses zero kilograms`() {
         val topSet = ExerciseTopSetUi(
             name = "Assisted Pull-up",
-            weightKg = "-",
+            weightKg = "0",
             reps = 8,
             oneRm = null,
         )
-        assert(topSet.contentDescription() == "Assisted Pull-up, - x 8, -")
+        assert(topSet.contentDescription() == "Assisted Pull-up, 0 kg x 8, -")
     }
 
     @Test

@@ -30,6 +30,7 @@ import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.oneRmChange
 import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
+import dev.sanastasov.bybon.workout.ui.formatLoggedLoadWithAdjusted
 import dev.sanastasov.bybon.workout.ui.oneRmChangeColor
 
 @Composable
@@ -124,7 +125,7 @@ private fun SummarySection(title: String, content: @Composable () -> Unit) {
 
 @Composable
 private fun WarmupSummaryRow(set: WorkoutSummarySetUi) {
-    val load = formatSummaryLoad(set.weightKg, set.reps)
+    val load = formatSummaryLoad(set.weightKg, set.reps, set.adjustedLoadLabel)
     Row(
         Modifier
             .fillMaxWidth()
@@ -239,8 +240,13 @@ private fun TotalRow(label: String, value: String) {
     }
 }
 
-internal fun formatSummaryLoad(weightKg: String?, reps: Int): String {
-    val load = weightKg?.let { "$it kg" } ?: MISSING_LOAD_LABEL
+internal fun formatSummaryLoad(
+    weightKg: String?,
+    reps: Int,
+    adjustedLoadLabel: String? = null,
+): String {
+    val logged = weightKg?.let { "$it kg" }
+    val load = formatLoggedLoadWithAdjusted(logged, adjustedLoadLabel)
     return "$load × $reps"
 }
 

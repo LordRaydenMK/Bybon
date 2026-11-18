@@ -1,11 +1,20 @@
 package dev.sanastasov.bybon.workout.ui
 
+import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.oneRmChange
 import org.junit.Test
 
 class SetLoadFormatTest {
+
+    @Test
+    fun `assisted blank load is zero only when requested`() {
+        assert(null.toLoadLabel(Equipment.AssistedBodyWeight) == "-")
+        assert(null.toLoadLabel(Equipment.AssistedBodyWeight, blankAssistedAsZero = true) == "0")
+        assert(null.toLoadLabel(Equipment.Barbell, blankAssistedAsZero = true) == "-")
+        assert(Weight.kilograms(25).toLoadLabel(Equipment.AssistedBodyWeight) == "-25")
+    }
 
     @Test
     fun `1RM delta is dash when current matches previous`() {
