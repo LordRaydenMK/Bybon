@@ -51,12 +51,12 @@ class WorkoutOverviewViewModel(
     val uiState: StateFlow<WorkoutOverviewUiState?> =
         combine(
             repository.workoutPlans(),
-            repository.workoutSessions(),
-        ) { plans, sessions ->
+            repository.workoutSessions(state = WorkoutState.Kind.Completed),
+            repository.workoutSessions(planId, WorkoutState.Kind.Draft),
+        ) { plans, completed, drafts ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
-            val completed = sessions.filter { it.state is WorkoutState.Completed }
             val previousSession = completed.latestCompletedFor(planId)
-            val draft = sessions.draftFor(planId)
+            val draft = drafts.firstOrNull()
             WorkoutOverviewUiState(
                 session = (draft ?: plan.toOverviewSession(previousHistory = completed))
                     .withPreviousFromHistory(completed),
