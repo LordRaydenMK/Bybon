@@ -26,13 +26,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.ui.icons.Clock
+import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
-import dev.sanastasov.bybon.workout.ui.formatOneRmKg
-import dev.sanastasov.bybon.workout.ui.oneRmDeltaHundredths
-import kotlin.math.abs
-
-private val OneRmImproved = Color(0xFF1B7A3D)
+import dev.sanastasov.bybon.workout.ui.oneRmChangeColor
 
 @Composable
 internal fun WorkoutSummaryExerciseCard(
@@ -181,16 +179,8 @@ private fun OneRmHighlight(
     modifier: Modifier = Modifier,
 ) {
     val value = oneRm?.let { "${it.kilograms} kg" } ?: MISSING_LOAD_LABEL
-    val vsPrevious = if (oneRm != null && previousOneRm != null) {
-        formatOneRmVsPrevious(oneRm, previousOneRm)
-    } else {
-        null
-    }
-    val deltaHundredths = if (oneRm != null && previousOneRm != null) {
-        oneRmDeltaHundredths(oneRm, previousOneRm)
-    } else {
-        null
-    }
+    val change = oneRm?.let { oneRmChange(it, previousOneRm) }
+    val vsPrevious = change?.vsPreviousLabel()
     Column(
         modifier.clearAndSetSemantics {
             contentDescription = listOfNotNull(title, value, vsPrevious).joinToString(", ")
@@ -207,14 +197,10 @@ private fun OneRmHighlight(
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.headlineSmall.copy(fontFeatureSettings = "tnum"),
         )
-        if (vsPrevious != null && deltaHundredths != null) {
+        if (vsPrevious != null) {
             Text(
                 vsPrevious,
-                color = if (deltaHundredths > 0) {
-                    OneRmImproved
-                } else {
-                    MaterialTheme.colorScheme.error
-                },
+                color = change.oneRmChangeColor(),
                 style = MaterialTheme.typography.labelMedium,
             )
         }
@@ -258,9 +244,11 @@ internal fun formatSummaryLoad(weightKg: String?, reps: Int): String {
     return "$load × $reps"
 }
 
-internal fun formatOneRmVsPrevious(current: Weight, previous: Weight): String? {
-    val deltaHundredths = oneRmDeltaHundredths(current, previous).takeIf { it != 0 } ?: return null
-    val amount = formatOneRmKg(abs(deltaHundredths) / 100f)
-    val arrow = if (deltaHundredths > 0) "↑" else "↓"
-    return "$arrow $amount kg vs previous"
+internal fun formatOneRmVsPrevious(current: Weight, previous: Weight): String? =
+    oneRmChange(current, previous)?.vsPreviousLabel()
+
+private fun OneRmChange.vsPreviousLabel(): String? = when (this) {
+    is OneRmChange.Improved -> "↑ ${delta.kilograms} kg vs previous"
+    is OneRmChange.Decreased -> "↓ ${delta.kilograms} kg vs previous"
+    OneRmChange.Unchanged -> null
 }

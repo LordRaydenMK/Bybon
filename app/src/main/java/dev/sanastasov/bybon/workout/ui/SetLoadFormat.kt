@@ -1,10 +1,11 @@
 package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.Equipment
+import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.isAssisted
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import java.util.*
-import kotlin.math.abs
 
 const val MISSING_LOAD_LABEL = "-"
 
@@ -28,13 +29,11 @@ fun Weight?.toOneRmLabel(): String =
     this?.let { "@ ${formatOneRmKg(it.kilogramsValue)} kg 1RM" } ?: MISSING_LOAD_LABEL
 
 fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
-    if (current == null || previous == null) return MISSING_LOAD_LABEL
-    val deltaHundredths = oneRmDeltaHundredths(current, previous)
-    val amount = formatOneRmKg(abs(deltaHundredths) / 100f)
-    return when {
-        deltaHundredths > 0 -> "+${amount}kg"
-        deltaHundredths < 0 -> "-${amount}kg"
-        else -> MISSING_LOAD_LABEL
+    val currentWeight = current ?: return MISSING_LOAD_LABEL
+    return when (val change = oneRmChange(currentWeight, previous)) {
+        is OneRmChange.Improved -> "+${change.delta.kilograms}kg"
+        is OneRmChange.Decreased -> "-${change.delta.kilograms}kg"
+        OneRmChange.Unchanged, null -> MISSING_LOAD_LABEL
     }
 }
 

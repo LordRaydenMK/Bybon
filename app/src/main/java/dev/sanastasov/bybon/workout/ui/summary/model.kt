@@ -16,6 +16,7 @@ import dev.sanastasov.bybon.workout.domain.averageWeight
 import dev.sanastasov.bybon.workout.domain.exercisePerformance
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.latestCompletedExerciseOccurrence
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import dev.sanastasov.bybon.workout.domain.volumeLoad
 import dev.sanastasov.bybon.workout.domain.withPreviousFrom
 import dev.sanastasov.bybon.workout.domain.workoutSessionSummary
@@ -24,6 +25,7 @@ import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.details.toOneRmTrend
 import dev.sanastasov.bybon.workout.ui.details.toPersonalRecordUi
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
+import dev.sanastasov.bybon.workout.ui.toLabel
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDateTime
@@ -174,7 +176,7 @@ private fun ExercisePerformanceChange.toUi(): SetPerformanceUi? =
 
 private fun ExerciseAverageOneRmChange.toUi(): ExerciseAverageOneRmUi = ExerciseAverageOneRmUi(
     name = name,
-    changeLabel = formatAverageOneRmChange(currentAverage, previousAverage),
+    changeLabel = checkNotNull(oneRmChange(currentAverage, previousAverage)).toLabel(),
 )
 
 private fun WorkoutExercise.toSummaryExerciseUi(

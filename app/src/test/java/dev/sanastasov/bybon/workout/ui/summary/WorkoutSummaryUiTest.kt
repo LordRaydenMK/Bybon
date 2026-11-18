@@ -1,6 +1,8 @@
 package dev.sanastasov.bybon.workout.ui.summary
 
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.oneRmChange
+import dev.sanastasov.bybon.workout.ui.toLabel
 import org.junit.Test
 
 class WorkoutSummaryUiTest {
@@ -55,15 +57,15 @@ class WorkoutSummaryUiTest {
     @Test
     fun `average e1RM change omits vs previous and names no change`() {
         assert(
-            formatAverageOneRmChange(Weight.kilograms(26.25f), Weight.kilograms(25.67f)) ==
+            oneRmChange(Weight.kilograms(26.25f), Weight.kilograms(25.67f))?.toLabel() ==
                 "↑ 0.58 kg",
         )
         assert(
-            formatAverageOneRmChange(Weight.kilograms(24f), Weight.kilograms(25f)) ==
+            oneRmChange(Weight.kilograms(24f), Weight.kilograms(25f))?.toLabel() ==
                 "↓ 1 kg",
         )
         assert(
-            formatAverageOneRmChange(Weight.kilograms(25f), Weight.kilograms(25f)) ==
+            oneRmChange(Weight.kilograms(25f), Weight.kilograms(25f))?.toLabel() ==
                 "No change",
         )
     }
