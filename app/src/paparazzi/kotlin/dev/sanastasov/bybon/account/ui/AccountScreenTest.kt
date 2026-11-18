@@ -10,7 +10,7 @@ class AccountScreenTest {
 
     @get:Rule
     val paparazzi: Paparazzi = Paparazzi(
-        deviceConfig = DeviceConfig.PIXEL_5,
+        deviceConfig = DeviceConfig.PIXEL_9,
         theme = "android:Theme.Material.Light.NoActionBar",
     )
 
