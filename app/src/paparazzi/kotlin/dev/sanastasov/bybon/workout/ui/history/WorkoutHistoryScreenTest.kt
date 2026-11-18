@@ -66,6 +66,16 @@ class WorkoutHistoryScreenTest {
             )
         }
     }
+}
+
+class WorkoutHistoryListScreenTest {
+
+    @get:Rule
+    val paparazzi: Paparazzi = Paparazzi(
+        deviceConfig = DeviceConfig.PIXEL_9.copy(screenHeight = 2720),
+        theme = "android:Theme.Material.Light.NoActionBar",
+        useDeviceResolution = true,
+    )
 
     @Test
     fun history() {
@@ -151,7 +161,7 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
     historySession(
         planId = "full-body-a",
         planName = "Full Body A",
-        startedAt = LocalDate.of(2026, 8, 20).atTime(11, 54),
+        startedAt = today.minusDays(1).atTime(11, 54),
         durationSeconds = 3877,
         topSet("bench-press", 57.5f, 10),
         topSet("squat", 45f, 12),

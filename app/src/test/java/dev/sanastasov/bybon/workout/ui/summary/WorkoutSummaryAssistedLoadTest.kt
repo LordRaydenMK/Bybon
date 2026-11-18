@@ -35,20 +35,23 @@ class WorkoutSummaryAssistedLoadTest {
         )
 
         val content = session.toSummaryUi()
-        val set = content.exercises.single().sets.single()
+        val exercise = content.exercises.single()
+        val set = exercise.sets.single()
         assert(set.weightKg == "0")
-        assert(set.adjustedLoadLabel == null)
+        assert(set.effectiveLoadKg == null)
+        assert(exercise.bodyWeightLabel == null)
+        assert(exercise.showEffectiveLoad)
         assert(set.reps == 8)
         assert(set.oneRm == null)
         assert(set.previousOneRm == null)
-        assert(content.exercises.single().volumeLoadLabel == "0 kg")
+        assert(exercise.volumeLoadLabel == "0 kg")
         assert(content.sessionSummary.volumeLoadLabel == "0 kg")
         assert(content.sessionSummary.setPerformance == null)
         assert(content.sessionSummary.exercisePerformance.isEmpty())
     }
 
     @Test
-    fun `summary assisted set shows body weight and effective load next to assistance`() {
+    fun `summary assisted work sets expose body weight and effective load`() {
         val session = completedSession(
             planId = "full-body-a",
             planName = "Full Body A",
@@ -63,15 +66,17 @@ class WorkoutSummaryAssistedLoadTest {
             ),
         )
 
-        val sets = session.toSummaryUi().exercises.single().sets
-        assert(sets[0].weightKg == "-25")
-        assert(sets[0].adjustedLoadLabel == "80 → 55 kg")
-        assert(sets[1].weightKg == "0")
-        assert(sets[1].adjustedLoadLabel == "80 → 80 kg")
+        val exercise = session.toSummaryUi().exercises.single()
+        assert(exercise.bodyWeightLabel == "80 kg")
+        assert(exercise.showEffectiveLoad)
+        assert(exercise.sets[0].weightKg == "-25")
+        assert(exercise.sets[0].effectiveLoadKg == "55")
+        assert(exercise.sets[1].weightKg == "0")
+        assert(exercise.sets[1].effectiveLoadKg == "80")
     }
 
     @Test
-    fun `summary assisted warmup shows body weight and effective load`() {
+    fun `summary assisted warmup omits effective load`() {
         val definition = catalogExercise("assisted-pull-ups")
         val bodyWeight = Weight.kilograms(80)
         val session = completedSession(
@@ -104,13 +109,15 @@ class WorkoutSummaryAssistedLoadTest {
             ),
         )
 
-        val sets = session.toSummaryUi().exercises.single().sets
-        val warmup = sets.single { it.isWarmup }
-        val work = sets.single { !it.isWarmup }
+        val exercise = session.toSummaryUi().exercises.single()
+        val warmup = exercise.sets.single { it.isWarmup }
+        val work = exercise.sets.single { !it.isWarmup }
+        assert(exercise.bodyWeightLabel == "80 kg")
+        assert(exercise.showEffectiveLoad)
         assert(warmup.weightKg == "-40")
-        assert(warmup.adjustedLoadLabel == "80 → 40 kg")
+        assert(warmup.effectiveLoadKg == null)
         assert(work.weightKg == "-20")
-        assert(work.adjustedLoadLabel == "80 → 60 kg")
+        assert(work.effectiveLoadKg == "60")
     }
 
     @Test
@@ -135,8 +142,11 @@ class WorkoutSummaryAssistedLoadTest {
             ),
         )
 
-        val set = session.toSummaryUi().exercises.single().sets.single()
+        val exercise = session.toSummaryUi().exercises.single()
+        val set = exercise.sets.single()
         assert(set.weightKg == null)
-        assert(set.adjustedLoadLabel == null)
+        assert(set.effectiveLoadKg == null)
+        assert(exercise.bodyWeightLabel == null)
+        assert(!exercise.showEffectiveLoad)
     }
 }

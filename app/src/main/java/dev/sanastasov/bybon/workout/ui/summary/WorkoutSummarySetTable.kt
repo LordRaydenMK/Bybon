@@ -19,48 +19,54 @@ import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.toOneRmColumnLabel
 
 @Composable
-internal fun WorkSetTable(workSets: List<WorkoutSummarySetUi>) {
+internal fun WorkSetTable(workSets: List<WorkoutSummarySetUi>, showEffectiveLoad: Boolean) {
     Column(
         Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        WorkSetHeader()
+        WorkSetHeader(showEffectiveLoad)
         workSets.forEach { set ->
-            WorkSetRow(set)
+            WorkSetRow(set, showEffectiveLoad)
         }
     }
 }
 
 @Composable
-private fun WorkSetHeader() {
+private fun WorkSetHeader(showEffectiveLoad: Boolean) {
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         HeaderCell("Set", Modifier.weight(0.7f), TextAlign.Start)
-        HeaderCell("Weight", Modifier.weight(1.4f), TextAlign.End)
+        HeaderCell("Weight", Modifier.weight(1f), TextAlign.End)
+        if (showEffectiveLoad) {
+            HeaderCell("Effective", Modifier.weight(1.1f), TextAlign.End)
+        }
         HeaderCell("Reps", Modifier.weight(0.8f), TextAlign.End)
         HeaderCell("e1RM", Modifier.weight(1f), TextAlign.End)
     }
 }
 
 @Composable
-private fun WorkSetRow(set: WorkoutSummarySetUi) {
+private fun WorkSetRow(set: WorkoutSummarySetUi, showEffectiveLoad: Boolean) {
     val number = checkNotNull(set.number)
     Row(
         Modifier
             .fillMaxWidth()
-            .clearAndSetSemantics { contentDescription = set.contentDescription() },
+            .clearAndSetSemantics {
+                contentDescription = set.contentDescription(
+                    showEffectiveLoad,
+                )
+            },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         BodyCell("$number", Modifier.weight(0.7f), TextAlign.Start)
-        WeightCell(
-            logged = set.weightKg ?: MISSING_LOAD_LABEL,
-            adjustedLoadLabel = set.adjustedLoadLabel,
-            modifier = Modifier.weight(1.4f),
-        )
+        BodyCell(set.weightKg ?: MISSING_LOAD_LABEL, Modifier.weight(1f), TextAlign.End)
+        if (showEffectiveLoad) {
+            BodyCell(set.effectiveLoadKg ?: MISSING_LOAD_LABEL, Modifier.weight(1f), TextAlign.End)
+        }
         BodyCell("${set.reps}", Modifier.weight(0.8f), TextAlign.End)
         BodyCell(set.oneRm.toOneRmColumnLabel(), Modifier.weight(1f), TextAlign.End)
     }
@@ -90,31 +96,15 @@ private fun BodyCell(text: String, modifier: Modifier, textAlign: TextAlign) {
     )
 }
 
-@Composable
-private fun WeightCell(logged: String, adjustedLoadLabel: String?, modifier: Modifier,) {
-    Column(modifier, horizontalAlignment = Alignment.End) {
-        Text(
-            logged,
-            textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
-            maxLines = 1,
-        )
-        if (adjustedLoadLabel != null) {
-            Text(
-                adjustedLoadLabel,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End,
-                style = MaterialTheme.typography.labelMedium.copy(fontFeatureSettings = "tnum"),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-internal fun WorkoutSummarySetUi.contentDescription(): String {
+internal fun WorkoutSummarySetUi.contentDescription(showEffectiveLoad: Boolean = false): String {
     val number = checkNotNull(number)
-    val load = formatSummaryLoad(weightKg, reps, adjustedLoadLabel)
+    val load = formatSummaryLoad(weightKg, reps)
+    val effective = if (showEffectiveLoad) {
+        val kg = effectiveLoadKg?.let { "$it kg" } ?: MISSING_LOAD_LABEL
+        ", $kg effective"
+    } else {
+        ""
+    }
     val rm = oneRm?.let { "${it.kilograms} kg e1RM" } ?: MISSING_LOAD_LABEL
-    return "$number. $load, $rm"
+    return "$number. $load$effective, $rm"
 }

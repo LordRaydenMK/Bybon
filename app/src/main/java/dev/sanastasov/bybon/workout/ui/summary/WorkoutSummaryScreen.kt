@@ -323,7 +323,6 @@ internal val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     5,
                     null,
                     isWarmup = true,
-                    adjustedLoadLabel = "80 → 40 kg",
                 ),
                 WorkoutSummarySetUi(
                     1,
@@ -331,7 +330,7 @@ internal val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     8,
                     Weight.kilograms(75.65f),
                     previousOneRm = Weight.kilograms(68.97f),
-                    adjustedLoadLabel = "80 → 60 kg",
+                    effectiveLoadKg = "60",
                 ),
                 WorkoutSummarySetUi(
                     2,
@@ -339,10 +338,12 @@ internal val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                     6,
                     Weight.kilograms(96f),
                     previousOneRm = Weight.kilograms(88f),
-                    adjustedLoadLabel = "80 → 80 kg",
+                    effectiveLoadKg = "80",
                 ),
             ),
             volumeLoadLabel = "960 kg",
+            bodyWeightLabel = "80 kg",
+            showEffectiveLoad = true,
         ),
     ),
 )
