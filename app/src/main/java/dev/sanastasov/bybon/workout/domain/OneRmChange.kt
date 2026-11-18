@@ -12,17 +12,16 @@ sealed interface OneRmChange {
     data object Unchanged : OneRmChange
 }
 
-fun oneRmChange(current: Weight?, previous: Weight?): OneRmChange? =
-    if (current == null || previous == null) {
-        null
-    } else {
-        oneRmChange(current, previous)
+fun oneRmChange(current: Weight, previous: Weight?): OneRmChange? {
+    previous ?: return null
+    return when {
+        current > previous -> OneRmChange.Improved(current - previous)
+        current < previous -> OneRmChange.Decreased(previous - current)
+        else -> OneRmChange.Unchanged
     }
-
-fun oneRmChange(current: Weight, previous: Weight): OneRmChange = when {
-    current > previous -> OneRmChange.Improved(current - previous)
-    current < previous -> OneRmChange.Decreased(previous - current)
-    else -> OneRmChange.Unchanged
 }
 
-fun ExerciseSet.oneRmChange(): OneRmChange? = oneRmChange(oneRm, previousOneRm)
+fun ExerciseSet.oneRmChange(): OneRmChange? {
+    val current = oneRm ?: return null
+    return oneRmChange(current, previousOneRm)
+}

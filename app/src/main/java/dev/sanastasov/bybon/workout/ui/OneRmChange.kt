@@ -9,7 +9,7 @@ fun oneRmDeltaHundredths(current: Weight, previous: Weight): Int =
     (current.kilogramsValue * 100f).roundToInt() - (previous.kilogramsValue * 100f).roundToInt()
 
 fun formatOneRmChange(current: Weight, previous: Weight): String =
-    oneRmChange(current, previous).toLabel()
+    requireNotNull(oneRmChange(current, previous)).toLabel()
 
 fun OneRmChange.toLabel(): String = when (this) {
     is OneRmChange.Improved -> "↑ ${delta.kilograms} kg"
