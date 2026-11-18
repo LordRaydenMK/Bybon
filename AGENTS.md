@@ -35,6 +35,7 @@ Important tasks:
 - Use `app:assembleDebug` to build the debug apk
 - Use `testDebutUnitTest` to run the unit tests
 - Use `verifyPaparazziDebug` to run screenshot tests; `recordPaparazziDebug` to write goldens
+- When changing UI, add Paparazzi tests and/or update existing tests and re-record golden images using `recordPaparazziDebug`
 - Snapshot PNGs under `app/src/test/snapshots` are stored in Git LFS
 - The `setup-android` action copies `scripts/pre-receive` into git hooks and runs it when `verify-snapshot-lfs` is true
 - When adding or changing Paparazzi goldens, put the same PNG in the PR description inside a
