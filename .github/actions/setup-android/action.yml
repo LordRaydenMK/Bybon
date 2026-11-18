@@ -7,6 +7,10 @@ inputs:
     description: Enable KVM for Android emulator
     required: false
     default: 'false'
+  verify-snapshot-lfs:
+    description: Copy scripts/pre-receive into git hooks and run the Paparazzi Git LFS check
+    required: false
+    default: 'false'
 
 runs:
   using: composite
@@ -27,3 +31,14 @@ runs:
         echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
+
+    - name: Verify snapshot Git LFS
+      if: inputs.verify-snapshot-lfs == 'true'
+      shell: bash
+      run: |
+        hooks_dir="$(git rev-parse --git-path hooks)"
+        mkdir -p "$hooks_dir"
+        cp scripts/pre-receive "$hooks_dir/pre-receive"
+        chmod +x "$hooks_dir/pre-receive"
+        "$hooks_dir/pre-receive"
+

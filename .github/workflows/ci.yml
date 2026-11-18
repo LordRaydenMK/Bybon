@@ -23,16 +23,8 @@ jobs:
 
       - name: Common setup
         uses: ./.github/actions/setup-android
-
-      - name: Install Git LFS snapshot hook
-        run: |
-          hooks_dir="$(git rev-parse --git-path hooks)"
-          mkdir -p "$hooks_dir"
-          cp scripts/pre-receive "$hooks_dir/pre-receive"
-          chmod +x "$hooks_dir/pre-receive"
-          "$hooks_dir/pre-receive"
-          git lfs install --local
-          git lfs pull
+        with:
+          verify-snapshot-lfs: true
 
       - name: Detekt
         run: ./gradlew detekt
