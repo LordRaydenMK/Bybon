@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.history
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import dev.sanastasov.bybon.paparazzi.bybonSnapshot
+import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
@@ -137,27 +138,9 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         planName = "Upper body B",
         startedAt = today.atTime(17, 59),
         durationSeconds = 3367,
-        topSet(
-            "incline-db-press",
-            20f,
-            14,
-            "↑ 0.66 kg",
-            OneRmChangeDirection.Increased,
-        ),
-        topSet(
-            "chest-supported-db-row",
-            22f,
-            15,
-            "↓ 0.42 kg",
-            OneRmChangeDirection.Decreased,
-        ),
-        topSet(
-            "incline-db-curl",
-            9f,
-            15,
-            "No change",
-            OneRmChangeDirection.Unchanged,
-        ),
+        topSet("incline-db-press", 20f, 14, OneRmChange.Improved(Weight.kilograms(0.66f))),
+        topSet("chest-supported-db-row", 22f, 15, OneRmChange.Decreased(Weight.kilograms(0.42f))),
+        topSet("incline-db-curl", 9f, 15, OneRmChange.Unchanged),
     ),
     historySession(
         planId = "full-body-a",
@@ -188,8 +171,7 @@ private fun topSet(
     exerciseId: String,
     kg: Float,
     reps: Int,
-    oneRmChange: String? = null,
-    oneRmChangeDirection: OneRmChangeDirection? = null,
+    oneRmChange: OneRmChange? = null,
 ): ExerciseTopSetUi {
     val exercise = catalogExercise(exerciseId)
     val weight = Weight.kilograms(kg)
@@ -199,6 +181,5 @@ private fun topSet(
         reps = reps,
         oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
         oneRmChange = oneRmChange,
-        oneRmChangeDirection = oneRmChangeDirection,
     )
 }

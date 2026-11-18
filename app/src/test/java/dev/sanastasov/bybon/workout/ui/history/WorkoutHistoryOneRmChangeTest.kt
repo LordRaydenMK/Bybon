@@ -5,9 +5,10 @@ import app.cash.turbine.test
 import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
+import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
-import dev.sanastasov.bybon.workout.ui.formatOneRmChange
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,25 +57,23 @@ class WorkoutHistoryOneRmChangeTest {
             val sessions = (awaitHistory() as WorkoutHistoryUiState.History).sessions
             val newest = sessions[0].exercises
             assert(
-                newest[0].oneRmChange == formatOneRmChange(
+                newest[0].oneRmChange == oneRmChange(
                     Weight.kilograms(estimateOneRmKg(52.5f, 8)),
                     Weight.kilograms(estimateOneRmKg(50f, 8)),
                 ),
             )
-            assert(newest[0].oneRmChangeDirection == OneRmChangeDirection.Increased)
+            assert(newest[0].oneRmChange is OneRmChange.Improved)
             assert(
-                newest[1].oneRmChange == formatOneRmChange(
+                newest[1].oneRmChange == oneRmChange(
                     Weight.kilograms(estimateOneRmKg(90f, 5)),
                     Weight.kilograms(estimateOneRmKg(100f, 5)),
                 ),
             )
-            assert(newest[1].oneRmChangeDirection == OneRmChangeDirection.Decreased)
+            assert(newest[1].oneRmChange is OneRmChange.Decreased)
             assert(newest[2].oneRmChange == null)
-            assert(newest[2].oneRmChangeDirection == null)
             val previousBench = sessions[1].exercises.first { it.name == "Barbell Bench Press" }
             val previousSquat = sessions[1].exercises.first { it.name == "Barbell Back Squat" }
-            assert(previousBench.oneRmChange == "No change")
-            assert(previousBench.oneRmChangeDirection == OneRmChangeDirection.Unchanged)
+            assert(previousBench.oneRmChange == OneRmChange.Unchanged)
             assert(previousSquat.oneRmChange == null)
             assert(sessions[2].exercises.single().oneRmChange == null)
         }

@@ -4,16 +4,16 @@ import android.net.Uri
 import dev.sanastasov.bybon.domain.isoWeekStart
 import dev.sanastasov.bybon.domain.toShortDisplayDate
 import dev.sanastasov.bybon.workout.domain.LastSevenDaysSummary
+import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
-import dev.sanastasov.bybon.workout.ui.formatOneRmChange
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
-import dev.sanastasov.bybon.workout.ui.oneRmDeltaHundredths
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDate
@@ -86,19 +86,12 @@ data class WorkoutHistoryPeriodSection(
     val sessions: List<WorkoutSessionHistoryUi>,
 )
 
-enum class OneRmChangeDirection {
-    Increased,
-    Decreased,
-    Unchanged,
-}
-
 data class ExerciseTopSetUi(
     val name: String,
     val weightKg: String,
     val reps: Int,
     val oneRm: Weight?,
-    val oneRmChange: String? = null,
-    val oneRmChangeDirection: OneRmChangeDirection? = null,
+    val oneRmChange: OneRmChange? = null,
 )
 
 sealed class WorkoutHistoryAction {
@@ -206,30 +199,11 @@ private fun WorkoutExercise.toTopSetUi(
         .latestCompletedExercise(id, before = sessionStartedAt)
         ?.topSet
         ?.oneRm
-    val comparable = if (currentOneRm != null && previousOneRm != null) {
-        currentOneRm to previousOneRm
-    } else {
-        null
-    }
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
         weightKg = topSet.weight.toLoadLabel(exerciseDefinition.equipment),
         reps = topSet.reps,
         oneRm = currentOneRm,
-        oneRmChange = comparable?.let { (current, previous) ->
-            formatOneRmChange(current, previous)
-        },
-        oneRmChangeDirection = comparable?.let { (current, previous) ->
-            oneRmChangeDirection(current, previous)
-        },
+        oneRmChange = oneRmChange(currentOneRm, previousOneRm),
     )
-}
-
-private fun oneRmChangeDirection(current: Weight, previous: Weight): OneRmChangeDirection {
-    val deltaHundredths = oneRmDeltaHundredths(current, previous)
-    return when {
-        deltaHundredths > 0 -> OneRmChangeDirection.Increased
-        deltaHundredths < 0 -> OneRmChangeDirection.Decreased
-        else -> OneRmChangeDirection.Unchanged
-    }
 }

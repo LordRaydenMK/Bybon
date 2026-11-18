@@ -341,7 +341,6 @@ class WorkoutHistoryViewModelTest {
             assert(topSet.reps == 12)
             assert(topSet.oneRm == Weight.kilograms(estimateOneRmKg(45f, 12)))
             assert(topSet.oneRmChange == null)
-            assert(topSet.oneRmChangeDirection == null)
         }
     }
 
@@ -376,7 +375,6 @@ class WorkoutHistoryViewModelTest {
             assert(topSet.reps == 8)
             assert(topSet.oneRm == null)
             assert(topSet.oneRmChange == null)
-            assert(topSet.oneRmChangeDirection == null)
         }
     }
 
@@ -405,7 +403,6 @@ class WorkoutHistoryViewModelTest {
             assert(topSet.reps == 10)
             assert(topSet.oneRm == null)
             assert(topSet.oneRmChange == null)
-            assert(topSet.oneRmChangeDirection == null)
         }
     }
 
