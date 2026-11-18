@@ -135,7 +135,7 @@ fun MainModule.MainScreen(
 
 @Suppress("LongMethod")
 @Composable
-private fun MainScreenContent(
+internal fun MainScreenContent(
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit,
     weightState: WeightDashboardUiState,
