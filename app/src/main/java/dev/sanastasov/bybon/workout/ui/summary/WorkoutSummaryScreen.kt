@@ -63,7 +63,7 @@ fun WorkoutModule.WorkoutSummaryScreen(
 }
 
 @Composable
-private fun WorkoutSummaryContent(
+internal fun WorkoutSummaryContent(
     uiState: WorkoutSummaryUiState,
     onAction: (WorkoutSummaryAction) -> Unit,
     onNavigateBack: () -> Unit,
@@ -207,7 +207,7 @@ private fun WorkoutSummaryContentPreview() {
     }
 }
 
-private val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
+internal val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
     title = "Full Body B",
     date = "13 Aug 2026",
     startTime = "18:25",
