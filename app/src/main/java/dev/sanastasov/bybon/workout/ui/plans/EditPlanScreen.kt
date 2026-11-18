@@ -64,7 +64,7 @@ fun WorkoutModule.EditPlanScreen(
 }
 
 @Composable
-private fun EditPlanContent(
+internal fun EditPlanContent(
     plan: WorkoutPlan?,
     onAction: (EditPlanAction) -> Unit,
     onNavigateBack: () -> Unit,
