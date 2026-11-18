@@ -39,6 +39,7 @@ internal fun SetValuesRow(
     reps: @Composable () -> Unit,
     trailing: @Composable () -> Unit,
     color: Color = Color.Unspecified,
+    oneRmColor: Color = Color.Unspecified,
     badgeColor: Color = Color.Unspecified,
     badgeFontWeight: FontWeight? = null,
     valueFontWeight: FontWeight? = null,
@@ -77,14 +78,17 @@ internal fun SetValuesRow(
         ) {
             Text(
                 oneRm.orEmpty(),
-                color = color,
+                color = oneRmColor.ifUnspecified(color),
                 fontWeight = valueFontWeight,
                 style = MaterialTheme.typography.labelMedium,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
             if (oneRm != null) {
-                SecondarySetLabel(numbered.oneRmDeltaLabel)
+                SecondarySetLabel(
+                    numbered.oneRmDeltaLabel,
+                    color = oneRmColor.ifUnspecified(MaterialTheme.colorScheme.onSurfaceVariant),
+                )
             }
         }
         Spacer(Modifier.weight(1f))
@@ -153,16 +157,22 @@ private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
 }
 
 @Composable
-private fun SecondarySetLabel(text: String) {
+private fun SecondarySetLabel(
+    text: String,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
     Text(
         text,
         style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = color,
         textAlign = TextAlign.Center,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
 }
+
+private fun Color.ifUnspecified(fallback: Color): Color =
+    if (this == Color.Unspecified) fallback else this
 
 @Composable
 internal fun RestOrSpacer(rest: Duration?) {

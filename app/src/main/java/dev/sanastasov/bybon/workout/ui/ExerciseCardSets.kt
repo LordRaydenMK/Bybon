@@ -9,15 +9,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.workout.domain.NumberedSet
+import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import kotlin.time.Duration
+
+private val OneRmImproved = Color(0xFF1B7A3D)
 
 @Composable
 internal fun ExerciseSetBlock(
@@ -107,8 +112,19 @@ private fun OverviewSetValuesRow(
             },
             weight = { EditableWeight(exercise, numbered, onEvent) },
             reps = { EditableReps(exercise, numbered, onEvent) },
+            oneRmColor = numbered.overviewOneRmColor(),
             trailing = { RestOrSpacer(rest) },
         )
+    }
+}
+
+@Composable
+private fun NumberedSet.overviewOneRmColor(): Color {
+    if (isWarmup) return Color.Unspecified
+    return when (set.oneRmChange()) {
+        OneRmChange.Improved -> OneRmImproved
+        OneRmChange.Decreased -> MaterialTheme.colorScheme.error
+        OneRmChange.Unchanged, null -> Color.Unspecified
     }
 }
 

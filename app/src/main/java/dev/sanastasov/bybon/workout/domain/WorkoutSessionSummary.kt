@@ -43,12 +43,11 @@ private fun List<ExerciseSet>.setPerformance(): ExercisePerformanceChange {
     var maintained = 0
     var declined = 0
     forEach { set ->
-        val current = set.oneRm ?: return@forEach
-        val previous = set.previousOneRm ?: return@forEach
-        when {
-            current > previous -> improved++
-            current < previous -> declined++
-            else -> maintained++
+        when (set.oneRmChange()) {
+            OneRmChange.Improved -> improved++
+            OneRmChange.Decreased -> declined++
+            OneRmChange.Unchanged -> maintained++
+            null -> Unit
         }
     }
     return ExercisePerformanceChange(improved, maintained, declined)
