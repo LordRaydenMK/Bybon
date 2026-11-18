@@ -19,7 +19,7 @@ class ExerciseDetailsScreenTest {
     @get:Rule
     val paparazzi: Paparazzi = Paparazzi(
         deviceConfig = DeviceConfig.PIXEL_9.copy(
-            screenHeight = DeviceConfig.PIXEL_9.screenHeight * 3,
+            screenHeight = DeviceConfig.PIXEL_9.screenHeight * 2,
         ),
         theme = "android:Theme.Material.Light.NoActionBar",
         useDeviceResolution = true,
