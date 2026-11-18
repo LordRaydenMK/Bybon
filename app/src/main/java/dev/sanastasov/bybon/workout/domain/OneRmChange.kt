@@ -1,6 +1,4 @@
-package dev.sanastasov.bybon.workout.ui
-
-import dev.sanastasov.bybon.workout.domain.Weight
+package dev.sanastasov.bybon.workout.domain
 
 enum class OneRmChange {
     Improved,
@@ -8,9 +6,11 @@ enum class OneRmChange {
     Unchanged,
 }
 
-fun oneRmChange(current: Weight?, previous: Weight?): OneRmChange {
-    if (current == null || previous == null) return OneRmChange.Unchanged
+fun ExerciseSet.oneRmChange(): OneRmChange? {
+    val current = oneRm
+    val previous = previousOneRm
     return when {
+        current == null || previous == null -> null
         current > previous -> OneRmChange.Improved
         current < previous -> OneRmChange.Decreased
         else -> OneRmChange.Unchanged

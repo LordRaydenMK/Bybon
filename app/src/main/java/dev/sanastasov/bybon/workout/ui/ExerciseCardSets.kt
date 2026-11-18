@@ -16,8 +16,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.workout.domain.NumberedSet
+import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.WorkoutExercise
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import kotlin.time.Duration
 
 private val OneRmImproved = Color(0xFF1B7A3D)
@@ -119,10 +121,10 @@ private fun OverviewSetValuesRow(
 @Composable
 private fun NumberedSet.overviewOneRmColor(): Color {
     if (isWarmup) return Color.Unspecified
-    return when (oneRmChange(set.oneRm, set.previousOneRm)) {
+    return when (set.oneRmChange()) {
         OneRmChange.Improved -> OneRmImproved
         OneRmChange.Decreased -> MaterialTheme.colorScheme.error
-        OneRmChange.Unchanged -> Color.Unspecified
+        OneRmChange.Unchanged, null -> Color.Unspecified
     }
 }
 
