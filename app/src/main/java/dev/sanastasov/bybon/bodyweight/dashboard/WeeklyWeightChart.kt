@@ -82,7 +82,6 @@ private fun WeeklyWeightChart(points: List<WeeklyTrendPointUi>, modifier: Modifi
         yRange,
         lines,
         colors,
-        skipAnimation,
         modifier.semantics { contentDescription = description },
     )
 }
@@ -93,9 +92,9 @@ private fun WeeklyAverageLineChart(
     yRange: ClosedFloatingPointRange<Double>,
     lines: List<Line>,
     colors: WeeklyChartColors,
-    skipAnimation: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val skipAnimation = LocalSkipChartAnimation.current
     LineChart(
         modifier = modifier,
         data = lines,
