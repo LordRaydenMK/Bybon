@@ -150,7 +150,9 @@ private fun CompletedSessionSetRow(
             onEvent(ExerciseCardEvent.OnResetSet(numbered.index, numbered.isWarmup))
         },
         weight = {
-            ColumnValue(set.weight.toLoadLabel(set.exerciseDefinition.equipment))
+            ColumnValue(
+                set.weight?.toLoadLabel(set.exerciseDefinition.equipment) ?: MISSING_LOAD_LABEL,
+            )
         },
         reps = { ColumnValue(set.reps.toString()) },
         trailing = {

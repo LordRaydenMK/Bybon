@@ -140,7 +140,9 @@ private fun PreviousColumn(numbered: NumberedSet, onResetSet: () -> Unit) {
     ) {
         Text(
             previous?.let {
-                "${it.weight.toLoadLabel(numbered.set.exerciseDefinition.equipment)} x ${it.reps}"
+                val load = it.weight?.toLoadLabel(numbered.set.exerciseDefinition.equipment)
+                    ?: MISSING_LOAD_LABEL
+                "$load x ${it.reps}"
             }.orEmpty(),
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,

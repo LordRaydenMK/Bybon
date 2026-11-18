@@ -9,11 +9,9 @@ import org.junit.Test
 class SetLoadFormatTest {
 
     @Test
-    fun `assisted blank load is zero only when requested`() {
-        assert(null.toLoadLabel(Equipment.AssistedBodyWeight) == "-")
-        assert(null.toLoadLabel(Equipment.AssistedBodyWeight, blankAssistedAsZero = true) == "0")
-        assert(null.toLoadLabel(Equipment.Barbell, blankAssistedAsZero = true) == "-")
+    fun `assisted load is signed kilograms`() {
         assert(Weight.kilograms(25).toLoadLabel(Equipment.AssistedBodyWeight) == "-25")
+        assert(Weight.kilograms(25).toLoadLabel(Equipment.Barbell) == "25")
     }
 
     @Test

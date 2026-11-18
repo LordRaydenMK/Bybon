@@ -254,11 +254,8 @@ private fun ExerciseSet.toSummarySetUi(
     includeEffectiveLoad: Boolean,
 ): WorkoutSummarySetUi {
     val equipment = exerciseDefinition.equipment
-    val logged = if (equipment?.isAssisted == true) {
-        weight.toLoadLabel(equipment, blankAssistedAsZero = true)
-    } else {
-        weight?.toLoadLabel(equipment)
-    }
+    val logged = weight?.toLoadLabel(equipment)
+        ?: "0".takeIf { equipment?.isAssisted == true }
     return WorkoutSummarySetUi(
         number = number,
         weightKg = logged,

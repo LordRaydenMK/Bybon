@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.PersonalRecord
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.toCatalogLabel
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import java.time.LocalDate
@@ -101,7 +102,7 @@ internal fun PersonalRecord.toPersonalRecordUi(today: LocalDate? = null): Person
         } else {
             date.toDisplayDateDotRelative(today)
         },
-        weightKg = set.weight.toLoadLabel(set.exerciseDefinition.equipment),
+        weightKg = set.weight?.toLoadLabel(set.exerciseDefinition.equipment) ?: MISSING_LOAD_LABEL,
         reps = set.reps,
     )
 }
@@ -114,9 +115,9 @@ internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi>
             dateLabel = CHART_DATE_FORMAT.format(session.startedAt),
             kilograms = oneRm.kilogramsValue,
             oneRm = oneRm,
-            weightKg = session.topSet.weight.toLoadLabel(
+            weightKg = session.topSet.weight?.toLoadLabel(
                 session.topSet.exerciseDefinition.equipment,
-            ),
+            ) ?: MISSING_LOAD_LABEL,
             reps = session.topSet.reps,
             averageOneRm = averageOneRm,
         )
@@ -141,7 +142,7 @@ private fun ExerciseSessionLog.toSessionUi(): ExerciseDetailsSessionUi = Exercis
 
 private fun ExerciseSet.toSetUi(number: Int): ExerciseDetailsSetUi = ExerciseDetailsSetUi(
     number = number,
-    weightKg = weight.toLoadLabel(exerciseDefinition.equipment),
+    weightKg = weight?.toLoadLabel(exerciseDefinition.equipment) ?: MISSING_LOAD_LABEL,
     reps = reps,
     oneRm = oneRm,
 )
