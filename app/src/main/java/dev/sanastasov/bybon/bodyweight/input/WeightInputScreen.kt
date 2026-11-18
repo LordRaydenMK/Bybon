@@ -59,7 +59,7 @@ fun BodyWeightModule.WeightInputScreen(onNavigateBack: () -> Unit) {
 }
 
 @Composable
-private fun WeightInputContent(
+internal fun WeightInputContent(
     weight: String,
     uiState: WeightInputUi,
     onAction: (WeightInputAction) -> Unit,
