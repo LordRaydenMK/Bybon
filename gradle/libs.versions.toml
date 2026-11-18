@@ -23,6 +23,7 @@ turbine = "1.2.1"
 roomVersion = "3.0.3"
 roomCommon = "2.8.5"
 detekt = "2.0.0-alpha.6"
+paparazzi = "2.0.0-alpha05.1"
 composeCharts = "1.0.0"
 coil3 = "3.6.3"
 okhttp = "5.5.1"
@@ -92,4 +93,5 @@ google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 google-google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlytics" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
 

@@ -10,4 +10,9 @@ class FakeContentResolverReader(
     override fun read(uri: Uri): String = csv
 }
 
-internal fun dummyUri(): Uri = DummyUri()
+internal fun dummyUri(): Uri = try {
+    DummyUri()
+} catch (_: Throwable) {
+    // Paparazzi puts layoutlib DummyUri on the unit-test classpath, which is inaccessible.
+    Uri.parse("content://bybon.test/csv")
+}

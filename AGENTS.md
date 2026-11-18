@@ -13,6 +13,7 @@ Tech stack:
 - Jetpack Navigation 3
 - Coil
 - Power Assert + Turbine for tests
+- Paparazzi for Compose screenshot tests
 - Maestro for e2e tests
 
 Architecture:
@@ -33,6 +34,9 @@ Important tasks:
 
 - Use `app:assembleDebug` to build the debug apk
 - Use `testDebutUnitTest` to run the unit tests
+- Use `verifyPaparazziDebug` to run screenshot tests; `recordPaparazziDebug` to write goldens
+- Snapshot PNGs under `app/src/test/snapshots` are stored in Git LFS
+- Use `bash .github/scripts/verify-snapshot-lfs.sh` to confirm snapshots are LFS pointers
 - Use `detekt` to run detekt checks, add `--auto-correct` to fix issues automatically
 - Use `lintDebug` for running lint checks
 

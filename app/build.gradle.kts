@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.kotlin.power.assert)
     alias(libs.plugins.androidx.room3)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.paparazzi)
 }
 
 val repdbCommit = providers.gradleProperty("repdb.commit")
@@ -52,6 +53,9 @@ android {
     }
 
     sourceSets {
+        getByName("test") {
+            kotlin.directories.add("src/paparazzi/kotlin")
+        }
         getByName("androidTest") {
             assets.directories.add("schemas")
         }

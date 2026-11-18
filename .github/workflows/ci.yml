@@ -18,12 +18,30 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          lfs: true
 
       - name: Common setup
         uses: ./.github/actions/setup-android
 
+      - name: Verify snapshot Git LFS
+        run: bash .github/scripts/verify-snapshot-lfs.sh
+
       - name: Detekt
         run: ./gradlew detekt
+
+      - name: Paparazzi tests
+        run: ./gradlew verifyPaparazziDebug
+
+      - name: Archive Paparazzi failures
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: paparazzi-failures
+          path: |
+            app/build/paparazzi/
+            app/build/reports/paparazzi/
+          if-no-files-found: ignore
 
       - name: Build
         run: ./gradlew buildDebug assembleDebug
