@@ -10,4 +10,3 @@ class FakeContentResolverReader(
 }
 
 internal fun dummyUri(): Uri = Uri.parse("content://bybon.test/csv")
-
