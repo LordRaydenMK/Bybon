@@ -85,7 +85,7 @@ fun WorkoutModule.ExerciseLibraryScreen(
 }
 
 @Composable
-private fun ExerciseLibraryContent(
+internal fun ExerciseLibraryContent(
     state: ExerciseLibraryUiState,
     onAction: (ExerciseLibraryAction) -> Unit,
     onNavigateBack: () -> Unit,
