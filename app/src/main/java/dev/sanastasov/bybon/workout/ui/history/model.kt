@@ -10,8 +10,10 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.isAssisted
 import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
 import dev.sanastasov.bybon.workout.domain.oneRmChange
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
@@ -201,7 +203,8 @@ private fun WorkoutExercise.toTopSetUi(
         ?.oneRm
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
-        weightKg = topSet.weight.toLoadLabel(exerciseDefinition.equipment),
+        weightKg = topSet.weight?.toLoadLabel(exerciseDefinition.equipment)
+            ?: if (exerciseDefinition.equipment?.isAssisted == true) "0" else MISSING_LOAD_LABEL,
         reps = topSet.reps,
         oneRm = currentOneRm,
         oneRmChange = currentOneRm?.let { oneRmChange(it, previousOneRm) },

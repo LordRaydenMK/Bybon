@@ -173,39 +173,6 @@ class WorkoutSummaryViewModelTest {
     }
 
     @Test
-    fun `summary uses dash when a set has no load`() {
-        val session = completedSession(
-            planId = "full-body-a",
-            planName = "Full Body A",
-            startedAt = LocalDateTime.of(2026, 8, 10, 18, 0),
-            exercises = listOf(
-                WorkoutExercise(
-                    exerciseDefinition = catalogExercise("assisted-pull-ups"),
-                    repRange = 6..10,
-                    sets = listOf(
-                        ExerciseSet(
-                            catalogExercise("assisted-pull-ups"),
-                            null,
-                            8,
-                            SetState.Completed(),
-                        ),
-                    ),
-                ),
-            ),
-        )
-
-        val content = session.toSummaryUi()
-        assert(content.exercises.single().sets.single().weightKg == null)
-        assert(content.exercises.single().sets.single().reps == 8)
-        assert(content.exercises.single().sets.single().oneRm == null)
-        assert(content.exercises.single().sets.single().previousOneRm == null)
-        assert(content.exercises.single().volumeLoadLabel == "0 kg")
-        assert(content.sessionSummary.volumeLoadLabel == "0 kg")
-        assert(content.sessionSummary.setPerformance == null)
-        assert(content.sessionSummary.exercisePerformance.isEmpty())
-    }
-
-    @Test
     fun `summary assisted volume and e1RM use body weight minus assistance`() {
         val previous = completedSession(
             planId = "full-body-a",

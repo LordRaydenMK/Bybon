@@ -1,11 +1,18 @@
 package dev.sanastasov.bybon.workout.ui
 
+import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.oneRmChange
 import org.junit.Test
 
 class SetLoadFormatTest {
+
+    @Test
+    fun `assisted load is signed kilograms`() {
+        assert(Weight.kilograms(25).toLoadLabel(Equipment.AssistedBodyWeight) == "-25")
+        assert(Weight.kilograms(25).toLoadLabel(Equipment.Barbell) == "25")
+    }
 
     @Test
     fun `1RM delta is dash when current matches previous`() {

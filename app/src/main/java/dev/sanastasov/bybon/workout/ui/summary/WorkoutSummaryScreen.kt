@@ -215,7 +215,7 @@ internal val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
     sessionSummary = WorkoutSessionSummaryUi(
         subtitle = "Full Body B · 13 Aug 2026 · Start 18:25",
         duration = "47m",
-        exerciseCount = 2,
+        exerciseCount = 3,
         workingSetCount = 5,
         volumeLoadLabel = "1762.5 kg",
         setPerformance = SetPerformanceUi(improved = 5, maintained = 0, declined = 0),
@@ -312,6 +312,38 @@ internal val PreviewSummaryUiState = WorkoutSummaryUiState.Content(
                 previewOneRmPoint("2 Aug", 24.83f, "18", 11, 23.4f),
                 previewOneRmPoint("13 Aug", 28.67f, "20", 13, 26.94f),
             ),
+        ),
+        WorkoutSummaryExerciseUi(
+            id = "assisted-pull-ups",
+            name = "Assisted Pull Ups",
+            sets = listOf(
+                WorkoutSummarySetUi(
+                    null,
+                    "-40",
+                    5,
+                    null,
+                    isWarmup = true,
+                ),
+                WorkoutSummarySetUi(
+                    1,
+                    "-20",
+                    8,
+                    Weight.kilograms(75.65f),
+                    previousOneRm = Weight.kilograms(68.97f),
+                    effectiveLoadKg = "60",
+                ),
+                WorkoutSummarySetUi(
+                    2,
+                    "0",
+                    6,
+                    Weight.kilograms(96f),
+                    previousOneRm = Weight.kilograms(88f),
+                    effectiveLoadKg = "80",
+                ),
+            ),
+            volumeLoadLabel = "960 kg",
+            bodyWeightLabel = "80 kg",
+            showEffectiveLoad = true,
         ),
     ),
 )

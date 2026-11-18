@@ -61,6 +61,15 @@ internal fun WorkoutSummaryExerciseCard(
                 style = MaterialTheme.typography.titleMedium,
             )
             exercise.previous?.let { PreviousWorkoutRow(it.workoutLabel) }
+            exercise.bodyWeightLabel?.let { label ->
+                val text = "Body weight $label"
+                Text(
+                    text,
+                    Modifier.clearAndSetSemantics { contentDescription = text },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             exercise.notes.forEach { note ->
                 Text(
                     note,
@@ -81,7 +90,7 @@ internal fun WorkoutSummaryExerciseCard(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             SummarySection("Working sets") {
                 OneRmHighlights(exercise)
-                WorkSetTable(workSets)
+                WorkSetTable(workSets, exercise.showEffectiveLoad)
                 WorkSetTotals(exercise)
             }
         }

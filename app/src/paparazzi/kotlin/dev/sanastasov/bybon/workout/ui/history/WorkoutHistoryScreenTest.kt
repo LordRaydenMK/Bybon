@@ -66,6 +66,16 @@ class WorkoutHistoryScreenTest {
             )
         }
     }
+}
+
+class WorkoutHistoryListScreenTest {
+
+    @get:Rule
+    val paparazzi: Paparazzi = Paparazzi(
+        deviceConfig = DeviceConfig.PIXEL_9.copy(screenHeight = 2720),
+        theme = "android:Theme.Material.Light.NoActionBar",
+        useDeviceResolution = true,
+    )
 
     @Test
     fun history() {
@@ -141,11 +151,17 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         topSet("incline-db-press", 20f, 14, OneRmChange.Improved(Weight.kilograms(0.66f))),
         topSet("chest-supported-db-row", 22f, 15, OneRmChange.Decreased(Weight.kilograms(0.42f))),
         topSet("incline-db-curl", 9f, 15, OneRmChange.Unchanged),
+        ExerciseTopSetUi(
+            name = catalogExercise("assisted-pull-ups").name,
+            weightKg = "0",
+            reps = 8,
+            oneRm = null,
+        ),
     ),
     historySession(
         planId = "full-body-a",
         planName = "Full Body A",
-        startedAt = LocalDate.of(2026, 8, 20).atTime(11, 54),
+        startedAt = LocalDate.of(2026, 11, 16).atTime(11, 54),
         durationSeconds = 3877,
         topSet("bench-press", 57.5f, 10),
         topSet("squat", 45f, 12),

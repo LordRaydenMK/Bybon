@@ -36,9 +36,26 @@ class WorkoutSummaryUiTest {
     }
 
     @Test
+    fun `assisted load content description names effective load`() {
+        val set = WorkoutSummarySetUi(
+            number = 1,
+            weightKg = "-20",
+            reps = 8,
+            oneRm = Weight.kilograms(75.65f),
+            effectiveLoadKg = "60",
+        )
+        assert(
+            set.contentDescription(showEffectiveLoad = true) ==
+                "1. -20 kg × 8, 60 kg effective, 75.65 kg e1RM",
+        )
+    }
+
+    @Test
     fun `summary load uses times sign and kilograms`() {
         assert(formatSummaryLoad("17.5", 15) == "17.5 kg × 15")
         assert(formatSummaryLoad(null, 8) == "- × 8")
+        assert(formatSummaryLoad("0", 8) == "0 kg × 8")
+        assert(formatSummaryLoad("-20", 8) == "-20 kg × 8")
     }
 
     @Test
