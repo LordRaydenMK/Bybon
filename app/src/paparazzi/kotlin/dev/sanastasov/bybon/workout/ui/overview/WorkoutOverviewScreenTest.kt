@@ -69,9 +69,16 @@ private fun overviewUiState(canDiscardDraft: Boolean = false): WorkoutOverviewUi
     val session = fullBodyA.toOverviewSession(previous)
     return WorkoutOverviewUiState(
         session.copy(
-            exercises = session.exercises.map { exercise ->
+            exercises = session.exercises.mapIndexed { exerciseIndex, exercise ->
                 exercise.copy(
-                    sets = exercise.sets.map { set -> set.copy(reps = set.reps + 1) },
+                    sets = exercise.sets.mapIndexed { setIndex, set ->
+                        val reps = if (exerciseIndex == 0 && setIndex == exercise.sets.lastIndex) {
+                            set.reps - 1
+                        } else {
+                            set.reps + 1
+                        }
+                        set.copy(reps = reps)
+                    },
                 )
             },
         ),
