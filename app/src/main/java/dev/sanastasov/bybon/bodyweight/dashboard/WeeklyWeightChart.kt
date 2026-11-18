@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import dev.sanastasov.bybon.ui.LocalSkipChartAnimation
 import ir.ehsannarmani.compose_charts.LineChart
 import ir.ehsannarmani.compose_charts.extensions.format
 import ir.ehsannarmani.compose_charts.models.DividerProperties
@@ -68,10 +69,11 @@ fun WeeklyWeightTrendCard(points: List<WeeklyTrendPointUi>, modifier: Modifier =
 @Composable
 private fun WeeklyWeightChart(points: List<WeeklyTrendPointUi>, modifier: Modifier = Modifier) {
     val colors = weeklyChartColors()
+    val skipAnimation = LocalSkipChartAnimation.current
     val values = remember(points) { points.map { it.kilograms.toDouble() } }
     val yRange = remember(values) { yAxisRange(values) }
-    val lines = remember(values, colors.line, colors.surface) {
-        listOf(weeklyAverageLine(values, colors.line, colors.surface))
+    val lines = remember(values, colors.line, colors.surface, skipAnimation) {
+        listOf(weeklyAverageLine(values, colors.line, colors.surface, skipAnimation))
     }
     val description = weeklyTrendDescription(points)
 
@@ -92,11 +94,12 @@ private fun WeeklyAverageLineChart(
     colors: WeeklyChartColors,
     modifier: Modifier = Modifier,
 ) {
+    val skipAnimation = LocalSkipChartAnimation.current
     LineChart(
         modifier = modifier,
         data = lines,
         curvedEdges = false,
-        animationDelay = 80,
+        animationDelay = if (skipAnimation) 0 else 80,
         minValue = yRange.start,
         maxValue = yRange.endInclusive,
         labelHelperProperties = LabelHelperProperties(enabled = false),
@@ -157,26 +160,30 @@ private fun weeklyChartColors(): WeeklyChartColors {
     )
 }
 
-private fun weeklyAverageLine(values: List<Double>, lineColor: Color, surfaceColor: Color): Line =
-    Line(
-        label = "Weekly average",
-        values = values,
-        color = SolidColor(lineColor),
-        firstGradientFillColor = lineColor.copy(alpha = 0.28f),
-        secondGradientFillColor = Color.Transparent,
-        curvedEdges = false,
-        drawStyle = DrawStyle.Stroke(width = 2.5.dp),
-        strokeAnimationSpec = tween(700),
-        gradientAnimationSpec = tween(700),
-        gradientAnimationDelay = 150,
-        dotProperties = DotProperties(
-            enabled = true,
-            radius = 4.dp,
-            color = SolidColor(surfaceColor),
-            strokeWidth = 2.dp,
-            strokeColor = SolidColor(lineColor),
-        ),
-    )
+private fun weeklyAverageLine(
+    values: List<Double>,
+    lineColor: Color,
+    surfaceColor: Color,
+    skipAnimation: Boolean,
+): Line = Line(
+    label = "Weekly average",
+    values = values,
+    color = SolidColor(lineColor),
+    firstGradientFillColor = lineColor.copy(alpha = 0.28f),
+    secondGradientFillColor = Color.Transparent,
+    curvedEdges = false,
+    drawStyle = DrawStyle.Stroke(width = 2.5.dp),
+    strokeAnimationSpec = tween(if (skipAnimation) 0 else 700),
+    gradientAnimationSpec = tween(if (skipAnimation) 0 else 700),
+    gradientAnimationDelay = if (skipAnimation) 0 else 150,
+    dotProperties = DotProperties(
+        enabled = true,
+        radius = 4.dp,
+        color = SolidColor(surfaceColor),
+        strokeWidth = 2.dp,
+        strokeColor = SolidColor(lineColor),
+    ),
+)
 
 private fun weeklyTrendDescription(points: List<WeeklyTrendPointUi>): String =
     points.joinToString(prefix = "Weekly body weight averages. ") {
