@@ -103,7 +103,7 @@ fun WorkoutModule.WorkoutOverviewScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun OverviewScreenContent(
+internal fun OverviewScreenContent(
     state: WorkoutOverviewUiState,
     onAction: (WorkoutOverviewAction) -> Unit,
     onBack: () -> Unit,
