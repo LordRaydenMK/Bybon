@@ -575,6 +575,37 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `toWorkoutSession ignores draft history when attaching previous`() {
+        val completed = completedSession(
+            planId = fullBodyA.id.id,
+            planName = fullBodyA.name,
+            startedAt = LocalDateTime.of(2026, 1, 1, 12, 0),
+            exercises = listOf(
+                completedExercise("bench-press", 40f to 9, 40f to 9, 40f to 9),
+            ),
+        )
+        val draft = fullBodyA.toOverviewSession().let { session ->
+            session.copy(
+                exercises = session.exercises.map { exercise ->
+                    exercise.copy(
+                        sets = exercise.sets.map {
+                            it.copy(weight = Weight.kilograms(99), reps = 1)
+                        },
+                    )
+                },
+                startedAt = LocalDateTime.of(2026, 2, 1, 12, 0),
+            )
+        }
+
+        val actual = fullBodyA.toWorkoutSession(previousHistory = listOf(completed, draft))
+        val bench = actual.exercises.first { it.id == "bench-press" }
+
+        assert(bench.sets[0].previous == PreviousSetPerformance(Weight.kilograms(40), 9))
+        assert(bench.sets[0].weight == Weight.kilograms(40))
+        assert(bench.sets[0].reps == 9)
+    }
+
+    @Test
     fun `toWorkoutSession ignores in-progress history when attaching previous`() {
         val inProgress = fullBodyA.toWorkoutSession().let { session ->
             session.copy(
