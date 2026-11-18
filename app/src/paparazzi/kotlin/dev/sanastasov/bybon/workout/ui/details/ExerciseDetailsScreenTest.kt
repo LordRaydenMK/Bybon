@@ -48,6 +48,13 @@ class ExerciseDetailsScreenTest {
             ExerciseDetailsContent(benchPressDetails(), {})
         }
     }
+
+    @Test
+    fun assistedPullUps() {
+        paparazzi.bybonSnapshot {
+            ExerciseDetailsContent(assistedPullUpsDetails(), {})
+        }
+    }
 }
 
 private fun benchPressDetails(): ExerciseDetailsUiState.Content =
@@ -91,6 +98,42 @@ private fun benchPressDetails(): ExerciseDetailsUiState.Content =
                 sets = listOf(
                     ExerciseDetailsSetUi(1, "60", 8, Weight.kilograms(75f)),
                     ExerciseDetailsSetUi(2, "60", 7, Weight.kilograms(72f)),
+                ),
+            ),
+        ),
+    )
+
+private fun assistedPullUpsDetails(): ExerciseDetailsUiState.Content =
+    catalogExercise("assisted-pull-ups").toDetailsUi().copy(
+        personalRecord = PersonalRecordUi(
+            Weight.kilograms(92.9f),
+            "1 Oct 2026",
+            "0",
+            6,
+        ),
+        oneRmTrend = listOf(
+            ExerciseOneRmPointUi(
+                "10 Aug",
+                68.28f,
+                Weight.kilograms(68.28f),
+                "-25",
+                8,
+            ),
+            ExerciseOneRmPointUi(
+                "1 Oct",
+                92.9f,
+                Weight.kilograms(92.9f),
+                "0",
+                6,
+            ),
+        ),
+        recentSessions = listOf(
+            ExerciseDetailsSessionUi(
+                dateLabel = "1 Oct 2026",
+                planName = "Full Body A",
+                sets = listOf(
+                    ExerciseDetailsSetUi(1, "-25", 8, Weight.kilograms(68.28f)),
+                    ExerciseDetailsSetUi(2, "0", 6, Weight.kilograms(92.9f)),
                 ),
             ),
         ),

@@ -9,7 +9,7 @@ val NumberedSet.oneRmLabel: String
 val NumberedSet.previousLabel: String?
     get() = set.previous?.let { previous ->
         val equipment = set.exerciseDefinition.equipment
-        val load = previous.weight?.toLoadLabel(equipment) ?: MISSING_LOAD_LABEL
+        val load = loggedLoadLabel(previous.weight, equipment)
         buildString {
             append("$load x ${previous.reps}")
             if (!isWarmup) {

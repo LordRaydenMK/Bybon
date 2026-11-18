@@ -15,9 +15,8 @@ fun Weight.toLoadLabel(equipment: Equipment? = null): String =
     if (equipment?.isAssisted == true) "-$kilograms" else kilograms
 
 fun Weight?.toContentLoadLabel(equipment: Equipment? = null): String {
-    val kilograms = this?.kilograms ?: return MISSING_LOAD_LABEL
-    val signed = if (equipment?.isAssisted == true) "-$kilograms" else kilograms
-    return "$signed kg"
+    val label = loggedLoadLabel(this, equipment)
+    return if (label == MISSING_LOAD_LABEL) MISSING_LOAD_LABEL else "$label kg"
 }
 
 fun Weight?.toOneRmColumnLabel(): String =

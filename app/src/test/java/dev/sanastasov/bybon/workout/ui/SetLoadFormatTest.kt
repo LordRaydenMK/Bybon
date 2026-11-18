@@ -15,6 +15,15 @@ class SetLoadFormatTest {
     }
 
     @Test
+    fun `blank assisted load is zero kilograms`() {
+        assert(loggedLoadLabel(null, Equipment.AssistedBodyWeight) == "0")
+        assert(loggedLoadLabel(null, Equipment.Barbell) == "-")
+        assert(null.toContentLoadLabel(Equipment.AssistedBodyWeight) == "0 kg")
+        assert(null.toContentLoadLabel(Equipment.Barbell) == "-")
+        assert(formatLoadedSet(null, 8, Equipment.AssistedBodyWeight) == "0 kg x 8")
+    }
+
+    @Test
     fun `1RM delta is dash when current matches previous`() {
         val oneRm = Weight.kilograms(63f)
         assert(formatOneRmDelta(oneRm, oneRm) == "-")
