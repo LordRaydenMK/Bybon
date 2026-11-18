@@ -36,7 +36,7 @@ Important tasks:
 - Use `testDebutUnitTest` to run the unit tests
 - Use `verifyPaparazziDebug` to run screenshot tests; `recordPaparazziDebug` to write goldens
 - Snapshot PNGs under `app/src/test/snapshots` are stored in Git LFS
-- Use `bash .github/scripts/verify-snapshot-lfs.sh` to confirm snapshots are LFS pointers
+- CI copies `scripts/pre-receive` into git hooks after checkout and runs it, then `git lfs pull`
 - Use `detekt` to run detekt checks, add `--auto-correct` to fix issues automatically
 - Use `lintDebug` for running lint checks
 
