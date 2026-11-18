@@ -37,6 +37,8 @@ Important tasks:
 - Use `verifyPaparazziDebug` to run screenshot tests; `recordPaparazziDebug` to write goldens
 - Snapshot PNGs under `app/src/test/snapshots` are stored in Git LFS
 - The `setup-android` action copies `scripts/pre-receive` into git hooks and runs it when `verify-snapshot-lfs` is true
+- When adding or changing Paparazzi goldens, put the same PNG in the PR description inside a
+  `<details>` / `<summary>` block (one block per snapshot)
 - Use `detekt` to run detekt checks, add `--auto-correct` to fix issues automatically
 - Use `lintDebug` for running lint checks
 

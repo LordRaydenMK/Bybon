@@ -124,11 +124,12 @@ fun WorkoutModule.WorkoutSessionScreen(
 }
 
 @Composable
-private fun SessionScreenContent(
+internal fun SessionScreenContent(
     state: WorkoutSession,
     pagerState: PagerState,
     onAction: (WorkoutSessionAction) -> Unit,
     onBack: () -> Unit,
+    now: () -> LocalDateTime = LocalDateTime::now,
 ) {
     var showCancelDialog by remember { mutableStateOf(false) }
     ClearFocusOnImeHidden()
@@ -139,7 +140,7 @@ private fun SessionScreenContent(
                     state.planName,
                     onBack,
                     actions = {
-                        SessionElapsedClock(state.startedAt)
+                        SessionElapsedClock(state.startedAt, now = now)
                         SessionOverflowMenu(
                             onAddExercise = { onAction(WorkoutSessionAction.OnAddExercise) },
                             onCancelWorkout = { showCancelDialog = true },
@@ -147,7 +148,7 @@ private fun SessionScreenContent(
                     },
                 )
                 state.restTimer()?.let { rest ->
-                    SessionRestProgress(rest)
+                    SessionRestProgress(rest, now = now)
                 }
             }
         },
