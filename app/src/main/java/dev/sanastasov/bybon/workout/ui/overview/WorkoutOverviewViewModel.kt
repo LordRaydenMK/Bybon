@@ -51,15 +51,17 @@ class WorkoutOverviewViewModel(
     val uiState: StateFlow<WorkoutOverviewUiState?> =
         combine(
             repository.workoutPlans(),
-            repository.workoutSessions(),
-        ) { plans, sessions ->
+            repository.workoutSessions(state = WorkoutState.Kind.Completed),
+            repository.workoutSessions(planId, WorkoutState.Kind.Draft),
+        ) { plans, completed, drafts ->
             val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
-            val previousSession = sessions.latestCompletedFor(planId)
-            val draft = sessions.draftFor(planId)
+            val previousSession = completed.latestCompletedFor(planId)
+            val draft = drafts.firstOrNull()
             WorkoutOverviewUiState(
-                session = draft ?: plan.toOverviewSession(previousHistory = sessions),
+                session = (draft ?: plan.toOverviewSession(previousHistory = completed))
+                    .withPreviousFromHistory(completed),
                 previousDate = previousPlanDateLabel(previousSession?.startedAt),
-                history = sessions,
+                history = completed,
                 canDiscardDraft = draft != null,
             )
         }
@@ -75,7 +77,10 @@ class WorkoutOverviewViewModel(
     fun onAction(action: WorkoutOverviewAction) {
         when (action) {
             WorkoutOverviewAction.OnSaveDraft -> coroutineScope.launch {
-                repository.updateWorkout(requireOverviewSession().asOverviewDraft())
+                val state = requireNotNull(uiState.value) { "No overview session" }
+                repository.updateWorkout(
+                    state.session.withPreviousFromHistory(state.history).asOverviewDraft(),
+                )
             }
 
             WorkoutOverviewAction.OnDiscardDraft -> coroutineScope.launch {
