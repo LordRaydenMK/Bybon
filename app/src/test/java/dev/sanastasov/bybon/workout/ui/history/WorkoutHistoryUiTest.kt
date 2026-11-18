@@ -122,14 +122,27 @@ class WorkoutHistoryUiTest {
     }
 
     @Test
-    fun `top set content description names load and 1RM`() {
+    fun `top set content description names load and 1RM change`() {
         val topSet = ExerciseTopSetUi(
             name = "Romanian Deadlift",
             weightKg = "45",
             reps = 12,
             oneRm = Weight.kilograms(63f),
+            oneRmChange = "↑ 2.5 kg",
         )
-        assert(topSet.contentDescription() == "Romanian Deadlift, 45 kg x 12, 63 kg 1RM")
+        assert(topSet.contentDescription() == "Romanian Deadlift, 45 kg x 12, ↑ 2.5 kg")
+    }
+
+    @Test
+    fun `unchanged 1RM content description says no change`() {
+        val topSet = ExerciseTopSetUi(
+            name = "Barbell Bench Press",
+            weightKg = "60",
+            reps = 8,
+            oneRm = Weight.kilograms(76f),
+            oneRmChange = "No change",
+        )
+        assert(topSet.contentDescription() == "Barbell Bench Press, 60 kg x 8, No change")
     }
 
     @Test

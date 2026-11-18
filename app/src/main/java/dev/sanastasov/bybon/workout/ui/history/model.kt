@@ -9,11 +9,15 @@ import dev.sanastasov.bybon.workout.domain.WorkoutExercise
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
+import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
+import dev.sanastasov.bybon.workout.ui.formatOneRmChange
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.TextStyle
 import java.util.Locale
@@ -87,6 +91,7 @@ data class ExerciseTopSetUi(
     val weightKg: String,
     val reps: Int,
     val oneRm: Weight?,
+    val oneRmChange: String = MISSING_LOAD_LABEL,
 )
 
 sealed class WorkoutHistoryAction {
@@ -96,10 +101,12 @@ sealed class WorkoutHistoryAction {
     data object OnImportDone : WorkoutHistoryAction()
 }
 
-internal fun List<WorkoutSession>.toHistoryUi(): List<WorkoutSessionHistoryUi> =
-    filter { it.state is WorkoutState.Completed }
+internal fun List<WorkoutSession>.toHistoryUi(): List<WorkoutSessionHistoryUi> {
+    val completed = filter { it.state is WorkoutState.Completed }
+    return completed
         .sortedByDescending { it.startedAt }
-        .map { it.toHistoryUi() }
+        .map { it.toHistoryUi(completed) }
+}
 
 internal fun List<WorkoutSessionHistoryUi>.toHistoryPeriodSections(
     today: LocalDate,
@@ -166,7 +173,9 @@ internal fun formatLastSevenDaysRange(start: LocalDate, end: LocalDate): String 
     }
 }
 
-internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
+internal fun WorkoutSession.toHistoryUi(
+    completedSessions: List<WorkoutSession> = listOf(this),
+): WorkoutSessionHistoryUi {
     val completed = state
     check(completed is WorkoutState.Completed) {
         "History UI requires a completed session, was $completed"
@@ -177,13 +186,23 @@ internal fun WorkoutSession.toHistoryUi(): WorkoutSessionHistoryUi {
         date = startedAt.toLocalDate(),
         startTime = startedAt.toStartTimeLabel(),
         duration = completed.duration.formatElapsedClock(),
-        exercises = exercises.map { it.toTopSetUi() },
+        exercises = exercises.map { it.toTopSetUi(completedSessions, startedAt) },
     )
 }
 
-private fun WorkoutExercise.toTopSetUi(): ExerciseTopSetUi = ExerciseTopSetUi(
-    name = exerciseDefinition.name,
-    weightKg = topSet.weight.toLoadLabel(exerciseDefinition.equipment),
-    reps = topSet.reps,
-    oneRm = topSet.oneRm,
-)
+private fun WorkoutExercise.toTopSetUi(
+    completedSessions: List<WorkoutSession>,
+    sessionStartedAt: LocalDateTime,
+): ExerciseTopSetUi {
+    val previousOneRm = completedSessions
+        .latestCompletedExercise(id, before = sessionStartedAt)
+        ?.topSet
+        ?.oneRm
+    return ExerciseTopSetUi(
+        name = exerciseDefinition.name,
+        weightKg = topSet.weight.toLoadLabel(exerciseDefinition.equipment),
+        reps = topSet.reps,
+        oneRm = topSet.oneRm,
+        oneRmChange = formatOneRmChange(topSet.oneRm, previousOneRm),
+    )
+}

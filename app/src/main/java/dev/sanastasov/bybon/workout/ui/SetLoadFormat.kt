@@ -5,7 +5,6 @@ import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.isAssisted
 import java.util.*
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 const val MISSING_LOAD_LABEL = "-"
 
@@ -30,8 +29,7 @@ fun Weight?.toOneRmLabel(): String =
 
 fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
     if (current == null || previous == null) return MISSING_LOAD_LABEL
-    val deltaHundredths =
-        (current.kilogramsValue * 100f).roundToInt() - (previous.kilogramsValue * 100f).roundToInt()
+    val deltaHundredths = oneRmDeltaHundredths(current, previous)
     val amount = formatOneRmKg(abs(deltaHundredths) / 100f)
     return when {
         deltaHundredths > 0 -> "+${amount}kg"

@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -44,7 +45,6 @@ import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.SessionMeta
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
-import dev.sanastasov.bybon.workout.ui.toContentLoadLabel
 import dev.sanastasov.bybon.workout.ui.toLoadLabel
 import dev.sanastasov.bybon.workout.ui.toStartTimeLabel
 import java.time.LocalDate
@@ -250,19 +250,19 @@ private fun TopSetRow(exercise: ExerciseTopSetUi) {
         leading = exercise.name,
         weightKg = exercise.weightKg,
         reps = exercise.reps,
-        oneRm = exercise.oneRm,
+        oneRmChange = exercise.oneRmChange,
         rowDescription = exercise.contentDescription(),
     )
 }
 
 internal fun ExerciseTopSetUi.contentDescription(): String {
     val load = formatLoadedSet(weightKg, reps)
-    val rm = oneRm?.let { "${it.kilograms} kg 1RM" } ?: MISSING_LOAD_LABEL
-    return "$name, $load, $rm"
+    return "$name, $load, $oneRmChange"
 }
 
 private val LoadColumnMinWidth = 96.dp
-private val OneRmColumnMinWidth = 72.dp
+private val OneRmColumnMinWidth = 88.dp
+private val OneRmImproved = Color(0xFF1B7A3D)
 
 @Composable
 private fun SetLoadOneRmHeader(modifier: Modifier = Modifier) {
@@ -273,7 +273,7 @@ private fun SetLoadOneRmHeader(modifier: Modifier = Modifier) {
     ) {
         HeaderCell("Exercise", Modifier.weight(1f), TextAlign.Start)
         HeaderCell("kg x reps", Modifier.widthIn(min = LoadColumnMinWidth), TextAlign.End)
-        HeaderCell("1RM", Modifier.widthIn(min = OneRmColumnMinWidth), TextAlign.End)
+        HeaderCell("Δ 1RM", Modifier.widthIn(min = OneRmColumnMinWidth), TextAlign.End)
     }
 }
 
@@ -282,12 +282,11 @@ private fun SetLoadOneRmRow(
     leading: String,
     weightKg: String,
     reps: Int,
-    oneRm: Weight?,
+    oneRmChange: String,
     rowDescription: String,
     modifier: Modifier = Modifier,
 ) {
     val load = formatLoadedSet(weightKg, reps)
-    val oneRmLabel = oneRm.toContentLoadLabel()
     Row(
         modifier
             .fillMaxWidth()
@@ -308,12 +307,21 @@ private fun SetLoadOneRmRow(
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
         )
         Text(
-            oneRmLabel,
+            oneRmChange,
             Modifier.widthIn(min = OneRmColumnMinWidth),
+            color = oneRmChange.oneRmChangeColor(),
             textAlign = TextAlign.End,
+            fontWeight = FontWeight.Medium,
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
         )
     }
+}
+
+@Composable
+private fun String.oneRmChangeColor(): Color = when {
+    startsWith("↑") -> OneRmImproved
+    startsWith("↓") -> MaterialTheme.colorScheme.error
+    else -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 @Composable
@@ -403,10 +411,10 @@ private fun previewHistorySessions(): List<WorkoutSessionHistoryUi> {
             planName = "Upper body B",
             startedAt = today.atTime(17, 59),
             durationSeconds = 3367,
-            previewTopSet("incline-db-press", 20f, 14),
-            previewTopSet("chest-supported-db-row", 22f, 15),
-            previewTopSet("incline-db-curl", 9f, 15),
-            previewTopSet("lateral-raise-machine", 32.5f, 12),
+            previewTopSet("incline-db-press", 20f, 14, "↑ 0.67 kg"),
+            previewTopSet("chest-supported-db-row", 22f, 15, "No change"),
+            previewTopSet("incline-db-curl", 9f, 15, "↓ 0.33 kg"),
+            previewTopSet("lateral-raise-machine", 32.5f, 12, "↑ 1.5 kg"),
             previewTopSet("machine-seated-crunch", 35f, 15),
         ),
         previewHistorySession(
@@ -460,13 +468,19 @@ private fun previewHistorySession(
     exercises = exercises.toList(),
 )
 
-private fun previewTopSet(exerciseId: String, kg: Float, reps: Int): ExerciseTopSetUi {
+private fun previewTopSet(
+    exerciseId: String,
+    kg: Float,
+    reps: Int,
+    oneRmChange: String = MISSING_LOAD_LABEL,
+): ExerciseTopSetUi {
     val weight = Weight.kilograms(kg)
     return ExerciseTopSetUi(
         name = catalogExercise(exerciseId).name,
         weightKg = weight.toLoadLabel(catalogExercise(exerciseId).equipment),
         reps = reps,
         oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
+        oneRmChange = oneRmChange,
     )
 }
 

@@ -29,8 +29,8 @@ import dev.sanastasov.bybon.ui.icons.Clock
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.formatOneRmKg
+import dev.sanastasov.bybon.workout.ui.oneRmDeltaHundredths
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 private val OneRmImproved = Color(0xFF1B7A3D)
 
@@ -257,9 +257,6 @@ internal fun formatSummaryLoad(weightKg: String?, reps: Int): String {
     val load = weightKg?.let { "$it kg" } ?: MISSING_LOAD_LABEL
     return "$load × $reps"
 }
-
-internal fun oneRmDeltaHundredths(current: Weight, previous: Weight): Int =
-    (current.kilogramsValue * 100f).roundToInt() - (previous.kilogramsValue * 100f).roundToInt()
 
 internal fun formatOneRmVsPrevious(current: Weight, previous: Weight): String? {
     val deltaHundredths = oneRmDeltaHundredths(current, previous).takeIf { it != 0 } ?: return null
