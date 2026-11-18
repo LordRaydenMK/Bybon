@@ -12,25 +12,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.sanastasov.bybon.ui.LocalSkipChartAnimation
 import dev.sanastasov.bybon.workout.domain.Weight
-import ir.ehsannarmani.compose_charts.LineChart
-import ir.ehsannarmani.compose_charts.extensions.format
-import ir.ehsannarmani.compose_charts.models.DividerProperties
 import ir.ehsannarmani.compose_charts.models.DotProperties
 import ir.ehsannarmani.compose_charts.models.DrawStyle
-import ir.ehsannarmani.compose_charts.models.GridProperties
-import ir.ehsannarmani.compose_charts.models.HorizontalIndicatorProperties
-import ir.ehsannarmani.compose_charts.models.IndicatorCount
-import ir.ehsannarmani.compose_charts.models.LabelHelperProperties
-import ir.ehsannarmani.compose_charts.models.LabelProperties
 import ir.ehsannarmani.compose_charts.models.Line
-import ir.ehsannarmani.compose_charts.models.LineProperties
 import ir.ehsannarmani.compose_charts.models.PopupProperties
 import ir.ehsannarmani.compose_charts.models.StrokeStyle
 
@@ -76,6 +65,7 @@ private fun ExerciseOneRmChart(
     val yRange = remember(topSetValues, averageValues, personalRecordKg) {
         oneRmYAxisRange(topSetValues + (averageValues ?: emptyList()), personalRecordKg)
     }
+    val skipAnimation = LocalSkipChartAnimation.current
     val popup = remember(points, colors) {
         PopupProperties(
             textStyle = colors.popupTextStyle,
@@ -84,52 +74,35 @@ private fun ExerciseOneRmChart(
             contentBuilder = { item -> oneRmTrendPopupText(points, item.valueIndex) },
         )
     }
-    val lines = remember(topSetValues, averageValues, personalRecordKg, colors, popup) {
-        oneRmChartLines(topSetValues, averageValues, personalRecordKg, colors, popup)
+    val lines = remember(
+        topSetValues,
+        averageValues,
+        personalRecordKg,
+        colors,
+        popup,
+        skipAnimation,
+    ) {
+        oneRmChartLines(
+            topSetValues,
+            averageValues,
+            personalRecordKg,
+            colors,
+            popup,
+            skipAnimation,
+        )
     }
-    LineChart(
-        modifier = modifier.semantics { contentDescription = oneRmTrendDescription(points) },
-        data = lines,
-        curvedEdges = false,
-        animationDelay = 80,
-        minValue = yRange.start,
-        maxValue = yRange.endInclusive,
-        labelHelperProperties = LabelHelperProperties(
-            enabled = true,
-            textStyle = colors.labelStyle,
-        ),
-        dividerProperties = DividerProperties(
-            xAxisProperties = LineProperties(color = SolidColor(colors.outline)),
-            yAxisProperties = LineProperties(color = SolidColor(colors.outline)),
-        ),
-        gridProperties = GridProperties(
-            xAxisProperties = GridProperties.AxisProperties(
-                color = SolidColor(colors.outline.copy(alpha = 0.7f)),
-                lineCount = 4,
-            ),
-            yAxisProperties = GridProperties.AxisProperties(enabled = false),
-        ),
-        indicatorProperties = HorizontalIndicatorProperties(
-            textStyle = colors.labelStyle,
-            count = IndicatorCount.CountBased(count = 4),
-            padding = 8.dp,
-            contentBuilder = { value -> value.format(1) },
-        ),
-        labelProperties = LabelProperties(
-            enabled = true,
-            textStyle = colors.labelStyle.copy(textAlign = TextAlign.Center),
-            padding = 12.dp,
-            labels = chartDateLabels(points),
-            rotation = LabelProperties.Rotation(
-                mode = LabelProperties.Rotation.Mode.Force,
-                degree = 0f,
-            ),
-        ),
-        popupProperties = popup,
+    OneRmLineChart(
+        points = points,
+        lines = lines,
+        yRange = yRange,
+        colors = colors,
+        popup = popup,
+        skipAnimation = skipAnimation,
+        modifier = modifier,
     )
 }
 
-private data class OneRmChartColors(
+internal data class OneRmChartColors(
     val line: Color,
     val averageLine: Color,
     val guideline: Color,
@@ -182,6 +155,7 @@ private fun oneRmChartLines(
     personalRecordKg: Double?,
     colors: OneRmChartColors,
     popupProperties: PopupProperties,
+    skipAnimation: Boolean,
 ): List<Line> = buildList {
     add(
         oneRmTrendLine(
@@ -190,6 +164,7 @@ private fun oneRmChartLines(
             lineColor = colors.line,
             surfaceColor = colors.surface,
             popupProperties = popupProperties,
+            skipAnimation = skipAnimation,
         ),
     )
     if (averageValues != null) {
@@ -199,6 +174,7 @@ private fun oneRmChartLines(
                 values = averageValues,
                 color = colors.averageLine,
                 dashed = false,
+                skipAnimation = skipAnimation,
             ),
         )
     }
@@ -209,6 +185,7 @@ private fun oneRmChartLines(
                 values = List(topSetValues.size) { personalRecordKg },
                 color = colors.guideline,
                 dashed = true,
+                skipAnimation = skipAnimation,
             ),
         )
     }
@@ -220,6 +197,7 @@ private fun oneRmTrendLine(
     lineColor: Color,
     surfaceColor: Color,
     popupProperties: PopupProperties,
+    skipAnimation: Boolean,
 ): Line = Line(
     label = label,
     values = values,
@@ -228,9 +206,9 @@ private fun oneRmTrendLine(
     secondGradientFillColor = Color.Transparent,
     curvedEdges = false,
     drawStyle = DrawStyle.Stroke(width = 2.5.dp),
-    strokeAnimationSpec = tween(700),
-    gradientAnimationSpec = tween(700),
-    gradientAnimationDelay = 150,
+    strokeAnimationSpec = tween(if (skipAnimation) 0 else 700),
+    gradientAnimationSpec = tween(if (skipAnimation) 0 else 700),
+    gradientAnimationDelay = if (skipAnimation) 0 else 150,
     dotProperties = DotProperties(
         enabled = true,
         radius = 4.dp,
@@ -246,6 +224,7 @@ private fun secondaryTrendLine(
     values: List<Double>,
     color: Color,
     dashed: Boolean,
+    skipAnimation: Boolean,
 ): Line = Line(
     label = label,
     values = values,
@@ -255,7 +234,7 @@ private fun secondaryTrendLine(
         width = if (dashed) 1.5.dp else 1.25.dp,
         strokeStyle = if (dashed) StrokeStyle.Dashed() else StrokeStyle.Normal,
     ),
-    strokeAnimationSpec = tween(700),
+    strokeAnimationSpec = tween(if (skipAnimation) 0 else 700),
     gradientAnimationSpec = tween(0),
     gradientAnimationDelay = 0,
     dotProperties = DotProperties(enabled = false),
@@ -283,7 +262,7 @@ internal fun chartDateLabels(points: List<ExerciseOneRmPointUi>): List<String> {
     }
 }
 
-private fun oneRmTrendDescription(points: List<ExerciseOneRmPointUi>): String {
+internal fun oneRmTrendDescription(points: List<ExerciseOneRmPointUi>): String {
     val prefix = if (points.any { it.averageOneRm != null }) {
         "Estimated 1RM of the top set and work-set average. "
     } else {
