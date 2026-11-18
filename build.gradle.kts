@@ -9,4 +9,5 @@ plugins {
     alias(libs.plugins.kotlin.power.assert) apply false
     alias(libs.plugins.androidx.room3) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.paparazzi) apply false
 }

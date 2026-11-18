@@ -1,6 +1,5 @@
 package dev.sanastasov.bybon.workout.ui.history
 
-import android.net.DummyUri
 import android.net.Uri
 
 class FakeContentResolverReader(
@@ -10,4 +9,4 @@ class FakeContentResolverReader(
     override fun read(uri: Uri): String = csv
 }
 
-internal fun dummyUri(): Uri = DummyUri()
+internal fun dummyUri(): Uri = Uri.parse("content://bybon.test/csv")
