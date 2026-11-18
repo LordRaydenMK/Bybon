@@ -251,13 +251,15 @@ private fun TopSetRow(exercise: ExerciseTopSetUi) {
         weightKg = exercise.weightKg,
         reps = exercise.reps,
         oneRmChange = exercise.oneRmChange,
+        oneRmChangeDirection = exercise.oneRmChangeDirection,
         rowDescription = exercise.contentDescription(),
     )
 }
 
 internal fun ExerciseTopSetUi.contentDescription(): String {
     val load = formatLoadedSet(weightKg, reps)
-    return "$name, $load, $oneRmChange"
+    val change = oneRmChange ?: MISSING_LOAD_LABEL
+    return "$name, $load, $change"
 }
 
 private val LoadColumnMinWidth = 96.dp
@@ -282,7 +284,8 @@ private fun SetLoadOneRmRow(
     leading: String,
     weightKg: String,
     reps: Int,
-    oneRmChange: String,
+    oneRmChange: String?,
+    oneRmChangeDirection: OneRmChangeDirection?,
     rowDescription: String,
     modifier: Modifier = Modifier,
 ) {
@@ -307,9 +310,9 @@ private fun SetLoadOneRmRow(
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
         )
         Text(
-            oneRmChange,
+            oneRmChange ?: MISSING_LOAD_LABEL,
             Modifier.widthIn(min = OneRmColumnMinWidth),
-            color = oneRmChange.oneRmChangeColor(),
+            color = oneRmChangeDirection.changeColor(),
             textAlign = TextAlign.End,
             fontWeight = FontWeight.Medium,
             style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = "tnum"),
@@ -318,10 +321,10 @@ private fun SetLoadOneRmRow(
 }
 
 @Composable
-private fun String.oneRmChangeColor(): Color = when {
-    startsWith("↑") -> OneRmImproved
-    startsWith("↓") -> MaterialTheme.colorScheme.error
-    else -> MaterialTheme.colorScheme.onSurfaceVariant
+private fun OneRmChangeDirection?.changeColor(): Color = when (this) {
+    OneRmChangeDirection.Increased -> OneRmImproved
+    OneRmChangeDirection.Decreased -> MaterialTheme.colorScheme.error
+    OneRmChangeDirection.Unchanged, null -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 @Composable
@@ -406,17 +409,7 @@ private fun previewHistorySessions(): List<WorkoutSessionHistoryUi> {
         ?: today.minusMonths(1).withDayOfMonth(1)
     val olderMonth = today.minusMonths(3).withDayOfMonth(20)
     return listOf(
-        previewHistorySession(
-            planId = "upper-body-b",
-            planName = "Upper body B",
-            startedAt = today.atTime(17, 59),
-            durationSeconds = 3367,
-            previewTopSet("incline-db-press", 20f, 14, "↑ 0.67 kg"),
-            previewTopSet("chest-supported-db-row", 22f, 15, "No change"),
-            previewTopSet("incline-db-curl", 9f, 15, "↓ 0.33 kg"),
-            previewTopSet("lateral-raise-machine", 32.5f, 12, "↑ 1.5 kg"),
-            previewTopSet("machine-seated-crunch", 35f, 15),
-        ),
+        previewUpperBodyB(today.atTime(17, 59)),
         previewHistorySession(
             planId = "upper-body-a",
             planName = "Upper body A",
@@ -453,6 +446,42 @@ private fun previewHistorySessions(): List<WorkoutSessionHistoryUi> {
     )
 }
 
+private fun previewUpperBodyB(startedAt: LocalDateTime) = previewHistorySession(
+    planId = "upper-body-b",
+    planName = "Upper body B",
+    startedAt = startedAt,
+    durationSeconds = 3367,
+    previewTopSet(
+        "incline-db-press",
+        20f,
+        14,
+        "↑ 0.67 kg",
+        OneRmChangeDirection.Increased,
+    ),
+    previewTopSet(
+        "chest-supported-db-row",
+        22f,
+        15,
+        "No change",
+        OneRmChangeDirection.Unchanged,
+    ),
+    previewTopSet(
+        "incline-db-curl",
+        9f,
+        15,
+        "↓ 0.33 kg",
+        OneRmChangeDirection.Decreased,
+    ),
+    previewTopSet(
+        "lateral-raise-machine",
+        32.5f,
+        12,
+        "↑ 1.5 kg",
+        OneRmChangeDirection.Increased,
+    ),
+    previewTopSet("machine-seated-crunch", 35f, 15),
+)
+
 private fun previewHistorySession(
     planId: String,
     planName: String,
@@ -472,7 +501,8 @@ private fun previewTopSet(
     exerciseId: String,
     kg: Float,
     reps: Int,
-    oneRmChange: String = MISSING_LOAD_LABEL,
+    oneRmChange: String? = null,
+    oneRmChangeDirection: OneRmChangeDirection? = null,
 ): ExerciseTopSetUi {
     val weight = Weight.kilograms(kg)
     return ExerciseTopSetUi(
@@ -481,6 +511,7 @@ private fun previewTopSet(
         reps = reps,
         oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
         oneRmChange = oneRmChange,
+        oneRmChangeDirection = oneRmChangeDirection,
     )
 }
 

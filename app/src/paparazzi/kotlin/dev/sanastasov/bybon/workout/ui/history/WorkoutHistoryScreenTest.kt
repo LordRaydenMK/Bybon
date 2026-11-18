@@ -137,9 +137,27 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         planName = "Upper body B",
         startedAt = today.atTime(17, 59),
         durationSeconds = 3367,
-        topSet("incline-db-press", 20f, 14, "↑ 0.66 kg"),
-        topSet("chest-supported-db-row", 22f, 15, "↓ 0.42 kg"),
-        topSet("incline-db-curl", 9f, 15, "No change"),
+        topSet(
+            "incline-db-press",
+            20f,
+            14,
+            "↑ 0.66 kg",
+            OneRmChangeDirection.Increased,
+        ),
+        topSet(
+            "chest-supported-db-row",
+            22f,
+            15,
+            "↓ 0.42 kg",
+            OneRmChangeDirection.Decreased,
+        ),
+        topSet(
+            "incline-db-curl",
+            9f,
+            15,
+            "No change",
+            OneRmChangeDirection.Unchanged,
+        ),
     ),
     historySession(
         planId = "full-body-a",
@@ -170,7 +188,8 @@ private fun topSet(
     exerciseId: String,
     kg: Float,
     reps: Int,
-    oneRmChange: String = "-",
+    oneRmChange: String? = null,
+    oneRmChangeDirection: OneRmChangeDirection? = null,
 ): ExerciseTopSetUi {
     val exercise = catalogExercise(exerciseId)
     val weight = Weight.kilograms(kg)
@@ -180,5 +199,6 @@ private fun topSet(
         reps = reps,
         oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
         oneRmChange = oneRmChange,
+        oneRmChangeDirection = oneRmChangeDirection,
     )
 }

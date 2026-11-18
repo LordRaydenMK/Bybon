@@ -42,8 +42,6 @@ class SetLoadFormatTest {
                 "↓ 1 kg",
         )
         assert(formatOneRmChange(Weight.kilograms(25f), Weight.kilograms(25f)) == "No change")
-        assert(formatOneRmChange(null, Weight.kilograms(25f)) == "-")
-        assert(formatOneRmChange(Weight.kilograms(25f), null) == "-")
     }
 
     @Test
