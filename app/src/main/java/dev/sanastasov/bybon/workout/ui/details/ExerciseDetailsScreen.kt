@@ -34,7 +34,7 @@ fun WorkoutModule.ExerciseDetailsScreen(exerciseId: String, onNavigateBack: () -
 }
 
 @Composable
-private fun ExerciseDetailsContent(
+internal fun ExerciseDetailsContent(
     uiState: ExerciseDetailsUiState,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
