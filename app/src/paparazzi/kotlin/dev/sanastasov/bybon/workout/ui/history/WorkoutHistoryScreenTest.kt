@@ -137,8 +137,9 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         planName = "Upper body B",
         startedAt = today.atTime(17, 59),
         durationSeconds = 3367,
-        topSet("incline-db-press", 20f, 14),
-        topSet("chest-supported-db-row", 22f, 15),
+        topSet("incline-db-press", 20f, 14, "↑ 0.66 kg"),
+        topSet("chest-supported-db-row", 22f, 15, "↓ 0.42 kg"),
+        topSet("incline-db-curl", 9f, 15, "No change"),
     ),
     historySession(
         planId = "full-body-a",
@@ -165,7 +166,12 @@ private fun historySession(
     exercises = exercises.toList(),
 )
 
-private fun topSet(exerciseId: String, kg: Float, reps: Int): ExerciseTopSetUi {
+private fun topSet(
+    exerciseId: String,
+    kg: Float,
+    reps: Int,
+    oneRmChange: String = "-",
+): ExerciseTopSetUi {
     val exercise = catalogExercise(exerciseId)
     val weight = Weight.kilograms(kg)
     return ExerciseTopSetUi(
@@ -173,5 +179,6 @@ private fun topSet(exerciseId: String, kg: Float, reps: Int): ExerciseTopSetUi {
         weightKg = weight.toLoadLabel(exercise.equipment),
         reps = reps,
         oneRm = Weight.kilograms(estimateOneRmKg(kg, reps)),
+        oneRmChange = oneRmChange,
     )
 }
