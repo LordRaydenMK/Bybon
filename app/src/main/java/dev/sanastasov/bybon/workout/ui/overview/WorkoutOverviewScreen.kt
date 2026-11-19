@@ -305,6 +305,9 @@ private fun ExerciseCardEvent.toOverviewAction(exercise: WorkoutExercise): Worko
 
         ExerciseCardEvent.OnRemoveLastSet -> WorkoutOverviewAction.RemoveLastSet(exercise)
 
+        ExerciseCardEvent.OnRemoveLastWarmupSet ->
+            WorkoutOverviewAction.RemoveLastWarmupSet(exercise)
+
         ExerciseCardEvent.OnConvertToWarmup -> WorkoutOverviewAction.OnConvertToWarmup(exercise)
 
         ExerciseCardEvent.OnConvertToWorkSet -> WorkoutOverviewAction.OnConvertToWorkSet(exercise)

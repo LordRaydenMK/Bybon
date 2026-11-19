@@ -37,13 +37,30 @@ fun WorkoutSession.removeLastSet(exercise: WorkoutExercise): WorkoutSession {
             else -> current
         }
     }
-    if (!hadInProgress || updated.workoutSets.any { it.setState == SetState.InProgress }) {
-        return updated
+    return updated.restoreInProgressIfNeeded(hadInProgress)
+}
+
+fun WorkoutSession.removeLastWarmupSet(exercise: WorkoutExercise): WorkoutSession {
+    val hadInProgress = workoutSets.any { it.setState == SetState.InProgress }
+    val updated = updateExercise(exercise.id) { current ->
+        val warmupSets = current.warmupSets ?: return@updateExercise current
+        if (warmupSets.last().setState is SetState.Completed) return@updateExercise current
+        current.copy(warmupSets = warmupSets.dropLast(1).nullIfEmpty())
     }
-    val next = updated.firstNotStartedSet() ?: return updated
-    val nextExercise = updated.exercises.first { it.id == next.exerciseId }
-    return updated.updateExerciseSet(nextExercise, next.index, next.isWarmup) {
-        it.copy(setState = SetState.InProgress)
+    return updated.restoreInProgressIfNeeded(hadInProgress)
+}
+
+private fun WorkoutSession.restoreInProgressIfNeeded(hadInProgress: Boolean): WorkoutSession {
+    val next = firstNotStartedSet().takeIf {
+        hadInProgress && workoutSets.none { set -> set.setState == SetState.InProgress }
+    }
+    return if (next == null) {
+        this
+    } else {
+        val nextExercise = exercises.first { it.id == next.exerciseId }
+        updateExerciseSet(nextExercise, next.index, next.isWarmup) {
+            it.copy(setState = SetState.InProgress)
+        }
     }
 }
 

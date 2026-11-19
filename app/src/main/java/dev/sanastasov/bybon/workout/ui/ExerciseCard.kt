@@ -137,19 +137,42 @@ private fun ExerciseCardHeader(
                     style = MaterialTheme.typography.headlineSmall,
                 )
             }
-            if (overflow != null || onRemoveExercise != null) {
-                ExerciseOverflowMenu(exercise.exerciseDefinition.name, overflow) { dismiss ->
-                    if (onRemoveExercise != null) {
-                        DropdownMenuItem(
-                            text = { Text("Remove Exercise") },
-                            onClick = {
-                                dismiss()
-                                onRemoveExercise()
-                            },
-                        )
-                    }
-                }
-            }
+            ExerciseCardOverflow(exercise, overflow, onRemoveExercise, onEvent)
+        }
+    }
+}
+
+@Composable
+private fun ExerciseCardOverflow(
+    exercise: WorkoutExercise,
+    overflow: ExerciseOverflow?,
+    onRemoveExercise: (() -> Unit)?,
+    onEvent: (ExerciseCardEvent) -> Unit,
+) {
+    val canRemoveWarmup = exercise.warmupSets != null
+    if (overflow == null && onRemoveExercise == null && !canRemoveWarmup) return
+    val name = exercise.exerciseDefinition.name
+    ExerciseOverflowMenu(name, overflow) { dismiss ->
+        if (canRemoveWarmup) {
+            DropdownMenuItem(
+                text = { Text("Remove warmup set") },
+                onClick = {
+                    dismiss()
+                    onEvent(ExerciseCardEvent.OnRemoveLastWarmupSet)
+                },
+                modifier = Modifier.clearAndSetSemantics {
+                    contentDescription = "Remove last warmup set for $name"
+                },
+            )
+        }
+        if (onRemoveExercise != null) {
+            DropdownMenuItem(
+                text = { Text("Remove Exercise") },
+                onClick = {
+                    dismiss()
+                    onRemoveExercise()
+                },
+            )
         }
     }
 }

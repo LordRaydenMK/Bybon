@@ -20,6 +20,7 @@ import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
 import dev.sanastasov.bybon.workout.domain.moveExercise
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastSet
+import dev.sanastasov.bybon.workout.domain.removeLastWarmupSet
 import dev.sanastasov.bybon.workout.domain.requireExercise
 import dev.sanastasov.bybon.workout.domain.resetExerciseToPrevious
 import dev.sanastasov.bybon.workout.domain.resetSetToPrevious
@@ -261,6 +262,9 @@ class WorkoutSessionViewModel(
 
         is WorkoutSessionAction.RemoveLastSet -> session.removeLastSet(action.exercise)
 
+        is WorkoutSessionAction.RemoveLastWarmupSet ->
+            session.removeLastWarmupSet(action.exercise)
+
         is WorkoutSessionAction.OnConvertToWarmup ->
             session.convertFirstWorkSetToWarmup(action.exercise)
 
@@ -423,6 +427,7 @@ private class ActiveSession(
 private fun WorkoutSessionAction.rematchPrevious(): Boolean = when (this) {
     is WorkoutSessionAction.OnAddSet,
     is WorkoutSessionAction.RemoveLastSet,
+    is WorkoutSessionAction.RemoveLastWarmupSet,
     is WorkoutSessionAction.OnConvertToWarmup,
     is WorkoutSessionAction.OnConvertToWorkSet,
     -> true
