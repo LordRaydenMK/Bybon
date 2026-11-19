@@ -81,7 +81,16 @@ data class WorkoutSummaryExerciseUi(
 ) {
     val workSets: List<WorkoutSummarySetUi> get() = sets.filterNot { it.isWarmup }
 
-    val topSetOneRm: Weight? get() = workSets.mapNotNull { it.oneRm }.maxOrNull()
+    val topSet: WorkoutSummarySetUi?
+        get() = workSets.maxWithOrNull(
+            compareBy(
+                { it.oneRm },
+                { it.effectiveLoadKg },
+                { it.reps },
+            ),
+        )
+
+    val topSetOneRm: Weight? get() = topSet?.oneRm
 
     val averageOneRm: Weight? get() = workSets.mapNotNull { it.oneRm }.averageWeight()
 

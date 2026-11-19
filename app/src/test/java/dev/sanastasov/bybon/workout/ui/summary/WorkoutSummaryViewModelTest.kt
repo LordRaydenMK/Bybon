@@ -319,6 +319,8 @@ class WorkoutSummaryViewModelTest {
         val exercise = listOf(previous, session).toSummaryExercise(session)
         assert(exercise.previous?.workoutLabel == "Previous workout: 13 Aug 2026 · 7 days ago")
         assert(exercise.topSetOneRm == oneRm(20f, 14))
+        assert(exercise.topSet?.weightKg == "20")
+        assert(exercise.topSet?.reps == 14)
         assert(exercise.averageOneRm == oneRm(20f, 14))
         assert(exercise.previous?.topSetOneRm == oneRm(20f, 13))
         assert(exercise.previous?.averageOneRm == oneRm(20f, 13))

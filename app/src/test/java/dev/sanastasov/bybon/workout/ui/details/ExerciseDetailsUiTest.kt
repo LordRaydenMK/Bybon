@@ -201,6 +201,22 @@ class ExerciseDetailsUiTest {
         )
     }
 
+    @Test
+    fun `estimated 1RM header names estimate and top-set load`() {
+        val oneRm = Weight.kilograms(estimateOneRmKg(45f, 12))
+        assert(
+            EstimatedOneRmHighlight(oneRm, "45", 12).label() ==
+                "${oneRm.kilograms} kg · 45 kg x 12",
+        )
+        assert(EstimatedOneRmHighlight(null, "45", 12).label() == "- · 45 kg x 12")
+        assert(EstimatedOneRmHighlight(null, null, 8).label() == "- · - x 8")
+        assert(
+            ExerciseOneRmPointUi("13 Aug", oneRm.kilogramsValue, oneRm, "45", 12)
+                .toHighlight()
+                .label() == "${oneRm.kilograms} kg · 45 kg x 12",
+        )
+    }
+
     private fun benchDetailsUi(): ExerciseDetailsUiState.Content {
         val older = completedSession(
             planId = "full-body-a",

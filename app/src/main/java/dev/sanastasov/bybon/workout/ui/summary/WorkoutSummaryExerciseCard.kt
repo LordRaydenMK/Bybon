@@ -219,7 +219,6 @@ private fun OneRmHighlight(
 @Composable
 private fun WorkSetTotals(exercise: WorkoutSummaryExerciseUi) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        TotalRow("Working sets", "${exercise.workSets.size}")
         TotalRow("Total reps", "${exercise.totalReps}")
         TotalRow("Volume load", exercise.volumeLoadLabel)
     }

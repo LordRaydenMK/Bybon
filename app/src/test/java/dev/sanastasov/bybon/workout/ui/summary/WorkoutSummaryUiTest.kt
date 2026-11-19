@@ -72,6 +72,20 @@ class WorkoutSummaryUiTest {
     }
 
     @Test
+    fun `top set is the working set with the highest e1RM`() {
+        val weaker = WorkoutSummarySetUi(1, "17.5", 11, Weight.kilograms(23.92f))
+        val stronger = WorkoutSummarySetUi(2, "17.5", 15, Weight.kilograms(26.25f))
+        val exercise = WorkoutSummaryExerciseUi(
+            id = "incline-db-press",
+            name = "Incline Dumbbell Press",
+            sets = listOf(weaker, stronger),
+            volumeLoadLabel = "682.5 kg",
+        )
+        assert(exercise.topSet == stronger)
+        assert(exercise.topSetOneRm == stronger.oneRm)
+    }
+
+    @Test
     fun `average e1RM change omits vs previous and names no change`() {
         assert(
             oneRmChange(Weight.kilograms(26.25f), Weight.kilograms(25.67f))?.toLabel() ==

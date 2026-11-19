@@ -1,19 +1,27 @@
 package dev.sanastasov.bybon.workout.ui.details
 
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.ui.LocalSkipChartAnimation
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -27,14 +35,41 @@ import ir.ehsannarmani.compose_charts.models.StrokeStyle
 internal fun ExerciseOneRmTrendCard(
     points: List<ExerciseOneRmPointUi>,
     personalRecordOneRm: Weight?,
+    highlightedTopSet: EstimatedOneRmHighlight? = points.lastOrNull()?.toHighlight(),
     modifier: Modifier = Modifier,
 ) {
+    val highlight = highlightedTopSet?.label()
     Column(modifier.fillMaxWidth()) {
-        Text(
-            "Estimated 1RM",
-            fontWeight = FontWeight.Bold,
-            style = MaterialTheme.typography.titleMedium,
-        )
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clearAndSetSemantics {
+                    contentDescription = listOfNotNull("Estimated 1RM", highlight)
+                        .joinToString(", ")
+                },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                "Estimated 1RM",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium,
+            )
+            if (highlight != null) {
+                Text(
+                    highlight,
+                    Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
         Spacer(Modifier.height(4.dp))
         Text(
             oneRmTrendCaption(points, personalRecordOneRm != null),
