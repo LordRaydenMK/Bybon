@@ -101,7 +101,7 @@ internal fun PersonalRecord.toPersonalRecordUi(today: LocalDate? = null): Person
         } else {
             date.toDisplayDateDotRelative(today)
         },
-        weightKg = loggedLoadLabel(set.weight, set.exerciseDefinition.equipment),
+        weightKg = set.loggedLoadLabel(),
         reps = set.reps,
     )
 }
@@ -114,10 +114,7 @@ internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi>
             dateLabel = CHART_DATE_FORMAT.format(session.startedAt),
             kilograms = oneRm.kilogramsValue,
             oneRm = oneRm,
-            weightKg = loggedLoadLabel(
-                session.topSet.weight,
-                session.topSet.exerciseDefinition.equipment,
-            ),
+            weightKg = session.topSet.loggedLoadLabel(),
             reps = session.topSet.reps,
             averageOneRm = averageOneRm,
         )
@@ -142,7 +139,7 @@ private fun ExerciseSessionLog.toSessionUi(): ExerciseDetailsSessionUi = Exercis
 
 private fun ExerciseSet.toSetUi(number: Int): ExerciseDetailsSetUi = ExerciseDetailsSetUi(
     number = number,
-    weightKg = loggedLoadLabel(weight, exerciseDefinition.equipment),
+    weightKg = loggedLoadLabel(),
     reps = reps,
     oneRm = oneRm,
 )

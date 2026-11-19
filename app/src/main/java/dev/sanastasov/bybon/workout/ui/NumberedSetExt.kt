@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.NumberedSet
 import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.isAssisted
 
 val NumberedSet.oneRmLabel: String
     get() = set.oneRm.toOneRmLabel()
@@ -9,7 +10,8 @@ val NumberedSet.oneRmLabel: String
 val NumberedSet.previousLabel: String?
     get() = set.previous?.let { previous ->
         val equipment = set.exerciseDefinition.equipment
-        val load = loggedLoadLabel(previous.weight, equipment)
+        val load = previous.weight?.toLoadLabel(equipment)
+            ?: if (equipment?.isAssisted == true) "0" else MISSING_LOAD_LABEL
         buildString {
             append("$load x ${previous.reps}")
             if (!isWarmup) {
@@ -22,7 +24,7 @@ val NumberedSet.oneRmDeltaLabel: String
     get() = formatOneRmDelta(set.oneRm, set.previousOneRm)
 
 val NumberedSet.weightRepsLabel: String
-    get() = formatLoadedSet(set.weight, set.reps, set.exerciseDefinition.equipment)
+    get() = formatLoadedSet(set.loggedLoadLabel(), set.reps)
 
 fun NumberedSet.notificationText(totalInGroup: Int): String = buildString {
     if (isWarmup) append("[w] ")
@@ -35,7 +37,7 @@ val NumberedSet.setTitle: String
 val NumberedSet.overviewContentDescription: String
     get() = buildString {
         append("$setTitle, ")
-        append(set.weight.toContentLoadLabel(set.exerciseDefinition.equipment))
+        append(set.contentLoadLabel())
         append(" by ${set.reps}")
         if (!isWarmup) {
             append(", $oneRmLabel, $oneRmDeltaLabel")
@@ -50,7 +52,7 @@ val NumberedSet.sessionContentDescription: String
             append(" in progress")
         }
         append(
-            ", ${set.weight.toContentLoadLabel(set.exerciseDefinition.equipment)} by ${set.reps}",
+            ", ${set.contentLoadLabel()} by ${set.reps}",
         )
         if (!isWarmup) {
             append(", $oneRmLabel, $oneRmDeltaLabel")
