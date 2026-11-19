@@ -35,27 +35,32 @@ import ir.ehsannarmani.compose_charts.models.StrokeStyle
 internal fun ExerciseOneRmTrendCard(
     points: List<ExerciseOneRmPointUi>,
     personalRecordOneRm: Weight?,
-    highlightedTopSet: EstimatedOneRmHighlight? = points.lastOrNull()?.toHighlight(),
+    highlightedTopSet: EstimatedOneRmHighlight? = null,
     modifier: Modifier = Modifier,
 ) {
     val highlight = highlightedTopSet?.label()
     Column(modifier.fillMaxWidth()) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .clearAndSetSemantics {
-                    contentDescription = listOfNotNull("Estimated 1RM", highlight)
-                        .joinToString(", ")
-                },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
+        if (highlight == null) {
             Text(
                 "Estimated 1RM",
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium,
             )
-            if (highlight != null) {
+        } else {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clearAndSetSemantics {
+                        contentDescription = "Estimated 1RM, $highlight"
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    "Estimated 1RM",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
+                )
                 Text(
                     highlight,
                     Modifier

@@ -51,9 +51,7 @@ data class ExerciseOneRmPointUi(
     val weightKg: String,
     val reps: Int,
     val averageOneRm: Weight? = null,
-) {
-    fun toHighlight(): EstimatedOneRmHighlight = EstimatedOneRmHighlight(oneRm, weightKg, reps)
-}
+)
 
 data class EstimatedOneRmHighlight(
     val oneRm: Weight?,
