@@ -295,6 +295,47 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `remove last warmup drops it without converting to a work set`() {
+        val overview = fullBodyA.toOverviewSession()
+
+        val actual = overview.removeLastWarmupSet(overview.exercises.first())
+        val bench = actual.exercises.first()
+
+        assert(bench.warmupSets?.size == 2)
+        assert(bench.sets.size == 3)
+        assert(actual.workoutSets.none { it.setState == SetState.InProgress })
+    }
+
+    @Test
+    fun `remove last remaining warmup leaves warmup sets null`() {
+        val overview = fullBodyB.toOverviewSession()
+        val splitSquat = overview.exercises.first { it.id == "bulgarian-split-squat" }
+        assert(splitSquat.warmupSets?.size == 1)
+
+        val actual = overview.removeLastWarmupSet(splitSquat)
+        val updated = actual.exercises.first { it.id == "bulgarian-split-squat" }
+
+        assert(updated.warmupSets == null)
+        assert(updated.sets.size == 3)
+    }
+
+    @Test
+    fun `remove last warmup promotes the next set when it was in progress`() {
+        val session = fullBodyA.toWorkoutSession()
+        val bench = session.exercises.first()
+        val afterFirst = session.completeSet(bench, 0, isWarmup = true)
+        val afterSecond = afterFirst.completeSet(afterFirst.exercises.first(), 1, isWarmup = true)
+        assert(afterSecond.exercises.first().warmupSets!![2].setState == SetState.InProgress)
+
+        val actual = afterSecond.removeLastWarmupSet(afterSecond.exercises.first())
+        val updated = actual.exercises.first()
+
+        assert(updated.warmupSets?.size == 2)
+        assert(updated.warmupSets!!.all { it.setState is SetState.Completed })
+        assert(updated.sets.first().setState == SetState.InProgress)
+    }
+
+    @Test
     fun `resetTo restores the previous overview draft`() {
         val previous = fullBodyA.toOverviewSession()
         val increased = previous.adjustAll(increase = true)

@@ -1,7 +1,10 @@
 package dev.sanastasov.bybon.workout.ui
 
 import dev.sanastasov.bybon.workout.domain.Equipment
+import dev.sanastasov.bybon.workout.domain.ExerciseSet
+import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
+import dev.sanastasov.bybon.workout.domain.catalogExercise
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.oneRmChange
 import org.junit.Test
@@ -12,6 +15,34 @@ class SetLoadFormatTest {
     fun `assisted load is signed kilograms`() {
         assert(Weight.kilograms(25).toLoadLabel(Equipment.AssistedBodyWeight) == "-25")
         assert(Weight.kilograms(25).toLoadLabel(Equipment.Barbell) == "25")
+    }
+
+    @Test
+    fun `blank assisted load is zero kilograms`() {
+        val pullUp = ExerciseSet(
+            catalogExercise("assisted-pull-ups"),
+            null,
+            8,
+            SetState.Completed(),
+        )
+        val bench = ExerciseSet(
+            catalogExercise("bench-press"),
+            null,
+            8,
+            SetState.Completed(),
+        )
+        assert(pullUp.loggedLoadLabel() == "0")
+        assert(pullUp.contentLoadLabel() == "0 kg")
+        assert(bench.loggedLoadLabel() == "-")
+        assert(bench.contentLoadLabel() == "-")
+        assert(formatLoadedSet(pullUp.loggedLoadLabel(), 8) == "0 kg x 8")
+        assert(
+            formatLoadedSet(Weight.kilograms(25), 8, Equipment.AssistedBodyWeight) ==
+                "-25 kg x 8",
+        )
+        assert(
+            Weight.kilograms(25).toContentLoadLabel(Equipment.AssistedBodyWeight) == "-25 kg",
+        )
     }
 
     @Test

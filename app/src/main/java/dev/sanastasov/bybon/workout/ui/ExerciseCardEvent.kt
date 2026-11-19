@@ -28,6 +28,7 @@ sealed class ExerciseCardEvent {
 
     data object OnAddSet : ExerciseCardEvent()
     data object OnRemoveLastSet : ExerciseCardEvent()
+    data object OnRemoveLastWarmupSet : ExerciseCardEvent()
     data object OnConvertToWarmup : ExerciseCardEvent()
     data object OnConvertToWorkSet : ExerciseCardEvent()
     data class OnCompleteSet(

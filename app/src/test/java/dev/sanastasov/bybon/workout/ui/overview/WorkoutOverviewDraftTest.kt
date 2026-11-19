@@ -141,6 +141,39 @@ class WorkoutOverviewDraftTest {
     }
 
     @Test
+    fun `save keeps a removed warmup after reload`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.test {
+            assert(awaitItem() == null)
+            val opened = awaitItem()!!
+            assert(opened.exercises.first().warmupSets?.size == 3)
+
+            viewModel.onAction(WorkoutOverviewAction.RemoveLastWarmupSet(opened.exercises.first()))
+            val removed = awaitItem()!!
+            assert(removed.exercises.first().warmupSets?.size == 2)
+            assert(removed.exercises.first().sets.size == 3)
+
+            viewModel.onAction(WorkoutOverviewAction.OnSaveDraft)
+            val afterSave = awaitItem()!!
+            assert(afterSave.exercises.first().warmupSets?.size == 2)
+            assert(afterSave.exercises.first().sets.size == 3)
+            assert(afterSave.canDiscardDraft)
+        }
+
+        val stored = repository.workoutSessions().first().single()
+        assert(stored.exercises.first().warmupSets?.size == 2)
+        assert(stored.exercises.first().sets.size == 3)
+
+        val reloaded = overviewViewModel(fullBodyA.id, repository, backgroundScope)
+        val loaded = reloaded.uiState.first { it != null }!!
+        assert(loaded.exercises.first().warmupSets?.size == 2)
+        assert(loaded.exercises.first().sets.size == 3)
+        assert(loaded.canDiscardDraft)
+    }
+
+    @Test
     fun `saved draft is kept when the plan later changes`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = overviewViewModel(fullBodyA.id, repository, backgroundScope)

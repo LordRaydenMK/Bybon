@@ -287,6 +287,9 @@ private fun ExerciseCardEvent.toSessionAction(exercise: WorkoutExercise): Workou
 
         ExerciseCardEvent.OnRemoveLastSet -> WorkoutSessionAction.RemoveLastSet(exercise)
 
+        ExerciseCardEvent.OnRemoveLastWarmupSet ->
+            WorkoutSessionAction.RemoveLastWarmupSet(exercise)
+
         ExerciseCardEvent.OnConvertToWarmup -> WorkoutSessionAction.OnConvertToWarmup(exercise)
 
         ExerciseCardEvent.OnConvertToWorkSet -> WorkoutSessionAction.OnConvertToWorkSet(exercise)
