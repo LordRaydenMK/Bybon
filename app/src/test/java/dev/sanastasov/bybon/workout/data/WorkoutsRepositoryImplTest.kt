@@ -18,6 +18,7 @@ import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
+import dev.sanastasov.bybon.workout.domain.removeLastWarmupSet
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.startWorkout
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
@@ -207,6 +208,23 @@ class WorkoutsRepositoryImplTest {
         repository.updateWorkout(fullBodyA.toOverviewSession())
 
         assert(repository.workoutSessions().first().single() == started)
+    }
+
+    @Test
+    fun `updateWorkout keeps a draft after dropping a warmup`() = runTest {
+        val repository: WorkoutsRepository = repository()
+        val draft = fullBodyA.toOverviewSession()
+        val reduced = draft.removeLastWarmupSet(draft.exercises.first())
+        repository.updateWorkout(reduced)
+
+        val stored = repository.workoutSessions().first().single()
+        assert(stored.isDraft)
+        assert(stored.exercises.first().warmupSets?.size == 2)
+        assert(stored.exercises.first().sets.size == 3)
+        assert(
+            repository.workoutSessions(fullBodyA.id, WorkoutState.Kind.Draft).first() ==
+                listOf(stored),
+        )
     }
 
     @Test
