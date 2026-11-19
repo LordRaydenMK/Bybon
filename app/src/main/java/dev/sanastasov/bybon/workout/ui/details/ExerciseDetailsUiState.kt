@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.PersonalRecord
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.toCatalogLabel
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.loggedLoadLabel
 import java.time.LocalDate
