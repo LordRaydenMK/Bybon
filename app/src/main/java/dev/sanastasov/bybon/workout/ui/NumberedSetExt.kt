@@ -77,12 +77,7 @@ val NumberedSet.completedContentDescription: String
         } else {
             append("$workSetNumber. ")
             append(
-                formatSetPerformance(
-                    set.weight,
-                    set.reps,
-                    set.oneRm,
-                    set.exerciseDefinition.equipment,
-                ),
+                formatSetPerformance(set.loggedLoadLabel(), set.reps, set.oneRm),
             )
         }
     }

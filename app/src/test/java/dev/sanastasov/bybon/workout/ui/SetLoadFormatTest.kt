@@ -35,7 +35,11 @@ class SetLoadFormatTest {
         assert(pullUp.contentLoadLabel() == "0 kg")
         assert(bench.loggedLoadLabel() == "-")
         assert(bench.contentLoadLabel() == "-")
-        assert(formatLoadedSet(null, 8, Equipment.AssistedBodyWeight) == "0 kg x 8")
+        assert(formatLoadedSet(pullUp.loggedLoadLabel(), 8) == "0 kg x 8")
+        assert(
+            formatLoadedSet(Weight.kilograms(25), 8, Equipment.AssistedBodyWeight) ==
+                "-25 kg x 8",
+        )
         assert(
             Weight.kilograms(25).toContentLoadLabel(Equipment.AssistedBodyWeight) == "-25 kg",
         )

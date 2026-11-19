@@ -31,16 +31,13 @@ fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
     }
 }
 
-fun formatLoadedSet(weight: Weight?, reps: Int, equipment: Equipment? = null): String {
-    val load = weight?.toContentLoadLabel(equipment)
-        ?: if (equipment?.isAssisted == true) "0 kg" else MISSING_LOAD_LABEL
-    return "$load x $reps"
-}
+fun formatLoadedSet(weight: Weight, reps: Int, equipment: Equipment? = null): String =
+    "${weight.toContentLoadLabel(equipment)} x $reps"
 
 fun formatLoadedSet(weightKg: String, reps: Int): String = "${weightKg.toDisplayLoad()} x $reps"
 
 fun formatSetPerformance(
-    weight: Weight?,
+    weight: Weight,
     reps: Int,
     oneRm: Weight?,
     equipment: Equipment? = null,
