@@ -60,6 +60,9 @@ sealed class WorkoutOverviewAction {
     data class RemoveLastSet(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()
+    data class RemoveLastWarmupSet(
+        val exercise: WorkoutExercise,
+    ) : WorkoutOverviewAction()
     data class OnConvertToWarmup(
         val exercise: WorkoutExercise,
     ) : WorkoutOverviewAction()

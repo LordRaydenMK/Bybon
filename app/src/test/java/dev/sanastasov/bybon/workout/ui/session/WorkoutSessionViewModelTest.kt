@@ -100,6 +100,11 @@ class WorkoutSessionViewModelTest {
             val removed = awaitItem()!!
             assert(removed.exercises.first().sets.size == 3)
             assert(removed.exercises.first().warmupSets?.size == 3)
+
+            viewModel.onAction(WorkoutSessionAction.RemoveLastWarmupSet(removed.exercises.first()))
+            val droppedWarmup = awaitItem()!!
+            assert(droppedWarmup.exercises.first().warmupSets?.size == 2)
+            assert(droppedWarmup.exercises.first().sets.size == 3)
         }
     }
 
