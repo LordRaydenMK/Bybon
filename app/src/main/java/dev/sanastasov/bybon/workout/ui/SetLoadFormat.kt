@@ -14,11 +14,7 @@ fun formatOneRmKg(kg: Float): String = "%.2f".format(Locale.US, kg).trimEnd('0')
 fun Weight.toLoadLabel(equipment: Equipment? = null): String =
     if (equipment?.isAssisted == true) "-$kilograms" else kilograms
 
-fun Weight?.toContentLoadLabel(equipment: Equipment? = null): String {
-    val kilograms = this?.kilograms ?: return MISSING_LOAD_LABEL
-    val signed = if (equipment?.isAssisted == true) "-$kilograms" else kilograms
-    return "$signed kg"
-}
+fun Weight.toContentLoadLabel(equipment: Equipment? = null): String = "${toLoadLabel(equipment)} kg"
 
 fun Weight?.toOneRmColumnLabel(): String =
     this?.let { formatOneRmKg(it.kilogramsValue) } ?: MISSING_LOAD_LABEL
@@ -35,13 +31,13 @@ fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
     }
 }
 
-fun formatLoadedSet(weight: Weight?, reps: Int, equipment: Equipment? = null): String =
+fun formatLoadedSet(weight: Weight, reps: Int, equipment: Equipment? = null): String =
     "${weight.toContentLoadLabel(equipment)} x $reps"
 
 fun formatLoadedSet(weightKg: String, reps: Int): String = "${weightKg.toDisplayLoad()} x $reps"
 
 fun formatSetPerformance(
-    weight: Weight?,
+    weight: Weight,
     reps: Int,
     oneRm: Weight?,
     equipment: Equipment? = null,

@@ -59,6 +59,23 @@ class NumberedSetExtTest {
     }
 
     @Test
+    fun `previous assisted blank load is zero kilograms`() {
+        val numbered = NumberedSet(
+            set = ExerciseSet(
+                catalogExercise("assisted-pull-ups"),
+                Weight.kilograms(20),
+                8,
+                SetState.NotStated,
+                PreviousSetPerformance(null, 8),
+            ),
+            isWarmup = false,
+            index = 0,
+        )
+
+        assert(numbered.previousLabel == "0 x 8, -")
+    }
+
+    @Test
     fun `missing load renders as dash and has no 1RM`() {
         val numbered = NumberedSet(
             set = ExerciseSet(
@@ -72,10 +89,10 @@ class NumberedSetExtTest {
         )
 
         assert(numbered.oneRmLabel == "-")
-        assert(numbered.weightRepsLabel == "- x 8")
+        assert(numbered.weightRepsLabel == "0 kg x 8")
         assert(numbered.oneRmDeltaLabel == "-")
-        assert(numbered.overviewContentDescription == "Set 1, - by 8, -, -")
-        assert(numbered.completedContentDescription == "1. - x 8 @ -")
+        assert(numbered.overviewContentDescription == "Set 1, 0 kg by 8, -, -")
+        assert(numbered.completedContentDescription == "1. 0 kg x 8 @ -")
     }
 
     @Test
@@ -204,6 +221,6 @@ class NumberedSetExtTest {
             index = 0,
         )
 
-        assert(numbered.notificationText(3) == "1/3 ${pullUp.name} - x 8")
+        assert(numbered.notificationText(3) == "1/3 ${pullUp.name} 0 kg x 8")
     }
 }
