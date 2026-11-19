@@ -53,18 +53,16 @@ class WorkoutOverviewViewModel(
             repositorySnapshots(),
             localSession,
         ) { snapshot, local ->
-            snapshot?.let {
-                val session = (local ?: it.sessionFromDraftOrPlan())
-                    .withPreviousFromHistory(it.completed)
-                WorkoutOverviewUiState(
-                    session = session,
-                    previousDate = previousPlanDateLabel(
-                        it.completed.latestCompletedFor(planId)?.startedAt,
-                    ),
-                    history = it.completed,
-                    canDiscardDraft = it.draft != null,
-                )
-            }
+            val session = (local ?: snapshot.sessionFromDraftOrPlan())
+                .withPreviousFromHistory(snapshot.completed)
+            WorkoutOverviewUiState(
+                session = session,
+                previousDate = previousPlanDateLabel(
+                    snapshot.completed.latestCompletedFor(planId)?.startedAt,
+                ),
+                history = snapshot.completed,
+                canDiscardDraft = snapshot.draft != null,
+            )
         }.stateInWhileInForeground(coroutineScope, null)
 
     init {
@@ -147,18 +145,19 @@ class WorkoutOverviewViewModel(
         actions.trySend(action)
     }
 
-    private fun repositorySnapshots(): Flow<OverviewRepositorySnapshot?> = combine(
+    private fun repositorySnapshots(): Flow<OverviewRepositorySnapshot> = combine(
         repository.workoutPlans(),
         repository.workoutSessions(state = WorkoutState.Kind.Completed),
         repository.workoutSessions(planId, WorkoutState.Kind.Draft),
     ) { plans, completed, drafts ->
-        val plan = plans.firstOrNull { it.id == planId } ?: return@combine null
+        val plan = plans.firstOrNull { it.id == planId }
+            ?: error("Plan ${planId.id} does not exist")
         OverviewRepositorySnapshot(plan, completed, drafts.firstOrNull())
     }
 
     private suspend fun collectActions() {
         actions.receiveAsFlow().collect { action ->
-            val state = uiState.value ?: return@collect
+            val state = uiState.value ?: error("No overview session")
             localSession.value = reduce(state.session, action, state.history)
         }
     }
