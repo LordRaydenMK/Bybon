@@ -194,7 +194,7 @@ private fun SummaryList(
                         exercise.oneRmTrend,
                         exercise.personalRecord?.oneRm,
                         highlightedTopSet = exercise.topSet?.let { set ->
-                            EstimatedOneRmHighlight(set.oneRm, set.weightKg, set.reps)
+                            EstimatedOneRmHighlight.of(set.oneRm, set.weightKg, set.reps)
                         },
                     )
                 }
