@@ -209,9 +209,7 @@ class ExerciseDetailsUiTest {
                 "${oneRm.kilograms} kg · 45 kg x 12",
         )
         assert(EstimatedOneRmHighlight.of(null, "45", 12)?.label() == "- · 45 kg x 12")
-        assert(
-            EstimatedOneRmHighlight.of(oneRm, null, 12)?.label() == "${oneRm.kilograms} kg · - x 12"
-        )
+        assert(EstimatedOneRmHighlight.of(oneRm, null, 12) == null)
         assert(EstimatedOneRmHighlight.of(null, null, 8) == null)
     }
 

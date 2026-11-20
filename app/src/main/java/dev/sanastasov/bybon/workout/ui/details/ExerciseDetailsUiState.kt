@@ -55,21 +55,19 @@ data class ExerciseOneRmPointUi(
 
 data class EstimatedOneRmHighlight(
     val oneRm: Weight?,
-    val weightKg: String?,
+    val weightKg: String,
     val reps: Int,
 ) {
     fun label(): String {
         val estimate = oneRm?.let { "${it.kilograms} kg" } ?: MISSING_LOAD_LABEL
-        return "$estimate · ${formatLoadedSet(weightKg ?: MISSING_LOAD_LABEL, reps)}"
+        return "$estimate · ${formatLoadedSet(weightKg, reps)}"
     }
 
     companion object {
-        fun of(oneRm: Weight?, weightKg: String?, reps: Int): EstimatedOneRmHighlight? =
-            if (oneRm == null && weightKg == null) {
-                null
-            } else {
-                EstimatedOneRmHighlight(oneRm, weightKg, reps)
-            }
+        fun of(oneRm: Weight?, weightKg: String?, reps: Int): EstimatedOneRmHighlight? {
+            if (weightKg == null) return null
+            return EstimatedOneRmHighlight(oneRm, weightKg, reps)
+        }
     }
 }
 
