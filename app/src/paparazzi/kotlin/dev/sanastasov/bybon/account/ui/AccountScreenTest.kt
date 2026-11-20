@@ -18,7 +18,7 @@ class AccountScreenTest {
     fun signedOut() {
         paparazzi.bybonSnapshot {
             AccountScreenContent(
-                AccountUiState(),
+                AccountUiState(environmentName = "prd"),
                 {},
                 {},
             )
@@ -29,7 +29,7 @@ class AccountScreenTest {
     fun signedIn() {
         paparazzi.bybonSnapshot {
             AccountScreenContent(
-                AccountUiState(email = "john.doe@example.com"),
+                AccountUiState(environmentName = "prd", email = "john.doe@example.com"),
                 {},
                 {},
             )
@@ -41,6 +41,7 @@ class AccountScreenTest {
         paparazzi.bybonSnapshot {
             AccountScreenContent(
                 AccountUiState(
+                    environmentName = "prd",
                     email = "john.doe@example.com",
                     confirmSignOut = true,
                 ),
