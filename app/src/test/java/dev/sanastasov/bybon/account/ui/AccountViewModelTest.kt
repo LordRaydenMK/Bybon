@@ -248,8 +248,7 @@ class AccountViewModelTest {
     private fun kotlinx.coroutines.test.TestScope.viewModel(
         auth: FakeAccountAuth = FakeAccountAuth(),
         googleSignIn: FakeGoogleSignIn = FakeGoogleSignIn(),
-        environmentName: String = "prd",
         weights: FakeBodyWeightRepository = FakeBodyWeightRepository(),
         coroutineScope: CoroutineScope = backgroundScope,
-    ) = AccountViewModel(auth, googleSignIn, environmentName, weights, coroutineScope)
+    ) = AccountViewModel(auth, googleSignIn, weights, coroutineScope)
 }

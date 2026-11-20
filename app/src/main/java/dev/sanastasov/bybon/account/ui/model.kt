@@ -5,7 +5,6 @@ import dev.sanastasov.bybon.bodyweight.domain.WeightImportSummary
 import java.time.Instant
 
 data class AccountUiState(
-    val environmentName: String = "",
     val email: String? = null,
     val message: String? = null,
     val confirmSignOut: Boolean = false,

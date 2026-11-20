@@ -1,11 +1,9 @@
 package dev.sanastasov.bybon.bodyweight.data
 
-import com.google.firebase.FirebaseApp
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import dev.sanastasov.bybon.BuildConfig
 import dev.sanastasov.bybon.bodyweight.sync.RemoteWeight
 import dev.sanastasov.bybon.bodyweight.sync.WeightCloud
 import dev.sanastasov.bybon.bodyweight.sync.WeightUpload
@@ -15,10 +13,7 @@ import java.util.Date
 import kotlinx.coroutines.tasks.await
 
 class FirestoreWeightCloud(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(
-        FirebaseApp.getInstance(),
-        BuildConfig.FIREBASE_ENV,
-    ),
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
 ) : WeightCloud {
 
     override suspend fun readAll(uid: String): List<RemoteWeight> =

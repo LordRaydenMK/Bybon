@@ -38,7 +38,6 @@ fun MainModule.AccountScreen(onNavigateBack: () -> Unit) {
         AccountViewModel(
             accountAuth,
             CredentialManagerGoogleSignIn(context),
-            firebaseEnvName,
             bodyWeightRepository,
             it.coroutineScope,
         )
@@ -65,7 +64,6 @@ fun AccountScreenContent(
                 .padding(horizontal = 16.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(uiState.environmentName, style = MaterialTheme.typography.titleMedium)
             BackupStatus(uiState)
             uiState.conflict?.let { conflict ->
                 Text(conflict.detail(), style = MaterialTheme.typography.bodyMedium)
