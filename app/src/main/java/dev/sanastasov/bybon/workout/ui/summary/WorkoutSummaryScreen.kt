@@ -37,6 +37,7 @@ import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.workout.WorkoutModule
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.ui.details.EstimatedOneRmHighlight
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmPointUi
 import dev.sanastasov.bybon.workout.ui.details.ExerciseOneRmTrendCard
 import dev.sanastasov.bybon.workout.ui.details.PersonalRecordUi
@@ -192,6 +193,9 @@ private fun SummaryList(
                     ExerciseOneRmTrendCard(
                         exercise.oneRmTrend,
                         exercise.personalRecord?.oneRm,
+                        highlightedTopSet = exercise.topSet?.let { set ->
+                            EstimatedOneRmHighlight.of(set.oneRm, set.weightKg, set.reps)
+                        },
                     )
                 }
             }

@@ -11,6 +11,7 @@ import dev.sanastasov.bybon.workout.domain.PersonalRecord
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.label
 import dev.sanastasov.bybon.workout.domain.toCatalogLabel
+import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
 import dev.sanastasov.bybon.workout.ui.loggedLoadLabel
 import java.time.LocalDate
@@ -51,6 +52,24 @@ data class ExerciseOneRmPointUi(
     val reps: Int,
     val averageOneRm: Weight? = null,
 )
+
+data class EstimatedOneRmHighlight(
+    val oneRm: Weight?,
+    val weightKg: String,
+    val reps: Int,
+) {
+    fun label(): String {
+        val estimate = oneRm?.let { "${it.kilograms} kg" } ?: MISSING_LOAD_LABEL
+        return "$estimate · ${formatLoadedSet(weightKg, reps)}"
+    }
+
+    companion object {
+        fun of(oneRm: Weight?, weightKg: String?, reps: Int): EstimatedOneRmHighlight? {
+            if (weightKg == null) return null
+            return EstimatedOneRmHighlight(oneRm, weightKg, reps)
+        }
+    }
+}
 
 data class ExerciseDetailsSessionUi(
     val dateLabel: String,
