@@ -8,6 +8,9 @@ import dev.sanastasov.bybon.bodyweight.data.DietPhaseDao
 import dev.sanastasov.bybon.bodyweight.data.DietPhaseEntity
 import dev.sanastasov.bybon.bodyweight.data.WeightDao
 import dev.sanastasov.bybon.bodyweight.data.WeightEntryEntity
+import dev.sanastasov.bybon.bodyweight.data.WeightSyncDao
+import dev.sanastasov.bybon.bodyweight.data.WeightSyncOpEntity
+import dev.sanastasov.bybon.bodyweight.data.WeightSyncStateEntity
 import dev.sanastasov.bybon.data.converter.LocalDateConverter
 import dev.sanastasov.bybon.data.converter.LocalDateTimeConverter
 import dev.sanastasov.bybon.workout.data.ExerciseDao
@@ -32,20 +35,24 @@ import dev.sanastasov.bybon.workout.data.WorkoutSetEntity
         WorkoutSessionEntity::class,
         WorkoutSessionExerciseEntity::class,
         WorkoutSetEntity::class,
+        WeightSyncOpEntity::class,
+        WeightSyncStateEntity::class,
     ],
-    version = 7,
+    version = 8,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
         AutoMigration(from = 2, to = 3),
         AutoMigration(from = 3, to = 4),
         AutoMigration(from = 4, to = 5),
         AutoMigration(from = 6, to = 7),
+        AutoMigration(from = 7, to = 8),
     ],
 )
 @ColumnTypeConverters(LocalDateConverter::class, LocalDateTimeConverter::class)
 abstract class BybonDatabase : RoomDatabase() {
     abstract fun weightEntryDao(): WeightDao
     abstract fun dietPhaseDao(): DietPhaseDao
+    abstract fun weightSyncDao(): WeightSyncDao
     abstract fun exerciseDao(): ExerciseDao
     abstract fun workoutPlanDao(): WorkoutPlanDao
     abstract fun workoutSessionDao(): WorkoutSessionDao
