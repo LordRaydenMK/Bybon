@@ -52,6 +52,37 @@ class WorkoutSessionTest {
     }
 
     @Test
+    fun `completing a work set starts the next work set`() {
+        val session = fullBodyA.toWorkoutSession().completeWarmups(0)
+        session.assertOnlyInProgress("bench-press", index = 0, isWarmup = false)
+
+        val actual = session.completeSet(session.exercises.first(), 0)
+
+        assert(actual.exercises.first().sets.first().setState is SetState.Completed)
+        actual.assertOnlyInProgress("bench-press", index = 1, isWarmup = false)
+    }
+
+    @Test
+    fun `completing the last set of an exercise with no warmup starts the next work set`() {
+        val ready = (0 until 3).fold(fullBodyA.toWorkoutSession()) { session, index ->
+            session.completeExerciseAt(index)
+        }.withLastWorkSetInProgress(3)
+        val curl = ready.exercises.first { it.id == "seated-leg-curl" }
+        ready.assertOnlyInProgress("seated-leg-curl", curl.sets.lastIndex, isWarmup = false)
+
+        val actual = ready.completeSet(
+            ready.exercises.first { it.id == "seated-leg-curl" },
+            curl.sets.lastIndex,
+        )
+
+        assert(
+            actual.exercises.first { it.id == "seated-leg-curl" }.state ==
+                ExerciseState.Completed,
+        )
+        actual.assertOnlyInProgress("dumbbell-upright-row", index = 0, isWarmup = false)
+    }
+
+    @Test
     fun `currentExerciseIndex is the first exercise that is not completed`() {
         val started = fullBodyA.toWorkoutSession()
         assert(started.currentExerciseIndex == 0)

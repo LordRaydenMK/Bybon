@@ -6,6 +6,54 @@ import org.junit.Test
 class WorkoutSessionConvertTest {
 
     @Test
+    fun `converting the in-progress work set to warmup keeps it active`() {
+        val session = fullBodyA.toWorkoutSession().let { started ->
+            val warmupCount = checkNotNull(started.exercises.first().warmupSets).size
+            (0 until warmupCount).fold(started) { current, index ->
+                current.completeSet(current.exercises.first(), index, isWarmup = true)
+            }
+        }
+        session.assertOnlyInProgress("bench-press", index = 0, isWarmup = false)
+
+        val actual = session.convertFirstWorkSetToWarmup(session.exercises.first())
+
+        assert(actual.exercises.first().warmupSets?.size == 4)
+        assert(actual.exercises.first().sets.size == 2)
+        actual.assertOnlyInProgress("bench-press", index = 3, isWarmup = true)
+    }
+
+    @Test
+    fun `converting the last warmup keeps the in-progress work set active`() {
+        val session = fullBodyA.toWorkoutSession().let { started ->
+            val warmupCount = checkNotNull(started.exercises.first().warmupSets).size
+            (0 until warmupCount).fold(started) { current, index ->
+                current.completeSet(current.exercises.first(), index, isWarmup = true)
+            }
+        }
+        session.assertOnlyInProgress("bench-press", index = 0, isWarmup = false)
+
+        val actual = session.convertLastWarmupToWorkSet(session.exercises.first())
+        val bench = actual.exercises.first()
+
+        assert(bench.warmupSets?.size == 2)
+        assert(bench.sets.first().setState is SetState.Completed)
+        actual.assertOnlyInProgress("bench-press", index = 1, isWarmup = false)
+    }
+
+    @Test
+    fun `converting the in-progress warmup to a work set keeps it active`() {
+        val session = (0 until 2).fold(fullBodyA.toWorkoutSession()) { current, index ->
+            current.completeSet(current.exercises.first(), index, isWarmup = true)
+        }
+        session.assertOnlyInProgress("bench-press", index = 2, isWarmup = true)
+
+        val actual = session.convertLastWarmupToWorkSet(session.exercises.first())
+
+        assert(actual.exercises.first().warmupSets?.size == 2)
+        actual.assertOnlyInProgress("bench-press", index = 0, isWarmup = false)
+    }
+
+    @Test
     fun `converting the last remaining work set to warmup is a no-op`() {
         val session = fullBodyA.toOverviewSession().let { draft ->
             draft.updateExercise(draft.exercises.first().id) { exercise ->
