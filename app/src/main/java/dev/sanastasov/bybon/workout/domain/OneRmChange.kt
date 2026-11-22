@@ -1,13 +1,29 @@
 package dev.sanastasov.bybon.workout.domain
 
 sealed interface OneRmChange {
+    sealed interface Gain : OneRmChange
+
+    sealed interface Loss : OneRmChange
+
     data class Improved(
         val delta: Weight,
-    ) : OneRmChange
+    ) : Gain
 
     data class Decreased(
         val delta: Weight,
-    ) : OneRmChange
+    ) : Loss
+
+    data class LessAssistance(
+        val delta: Weight,
+    ) : Gain
+
+    data class MoreAssistance(
+        val delta: Weight,
+    ) : Loss
+
+    data object MoreReps : Gain
+
+    data object FewerReps : Loss
 
     data object Unchanged : OneRmChange
 }

@@ -1,13 +1,19 @@
 package dev.sanastasov.bybon.workout.ui.history
 
+import dev.sanastasov.bybon.workout.data.completedAssistedExercise
+import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.OneRmChange
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
+import dev.sanastasov.bybon.workout.domain.catalogExercise
+import dev.sanastasov.bybon.workout.domain.estimateOneRmKg
 import dev.sanastasov.bybon.workout.domain.lastSevenDaysSummary
+import dev.sanastasov.bybon.workout.domain.oneRmChange
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -156,6 +162,91 @@ class WorkoutHistoryUiTest {
         )
         assert(topSet.contentDescription() == "Assisted Pull-up, 0 kg x 8, -")
     }
+
+    @Test
+    fun `assisted performance content description names less assistance`() {
+        val topSet = ExerciseTopSetUi(
+            name = "Assisted Pull-up",
+            weightKg = "-20",
+            reps = 8,
+            oneRm = null,
+            oneRmChange = OneRmChange.LessAssistance(Weight.kilograms(5)),
+        )
+        assert(topSet.contentDescription() == "Assisted Pull-up, -20 kg x 8, ↑ 5 less")
+    }
+
+    @Test
+    fun `assisted performance content description names a rep change`() {
+        val topSet = ExerciseTopSetUi(
+            name = "Assisted Pull-up",
+            weightKg = "-20",
+            reps = 10,
+            oneRm = null,
+            oneRmChange = OneRmChange.MoreReps,
+        )
+        assert(topSet.contentDescription() == "Assisted Pull-up, -20 kg x 10, ↑ reps")
+    }
+
+    @Test
+    fun `assisted history shows less assistance when body weight is missing`() {
+        val previous = assistedSession(
+            LocalDateTime.of(2026, 8, 3, 18, 0),
+            25f to 8,
+        )
+        val current = assistedSession(
+            LocalDateTime.of(2026, 8, 10, 18, 0),
+            25f to 10,
+            20f to 8,
+        )
+
+        val topSet = listOf(previous, current).toHistoryUi().first().exercises.single()
+
+        assert(topSet.weightKg == "-20")
+        assert(topSet.reps == 8)
+        assert(topSet.oneRm == null)
+        assert(topSet.oneRmChange == OneRmChange.LessAssistance(Weight.kilograms(5)))
+        assert(
+            topSet.contentDescription() ==
+                "${catalogExercise("assisted-pull-ups").name}, -20 kg x 8, ↑ 5 less",
+        )
+    }
+
+    @Test
+    fun `assisted history keeps the 1RM delta when both sessions have body weight`() {
+        val previous = assistedSession(
+            LocalDateTime.of(2026, 8, 3, 18, 0),
+            25f to 8,
+            bodyWeightKg = 80f,
+        )
+        val current = assistedSession(
+            LocalDateTime.of(2026, 8, 10, 18, 0),
+            20f to 8,
+            bodyWeightKg = 80f,
+        )
+
+        val topSet = listOf(previous, current).toHistoryUi().first().exercises.single()
+
+        assert(
+            topSet.oneRmChange == oneRmChange(
+                Weight.kilograms(estimateOneRmKg(60f, 8)),
+                Weight.kilograms(estimateOneRmKg(55f, 8)),
+            ),
+        )
+        assert(topSet.oneRmChange is OneRmChange.Improved)
+    }
+
+    private fun assistedSession(
+        startedAt: LocalDateTime,
+        vararg assistAndReps: Pair<Float?, Int>,
+        bodyWeightKg: Float? = null,
+    ) = completedSession(
+        planId = "full-body-a",
+        planName = "Full Body A",
+        startedAt = startedAt,
+        exercises = listOf(
+            completedAssistedExercise("assisted-pull-ups", bodyWeightKg, *assistAndReps),
+        ),
+    )
 
     @Test
     fun `history sections use this week this month and named months`() {

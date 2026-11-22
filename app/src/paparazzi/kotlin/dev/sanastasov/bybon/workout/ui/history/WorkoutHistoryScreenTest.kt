@@ -153,9 +153,10 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         topSet("incline-db-curl", 9f, 15, OneRmChange.Unchanged),
         ExerciseTopSetUi(
             name = catalogExercise("assisted-pull-ups").name,
-            weightKg = "0",
+            weightKg = "-20",
             reps = 8,
             oneRm = null,
+            oneRmChange = OneRmChange.LessAssistance(Weight.kilograms(5)),
         ),
     ),
     historySession(

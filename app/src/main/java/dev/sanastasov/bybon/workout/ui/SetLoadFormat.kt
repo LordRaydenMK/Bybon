@@ -27,7 +27,7 @@ fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
     return when (val change = oneRmChange(currentWeight, previous)) {
         is OneRmChange.Improved -> "+${change.delta.kilograms}kg"
         is OneRmChange.Decreased -> "-${change.delta.kilograms}kg"
-        OneRmChange.Unchanged, null -> MISSING_LOAD_LABEL
+        else -> MISSING_LOAD_LABEL
     }
 }
 
