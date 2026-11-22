@@ -72,7 +72,7 @@ class WorkoutHistoryListScreenTest {
 
     @get:Rule
     val paparazzi: Paparazzi = Paparazzi(
-        deviceConfig = DeviceConfig.PIXEL_9.copy(screenHeight = 2720),
+        deviceConfig = DeviceConfig.PIXEL_9.copy(screenHeight = 3400),
         theme = "android:Theme.Material.Light.NoActionBar",
         useDeviceResolution = true,
     )
@@ -176,6 +176,12 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         durationSeconds = 3877,
         topSet("bench-press", 57.5f, 10),
         topSet("squat", 45f, 12),
+        ExerciseTopSetUi(
+            name = catalogExercise("assisted-pull-ups").name,
+            weightKg = "-25",
+            reps = 8,
+            oneRm = null,
+        ),
     ),
 )
 
