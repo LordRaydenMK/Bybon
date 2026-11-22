@@ -202,6 +202,64 @@ class LastSevenDaysSummaryTest {
     }
 
     @Test
+    fun `assisted performance improves without body weight when assistance drops`() {
+        val previous = sessionOn(
+            today.minusDays(10),
+            completedAssistedExercise("assisted-pull-ups", null, 25f to 8),
+        )
+        val harder = sessionOn(
+            today.minusDays(2),
+            completedAssistedExercise("assisted-pull-ups", null, 20f to 8),
+        )
+        val easier = sessionOn(
+            today.minusDays(1),
+            completedAssistedExercise("assisted-pull-ups", null, 30f to 8),
+        )
+
+        val summary = listOf(previous, easier, harder).lastSevenDaysSummary(today)
+
+        assert(summary.performance.improved == 1)
+        assert(summary.performance.maintained == 0)
+        assert(summary.performance.declined == 0)
+    }
+
+    @Test
+    fun `assisted performance counts reps and extra assistance without body weight`() {
+        val previous = sessionOn(
+            today.minusDays(10),
+            completedAssistedExercise("assisted-pull-ups", null, 20f to 6),
+            completedAssistedExercise("assisted-dips", null, 15f to 8),
+        )
+        val current = sessionOn(
+            today,
+            completedAssistedExercise("assisted-pull-ups", null, 20f to 8),
+            completedAssistedExercise("assisted-dips", null, 20f to 8),
+        )
+
+        val summary = listOf(previous, current).lastSevenDaysSummary(today)
+
+        assert(summary.performance.improved == 1)
+        assert(summary.performance.declined == 1)
+        assert(summary.performance.maintained == 0)
+    }
+
+    @Test
+    fun `assisted performance is maintained when assistance and reps match`() {
+        val previous = sessionOn(
+            today.minusDays(10),
+            completedAssistedExercise("assisted-pull-ups", null, 20f to 8),
+        )
+        val current = sessionOn(
+            today,
+            completedAssistedExercise("assisted-pull-ups", null, 20f to 8),
+        )
+
+        val summary = listOf(previous, current).lastSevenDaysSummary(today)
+
+        assert(summary.performance == ExercisePerformanceChange(0, 1, 0))
+    }
+
+    @Test
     fun `marks a decline against the previous top set`() {
         val previous = sessionOn(
             today.minusDays(10),

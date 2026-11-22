@@ -72,7 +72,7 @@ class WorkoutHistoryListScreenTest {
 
     @get:Rule
     val paparazzi: Paparazzi = Paparazzi(
-        deviceConfig = DeviceConfig.PIXEL_9.copy(screenHeight = 2720),
+        deviceConfig = DeviceConfig.PIXEL_9.copy(screenHeight = 3400),
         theme = "android:Theme.Material.Light.NoActionBar",
         useDeviceResolution = true,
     )
@@ -148,14 +148,25 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         planName = "Upper body B",
         startedAt = today.atTime(17, 59),
         durationSeconds = 3367,
-        topSet("incline-db-press", 20f, 14, OneRmChange.Improved(Weight.kilograms(0.66f))),
-        topSet("chest-supported-db-row", 22f, 15, OneRmChange.Decreased(Weight.kilograms(0.42f))),
-        topSet("incline-db-curl", 9f, 15, OneRmChange.Unchanged),
+        topSet(
+            "incline-db-press",
+            20f,
+            14,
+            OneRmChange.Improved(OneRmChange.How.OneRm(Weight.kilograms(0.66f))),
+        ),
+        topSet(
+            "chest-supported-db-row",
+            22f,
+            15,
+            OneRmChange.Declined(OneRmChange.How.OneRm(Weight.kilograms(0.42f))),
+        ),
+        topSet("incline-db-curl", 9f, 15, OneRmChange.Maintained),
         ExerciseTopSetUi(
             name = catalogExercise("assisted-pull-ups").name,
-            weightKg = "0",
+            weightKg = "-20",
             reps = 8,
             oneRm = null,
+            oneRmChange = OneRmChange.Improved(OneRmChange.How.Assistance(Weight.kilograms(5))),
         ),
     ),
     historySession(
@@ -165,6 +176,12 @@ private fun historySessions(today: LocalDate): List<WorkoutSessionHistoryUi> = l
         durationSeconds = 3877,
         topSet("bench-press", 57.5f, 10),
         topSet("squat", 45f, 12),
+        ExerciseTopSetUi(
+            name = catalogExercise("assisted-pull-ups").name,
+            weightKg = "-25",
+            reps = 8,
+            oneRm = null,
+        ),
     ),
 )
 

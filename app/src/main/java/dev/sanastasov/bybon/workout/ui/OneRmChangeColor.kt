@@ -10,6 +10,6 @@ private val OneRmImproved = Color(0xFF1B7A3D)
 @Composable
 fun OneRmChange?.oneRmChangeColor(unchanged: Color = Color.Unspecified): Color = when (this) {
     is OneRmChange.Improved -> OneRmImproved
-    is OneRmChange.Decreased -> MaterialTheme.colorScheme.error
-    OneRmChange.Unchanged, null -> unchanged
+    is OneRmChange.Declined -> MaterialTheme.colorScheme.error
+    OneRmChange.Maintained, null -> unchanged
 }

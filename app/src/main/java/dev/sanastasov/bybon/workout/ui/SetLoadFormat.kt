@@ -25,9 +25,17 @@ fun Weight?.toOneRmLabel(): String =
 fun formatOneRmDelta(current: Weight?, previous: Weight?): String {
     val currentWeight = current ?: return MISSING_LOAD_LABEL
     return when (val change = oneRmChange(currentWeight, previous)) {
-        is OneRmChange.Improved -> "+${change.delta.kilograms}kg"
-        is OneRmChange.Decreased -> "-${change.delta.kilograms}kg"
-        OneRmChange.Unchanged, null -> MISSING_LOAD_LABEL
+        is OneRmChange.Improved -> when (val how = change.how) {
+            is OneRmChange.How.OneRm -> "+${how.delta.kilograms}kg"
+            else -> MISSING_LOAD_LABEL
+        }
+
+        is OneRmChange.Declined -> when (val how = change.how) {
+            is OneRmChange.How.OneRm -> "-${how.delta.kilograms}kg"
+            else -> MISSING_LOAD_LABEL
+        }
+
+        else -> MISSING_LOAD_LABEL
     }
 }
 

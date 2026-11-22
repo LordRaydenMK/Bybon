@@ -10,23 +10,27 @@ class OneRmChangeTest {
         val current = checkNotNull(set.oneRm)
         val previous = checkNotNull(set.previousOneRm)
 
-        assert(set.oneRmChange() == OneRmChange.Improved(current - previous))
+        assert(
+            set.oneRmChange() == OneRmChange.Improved(OneRmChange.How.OneRm(current - previous)),
+        )
     }
 
     @Test
-    fun `oneRmChange is decreased when the new estimate is lower`() {
+    fun `oneRmChange is declined when the new estimate is lower`() {
         val set = benchSet(45f, 8, previous = PreviousSetPerformance(Weight.kilograms(45), 10))
         val current = checkNotNull(set.oneRm)
         val previous = checkNotNull(set.previousOneRm)
 
-        assert(set.oneRmChange() == OneRmChange.Decreased(previous - current))
+        assert(
+            set.oneRmChange() == OneRmChange.Declined(OneRmChange.How.OneRm(previous - current)),
+        )
     }
 
     @Test
-    fun `oneRmChange is unchanged when the estimates match`() {
+    fun `oneRmChange is maintained when the estimates match`() {
         val previous = PreviousSetPerformance(Weight.kilograms(45), 9)
 
-        assert(benchSet(45f, 9, previous).oneRmChange() == OneRmChange.Unchanged)
+        assert(benchSet(45f, 9, previous).oneRmChange() == OneRmChange.Maintained)
     }
 
     @Test

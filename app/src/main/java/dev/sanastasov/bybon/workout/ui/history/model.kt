@@ -11,7 +11,8 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.latestCompletedExercise
-import dev.sanastasov.bybon.workout.domain.oneRmChange
+import dev.sanastasov.bybon.workout.domain.performanceChange
+import dev.sanastasov.bybon.workout.domain.performanceTopSet
 import dev.sanastasov.bybon.workout.ui.formatElapsedClock
 import dev.sanastasov.bybon.workout.ui.formatTrainingTime
 import dev.sanastasov.bybon.workout.ui.loggedLoadLabel
@@ -194,16 +195,15 @@ private fun WorkoutExercise.toTopSetUi(
     completedSessions: List<WorkoutSession>,
     sessionStartedAt: LocalDateTime,
 ): ExerciseTopSetUi {
-    val currentOneRm = topSet.oneRm
-    val previousOneRm = completedSessions
+    val current = performanceTopSet()
+    val previous = completedSessions
         .latestCompletedExercise(id, before = sessionStartedAt)
-        ?.topSet
-        ?.oneRm
+        ?.performanceTopSet()
     return ExerciseTopSetUi(
         name = exerciseDefinition.name,
-        weightKg = topSet.loggedLoadLabel(),
-        reps = topSet.reps,
-        oneRm = currentOneRm,
-        oneRmChange = currentOneRm?.let { oneRmChange(it, previousOneRm) },
+        weightKg = current.loggedLoadLabel(),
+        reps = current.reps,
+        oneRm = current.oneRm,
+        oneRmChange = previous?.let { current.performanceChange(it) },
     )
 }

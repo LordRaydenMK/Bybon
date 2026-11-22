@@ -256,7 +256,17 @@ internal fun formatOneRmVsPrevious(current: Weight, previous: Weight): String? =
     oneRmChange(current, previous)?.vsPreviousLabel()
 
 private fun OneRmChange.vsPreviousLabel(): String? = when (this) {
-    is OneRmChange.Improved -> "↑ ${delta.kilograms} kg vs previous"
-    is OneRmChange.Decreased -> "↓ ${delta.kilograms} kg vs previous"
-    OneRmChange.Unchanged -> null
+    is OneRmChange.Improved -> when (val measure = how) {
+        is OneRmChange.How.OneRm -> "↑ ${measure.delta.kilograms} kg vs previous"
+        is OneRmChange.How.Assistance -> "↑ ${measure.delta.kilograms} less vs previous"
+        OneRmChange.How.Reps -> "↑ reps vs previous"
+    }
+
+    is OneRmChange.Declined -> when (val measure = how) {
+        is OneRmChange.How.OneRm -> "↓ ${measure.delta.kilograms} kg vs previous"
+        is OneRmChange.How.Assistance -> "↓ ${measure.delta.kilograms} more vs previous"
+        OneRmChange.How.Reps -> "↓ reps vs previous"
+    }
+
+    OneRmChange.Maintained -> null
 }

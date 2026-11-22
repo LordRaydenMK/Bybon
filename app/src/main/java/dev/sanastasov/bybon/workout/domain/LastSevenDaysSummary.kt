@@ -64,12 +64,13 @@ private fun performanceChange(
     var maintained = 0
     var declined = 0
     inWindow.exerciseIds().forEach { exerciseId ->
-        val current = inWindow.bestTopSetOneRm(exerciseId) ?: return@forEach
-        val previous = beforeWindow.latestTopSetOneRm(exerciseId) ?: return@forEach
-        when {
-            current > previous -> improved++
-            current < previous -> declined++
-            else -> maintained++
+        val current = inWindow.bestPerformanceSet(exerciseId) ?: return@forEach
+        val previous = beforeWindow.latestPerformanceSet(exerciseId) ?: return@forEach
+        when (current.performanceChange(previous)) {
+            is OneRmChange.Improved -> improved++
+            is OneRmChange.Declined -> declined++
+            OneRmChange.Maintained -> maintained++
+            null -> Unit
         }
     }
     return ExercisePerformanceChange(improved, maintained, declined)
@@ -78,15 +79,15 @@ private fun performanceChange(
 private fun List<WorkoutSession>.exerciseIds(): Set<String> =
     flatMap { session -> session.exercises.map { it.id } }.toSet()
 
-private fun List<WorkoutSession>.bestTopSetOneRm(exerciseId: String): Weight? =
-    mapNotNull { session -> session.exerciseOrNull(exerciseId)?.topSet?.oneRm }.maxOrNull()
+private fun List<WorkoutSession>.bestPerformanceSet(exerciseId: String): ExerciseSet? =
+    mapNotNull { session -> session.exerciseOrNull(exerciseId)?.performanceTopSet() }
+        .maxWithOrNull(performanceSetOrder)
 
-private fun List<WorkoutSession>.latestTopSetOneRm(exerciseId: String): Weight? =
+private fun List<WorkoutSession>.latestPerformanceSet(exerciseId: String): ExerciseSet? =
     filter { session -> session.exerciseOrNull(exerciseId) != null }
         .maxByOrNull { it.startedAt }
         ?.exerciseOrNull(exerciseId)
-        ?.topSet
-        ?.oneRm
+        ?.performanceTopSet()
 
 private fun WorkoutSession.exerciseOrNull(exerciseId: String): WorkoutExercise? =
     exercises.firstOrNull { it.id == exerciseId }
