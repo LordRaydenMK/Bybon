@@ -445,10 +445,25 @@ private fun previewUpperBodyB(startedAt: LocalDateTime) = previewHistorySession(
     planName = "Upper body B",
     startedAt = startedAt,
     durationSeconds = 3367,
-    previewTopSet("incline-db-press", 20f, 14, OneRmChange.Improved(Weight.kilograms(0.67f))),
-    previewTopSet("chest-supported-db-row", 22f, 15, OneRmChange.Unchanged),
-    previewTopSet("incline-db-curl", 9f, 15, OneRmChange.Decreased(Weight.kilograms(0.33f))),
-    previewTopSet("lateral-raise-machine", 32.5f, 12, OneRmChange.Improved(Weight.kilograms(1.5f))),
+    previewTopSet(
+        "incline-db-press",
+        20f,
+        14,
+        OneRmChange.Improved(OneRmChange.How.OneRm(Weight.kilograms(0.67f))),
+    ),
+    previewTopSet("chest-supported-db-row", 22f, 15, OneRmChange.Maintained),
+    previewTopSet(
+        "incline-db-curl",
+        9f,
+        15,
+        OneRmChange.Declined(OneRmChange.How.OneRm(Weight.kilograms(0.33f))),
+    ),
+    previewTopSet(
+        "lateral-raise-machine",
+        32.5f,
+        12,
+        OneRmChange.Improved(OneRmChange.How.OneRm(Weight.kilograms(1.5f))),
+    ),
     previewTopSet("machine-seated-crunch", 35f, 15),
 )
 

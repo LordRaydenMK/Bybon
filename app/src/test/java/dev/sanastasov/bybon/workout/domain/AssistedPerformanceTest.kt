@@ -42,8 +42,9 @@ class AssistedPerformanceTest {
         assert(current.oneRm != null)
         assert(previous.oneRm == null)
         assert(
-            current.performanceChange(previous) ==
-                OneRmChange.LessAssistance(Weight.kilograms(5)),
+            current.performanceChange(previous) == OneRmChange.Improved(
+                OneRmChange.How.Assistance(Weight.kilograms(5)),
+            ),
         )
     }
 
@@ -73,21 +74,25 @@ class AssistedPerformanceTest {
         val earlierUnassisted = assisted(null, 6, bodyWeight = null)
 
         assert(
-            moreAssistance.performanceChange(baseline) ==
-                OneRmChange.MoreAssistance(Weight.kilograms(5)),
+            moreAssistance.performanceChange(baseline) == OneRmChange.Declined(
+                OneRmChange.How.Assistance(Weight.kilograms(5)),
+            ),
         )
-        assert(moreReps.performanceChange(baseline) == OneRmChange.MoreReps)
-        assert(fewerReps.performanceChange(baseline) == OneRmChange.FewerReps)
-        assert(same.performanceChange(baseline) == OneRmChange.Unchanged)
+        assert(moreReps.performanceChange(baseline) == OneRmChange.Improved(OneRmChange.How.Reps))
+        assert(fewerReps.performanceChange(baseline) == OneRmChange.Declined(OneRmChange.How.Reps))
+        assert(same.performanceChange(baseline) == OneRmChange.Maintained)
         assert(
-            unassisted.performanceChange(baseline) ==
-                OneRmChange.LessAssistance(Weight.kilograms(20)),
+            unassisted.performanceChange(baseline) == OneRmChange.Improved(
+                OneRmChange.How.Assistance(Weight.kilograms(20)),
+            ),
         )
         assert(
-            baseline.performanceChange(earlierUnassisted) ==
-                OneRmChange.MoreAssistance(Weight.kilograms(20)),
+            baseline.performanceChange(earlierUnassisted) == OneRmChange.Declined(
+                OneRmChange.How.Assistance(Weight.kilograms(20)),
+            ),
         )
-        assert(unassisted.performanceChange(earlierUnassisted) == OneRmChange.MoreReps)
+        val repChange = unassisted.performanceChange(earlierUnassisted)
+        assert(repChange == OneRmChange.Improved(OneRmChange.How.Reps))
     }
 
     @Test
@@ -103,7 +108,6 @@ class AssistedPerformanceTest {
             ),
         )
         assert(missing.performanceChange(previous) == null)
-        assert(current.performanceChange(null) == null)
     }
 
     private fun assisted(assist: Float?, reps: Int, bodyWeight: Float?): ExerciseSet = ExerciseSet(

@@ -1,39 +1,35 @@
 package dev.sanastasov.bybon.workout.domain
 
 sealed interface OneRmChange {
-    sealed interface Gain : OneRmChange
-
-    sealed interface Loss : OneRmChange
-
     data class Improved(
-        val delta: Weight,
-    ) : Gain
+        val how: How,
+    ) : OneRmChange
 
-    data class Decreased(
-        val delta: Weight,
-    ) : Loss
+    data object Maintained : OneRmChange
 
-    data class LessAssistance(
-        val delta: Weight,
-    ) : Gain
+    data class Declined(
+        val how: How,
+    ) : OneRmChange
 
-    data class MoreAssistance(
-        val delta: Weight,
-    ) : Loss
+    sealed interface How {
+        data class OneRm(
+            val delta: Weight,
+        ) : How
 
-    data object MoreReps : Gain
+        data class Assistance(
+            val delta: Weight,
+        ) : How
 
-    data object FewerReps : Loss
-
-    data object Unchanged : OneRmChange
+        data object Reps : How
+    }
 }
 
 fun oneRmChange(current: Weight, previous: Weight?): OneRmChange? {
     previous ?: return null
     return when {
-        current > previous -> OneRmChange.Improved(current - previous)
-        current < previous -> OneRmChange.Decreased(previous - current)
-        else -> OneRmChange.Unchanged
+        current > previous -> OneRmChange.Improved(OneRmChange.How.OneRm(current - previous))
+        current < previous -> OneRmChange.Declined(OneRmChange.How.OneRm(previous - current))
+        else -> OneRmChange.Maintained
     }
 }
 

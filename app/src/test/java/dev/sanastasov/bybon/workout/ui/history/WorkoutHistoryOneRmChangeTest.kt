@@ -69,11 +69,11 @@ class WorkoutHistoryOneRmChangeTest {
                     Weight.kilograms(estimateOneRmKg(100f, 5)),
                 ),
             )
-            assert(newest[1].oneRmChange is OneRmChange.Decreased)
+            assert(newest[1].oneRmChange is OneRmChange.Declined)
             assert(newest[2].oneRmChange == null)
             val previousBench = sessions[1].exercises.first { it.name == "Barbell Bench Press" }
             val previousSquat = sessions[1].exercises.first { it.name == "Barbell Back Squat" }
-            assert(previousBench.oneRmChange == OneRmChange.Unchanged)
+            assert(previousBench.oneRmChange == OneRmChange.Maintained)
             assert(previousSquat.oneRmChange == null)
             assert(sessions[2].exercises.single().oneRmChange == null)
         }

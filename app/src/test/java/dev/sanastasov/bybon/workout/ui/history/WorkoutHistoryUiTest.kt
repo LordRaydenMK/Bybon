@@ -135,7 +135,7 @@ class WorkoutHistoryUiTest {
             weightKg = "45",
             reps = 12,
             oneRm = Weight.kilograms(63f),
-            oneRmChange = OneRmChange.Improved(Weight.kilograms(2.5f)),
+            oneRmChange = OneRmChange.Improved(OneRmChange.How.OneRm(Weight.kilograms(2.5f))),
         )
         assert(topSet.contentDescription() == "Romanian Deadlift, 45 kg x 12, ↑ 2.5 kg")
     }
@@ -147,7 +147,7 @@ class WorkoutHistoryUiTest {
             weightKg = "60",
             reps = 8,
             oneRm = Weight.kilograms(76f),
-            oneRmChange = OneRmChange.Unchanged,
+            oneRmChange = OneRmChange.Maintained,
         )
         assert(topSet.contentDescription() == "Barbell Bench Press, 60 kg x 8, No change")
     }
@@ -170,7 +170,7 @@ class WorkoutHistoryUiTest {
             weightKg = "-20",
             reps = 8,
             oneRm = null,
-            oneRmChange = OneRmChange.LessAssistance(Weight.kilograms(5)),
+            oneRmChange = OneRmChange.Improved(OneRmChange.How.Assistance(Weight.kilograms(5))),
         )
         assert(topSet.contentDescription() == "Assisted Pull-up, -20 kg x 8, ↑ 5 less")
     }
@@ -182,7 +182,7 @@ class WorkoutHistoryUiTest {
             weightKg = "-20",
             reps = 10,
             oneRm = null,
-            oneRmChange = OneRmChange.MoreReps,
+            oneRmChange = OneRmChange.Improved(OneRmChange.How.Reps),
         )
         assert(topSet.contentDescription() == "Assisted Pull-up, -20 kg x 10, ↑ reps")
     }
@@ -204,7 +204,11 @@ class WorkoutHistoryUiTest {
         assert(topSet.weightKg == "-20")
         assert(topSet.reps == 8)
         assert(topSet.oneRm == null)
-        assert(topSet.oneRmChange == OneRmChange.LessAssistance(Weight.kilograms(5)))
+        assert(
+            topSet.oneRmChange == OneRmChange.Improved(
+                OneRmChange.How.Assistance(Weight.kilograms(5)),
+            ),
+        )
         assert(
             topSet.contentDescription() ==
                 "${catalogExercise("assisted-pull-ups").name}, -20 kg x 8, ↑ 5 less",

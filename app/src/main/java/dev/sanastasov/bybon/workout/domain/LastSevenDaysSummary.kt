@@ -67,9 +67,9 @@ private fun performanceChange(
         val current = inWindow.bestPerformanceSet(exerciseId) ?: return@forEach
         val previous = beforeWindow.latestPerformanceSet(exerciseId) ?: return@forEach
         when (current.performanceChange(previous)) {
-            is OneRmChange.Gain -> improved++
-            is OneRmChange.Loss -> declined++
-            OneRmChange.Unchanged -> maintained++
+            is OneRmChange.Improved -> improved++
+            is OneRmChange.Declined -> declined++
+            OneRmChange.Maintained -> maintained++
             null -> Unit
         }
     }

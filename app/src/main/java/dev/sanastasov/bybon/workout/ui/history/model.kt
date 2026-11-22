@@ -204,6 +204,6 @@ private fun WorkoutExercise.toTopSetUi(
         weightKg = current.loggedLoadLabel(),
         reps = current.reps,
         oneRm = current.oneRm,
-        oneRmChange = current.performanceChange(previous),
+        oneRmChange = previous?.let { current.performanceChange(it) },
     )
 }

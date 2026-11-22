@@ -13,8 +13,7 @@ fun WorkoutExercise.performanceTopSet(): ExerciseSet = checkNotNull(
     sets.maxWithOrNull(performanceSetOrder),
 ) { "sets must contain at least one set" }
 
-fun ExerciseSet.performanceChange(previous: ExerciseSet?): OneRmChange? {
-    if (previous == null) return null
+fun ExerciseSet.performanceChange(previous: ExerciseSet): OneRmChange? {
     val currentOneRm = oneRm
     val previousOneRm = previous.oneRm
     return when {
@@ -31,11 +30,11 @@ private fun ExerciseSet.assistedChange(previous: ExerciseSet): OneRmChange {
     val removed = previous.assistanceAbove(this)
     val added = assistanceAbove(previous)
     return when {
-        removed != null -> OneRmChange.LessAssistance(removed)
-        added != null -> OneRmChange.MoreAssistance(added)
-        reps > previous.reps -> OneRmChange.MoreReps
-        reps < previous.reps -> OneRmChange.FewerReps
-        else -> OneRmChange.Unchanged
+        removed != null -> OneRmChange.Improved(OneRmChange.How.Assistance(removed))
+        added != null -> OneRmChange.Declined(OneRmChange.How.Assistance(added))
+        reps > previous.reps -> OneRmChange.Improved(OneRmChange.How.Reps)
+        reps < previous.reps -> OneRmChange.Declined(OneRmChange.How.Reps)
+        else -> OneRmChange.Maintained
     }
 }
 
