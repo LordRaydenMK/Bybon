@@ -17,6 +17,7 @@ data class WorkoutPlansUiState(
 ) {
     val unarchivedPlans: List<WorkoutPlanUi>
         get() = plans.filter { !it.plan.isArchived }.sortedWith(
+            // Active, then draft, then stored position. Stable, so each group keeps that order.
             compareByDescending<WorkoutPlanUi> { it is WorkoutPlanUi.Active }
                 .thenByDescending { it is WorkoutPlanUi.Draft },
         )
@@ -116,6 +117,14 @@ sealed class WorkoutPlansAction {
     data object OnHideArchivedPlans : WorkoutPlansAction()
 
     data class OnDiscardDraft(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
+
+    data class OnMovePlanUp(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
+
+    data class OnMovePlanDown(
         val plan: WorkoutPlan,
     ) : WorkoutPlansAction()
 }

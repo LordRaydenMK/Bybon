@@ -6,11 +6,12 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import kotlin.time.Duration.Companion.seconds
 
-internal fun WorkoutPlan.toEntity(): WorkoutPlanEntity = WorkoutPlanEntity(
+internal fun WorkoutPlan.toEntity(position: Int): WorkoutPlanEntity = WorkoutPlanEntity(
     id = id.id,
     name = name,
     description = description,
     isArchived = isArchived,
+    position = position,
 )
 
 internal fun WorkoutPlan.toExerciseEntities(): List<WorkoutPlanExerciseEntity> =

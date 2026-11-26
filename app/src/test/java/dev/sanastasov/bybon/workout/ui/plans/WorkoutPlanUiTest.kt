@@ -4,11 +4,13 @@ import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseState
 import dev.sanastasov.bybon.workout.domain.SetState
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.toOverviewSession
 import dev.sanastasov.bybon.workout.domain.toWorkoutSession
+import dev.sanastasov.bybon.workout.domain.upperBodyA
 import java.time.LocalDateTime
 import org.junit.Test
 
@@ -102,6 +104,29 @@ class WorkoutPlanUiTest {
         )
 
         assert(state.unarchivedPlans.map { it.plan } == listOf(fullBodyB, fullBodyA))
+    }
+
+    @Test
+    fun `active then draft stay above idle plans in stored order`() {
+        val legacy = upperBodyA.copy(isArchived = false)
+        val extra = fullBodyA.copy(id = WorkoutPlanId("extra"), name = "Extra")
+        val state = WorkoutPlansUiState(
+            plans = listOf(
+                WorkoutPlanUi.Idle(fullBodyA),
+                WorkoutPlanUi.Draft(fullBodyB),
+                WorkoutPlanUi.Idle(legacy),
+                WorkoutPlanUi.Active(extra),
+            ),
+        )
+
+        assert(
+            state.unarchivedPlans.map { it.plan.id } == listOf(
+                extra.id,
+                fullBodyB.id,
+                fullBodyA.id,
+                legacy.id,
+            ),
+        )
     }
 }
 

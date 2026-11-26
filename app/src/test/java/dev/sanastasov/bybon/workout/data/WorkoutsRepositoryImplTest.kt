@@ -7,6 +7,7 @@ import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
+import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
@@ -27,6 +28,7 @@ import dev.sanastasov.bybon.workout.domain.updateWeight
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -643,6 +645,44 @@ class WorkoutsRepositoryImplTest {
         val pullUp = active.exercises.first { it.id == "assisted-pull-ups" }
         assert(pullUp.sets.first().previous?.bodyWeight == Weight.kilograms(80))
         assert(pullUp.sets.first().bodyWeight == Weight.kilograms(81))
+    }
+
+    @Test
+    fun `editing a plan keeps its position`() = runTest {
+        val repository = repository()
+
+        repository.updatePlan(fullBodyB.id) { it.addWorkSet("romanian-deadlift") }
+        val plans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+
+        assert(plans.map { it.id } == listOf(fullBodyA.id, fullBodyB.id, upperBodyA.id))
+        assert(plans[1].sets.first { it.exercise.id == "romanian-deadlift" }.sets == 4)
+    }
+
+    @Test
+    fun `movePlan reorders idle plans around an open session and an archived plan`() = runTest {
+        val exerciseDao = FakeExerciseDao()
+        val planDao = FakeWorkoutPlanDao()
+        val sessionDao = FakeWorkoutSessionDao(exerciseDao, planDao)
+        val first = repository(exerciseDao, planDao, sessionDao)
+        val extra = fullBodyA.copy(id = WorkoutPlanId("extra"), name = "Extra")
+        first.importHistory(
+            plans = listOf(extra),
+            sessions = emptyList(),
+            exercises = emptyList(),
+        )
+        first.updateWorkout(fullBodyA.toWorkoutSession())
+
+        val pinned = assertFailsWith<IllegalStateException> {
+            first.movePlan(fullBodyA.id, ReorderDirection.Down)
+        }
+        assert(pinned.message == "Cannot move full-body-a")
+
+        first.movePlan(extra.id, ReorderDirection.Up)
+
+        val second = repository(exerciseDao, planDao, sessionDao)
+        val stored = second.workoutPlans(WorkoutPlansFilter.AllPlans).first().map { it.id }
+
+        assert(stored == listOf(fullBodyA.id, extra.id, upperBodyA.id, fullBodyB.id))
     }
 
     private suspend fun inProgressSession(

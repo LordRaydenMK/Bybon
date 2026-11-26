@@ -1,6 +1,7 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
@@ -75,6 +76,14 @@ class WorkoutPlansViewModel(
                     .first()
                     .first()
                 repository.deleteWorkout(draft.id)
+            }
+
+            is WorkoutPlansAction.OnMovePlanUp -> coroutineScope.launch {
+                repository.movePlan(action.plan.id, ReorderDirection.Up)
+            }
+
+            is WorkoutPlansAction.OnMovePlanDown -> coroutineScope.launch {
+                repository.movePlan(action.plan.id, ReorderDirection.Down)
             }
         }
     }
