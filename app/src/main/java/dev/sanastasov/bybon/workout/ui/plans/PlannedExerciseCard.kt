@@ -3,7 +3,6 @@ package dev.sanastasov.bybon.workout.ui.plans
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -51,7 +50,13 @@ fun PlannedExerciseCard(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        PlannedExerciseHeader(exercise, overflow, onRemoveExercise)
+        PlannedExerciseHeader(
+            exercise,
+            overflow,
+            onAddWarmupSet,
+            onRemoveLastWarmupSet,
+            onRemoveExercise,
+        )
         PlannedSetColumnsHeader()
         exercise.toPlannedSets().forEachIndexed { index, plannedSet ->
             key(index) {
@@ -62,8 +67,6 @@ fun PlannedExerciseCard(
             exercise,
             onAddSet,
             onRemoveLastSet,
-            onAddWarmupSet,
-            onRemoveLastWarmupSet,
             onRemoveExercise,
             canRemoveExercise,
         )
@@ -74,8 +77,11 @@ fun PlannedExerciseCard(
 private fun PlannedExerciseHeader(
     exercise: PlanedExercise,
     overflow: ExerciseOverflow?,
+    onAddWarmupSet: () -> Unit,
+    onRemoveLastWarmupSet: () -> Unit,
     onRemoveExercise: () -> Unit,
 ) {
+    val exerciseName = exercise.exercise.name
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -85,7 +91,7 @@ private fun PlannedExerciseHeader(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                exercise.exercise.name,
+                exerciseName,
                 fontWeight = FontWeight.Bold,
             )
             Text(
@@ -94,8 +100,9 @@ private fun PlannedExerciseHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        overflow?.let {
-            ExerciseOverflowMenu(exercise.exercise.name, it) { dismiss ->
+        ExerciseOverflowMenu(exerciseName, overflow) { dismiss ->
+            PlanWarmupMenuItems(exercise, onAddWarmupSet, onRemoveLastWarmupSet, dismiss)
+            if (overflow != null) {
                 DropdownMenuItem(
                     text = { Text("Remove Exercise") },
                     onClick = {
@@ -105,6 +112,38 @@ private fun PlannedExerciseHeader(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun PlanWarmupMenuItems(
+    exercise: PlanedExercise,
+    onAddWarmupSet: () -> Unit,
+    onRemoveLastWarmupSet: () -> Unit,
+    dismiss: () -> Unit,
+) {
+    val exerciseName = exercise.exercise.name
+    DropdownMenuItem(
+        text = { Text("Add warmup set") },
+        onClick = {
+            dismiss()
+            onAddWarmupSet()
+        },
+        modifier = Modifier.clearAndSetSemantics {
+            contentDescription = "Add warmup set to $exerciseName"
+        },
+    )
+    if (exercise.warmupSets > 0) {
+        DropdownMenuItem(
+            text = { Text("Remove warmup set") },
+            onClick = {
+                dismiss()
+                onRemoveLastWarmupSet()
+            },
+            modifier = Modifier.clearAndSetSemantics {
+                contentDescription = "Remove last warmup set from $exerciseName"
+            },
+        )
     }
 }
 
@@ -182,57 +221,40 @@ private fun PlannedExerciseActions(
     exercise: PlanedExercise,
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
-    onAddWarmupSet: () -> Unit,
-    onRemoveLastWarmupSet: () -> Unit,
     onRemoveExercise: () -> Unit,
     canRemoveExercise: Boolean,
 ) {
     val exerciseName = exercise.exercise.name
-    Column(Modifier.fillMaxWidth()) {
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(
+            onAddSet,
+            Modifier.clearAndSetSemantics {
+                contentDescription = "Add set to $exerciseName"
+            },
         ) {
-            PlanActionButton("Add Set", "Add set to $exerciseName", onAddSet)
-            if (exercise.sets == 1) {
-                if (canRemoveExercise) {
-                    PlanActionButton(
-                        "Remove Exercise",
-                        "Remove $exerciseName from plan",
-                        onRemoveExercise,
-                    )
+            Text("Add Set")
+        }
+        if (exercise.sets == 1) {
+            if (canRemoveExercise) {
+                TextButton(
+                    onRemoveExercise,
+                    Modifier.clearAndSetSemantics {
+                        contentDescription = "Remove $exerciseName from plan"
+                    },
+                ) {
+                    Text("Remove Exercise")
                 }
-            } else {
-                PlanActionButton(
-                    "Remove Last Set",
-                    "Remove last set from $exerciseName",
-                    onRemoveLastSet,
-                )
+            }
+        } else {
+            TextButton(
+                onRemoveLastSet,
+                Modifier.clearAndSetSemantics {
+                    contentDescription = "Remove last set from $exerciseName"
+                },
+            ) {
+                Text("Remove Last Set")
             }
         }
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            PlanActionButton("Add Warmup", "Add warmup set to $exerciseName", onAddWarmupSet)
-            if (exercise.warmupSets > 0) {
-                PlanActionButton(
-                    "Remove Warmup",
-                    "Remove last warmup set from $exerciseName",
-                    onRemoveLastWarmupSet,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PlanActionButton(label: String, description: String, onClick: () -> Unit) {
-    TextButton(
-        onClick,
-        Modifier.clearAndSetSemantics { contentDescription = description },
-    ) {
-        Text(label)
     }
 }
 
