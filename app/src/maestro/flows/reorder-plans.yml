@@ -6,20 +6,20 @@ appId: dev.sanastasov.bybon.debug
 - extendedWaitUntil:
     visible: "Full Body A"
     timeout: 30000
-- extendedWaitUntil:
-    visible: "Full Body B"
-    timeout: 30000
-- tapOn: "More options for Full Body B"
-- assertVisible: "Move Full Body B up"
-- assertVisible: "Move Full Body B down"
-- tapOn: "Move Full Body B up"
+- tapOn: "More options for Full Body A"
 - assertVisible:
-    text: "Full Body A"
-    below:
-      text: "Full Body B"
-- tapOn: "More options for Full Body B"
-- tapOn: "Move Full Body B down"
+    text: "Move Full Body A up"
+    enabled: false
 - assertVisible:
-    text: "Full Body B"
-    below:
-      text: "Full Body A"
+    text: "Move Full Body A down"
+    enabled: true
+- tapOn: "Move Full Body A down"
+- tapOn: "More options for Full Body A"
+- assertVisible:
+    text: "Move Full Body A up"
+    enabled: true
+- tapOn: "Move Full Body A up"
+- tapOn: "More options for Full Body A"
+- assertVisible:
+    text: "Move Full Body A up"
+    enabled: false

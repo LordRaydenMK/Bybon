@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -204,6 +205,7 @@ private fun ColumnScope.PlanMoveItems(plan: WorkoutPlan, move: PlanMove, dismiss
         enabled = move.canMoveUp,
         modifier = Modifier.clearAndSetSemantics {
             contentDescription = "Move ${plan.name} up"
+            if (!move.canMoveUp) disabled()
         },
     )
     DropdownMenuItem(
@@ -215,6 +217,7 @@ private fun ColumnScope.PlanMoveItems(plan: WorkoutPlan, move: PlanMove, dismiss
         enabled = move.canMoveDown,
         modifier = Modifier.clearAndSetSemantics {
             contentDescription = "Move ${plan.name} down"
+            if (!move.canMoveDown) disabled()
         },
     )
 }
