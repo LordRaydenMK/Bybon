@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.plans
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -38,6 +39,8 @@ fun PlannedExerciseCard(
     overflow: ExerciseOverflow?,
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
+    onAddWarmupSet: () -> Unit,
+    onRemoveLastWarmupSet: () -> Unit,
     onRemoveExercise: () -> Unit,
     modifier: Modifier = Modifier,
     canRemoveExercise: Boolean = true,
@@ -59,6 +62,8 @@ fun PlannedExerciseCard(
             exercise,
             onAddSet,
             onRemoveLastSet,
+            onAddWarmupSet,
+            onRemoveLastWarmupSet,
             onRemoveExercise,
             canRemoveExercise,
         )
@@ -177,40 +182,57 @@ private fun PlannedExerciseActions(
     exercise: PlanedExercise,
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
+    onAddWarmupSet: () -> Unit,
+    onRemoveLastWarmupSet: () -> Unit,
     onRemoveExercise: () -> Unit,
     canRemoveExercise: Boolean,
 ) {
     val exerciseName = exercise.exercise.name
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        TextButton(
-            onAddSet,
-            Modifier.clearAndSetSemantics {
-                contentDescription = "Add set to $exerciseName"
-            },
+    Column(Modifier.fillMaxWidth()) {
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Add Set")
-        }
-        if (exercise.sets == 1) {
-            if (canRemoveExercise) {
-                TextButton(
-                    onRemoveExercise,
-                    Modifier.clearAndSetSemantics {
-                        contentDescription = "Remove $exerciseName from plan"
-                    },
-                ) {
-                    Text("Remove Exercise")
+            PlanActionButton("Add Set", "Add set to $exerciseName", onAddSet)
+            if (exercise.sets == 1) {
+                if (canRemoveExercise) {
+                    PlanActionButton(
+                        "Remove Exercise",
+                        "Remove $exerciseName from plan",
+                        onRemoveExercise,
+                    )
                 }
-            }
-        } else {
-            TextButton(
-                onRemoveLastSet,
-                Modifier.clearAndSetSemantics {
-                    contentDescription = "Remove last set from $exerciseName"
-                },
-            ) {
-                Text("Remove Last Set")
+            } else {
+                PlanActionButton(
+                    "Remove Last Set",
+                    "Remove last set from $exerciseName",
+                    onRemoveLastSet,
+                )
             }
         }
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            PlanActionButton("Add Warmup", "Add warmup set to $exerciseName", onAddWarmupSet)
+            if (exercise.warmupSets > 0) {
+                PlanActionButton(
+                    "Remove Warmup",
+                    "Remove last warmup set from $exerciseName",
+                    onRemoveLastWarmupSet,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlanActionButton(label: String, description: String, onClick: () -> Unit) {
+    TextButton(
+        onClick,
+        Modifier.clearAndSetSemantics { contentDescription = description },
+    ) {
+        Text(label)
     }
 }
 
@@ -221,6 +243,8 @@ private fun PlannedExerciseCardWithWarmupsPreview() {
         PlannedExerciseCard(
             fullBodyA.sets.first(),
             ExerciseOverflow(false, true, {}, {}),
+            {},
+            {},
             {},
             {},
             {},
@@ -238,6 +262,8 @@ private fun PlannedExerciseCardWithoutWarmupsPreview() {
             {},
             {},
             {},
+            {},
+            {},
         )
     }
 }
@@ -252,6 +278,8 @@ private fun PlannedExerciseCardSingleSetPreview() {
             {},
             {},
             {},
+            {},
+            {},
         )
     }
 }
@@ -260,6 +288,6 @@ private fun PlannedExerciseCardSingleSetPreview() {
 @Composable
 private fun PlannedExerciseCardLastExercisePreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first(), null, {}, {}, {})
+        PlannedExerciseCard(fullBodyA.sets.first(), null, {}, {}, {}, {}, {})
     }
 }

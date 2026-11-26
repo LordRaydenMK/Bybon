@@ -5,10 +5,12 @@ import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.addExercise
+import dev.sanastasov.bybon.workout.domain.addWarmupSet
 import dev.sanastasov.bybon.workout.domain.addWorkSet
 import dev.sanastasov.bybon.workout.domain.moveExerciseDown
 import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeExercise
+import dev.sanastasov.bybon.workout.domain.removeLastWarmupSet
 import dev.sanastasov.bybon.workout.domain.removeLastWorkSet
 import dev.sanastasov.bybon.workout.domain.requireExercise
 import kotlinx.coroutines.CoroutineScope
@@ -46,6 +48,12 @@ class EditPlanViewModel(
 
                 is EditPlanAction.OnRemoveLastSet ->
                     repository.updatePlan(planId) { it.removeLastWorkSet(action.exerciseId) }
+
+                is EditPlanAction.OnAddWarmupSet ->
+                    repository.updatePlan(planId) { it.addWarmupSet(action.exerciseId) }
+
+                is EditPlanAction.OnRemoveLastWarmupSet ->
+                    repository.updatePlan(planId) { it.removeLastWarmupSet(action.exerciseId) }
 
                 is EditPlanAction.OnRemoveExercise ->
                     repository.updatePlan(planId) { it.removeExercise(action.exerciseId) }

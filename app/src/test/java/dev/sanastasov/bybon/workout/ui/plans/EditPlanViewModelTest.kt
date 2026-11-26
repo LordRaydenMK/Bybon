@@ -66,6 +66,60 @@ class EditPlanViewModelTest {
     }
 
     @Test
+    fun `adding a warmup persists a warmup set on the planned exercise`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnAddWarmupSet("seated-leg-curl"))
+
+        val updated = viewModel.uiState.first { plan ->
+            plan?.sets?.first { it.exercise.id == "seated-leg-curl" }?.warmupSets == 1
+        }!!
+        val curl = updated.sets.first { it.exercise.id == "seated-leg-curl" }
+        assert(curl.warmupSets == 1)
+        assert(curl.sets == 3)
+        assert(updated.sets.first().warmupSets == 3)
+        assert(
+            repository.workoutPlans().first().first().sets
+                .first { it.exercise.id == "seated-leg-curl" }.warmupSets == 1,
+        )
+        assert(repository.workoutPlans().first()[1] == fullBodyB)
+    }
+
+    @Test
+    fun `removing the last warmup persists one fewer warmup set`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnRemoveLastWarmupSet("bench-press"))
+
+        val updated = viewModel.uiState.first { plan ->
+            plan?.sets?.first()?.warmupSets == 2
+        }!!
+        assert(updated.sets.first().warmupSets == 2)
+        assert(updated.sets.first().sets == 3)
+        assert(repository.workoutPlans().first().single().sets.first().warmupSets == 2)
+    }
+
+    @Test
+    fun `removing a warmup when none remain is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = EditPlanViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
+            failures.scope,
+        )
+        viewModel.uiState.first { it != null }
+        failures.expectFailure(
+            "Cannot remove last warmup set from seated-leg-curl; none remain",
+        ) {
+            viewModel.onAction(EditPlanAction.OnRemoveLastWarmupSet("seated-leg-curl"))
+        }
+    }
+
+    @Test
     fun `removing an exercise persists the plan without it`() = runTest {
         val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)

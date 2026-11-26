@@ -144,6 +144,12 @@ sealed class EditPlanAction {
     data class OnRemoveLastSet(
         val exerciseId: String,
     ) : EditPlanAction()
+    data class OnAddWarmupSet(
+        val exerciseId: String,
+    ) : EditPlanAction()
+    data class OnRemoveLastWarmupSet(
+        val exerciseId: String,
+    ) : EditPlanAction()
     data class OnRemoveExercise(
         val exerciseId: String,
     ) : EditPlanAction()
