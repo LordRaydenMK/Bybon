@@ -14,11 +14,19 @@ appId: dev.sanastasov.bybon.debug
     text: "Move Full Body A down"
     enabled: true
 - tapOn: "Move Full Body A down"
+- scrollUntilVisible:
+    element: "Full Body A"
+    direction: UP
+    centerElement: true
 - tapOn: "More options for Full Body A"
 - assertVisible:
     text: "Move Full Body A up"
     enabled: true
 - tapOn: "Move Full Body A up"
+- scrollUntilVisible:
+    element: "Full Body A"
+    direction: UP
+    centerElement: true
 - tapOn: "More options for Full Body A"
 - assertVisible:
     text: "Move Full Body A up"
