@@ -134,6 +134,12 @@ sealed class WorkoutPlanEffect {
 
 sealed class EditPlanAction {
     data object OnArchivePlan : EditPlanAction()
+    data class OnRenamePlan(
+        val name: String,
+    ) : EditPlanAction()
+    data class OnUpdateNote(
+        val note: String,
+    ) : EditPlanAction()
     data object OnAddExercise : EditPlanAction()
     data class OnExercisePicked(
         val exerciseId: String,

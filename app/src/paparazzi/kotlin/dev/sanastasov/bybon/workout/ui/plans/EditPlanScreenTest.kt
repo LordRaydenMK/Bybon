@@ -34,6 +34,20 @@ class EditPlanScreenTest {
     }
 
     @Test
+    fun noNote() {
+        paparazzi.bybonSnapshot {
+            EditPlanContent(
+                fullBodyA.copy(
+                    description = null,
+                    sets = listOf(fullBodyA.sets.first()),
+                ),
+                {},
+                {},
+            )
+        }
+    }
+
+    @Test
     fun noWarmups() {
         paparazzi.bybonSnapshot {
             EditPlanContent(

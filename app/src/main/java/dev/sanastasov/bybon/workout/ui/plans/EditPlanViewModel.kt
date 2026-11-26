@@ -12,7 +12,9 @@ import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastWarmupSet
 import dev.sanastasov.bybon.workout.domain.removeLastWorkSet
+import dev.sanastasov.bybon.workout.domain.rename
 import dev.sanastasov.bybon.workout.domain.requireExercise
+import dev.sanastasov.bybon.workout.domain.withNote
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -42,6 +44,12 @@ class EditPlanViewModel(
                     repository.archivePlan(planId, archived = true)
                     _effects.trySend(EditPlanEffect.NavigateBack)
                 }
+
+                is EditPlanAction.OnRenamePlan ->
+                    repository.updatePlan(planId) { it.rename(action.name) }
+
+                is EditPlanAction.OnUpdateNote ->
+                    repository.updatePlan(planId) { it.withNote(action.note) }
 
                 is EditPlanAction.OnAddSet ->
                     repository.updatePlan(planId) { it.addWorkSet(action.exerciseId) }
