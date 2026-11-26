@@ -16,6 +16,19 @@ fun WorkoutPlan.removeLastWorkSet(exerciseId: String): WorkoutPlan =
         exercise.copy(sets = exercise.sets - 1)
     }
 
+fun WorkoutPlan.addWarmupSet(exerciseId: String): WorkoutPlan =
+    updatePlannedExercise(exerciseId) { exercise ->
+        exercise.copy(warmupSets = exercise.warmupSets + 1)
+    }
+
+fun WorkoutPlan.removeLastWarmupSet(exerciseId: String): WorkoutPlan =
+    updatePlannedExercise(exerciseId) { exercise ->
+        check(exercise.warmupSets > 0) {
+            "Cannot remove last warmup set from $exerciseId; none remain"
+        }
+        exercise.copy(warmupSets = exercise.warmupSets - 1)
+    }
+
 fun WorkoutPlan.removeExercise(exerciseId: String): WorkoutPlan {
     val exercise = requireExercise(exerciseId)
     check(sets.size > 1) {

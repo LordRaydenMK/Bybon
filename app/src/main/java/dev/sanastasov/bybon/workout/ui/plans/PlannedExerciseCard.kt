@@ -38,6 +38,8 @@ fun PlannedExerciseCard(
     overflow: ExerciseOverflow?,
     onAddSet: () -> Unit,
     onRemoveLastSet: () -> Unit,
+    onAddWarmupSet: () -> Unit,
+    onRemoveLastWarmupSet: () -> Unit,
     onRemoveExercise: () -> Unit,
     modifier: Modifier = Modifier,
     canRemoveExercise: Boolean = true,
@@ -48,7 +50,13 @@ fun PlannedExerciseCard(
             .padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        PlannedExerciseHeader(exercise, overflow, onRemoveExercise)
+        PlannedExerciseHeader(
+            exercise,
+            overflow,
+            onAddWarmupSet,
+            onRemoveLastWarmupSet,
+            onRemoveExercise,
+        )
         PlannedSetColumnsHeader()
         exercise.toPlannedSets().forEachIndexed { index, plannedSet ->
             key(index) {
@@ -69,8 +77,11 @@ fun PlannedExerciseCard(
 private fun PlannedExerciseHeader(
     exercise: PlanedExercise,
     overflow: ExerciseOverflow?,
+    onAddWarmupSet: () -> Unit,
+    onRemoveLastWarmupSet: () -> Unit,
     onRemoveExercise: () -> Unit,
 ) {
+    val exerciseName = exercise.exercise.name
     Row(
         Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -80,7 +91,7 @@ private fun PlannedExerciseHeader(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                exercise.exercise.name,
+                exerciseName,
                 fontWeight = FontWeight.Bold,
             )
             Text(
@@ -89,8 +100,9 @@ private fun PlannedExerciseHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        overflow?.let {
-            ExerciseOverflowMenu(exercise.exercise.name, it) { dismiss ->
+        ExerciseOverflowMenu(exerciseName, overflow) { dismiss ->
+            PlanWarmupMenuItems(exercise, onAddWarmupSet, onRemoveLastWarmupSet, dismiss)
+            if (overflow != null) {
                 DropdownMenuItem(
                     text = { Text("Remove Exercise") },
                     onClick = {
@@ -100,6 +112,38 @@ private fun PlannedExerciseHeader(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun PlanWarmupMenuItems(
+    exercise: PlanedExercise,
+    onAddWarmupSet: () -> Unit,
+    onRemoveLastWarmupSet: () -> Unit,
+    dismiss: () -> Unit,
+) {
+    val exerciseName = exercise.exercise.name
+    DropdownMenuItem(
+        text = { Text("Add warmup set") },
+        onClick = {
+            dismiss()
+            onAddWarmupSet()
+        },
+        modifier = Modifier.clearAndSetSemantics {
+            contentDescription = "Add warmup set to $exerciseName"
+        },
+    )
+    if (exercise.warmupSets > 0) {
+        DropdownMenuItem(
+            text = { Text("Remove warmup set") },
+            onClick = {
+                dismiss()
+                onRemoveLastWarmupSet()
+            },
+            modifier = Modifier.clearAndSetSemantics {
+                contentDescription = "Remove last warmup set from $exerciseName"
+            },
+        )
     }
 }
 
@@ -224,6 +268,8 @@ private fun PlannedExerciseCardWithWarmupsPreview() {
             {},
             {},
             {},
+            {},
+            {},
         )
     }
 }
@@ -235,6 +281,8 @@ private fun PlannedExerciseCardWithoutWarmupsPreview() {
         PlannedExerciseCard(
             fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" },
             ExerciseOverflow(true, true, {}, {}),
+            {},
+            {},
             {},
             {},
             {},
@@ -252,6 +300,8 @@ private fun PlannedExerciseCardSingleSetPreview() {
             {},
             {},
             {},
+            {},
+            {},
         )
     }
 }
@@ -260,6 +310,6 @@ private fun PlannedExerciseCardSingleSetPreview() {
 @Composable
 private fun PlannedExerciseCardLastExercisePreview() {
     Surface {
-        PlannedExerciseCard(fullBodyA.sets.first(), null, {}, {}, {})
+        PlannedExerciseCard(fullBodyA.sets.first(), null, {}, {}, {}, {}, {})
     }
 }

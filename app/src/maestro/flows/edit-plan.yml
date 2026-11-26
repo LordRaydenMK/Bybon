@@ -17,6 +17,21 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Barbell Bench Press set 1, 8–10 reps, rest 2:00"
 - assertVisible: "Add set to Barbell Bench Press"
 - assertVisible: "Remove last set from Barbell Bench Press"
+- tapOn: "More options for Barbell Bench Press"
+- assertVisible: "Add warmup set to Barbell Bench Press"
+- assertVisible: "Remove last warmup set from Barbell Bench Press"
+- assertNotVisible:
+    text: "Barbell Bench Press warmup set"
+    index: 3
+- tapOn: "Add warmup set to Barbell Bench Press"
+- assertVisible:
+    text: "Barbell Bench Press warmup set"
+    index: 3
+- tapOn: "More options for Barbell Bench Press"
+- tapOn: "Remove last warmup set from Barbell Bench Press"
+- assertNotVisible:
+    text: "Barbell Bench Press warmup set"
+    index: 3
 - assertVisible: "More options for Barbell Bench Press"
 - tapOn: "More options for Barbell Bench Press"
 - assertVisible: "Move Barbell Bench Press up"
@@ -58,6 +73,21 @@ appId: dev.sanastasov.bybon.debug
 - assertVisible: "Seated Leg Curl"
 - assertVisible: "Upper legs · Machine"
 - assertVisible: "Seated Leg Curl set 1, 12–14 reps, rest 1:00"
+- assertNotVisible: "Seated Leg Curl warmup set"
+- scrollUntilVisible:
+    element: "More options for Seated Leg Curl"
+    direction: DOWN
+- tapOn: "More options for Seated Leg Curl"
+- assertVisible: "Add warmup set to Seated Leg Curl"
+- assertNotVisible: "Remove last warmup set from Seated Leg Curl"
+- tapOn: "Add warmup set to Seated Leg Curl"
+- assertVisible: "Seated Leg Curl warmup set"
+- tapOn: "More options for Seated Leg Curl"
+- assertVisible: "Remove last warmup set from Seated Leg Curl"
+- tapOn: "Remove last warmup set from Seated Leg Curl"
+- assertNotVisible: "Seated Leg Curl warmup set"
+- tapOn: "More options for Seated Leg Curl"
+- assertNotVisible: "Remove last warmup set from Seated Leg Curl"
 - scrollUntilVisible:
     element: "Add Exercise"
     direction: DOWN

@@ -32,4 +32,17 @@ class EditPlanScreenTest {
             )
         }
     }
+
+    @Test
+    fun noWarmups() {
+        paparazzi.bybonSnapshot {
+            EditPlanContent(
+                fullBodyA.copy(
+                    sets = listOf(fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }),
+                ),
+                {},
+                {},
+            )
+        }
+    }
 }

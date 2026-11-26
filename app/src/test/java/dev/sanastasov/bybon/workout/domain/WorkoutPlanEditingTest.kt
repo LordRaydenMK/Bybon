@@ -44,6 +44,34 @@ class WorkoutPlanEditingTest {
     }
 
     @Test
+    fun `addWarmupSet appends a warmup and leaves work sets unchanged`() {
+        val actual = fullBodyA.addWarmupSet("seated-leg-curl")
+        val curl = actual.sets.first { it.exercise.id == "seated-leg-curl" }
+
+        assert(curl.warmupSets == 1)
+        assert(curl.sets == 3)
+        assert(actual.sets.first() == fullBodyA.sets.first())
+    }
+
+    @Test
+    fun `removeLastWarmupSet drops the last warmup`() {
+        val actual = fullBodyA.removeLastWarmupSet("bench-press")
+        val bench = actual.sets.first()
+
+        assert(bench.warmupSets == 2)
+        assert(bench.sets == 3)
+        assert(actual.sets.drop(1) == fullBodyA.sets.drop(1))
+    }
+
+    @Test
+    fun `removeLastWarmupSet throws when no warmup remains`() {
+        val error = assertFailsWith<IllegalStateException> {
+            fullBodyA.removeLastWarmupSet("seated-leg-curl")
+        }
+        assert(error.message == "Cannot remove last warmup set from seated-leg-curl; none remain")
+    }
+
+    @Test
     fun `removeExercise drops the matching exercise`() {
         val actual = fullBodyA.removeExercise("seated-leg-curl")
 
@@ -82,6 +110,8 @@ class WorkoutPlanEditingTest {
         }
         assert(error.message == "Exercise missing is not in the plan")
         assertFailsWith<IllegalStateException> { fullBodyA.removeLastWorkSet("missing") }
+        assertFailsWith<IllegalStateException> { fullBodyA.addWarmupSet("missing") }
+        assertFailsWith<IllegalStateException> { fullBodyA.removeLastWarmupSet("missing") }
         assertFailsWith<IllegalStateException> { fullBodyA.removeExercise("missing") }
         assertFailsWith<IllegalStateException> { fullBodyA.moveExerciseUp("missing") }
         assertFailsWith<IllegalStateException> { fullBodyA.moveExerciseDown("missing") }
@@ -135,6 +165,25 @@ class WorkoutPlanEditingTest {
 
         assert(session.exercises.first().sets.size == 4)
         assert(session.exercises.first().warmupSets?.size == 3)
+    }
+
+    @Test
+    fun `added warmup set is used when creating a session`() {
+        val plan = fullBodyA.addWarmupSet("seated-leg-curl")
+        val session = plan.toWorkoutSession()
+        val curl = session.exercises.first { it.id == "seated-leg-curl" }
+
+        assert(curl.warmupSets?.size == 1)
+        assert(curl.sets.size == 3)
+    }
+
+    @Test
+    fun `removed warmup set is omitted when creating a session`() {
+        val plan = fullBodyA.removeLastWarmupSet("bench-press")
+        val session = plan.toWorkoutSession()
+
+        assert(session.exercises.first().warmupSets?.size == 2)
+        assert(session.exercises.first().sets.size == 3)
     }
 
     @Test

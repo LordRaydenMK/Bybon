@@ -139,6 +139,10 @@ private fun LazyItemScope.EditPlanExerciseCard(
             onRemoveLastSet = {
                 onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
             },
+            onAddWarmupSet = { onAction(EditPlanAction.OnAddWarmupSet(exercise.exercise.id)) },
+            onRemoveLastWarmupSet = {
+                onAction(EditPlanAction.OnRemoveLastWarmupSet(exercise.exercise.id))
+            },
             onRemoveExercise = {
                 onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
             },
