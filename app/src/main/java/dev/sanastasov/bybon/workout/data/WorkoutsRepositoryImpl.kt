@@ -7,7 +7,6 @@ import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.bodyweight.data.WeightDao
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ImportHistoryResult
-import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
@@ -19,7 +18,6 @@ import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercises
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
-import dev.sanastasov.bybon.workout.domain.movePlan
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
 import dev.sanastasov.bybon.workout.domain.resolveBodyWeight
 import dev.sanastasov.bybon.workout.domain.sevenDayBodyWeightAverage
@@ -98,16 +96,15 @@ class WorkoutsRepositoryImpl internal constructor(
         }
     }
 
-    override suspend fun movePlan(planId: WorkoutPlanId, direction: ReorderDirection) {
+    override suspend fun reorderPlans(planIds: List<WorkoutPlanId>) {
         withContext(defaultDispatcher) {
             seedLock.withLock {
                 seedLocked()
-                val ordered = loadPlans()
-                val pinned = openPlanIds()
-                val updated = ordered.movePlan(planId, direction) { plan ->
-                    !plan.isArchived && plan.id !in pinned
+                val ids = planIds.map { it.id }
+                require(ids.toSet() == workoutPlanDao.ids().toSet()) {
+                    "Plan order must include every plan"
                 }
-                workoutPlanDao.setPositions(updated.map { it.id.id })
+                workoutPlanDao.setPositions(ids)
             }
         }
     }
@@ -308,20 +305,6 @@ class WorkoutsRepositoryImpl internal constructor(
         }
         seededCommit = repdbCommit
     }
-
-    private suspend fun loadPlans(): List<WorkoutPlan> {
-        val plans = workoutPlanDao.observePlans().first()
-        val lines = workoutPlanDao.observePlanExercises().first()
-        val exercises = exerciseDao.observeAll().first()
-        return plans.toDomainPlans(lines, exercises)
-    }
-
-    private suspend fun openPlanIds(): Set<WorkoutPlanId> =
-        workoutSessionDao.observeSessions().first()
-            .asSequence()
-            .filter { it.durationSeconds == null }
-            .map { WorkoutPlanId(it.planId) }
-            .toSet()
 
     private suspend fun List<WorkoutPlan>.withAppendedPositions(): List<WorkoutPlanEntity> {
         val start = workoutPlanDao.maxPosition() + 1

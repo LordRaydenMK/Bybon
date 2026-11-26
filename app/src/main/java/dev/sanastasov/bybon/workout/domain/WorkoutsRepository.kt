@@ -13,7 +13,7 @@ interface WorkoutsRepository {
 
     suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean)
 
-    suspend fun movePlan(planId: WorkoutPlanId, direction: ReorderDirection)
+    suspend fun reorderPlans(planIds: List<WorkoutPlanId>)
 
     suspend fun updatePlan(planId: WorkoutPlanId, transform: (WorkoutPlan) -> WorkoutPlan)
 

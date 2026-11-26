@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface WorkoutPlanDao {
 
-    @Query("SELECT * FROM workout_plan ORDER BY position, rowid")
+    @Query("SELECT * FROM workout_plan ORDER BY position")
     fun observePlans(): Flow<List<WorkoutPlanEntity>>
 
     @Query("SELECT * FROM workout_plan_exercise ORDER BY rowid")

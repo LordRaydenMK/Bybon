@@ -7,7 +7,6 @@ import dev.sanastasov.bybon.workout.domain.BodyPart
 import dev.sanastasov.bybon.workout.domain.Equipment
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.Mechanic
-import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
@@ -28,7 +27,6 @@ import dev.sanastasov.bybon.workout.domain.updateWeight
 import dev.sanastasov.bybon.workout.domain.upperBodyA
 import java.time.LocalDate
 import java.time.LocalDateTime
-import kotlin.test.assertFailsWith
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -659,30 +657,27 @@ class WorkoutsRepositoryImplTest {
     }
 
     @Test
-    fun `movePlan reorders idle plans around an open session and an archived plan`() = runTest {
+    fun `reorderPlans stores the given order`() = runTest {
         val exerciseDao = FakeExerciseDao()
         val planDao = FakeWorkoutPlanDao()
-        val sessionDao = FakeWorkoutSessionDao(exerciseDao, planDao)
-        val first = repository(exerciseDao, planDao, sessionDao)
-        val extra = fullBodyA.copy(id = WorkoutPlanId("extra"), name = "Extra")
-        first.importHistory(
-            plans = listOf(extra),
-            sessions = emptyList(),
-            exercises = emptyList(),
-        )
-        first.updateWorkout(fullBodyA.toWorkoutSession())
+        val first = repository(exerciseDao, planDao)
+        val order = listOf(upperBodyA.id, fullBodyB.id, fullBodyA.id)
 
-        val pinned = assertFailsWith<IllegalStateException> {
-            first.movePlan(fullBodyA.id, ReorderDirection.Down)
-        }
-        assert(pinned.message == "Cannot move full-body-a")
+        first.reorderPlans(order)
 
-        first.movePlan(extra.id, ReorderDirection.Up)
-
-        val second = repository(exerciseDao, planDao, sessionDao)
+        val second = repository(exerciseDao, planDao)
         val stored = second.workoutPlans(WorkoutPlansFilter.AllPlans).first().map { it.id }
+        assert(stored == order)
+    }
 
-        assert(stored == listOf(fullBodyA.id, extra.id, upperBodyA.id, fullBodyB.id))
+    @Test
+    fun `an open session does not change stored plan order`() = runTest {
+        val repository = repository()
+
+        repository.updateWorkout(fullBodyB.toWorkoutSession())
+
+        val stored = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().map { it.id }
+        assert(stored == listOf(fullBodyA.id, fullBodyB.id, upperBodyA.id))
     }
 
     private suspend fun inProgressSession(

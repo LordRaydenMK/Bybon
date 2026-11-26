@@ -4,11 +4,9 @@ import dev.sanastasov.bybon.bodyweight.BodyWeightEntry
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
 import dev.sanastasov.bybon.workout.domain.ImportHistoryResult
 import dev.sanastasov.bybon.workout.domain.Weight
-import dev.sanastasov.bybon.workout.domain.ReorderDirection
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
-import dev.sanastasov.bybon.workout.domain.movePlan
 import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
@@ -42,15 +40,11 @@ class FakeWorkoutsRepository(
             }
         }
 
-    override suspend fun movePlan(planId: WorkoutPlanId, direction: ReorderDirection) {
-        val pinned = sessions.value
-            .filter { it.isDraft || it.isResumable }
-            .map { it.planId }
-            .toSet()
+    override suspend fun reorderPlans(planIds: List<WorkoutPlanId>) {
         plans.update { list ->
-            list.movePlan(planId, direction) { plan ->
-                !plan.isArchived && plan.id !in pinned
-            }
+            val byId = list.associateBy { it.id }
+            require(planIds.toSet() == byId.keys) { "Plan order must include every plan" }
+            planIds.map { byId.getValue(it) }
         }
     }
 

@@ -100,7 +100,7 @@ class WorkoutPlanUiTest {
             plans = listOf(
                 WorkoutPlanUi.Idle(fullBodyA),
                 WorkoutPlanUi.Active(fullBodyB),
-            ),
+            ).withPinnedWorkout(),
         )
 
         assert(state.unarchivedPlans.map { it.plan } == listOf(fullBodyB, fullBodyA))
@@ -116,7 +116,7 @@ class WorkoutPlanUiTest {
                 WorkoutPlanUi.Draft(fullBodyB),
                 WorkoutPlanUi.Idle(legacy),
                 WorkoutPlanUi.Active(extra),
-            ),
+            ).withPinnedWorkout(),
         )
 
         assert(
