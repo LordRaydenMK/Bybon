@@ -9,14 +9,16 @@ fun List<WorkoutPlan>.movePlan(
     check(canMove(plan)) { "Cannot move ${planId.id}" }
     val movable = filter(canMove)
     val fromIndex = movable.indexOfFirst { it.id == planId }
-    val toIndex = fromIndex + direction.offset
-    check(toIndex in movable.indices) {
+    val neighborIndex = fromIndex + direction.offset
+    check(neighborIndex in movable.indices) {
         "Cannot move ${planId.id} ${direction.name.lowercase()}"
     }
-    val reordered = movable.toMutableList().apply {
-        add(toIndex, removeAt(fromIndex))
-    }.iterator()
+    val neighbor = movable[neighborIndex]
     return map { current ->
-        if (canMove(current)) reordered.next() else current
+        when (current.id) {
+            plan.id -> neighbor
+            neighbor.id -> plan
+            else -> current
+        }
     }
 }
