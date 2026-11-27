@@ -132,8 +132,24 @@ sealed class WorkoutPlanEffect {
     ) : WorkoutPlanEffect()
 }
 
+data class EditPlanUiState(
+    val plan: WorkoutPlan,
+    val canSave: Boolean,
+    val confirmDiscard: Boolean = false,
+)
+
 sealed class EditPlanAction {
+    data object OnBack : EditPlanAction()
+    data object OnSave : EditPlanAction()
+    data object OnDiscardConfirmed : EditPlanAction()
+    data object OnDiscardDismissed : EditPlanAction()
     data object OnArchivePlan : EditPlanAction()
+    data class OnNameChanged(
+        val name: String,
+    ) : EditPlanAction()
+    data class OnNoteChanged(
+        val note: String,
+    ) : EditPlanAction()
     data object OnAddExercise : EditPlanAction()
     data class OnExercisePicked(
         val exerciseId: String,

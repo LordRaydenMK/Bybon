@@ -9,6 +9,7 @@ appId: dev.sanastasov.bybon.debug
 - tapOn: "More options for Full Body A"
 - tapOn: "Edit Plan"
 - assertVisible: "Edit plan"
+- assertVisible: "Save"
 - assertVisible: "Full Body A"
 - assertVisible: "Full body workout routine variant A"
 - assertVisible: "Barbell Bench Press"
@@ -128,6 +129,7 @@ appId: dev.sanastasov.bybon.debug
 - scrollUntilVisible:
     element: "Archive Plan"
     direction: DOWN
+- tapOn: "Save"
 - tapOn: "Back"
 - assertVisible: "Bybon"
 - assertVisible: "Start Workout"

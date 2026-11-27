@@ -18,7 +18,7 @@ class EditPlanScreenTest {
     @Test
     fun fullPlan() {
         paparazzi.bybonSnapshot {
-            EditPlanContent(fullBodyA, {}, {})
+            EditPlanContent(EditPlanUiState(fullBodyA, canSave = false), {})
         }
     }
 
@@ -26,8 +26,27 @@ class EditPlanScreenTest {
     fun singleExercise() {
         paparazzi.bybonSnapshot {
             EditPlanContent(
-                fullBodyA.copy(sets = listOf(fullBodyA.sets.first())),
+                EditPlanUiState(
+                    fullBodyA.copy(sets = listOf(fullBodyA.sets.first())),
+                    canSave = false,
+                ),
                 {},
+            )
+        }
+    }
+
+    @Test
+    fun unsavedChanges() {
+        paparazzi.bybonSnapshot {
+            EditPlanContent(EditPlanUiState(fullBodyA, canSave = true), {})
+        }
+    }
+
+    @Test
+    fun discardChanges() {
+        paparazzi.bybonSnapshot {
+            EditPlanContent(
+                EditPlanUiState(fullBodyA, canSave = true, confirmDiscard = true),
                 {},
             )
         }
@@ -37,10 +56,12 @@ class EditPlanScreenTest {
     fun noWarmups() {
         paparazzi.bybonSnapshot {
             EditPlanContent(
-                fullBodyA.copy(
-                    sets = listOf(fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }),
+                EditPlanUiState(
+                    fullBodyA.copy(
+                        sets = listOf(fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }),
+                    ),
+                    canSave = false,
                 ),
-                {},
                 {},
             )
         }
