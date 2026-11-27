@@ -307,7 +307,7 @@ class WorkoutsRepositoryImpl internal constructor(
     }
 
     private suspend fun List<WorkoutPlan>.withAppendedPositions(): List<WorkoutPlanEntity> {
-        val start = workoutPlanDao.maxPosition() + 1
+        val start = workoutPlanDao.maxPosition()?.plus(1) ?: 0
         return mapIndexed { index, plan -> plan.toEntity(position = start + index) }
     }
 

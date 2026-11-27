@@ -23,7 +23,7 @@ class FakeWorkoutPlanDao : WorkoutPlanDao {
     override suspend fun exercisesForPlan(planId: String): List<WorkoutPlanExerciseEntity> =
         exercises.value.filter { it.planId == planId }.sortedBy { it.position }
 
-    override suspend fun maxPosition(): Int = plans.value.maxOfOrNull { it.position } ?: -1
+    override suspend fun maxPosition(): Int? = plans.value.maxOfOrNull { it.position }
 
     override suspend fun setPosition(planId: String, position: Int) {
         plans.value = plans.value.map { plan ->

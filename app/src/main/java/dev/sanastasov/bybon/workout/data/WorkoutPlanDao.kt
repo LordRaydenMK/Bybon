@@ -31,8 +31,8 @@ interface WorkoutPlanDao {
     @Query("UPDATE workout_plan SET is_archived = :archived WHERE id = :planId")
     suspend fun setArchived(planId: String, archived: Boolean)
 
-    @Query("SELECT COALESCE(MAX(position), -1) FROM workout_plan")
-    suspend fun maxPosition(): Int
+    @Query("SELECT MAX(position) FROM workout_plan")
+    suspend fun maxPosition(): Int?
 
     @Query("UPDATE workout_plan SET position = :position WHERE id = :planId")
     suspend fun setPosition(planId: String, position: Int)
