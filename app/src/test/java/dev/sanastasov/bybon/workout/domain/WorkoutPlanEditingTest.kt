@@ -7,6 +7,48 @@ import org.junit.Test
 class WorkoutPlanEditingTest {
 
     @Test
+    fun `rename trims the name and keeps the plan id`() {
+        val actual = fullBodyA.rename("  Push Day  ")
+
+        assert(actual.name == "Push Day")
+        assert(actual.id == fullBodyA.id)
+        assert(actual.description == fullBodyA.description)
+        assert(actual.sets == fullBodyA.sets)
+    }
+
+    @Test
+    fun `rename rejects a blank name`() {
+        val error = assertFailsWith<IllegalArgumentException> {
+            fullBodyA.rename("   ")
+        }
+        assert(error.message == "Plan name must not be blank")
+    }
+
+    @Test
+    fun `withNote stores a trimmed note`() {
+        val actual = fullBodyA.withNote("  Morning session  ")
+
+        assert(actual.description == "Morning session")
+        assert(actual.name == fullBodyA.name)
+        assert(actual.sets == fullBodyA.sets)
+    }
+
+    @Test
+    fun `withNote clears the note when the text is blank`() {
+        val actual = fullBodyA.withNote("   ")
+
+        assert(actual.description == null)
+        assert(actual.name == fullBodyA.name)
+    }
+
+    @Test
+    fun `withNote adds a note when the plan has none`() {
+        val actual = fullBodyA.copy(description = null).withNote("Easy day")
+
+        assert(actual.description == "Easy day")
+    }
+
+    @Test
     fun `addWorkSet appends a work set and leaves warmups unchanged`() {
         val actual = fullBodyA.addWorkSet("bench-press")
         val bench = actual.sets.first()

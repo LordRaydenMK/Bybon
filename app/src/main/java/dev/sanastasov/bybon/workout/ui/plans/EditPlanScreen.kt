@@ -9,17 +9,28 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -82,7 +93,7 @@ internal fun EditPlanContent(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item(key = "header") {
-                    EditPlanHeader(currentPlan)
+                    EditPlanHeader(currentPlan, onAction)
                 }
                 itemsIndexed(
                     currentPlan.sets,
@@ -152,11 +163,70 @@ private fun LazyItemScope.EditPlanExerciseCard(
 }
 
 @Composable
-private fun EditPlanHeader(plan: WorkoutPlan) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(plan.name, fontWeight = FontWeight.Bold)
-        plan.description?.let { Text(it) }
+private fun EditPlanHeader(plan: WorkoutPlan, onAction: (EditPlanAction) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        EditPlanTextField(
+            value = plan.name,
+            label = "Name",
+            allowBlank = false,
+            imeAction = ImeAction.Next,
+            onCommit = { onAction(EditPlanAction.OnRenamePlan(it)) },
+        )
+        EditPlanTextField(
+            value = plan.description.orEmpty(),
+            label = "Note",
+            allowBlank = true,
+            imeAction = ImeAction.Done,
+            onCommit = { onAction(EditPlanAction.OnUpdateNote(it)) },
+            placeholder = "Add a note",
+        )
     }
+}
+
+@Composable
+private fun EditPlanTextField(
+    value: String,
+    label: String,
+    allowBlank: Boolean,
+    imeAction: ImeAction,
+    onCommit: (String) -> Unit,
+    placeholder: String? = null,
+) {
+    var text by remember(value) { mutableStateOf(value) }
+    var focused by remember(value) { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    fun commit() {
+        val trimmed = text.trim()
+        when {
+            trimmed.isEmpty() && !allowBlank -> text = value
+            trimmed == value -> if (text != value) text = value
+            else -> onCommit(trimmed)
+        }
+    }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it },
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focusState ->
+                val wasFocused = focused
+                focused = focusState.isFocused
+                if (wasFocused && !focusState.isFocused) commit()
+            },
+        textStyle = MaterialTheme.typography.bodyLarge,
+        label = { Text(label) },
+        placeholder = placeholder?.let { hint -> { Text(hint) } },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = imeAction),
+        keyboardActions = KeyboardActions(
+            onNext = { focusManager.moveFocus(FocusDirection.Down) },
+            onDone = {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            },
+        ),
+    )
 }
 
 @Preview

@@ -24,6 +24,65 @@ class EditPlanViewModelTest {
     }
 
     @Test
+    fun `renaming the plan persists the trimmed name and keeps the id`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnRenamePlan("  Push Day  "))
+
+        val updated = viewModel.uiState.first { it?.name == "Push Day" }!!
+        assert(updated.id == fullBodyA.id)
+        assert(updated.sets == fullBodyA.sets)
+        assert(updated.description == fullBodyA.description)
+        assert(repository.workoutPlans().first()[1] == fullBodyB)
+    }
+
+    @Test
+    fun `a blank plan name is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val viewModel = EditPlanViewModel(
+            fullBodyA.id,
+            FakeWorkoutsRepository(initialPlans = listOf(fullBodyA)),
+            failures.scope,
+        )
+        viewModel.uiState.first { it != null }
+        failures.expectFailure("Plan name must not be blank") {
+            viewModel.onAction(EditPlanAction.OnRenamePlan("   "))
+        }
+    }
+
+    @Test
+    fun `updating the note persists it and a blank note clears it`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnUpdateNote("  Morning session  "))
+
+        val updated = viewModel.uiState.first { it?.description == "Morning session" }!!
+        assert(updated.name == fullBodyA.name)
+        assert(repository.workoutPlans().first()[1] == fullBodyB)
+
+        viewModel.onAction(EditPlanAction.OnUpdateNote("   "))
+        val cleared = viewModel.uiState.first { it?.description == null }!!
+        assert(cleared.name == fullBodyA.name)
+    }
+
+    @Test
+    fun `a plan with no note can gain one`() = runTest {
+        val withoutNote = fullBodyA.copy(description = null)
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(withoutNote))
+        val viewModel = EditPlanViewModel(withoutNote.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnUpdateNote("Easy day"))
+
+        val updated = viewModel.uiState.first { it?.description == "Easy day" }!!
+        assert(updated.description == "Easy day")
+    }
+
+    @Test
     fun `archiving the plan hides it and navigates back`() = runTest {
         val repository: WorkoutsRepository =
             FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
