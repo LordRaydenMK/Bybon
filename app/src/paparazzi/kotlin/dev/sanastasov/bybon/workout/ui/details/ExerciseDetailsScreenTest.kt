@@ -8,6 +8,8 @@ import coil3.ColorImage
 import coil3.test.FakeImageLoaderEngine
 import dev.sanastasov.bybon.paparazzi.bybonSnapshot
 import dev.sanastasov.bybon.paparazzi.installFakeCoil
+import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 import org.junit.Before
@@ -55,10 +57,18 @@ class ExerciseDetailsScreenTest {
             ExerciseDetailsContent(assistedPullUpsDetails(), {})
         }
     }
+
+    @Test
+    fun lastTwelveSessions() {
+        paparazzi.bybonSnapshot {
+            ExerciseDetailsContent(lastTwelveSessionsDetails(), {})
+        }
+    }
 }
 
 private fun benchPressDetails(): ExerciseDetailsUiState.Content =
     catalogExercise("bench-press").toDetailsUi().copy(
+        historyWindow = ExerciseHistoryWindow.LastThreeMonths,
         personalRecord = PersonalRecordUi(
             Weight.kilograms(78f),
             "20 Sep 2026",
@@ -105,6 +115,7 @@ private fun benchPressDetails(): ExerciseDetailsUiState.Content =
 
 private fun assistedPullUpsDetails(): ExerciseDetailsUiState.Content =
     catalogExercise("assisted-pull-ups").toDetailsUi().copy(
+        historyWindow = ExerciseHistoryWindow.LastThreeMonths,
         personalRecord = PersonalRecordUi(
             Weight.kilograms(92.9f),
             "1 Oct 2026",
@@ -134,6 +145,66 @@ private fun assistedPullUpsDetails(): ExerciseDetailsUiState.Content =
                 sets = listOf(
                     ExerciseDetailsSetUi(1, "-25", 8, Weight.kilograms(68.28f)),
                     ExerciseDetailsSetUi(2, "0", 6, Weight.kilograms(92.9f)),
+                ),
+            ),
+        ),
+    )
+
+private fun lastTwelveSessionsDetails(): ExerciseDetailsUiState.Content =
+    ExerciseDefinition(id = "custom-curl", name = "Custom Curl").toDetailsUi().copy(
+        historyWindow = ExerciseHistoryWindow.LastTwelveSessions,
+        personalRecord = PersonalRecordUi(
+            Weight.kilograms(56.25f),
+            "18 Oct 2026",
+            "45",
+            8,
+        ),
+        oneRmTrend = listOf(
+            ExerciseOneRmPointUi(
+                "12 Jan",
+                50f,
+                Weight.kilograms(50f),
+                "40",
+                8,
+                Weight.kilograms(48f),
+            ),
+            ExerciseOneRmPointUi(
+                "3 Apr",
+                52f,
+                Weight.kilograms(52f),
+                "42",
+                8,
+                Weight.kilograms(50f),
+            ),
+            ExerciseOneRmPointUi(
+                "18 Oct",
+                56.25f,
+                Weight.kilograms(56.25f),
+                "45",
+                8,
+                Weight.kilograms(54f),
+            ),
+        ),
+        recentSessions = listOf(
+            ExerciseDetailsSessionUi(
+                dateLabel = "18 Oct 2026",
+                planName = "Arms",
+                sets = listOf(
+                    ExerciseDetailsSetUi(1, "45", 8, Weight.kilograms(56.25f)),
+                ),
+            ),
+            ExerciseDetailsSessionUi(
+                dateLabel = "3 Apr 2026",
+                planName = "Arms",
+                sets = listOf(
+                    ExerciseDetailsSetUi(1, "42", 8, Weight.kilograms(52f)),
+                ),
+            ),
+            ExerciseDetailsSessionUi(
+                dateLabel = "12 Jan 2026",
+                planName = "Arms",
+                sets = listOf(
+                    ExerciseDetailsSetUi(1, "40", 8, Weight.kilograms(50f)),
                 ),
             ),
         ),

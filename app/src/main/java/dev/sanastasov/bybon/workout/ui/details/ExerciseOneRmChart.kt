@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.sanastasov.bybon.ui.LocalSkipChartAnimation
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.Weight
 import ir.ehsannarmani.compose_charts.models.DotProperties
 import ir.ehsannarmani.compose_charts.models.DrawStyle
@@ -36,6 +37,7 @@ internal fun ExerciseOneRmTrendCard(
     points: List<ExerciseOneRmPointUi>,
     personalRecordOneRm: Weight?,
     highlightedTopSet: EstimatedOneRmHighlight? = null,
+    historyWindow: ExerciseHistoryWindow = ExerciseHistoryWindow.LastThreeMonths,
     modifier: Modifier = Modifier,
 ) {
     val highlight = highlightedTopSet?.label()
@@ -77,7 +79,7 @@ internal fun ExerciseOneRmTrendCard(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            oneRmTrendCaption(points, personalRecordOneRm != null),
+            oneRmTrendCaption(points, personalRecordOneRm != null, historyWindow),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -174,10 +176,11 @@ private fun oneRmChartColors(): OneRmChartColors {
 internal fun oneRmTrendCaption(
     points: List<ExerciseOneRmPointUi>,
     hasPersonalRecord: Boolean,
+    historyWindow: ExerciseHistoryWindow = ExerciseHistoryWindow.LastThreeMonths,
 ): String {
     val hasAverage = points.any { it.averageOneRm != null }
     return buildList {
-        add("Last 3 months")
+        add(historyWindow.label())
         add("top-set 1RM")
         if (hasAverage) add("work-set average")
         if (hasPersonalRecord) add("dashed line is PR")

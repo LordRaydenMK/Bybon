@@ -18,6 +18,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.ui.MISSING_LOAD_LABEL
 import dev.sanastasov.bybon.workout.ui.formatLoadedSet
@@ -58,19 +59,23 @@ internal fun LazyListScope.detailsPersonalRecord(personalRecord: PersonalRecordU
 internal fun LazyListScope.detailsOneRmTrend(
     points: List<ExerciseOneRmPointUi>,
     personalRecordOneRm: Weight?,
+    historyWindow: ExerciseHistoryWindow,
 ) {
     require(points.isNotEmpty()) { "1RM trend requires at least one point" }
     item(key = "one-rm-trend") {
-        ExerciseOneRmTrendCard(points, personalRecordOneRm)
+        ExerciseOneRmTrendCard(points, personalRecordOneRm, historyWindow = historyWindow)
     }
 }
 
-internal fun LazyListScope.detailsRecentSessions(sessions: List<ExerciseDetailsSessionUi>) {
+internal fun LazyListScope.detailsRecentSessions(
+    sessions: List<ExerciseDetailsSessionUi>,
+    historyWindow: ExerciseHistoryWindow,
+) {
     item(key = "recent-history") {
-        DetailsSection("Last 3 months") {
+        DetailsSection(historyWindow.label()) {
             if (sessions.isEmpty()) {
                 Text(
-                    "No working sets in the last 3 months.",
+                    historyWindow.emptyHistoryMessage(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge,
                 )

@@ -7,6 +7,7 @@ import dev.sanastasov.bybon.workout.data.FakeWorkoutsRepository
 import dev.sanastasov.bybon.workout.data.completedAssistedExercise
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.SetState
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -70,6 +71,7 @@ class WorkoutSummaryViewModelTest {
                         WorkoutSummarySetUi(2, "45", 11, oneRm(45f, 11)),
                     ),
                     personalRecord = session.personalRecordUi("romanian-deadlift"),
+                    historyWindow = ExerciseHistoryWindow.LastTwelveSessions,
                     oneRmTrend = session.oneRmTrend("romanian-deadlift"),
                     volumeLoadLabel = "1035 kg",
                 ),
@@ -82,6 +84,7 @@ class WorkoutSummaryViewModelTest {
                         WorkoutSummarySetUi(3, "20", 8, oneRm(20f, 8)),
                     ),
                     personalRecord = session.personalRecordUi("incline-db-press"),
+                    historyWindow = ExerciseHistoryWindow.LastTwelveSessions,
                     oneRmTrend = session.oneRmTrend("incline-db-press"),
                     volumeLoadLabel = "640 kg",
                 ),
@@ -515,7 +518,7 @@ class WorkoutSummaryViewModelTest {
     }
 
     @Test
-    fun `summary shows all-time 1RM and last 3 months top-set 1RM trend`() = runTest {
+    fun `summary shows all-time 1RM and expands a sparse top-set 1RM trend`() = runTest {
         val now = LocalDateTime.of(2026, 10, 22, 18, 0)
         val olderPr = completedSession(
             planId = "full-body-a",
@@ -565,8 +568,9 @@ class WorkoutSummaryViewModelTest {
             val expectedPerformance = completed.exercisePerformance("bench-press", now)
             assert(bench.personalRecord == expectedPerformance.personalRecord?.toPersonalRecordUi())
             assert(bench.personalRecord?.dateLabel == "1 Jun 2026")
+            assert(bench.historyWindow == ExerciseHistoryWindow.LastTwelveSessions)
             assert(bench.oneRmTrend == expectedPerformance.recentSessions.toOneRmTrend())
-            assert(bench.oneRmTrend.map { it.dateLabel } == listOf("10 Aug", "1 Oct"))
+            assert(bench.oneRmTrend.map { it.dateLabel } == listOf("1 Jun", "10 Aug", "1 Oct"))
             assert(pullUp.personalRecord == null)
             assert(pullUp.oneRmTrend.isEmpty())
         }

@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.details
 import dev.sanastasov.bybon.workout.data.completedExercise
 import dev.sanastasov.bybon.workout.data.completedSession
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.ExerciseImages
 import dev.sanastasov.bybon.workout.domain.ExerciseSessionLog
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
@@ -102,6 +103,7 @@ class ExerciseDetailsUiTest {
             "80",
             8,
         )
+        assert(ui.historyWindow == ExerciseHistoryWindow.LastTwelveSessions)
         assert(ui.personalRecord == personalRecord)
         assert(
             personalRecordOneRmLabel(personalRecord) == "${newerOneRm.kilograms} kg · 80 kg x 8",
@@ -198,6 +200,23 @@ class ExerciseDetailsUiTest {
         assert(
             oneRmTrendCaption(points, hasPersonalRecord = false) ==
                 "Last 3 months · top-set 1RM",
+        )
+        assert(
+            oneRmTrendCaption(
+                points,
+                hasPersonalRecord = false,
+                historyWindow = ExerciseHistoryWindow.LastTwelveSessions,
+            ) == "Last 12 sessions · top-set 1RM",
+        )
+        assert(ExerciseHistoryWindow.LastThreeMonths.label() == "Last 3 months")
+        assert(
+            ExerciseHistoryWindow.LastThreeMonths.emptyHistoryMessage() ==
+                "No working sets in the last 3 months.",
+        )
+        assert(ExerciseHistoryWindow.LastTwelveSessions.label() == "Last 12 sessions")
+        assert(
+            ExerciseHistoryWindow.LastTwelveSessions.emptyHistoryMessage() ==
+                "No working sets in the last 12 sessions.",
         )
     }
 

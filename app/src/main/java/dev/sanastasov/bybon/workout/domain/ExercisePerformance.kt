@@ -3,9 +3,15 @@ package dev.sanastasov.bybon.workout.domain
 import java.time.LocalDateTime
 import java.time.Period
 
+enum class ExerciseHistoryWindow {
+    LastThreeMonths,
+    LastTwelveSessions,
+}
+
 data class ExercisePerformance(
     val personalRecord: PersonalRecord?,
     val recentSessions: List<ExerciseSessionLog>,
+    val historyWindow: ExerciseHistoryWindow,
 ) {
     val personalRecordOneRm: Weight? get() = personalRecord?.oneRm
 }
@@ -37,7 +43,6 @@ data class ExerciseSessionLog(
 fun List<WorkoutSession>.exercisePerformance(
     exerciseId: String,
     now: LocalDateTime,
-    historyWindow: Period = Period.ofMonths(3),
 ): ExercisePerformance {
     require(all { it.state is WorkoutState.Completed }) {
         "exercisePerformance requires completed sessions"
@@ -49,21 +54,35 @@ fun List<WorkoutSession>.exercisePerformance(
         session to exercise
     }
     val personalRecord = matching.personalRecord()
-    val windowStart = now.minus(historyWindow)
-    val recentSessions = matching
-        .filter { (session, _) ->
-            !session.startedAt.isBefore(windowStart) && !session.startedAt.isAfter(now)
-        }
+    val (historyWindow, selected) = matching.recentHistory(now)
+    val recentSessions = selected.map { (session, exercise) ->
+        ExerciseSessionLog(
+            startedAt = session.startedAt,
+            planName = session.planName,
+            topSet = exercise.topSet,
+            workSets = exercise.sets,
+        )
+    }
+    return ExercisePerformance(personalRecord, recentSessions, historyWindow)
+}
+
+private const val THREE_MONTH_MINIMUM_SESSIONS = 4
+private const val SESSION_HISTORY_LIMIT = 12
+
+private fun List<Pair<WorkoutSession, WorkoutExercise>>.recentHistory(
+    now: LocalDateTime,
+): Pair<ExerciseHistoryWindow, List<Pair<WorkoutSession, WorkoutExercise>>> {
+    val eligible = filter { (session, _) -> !session.startedAt.isAfter(now) }
         .sortedByDescending { it.first.startedAt }
-        .map { (session, exercise) ->
-            ExerciseSessionLog(
-                startedAt = session.startedAt,
-                planName = session.planName,
-                topSet = exercise.topSet,
-                workSets = exercise.sets,
-            )
-        }
-    return ExercisePerformance(personalRecord, recentSessions)
+    val windowStart = now.minus(Period.ofMonths(3))
+    val inLastThreeMonths = eligible.filter { (session, _) ->
+        !session.startedAt.isBefore(windowStart)
+    }
+    return if (inLastThreeMonths.size >= THREE_MONTH_MINIMUM_SESSIONS) {
+        ExerciseHistoryWindow.LastThreeMonths to inLastThreeMonths
+    } else {
+        ExerciseHistoryWindow.LastTwelveSessions to eligible.take(SESSION_HISTORY_LIMIT)
+    }
 }
 
 private fun List<Pair<WorkoutSession, WorkoutExercise>>.personalRecord(): PersonalRecord? {
