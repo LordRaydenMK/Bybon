@@ -1,9 +1,12 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
 import dev.sanastasov.bybon.ui.stateInWhileInForeground
+import dev.sanastasov.bybon.workout.domain.ReorderDirection
+import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutPlansFilter
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.movePlan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +32,7 @@ class WorkoutPlansViewModel(
         showArchived,
     ) { plans, sessions, includeArchived ->
         WorkoutPlansUiState(
-            plans = plans.map { it.toUi(sessions) },
+            plans = plans.map { it.toUi(sessions) }.withPinnedWorkout(),
             showArchived = includeArchived,
         )
     }
@@ -76,6 +79,29 @@ class WorkoutPlansViewModel(
                     .first()
                 repository.deleteWorkout(draft.id)
             }
+
+            is WorkoutPlansAction.OnMovePlanUp ->
+                onMovePlan(action.plan.id, ReorderDirection.Up)
+
+            is WorkoutPlansAction.OnMovePlanDown ->
+                onMovePlan(action.plan.id, ReorderDirection.Down)
+        }
+    }
+
+    private fun onMovePlan(planId: WorkoutPlanId, direction: ReorderDirection) {
+        val movable = uiState.value.unarchivedPlans
+            .filterIsInstance<WorkoutPlanUi.Idle>()
+            .map { it.plan.id }
+            .toSet()
+        coroutineScope.launch {
+            val stored = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+            val updated = stored.movePlan(planId, direction) { it.id in movable }
+            repository.reorderPlans(updated.map { it.id })
         }
     }
 }
+
+internal fun List<WorkoutPlanUi>.withPinnedWorkout(): List<WorkoutPlanUi> = sortedWith(
+    compareByDescending<WorkoutPlanUi> { it is WorkoutPlanUi.Active }
+        .thenByDescending { it is WorkoutPlanUi.Draft },
+)

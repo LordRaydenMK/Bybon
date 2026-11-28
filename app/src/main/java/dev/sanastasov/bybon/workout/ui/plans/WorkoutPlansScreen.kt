@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.plans
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -30,6 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -58,6 +62,7 @@ fun WorkoutsTab(
             WorkoutPlanCard(
                 planUi = planUi,
                 onAction = onAction,
+                move = planUi.idleMove(state.unarchivedPlans, onAction),
             )
         }
         if (state.showArchivedPlansHeading) {
@@ -68,6 +73,7 @@ fun WorkoutsTab(
                 WorkoutPlanCard(
                     planUi = planUi,
                     onAction = onAction,
+                    move = null,
                 )
             }
         }
@@ -109,8 +115,37 @@ private fun ArchiveFilterButton(label: String, onClick: () -> Unit) {
     }
 }
 
+private data class PlanMove(
+    val canMoveUp: Boolean,
+    val canMoveDown: Boolean,
+    val onMoveUp: () -> Unit,
+    val onMoveDown: () -> Unit,
+)
+
+private fun WorkoutPlanUi.idleMove(
+    unarchived: List<WorkoutPlanUi>,
+    onAction: (WorkoutPlansAction) -> Unit,
+): PlanMove? {
+    val idle = unarchived.filterIsInstance<WorkoutPlanUi.Idle>()
+    val index = idle.indexOfFirst { it.plan.id == plan.id }
+    return if (this is WorkoutPlanUi.Idle && index >= 0) {
+        PlanMove(
+            canMoveUp = index > 0,
+            canMoveDown = index < idle.lastIndex,
+            onMoveUp = { onAction(WorkoutPlansAction.OnMovePlanUp(plan)) },
+            onMoveDown = { onAction(WorkoutPlansAction.OnMovePlanDown(plan)) },
+        )
+    } else {
+        null
+    }
+}
+
 @Composable
-private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction) -> Unit) {
+private fun WorkoutPlanCard(
+    planUi: WorkoutPlanUi,
+    onAction: (WorkoutPlansAction) -> Unit,
+    move: PlanMove?,
+) {
     val plan = planUi.plan
     Card(Modifier.fillMaxWidth()) {
         Column(
@@ -130,6 +165,7 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction
                         PlanOverflowMenu(
                             plan,
                             canDiscardDraft = planUi is WorkoutPlanUi.Draft,
+                            move = move,
                             onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
                             onArchiveClicked = { onAction(WorkoutPlansAction.OnArchivePlan(it)) },
                             onDiscardDraftClicked = {
@@ -159,9 +195,38 @@ private fun WorkoutPlanCard(planUi: WorkoutPlanUi, onAction: (WorkoutPlansAction
 }
 
 @Composable
+private fun ColumnScope.PlanMoveItems(plan: WorkoutPlan, move: PlanMove, dismiss: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text("Move up") },
+        onClick = {
+            dismiss()
+            move.onMoveUp()
+        },
+        enabled = move.canMoveUp,
+        modifier = Modifier.clearAndSetSemantics {
+            contentDescription = "Move ${plan.name} up"
+            if (!move.canMoveUp) disabled()
+        },
+    )
+    DropdownMenuItem(
+        text = { Text("Move down") },
+        onClick = {
+            dismiss()
+            move.onMoveDown()
+        },
+        enabled = move.canMoveDown,
+        modifier = Modifier.clearAndSetSemantics {
+            contentDescription = "Move ${plan.name} down"
+            if (!move.canMoveDown) disabled()
+        },
+    )
+}
+
+@Composable
 private fun PlanOverflowMenu(
     plan: WorkoutPlan,
     canDiscardDraft: Boolean,
+    move: PlanMove?,
     onEditClicked: (WorkoutPlan) -> Unit,
     onArchiveClicked: (WorkoutPlan) -> Unit,
     onDiscardDraftClicked: (WorkoutPlan) -> Unit,
@@ -178,6 +243,9 @@ private fun PlanOverflowMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
+            move?.let { current ->
+                PlanMoveItems(plan, current) { expanded = false }
+            }
             DropdownMenuItem(
                 text = { Text("Edit Plan") },
                 onClick = {

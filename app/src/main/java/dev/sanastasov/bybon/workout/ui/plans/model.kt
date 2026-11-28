@@ -16,10 +16,7 @@ data class WorkoutPlansUiState(
     val showArchived: Boolean = false,
 ) {
     val unarchivedPlans: List<WorkoutPlanUi>
-        get() = plans.filter { !it.plan.isArchived }.sortedWith(
-            compareByDescending<WorkoutPlanUi> { it is WorkoutPlanUi.Active }
-                .thenByDescending { it is WorkoutPlanUi.Draft },
-        )
+        get() = plans.filter { !it.plan.isArchived }
 
     val archivedPlans: List<WorkoutPlanUi> get() = plans.filter { it.plan.isArchived }
 
@@ -118,6 +115,14 @@ sealed class WorkoutPlansAction {
     data class OnDiscardDraft(
         val plan: WorkoutPlan,
     ) : WorkoutPlansAction()
+
+    data class OnMovePlanUp(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
+
+    data class OnMovePlanDown(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
 }
 
 sealed class WorkoutPlanEffect {
@@ -134,9 +139,15 @@ sealed class WorkoutPlanEffect {
 
 data class EditPlanUiState(
     val plan: WorkoutPlan,
-    val canSave: Boolean,
+    val loadedPlan: WorkoutPlan,
     val confirmDiscard: Boolean = false,
-)
+) {
+    val canSave: Boolean
+        get() = plan != loadedPlan
+
+    val backHandlerEnabled: Boolean
+        get() = canSave && !confirmDiscard
+}
 
 sealed class EditPlanAction {
     data object OnBack : EditPlanAction()
@@ -144,10 +155,10 @@ sealed class EditPlanAction {
     data object OnDiscardConfirmed : EditPlanAction()
     data object OnDiscardDismissed : EditPlanAction()
     data object OnArchivePlan : EditPlanAction()
-    data class OnNameChanged(
+    data class OnRenamePlan(
         val name: String,
     ) : EditPlanAction()
-    data class OnNoteChanged(
+    data class OnUpdateNote(
         val note: String,
     ) : EditPlanAction()
     data object OnAddExercise : EditPlanAction()

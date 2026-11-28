@@ -129,7 +129,28 @@ appId: dev.sanastasov.bybon.debug
 - scrollUntilVisible:
     element: "Archive Plan"
     direction: DOWN
+- scrollUntilVisible:
+    element: "Name"
+    direction: UP
+- tapOn:
+    text: "Full Body A"
+    point: "90%, 50%"
+- eraseText: 20
+- inputText: "Full Body A2"
+- pressKey: Enter
+- tapOn:
+    text: "Full body workout routine variant A"
+    point: "90%, 50%"
+- eraseText: 40
+- inputText: "Morning session"
+- pressKey: Enter
+- tapOn: "Edit plan"
+- assertVisible: "Full Body A2"
+- assertVisible: "Morning session"
+- assertNotVisible: "Full body workout routine variant A"
 - tapOn: "Save"
 - tapOn: "Back"
 - assertVisible: "Bybon"
+- assertVisible: "Full Body A2"
+- assertVisible: "Morning session"
 - assertVisible: "Start Workout"

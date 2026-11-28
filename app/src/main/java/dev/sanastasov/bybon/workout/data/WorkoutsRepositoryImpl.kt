@@ -96,6 +96,19 @@ class WorkoutsRepositoryImpl internal constructor(
         }
     }
 
+    override suspend fun reorderPlans(planIds: List<WorkoutPlanId>) {
+        withContext(defaultDispatcher) {
+            seedLock.withLock {
+                seedLocked()
+                val ids = planIds.map { it.id }
+                require(ids.toSet() == workoutPlanDao.ids().toSet()) {
+                    "Plan order must include every plan"
+                }
+                workoutPlanDao.setPositions(ids)
+            }
+        }
+    }
+
     override suspend fun updatePlan(
         planId: WorkoutPlanId,
         transform: (WorkoutPlan) -> WorkoutPlan,
@@ -112,7 +125,10 @@ class WorkoutsRepositoryImpl internal constructor(
                     .associateBy { it.id }
                 val current = entity.toDomain(lines, exercises)
                 val updated = transform(current)
-                workoutPlanDao.replacePlan(updated.toEntity(), updated.toExerciseEntities())
+                workoutPlanDao.replacePlan(
+                    updated.toEntity(position = entity.position),
+                    updated.toExerciseEntities(),
+                )
             }
         }
     }
@@ -239,7 +255,7 @@ class WorkoutsRepositoryImpl internal constructor(
             val addedSessions = sessions.withoutExistingIds(existingSessionIds) { it.id }
             workoutSessionDao.importAdded(
                 exercises = addedExercises.map { it.toEntity(source = ExerciseSource.IMPORT) },
-                plans = addedPlans.map { it.toEntity() },
+                plans = addedPlans.withAppendedPositions(),
                 planExercises = addedPlans.flatMap { it.toExerciseEntities() },
                 sessions = addedSessions.map { it.toWrite(sessionId = 0) },
             )
@@ -273,7 +289,7 @@ class WorkoutsRepositoryImpl internal constructor(
             }
             if (newPlans.isNotEmpty()) {
                 workoutPlanDao.insertPlansWithExercises(
-                    newPlans.map { it.toEntity() },
+                    newPlans.withAppendedPositions(),
                     newPlans.flatMap { it.toExerciseEntities() },
                 )
             }
@@ -283,11 +299,16 @@ class WorkoutsRepositoryImpl internal constructor(
             exerciseDao.insertCatalog(RepdbCatalogEntity(commit = repdbCommit))
         } else if (newPlans.isNotEmpty()) {
             workoutPlanDao.insertPlansWithExercises(
-                newPlans.map { it.toEntity() },
+                newPlans.withAppendedPositions(),
                 newPlans.flatMap { it.toExerciseEntities() },
             )
         }
         seededCommit = repdbCommit
+    }
+
+    private suspend fun List<WorkoutPlan>.withAppendedPositions(): List<WorkoutPlanEntity> {
+        val start = workoutPlanDao.maxPosition()?.plus(1) ?: 0
+        return mapIndexed { index, plan -> plan.toEntity(position = start + index) }
     }
 
     private suspend fun WorkoutSessionEntity.toDomainSession(): WorkoutSession {

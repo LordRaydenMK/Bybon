@@ -11,7 +11,9 @@ import dev.sanastasov.bybon.workout.domain.moveExerciseUp
 import dev.sanastasov.bybon.workout.domain.removeExercise
 import dev.sanastasov.bybon.workout.domain.removeLastWarmupSet
 import dev.sanastasov.bybon.workout.domain.removeLastWorkSet
+import dev.sanastasov.bybon.workout.domain.rename
 import dev.sanastasov.bybon.workout.domain.requireExercise
+import dev.sanastasov.bybon.workout.domain.withNote
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -35,9 +37,6 @@ class EditPlanViewModel(
 
     private val _uiState = MutableStateFlow<EditPlanUiState?>(null)
     val uiState: StateFlow<EditPlanUiState?> = _uiState
-
-    private var loadedPlan: WorkoutPlan? = null
-    private var confirmDiscard: Boolean = false
 
     init {
         coroutineScope.launch {
@@ -67,42 +66,45 @@ class EditPlanViewModel(
 
                     is EditPlanAction.OnExercisePicked -> addPickedExercise(action.exerciseId)
 
-                    else -> publish(requireDraft().applyEdit(action))
+                    else -> {
+                        val state = requireState()
+                        publish(
+                            state.plan.applyEdit(action),
+                            state.loadedPlan,
+                            state.confirmDiscard,
+                        )
+                    }
                 }
             }
         }
     }
 
     private fun handleBack() {
-        val draft = _uiState.value?.plan
-        val baseline = loadedPlan
-        if (draft != null && baseline != null && draft != baseline) {
-            confirmDiscard = true
-            publish(draft)
+        val state = _uiState.value
+        if (state != null && state.plan != state.loadedPlan) {
+            publish(state.plan, state.loadedPlan, confirmDiscard = true)
         } else {
             _effects.trySend(EditPlanEffect.NavigateBack)
         }
     }
 
     private suspend fun handleSave() {
-        val draft = requireDraft()
-        val baseline = loadedPlan
-        if (baseline != null && draft != baseline) {
-            val saved = draft.copy(id = planId)
+        val state = requireState()
+        if (state.plan != state.loadedPlan) {
+            val saved = state.plan.copy(id = planId)
             repository.updatePlan(planId) { _ -> saved }
-            loadedPlan = saved
-            confirmDiscard = false
-            publish(saved)
+            publish(saved, saved, confirmDiscard = false)
         }
     }
 
     private fun dismissDiscard() {
-        confirmDiscard = false
-        _uiState.value?.plan?.let(::publish)
+        _uiState.value?.let { state ->
+            publish(state.plan, state.loadedPlan, confirmDiscard = false)
+        }
     }
 
     private suspend fun openLibrary() {
-        val plan = requireDraft()
+        val plan = requireState().plan
         _effects.trySend(
             EditPlanEffect.OpenExerciseLibrary(plan.sets.map { it.exercise.id }),
         )
@@ -110,40 +112,43 @@ class EditPlanViewModel(
 
     private suspend fun addPickedExercise(exerciseId: String) {
         val exercise = repository.requireExercise(exerciseId)
-        publish(requireDraft().addExercise(exercise))
+        val state = requireState()
+        publish(
+            state.plan.addExercise(exercise),
+            state.loadedPlan,
+            state.confirmDiscard,
+        )
     }
 
     private suspend fun ensureLoaded() {
-        if (loadedPlan == null) {
+        if (_uiState.value == null) {
             val plan = repository.workoutPlans().first().firstOrNull { it.id == planId }
-            if (plan != null && loadedPlan == null) {
-                loadedPlan = plan
-                publish(plan)
+            if (plan != null && _uiState.value == null) {
+                publish(plan, plan, confirmDiscard = false)
             }
         }
     }
 
-    private suspend fun requireDraft(): WorkoutPlan {
+    private suspend fun requireState(): EditPlanUiState {
         ensureLoaded()
-        return checkNotNull(_uiState.value?.plan) {
+        return checkNotNull(_uiState.value) {
             "Plan $planId is not in the repository"
         }
     }
 
-    private fun publish(draft: WorkoutPlan) {
-        val baseline = checkNotNull(loadedPlan)
+    private fun publish(draft: WorkoutPlan, loadedPlan: WorkoutPlan, confirmDiscard: Boolean) {
         _uiState.value = EditPlanUiState(
             plan = draft,
-            canSave = draft != baseline,
+            loadedPlan = loadedPlan,
             confirmDiscard = confirmDiscard,
         )
     }
 }
 
 private fun WorkoutPlan.applyEdit(action: EditPlanAction): WorkoutPlan = when (action) {
-    is EditPlanAction.OnNameChanged -> copy(name = action.name)
+    is EditPlanAction.OnRenamePlan -> rename(action.name)
 
-    is EditPlanAction.OnNoteChanged -> copy(description = action.note.ifEmpty { null })
+    is EditPlanAction.OnUpdateNote -> withNote(action.note)
 
     is EditPlanAction.OnAddSet -> addWorkSet(action.exerciseId)
 

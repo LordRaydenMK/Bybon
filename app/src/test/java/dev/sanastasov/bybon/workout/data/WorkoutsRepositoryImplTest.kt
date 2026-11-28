@@ -645,6 +645,41 @@ class WorkoutsRepositoryImplTest {
         assert(pullUp.sets.first().bodyWeight == Weight.kilograms(81))
     }
 
+    @Test
+    fun `editing a plan keeps its position`() = runTest {
+        val repository = repository()
+
+        repository.updatePlan(fullBodyB.id) { it.addWorkSet("romanian-deadlift") }
+        val plans = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first()
+
+        assert(plans.map { it.id } == listOf(fullBodyA.id, fullBodyB.id, upperBodyA.id))
+        assert(plans[1].sets.first { it.exercise.id == "romanian-deadlift" }.sets == 4)
+    }
+
+    @Test
+    fun `reorderPlans stores the given order`() = runTest {
+        val exerciseDao = FakeExerciseDao()
+        val planDao = FakeWorkoutPlanDao()
+        val first = repository(exerciseDao, planDao)
+        val order = listOf(upperBodyA.id, fullBodyB.id, fullBodyA.id)
+
+        first.reorderPlans(order)
+
+        val second = repository(exerciseDao, planDao)
+        val stored = second.workoutPlans(WorkoutPlansFilter.AllPlans).first().map { it.id }
+        assert(stored == order)
+    }
+
+    @Test
+    fun `an open session does not change stored plan order`() = runTest {
+        val repository = repository()
+
+        repository.updateWorkout(fullBodyB.toWorkoutSession())
+
+        val stored = repository.workoutPlans(WorkoutPlansFilter.AllPlans).first().map { it.id }
+        assert(stored == listOf(fullBodyA.id, fullBodyB.id, upperBodyA.id))
+    }
+
     private suspend fun inProgressSession(
         repository: WorkoutsRepository,
         planId: WorkoutPlanId,

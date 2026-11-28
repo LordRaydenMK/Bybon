@@ -40,6 +40,14 @@ class FakeWorkoutsRepository(
             }
         }
 
+    override suspend fun reorderPlans(planIds: List<WorkoutPlanId>) {
+        plans.update { list ->
+            val byId = list.associateBy { it.id }
+            require(planIds.toSet() == byId.keys) { "Plan order must include every plan" }
+            planIds.map { byId.getValue(it) }
+        }
+    }
+
     override suspend fun archivePlan(planId: WorkoutPlanId, archived: Boolean) {
         plans.update { list ->
             list.map { plan ->

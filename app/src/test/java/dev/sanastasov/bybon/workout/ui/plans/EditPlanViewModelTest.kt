@@ -27,7 +27,9 @@ class EditPlanViewModelTest {
 
         val state = viewModel.uiState.first { it != null }!!
         assert(state.plan == fullBodyA)
+        assert(state.loadedPlan == fullBodyA)
         assert(!state.canSave)
+        assert(!state.backHandlerEnabled)
         assert(!state.confirmDiscard)
 
         repository.updatePlan(fullBodyA.id) { it.addWorkSet("bench-press") }
@@ -35,6 +37,82 @@ class EditPlanViewModelTest {
 
         assert(viewModel.uiState.value?.plan == fullBodyA)
         assert(viewModel.uiState.value?.canSave == false)
+    }
+
+    @Test
+    fun `renaming the plan trims the name in the working copy until save`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnRenamePlan("  Push Day  "))
+
+        val updated = viewModel.uiState.first { it?.plan?.name == "Push Day" }!!
+        assert(updated.canSave)
+        assert(updated.backHandlerEnabled)
+        assert(updated.plan.id == fullBodyA.id)
+        assert(updated.plan.sets == fullBodyA.sets)
+        assert(updated.plan.description == fullBodyA.description)
+        assert(updated.loadedPlan == fullBodyA)
+        assert(repository.workoutPlans().first() == listOf(fullBodyA, fullBodyB))
+
+        viewModel.onAction(EditPlanAction.OnSave)
+        val saved = viewModel.uiState.first { it?.canSave == false }!!
+        assert(saved.plan.name == "Push Day")
+        assert(saved.loadedPlan == saved.plan)
+        assert(!saved.backHandlerEnabled)
+        assert(repository.workoutPlans().first().first() == saved.plan)
+        assert(repository.workoutPlans().first()[1] == fullBodyB)
+    }
+
+    @Test
+    fun `a blank plan name is rejected`() = runTest {
+        val failures = BackgroundFailures(this)
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, failures.scope)
+        viewModel.uiState.first { it != null }
+        failures.expectFailure("Plan name must not be blank") {
+            viewModel.onAction(EditPlanAction.OnRenamePlan("   "))
+        }
+        assert(viewModel.uiState.value?.plan == fullBodyA)
+        assert(repository.workoutPlans().first().single() == fullBodyA)
+    }
+
+    @Test
+    fun `updating the note trims it in the working copy and a blank note clears it`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnUpdateNote("  Morning session  "))
+
+        val updated = viewModel.uiState.first { it?.plan?.description == "Morning session" }!!
+        assert(updated.plan.name == fullBodyA.name)
+        assert(updated.canSave)
+        assert(updated.loadedPlan == fullBodyA)
+        assert(repository.workoutPlans().first() == listOf(fullBodyA, fullBodyB))
+
+        viewModel.onAction(EditPlanAction.OnUpdateNote("   "))
+        val cleared = viewModel.uiState.first { it?.plan?.description == null }!!
+        assert(cleared.plan.name == fullBodyA.name)
+        assert(cleared.canSave)
+        assert(repository.workoutPlans().first().first() == fullBodyA)
+    }
+
+    @Test
+    fun `a plan with no note can gain one`() = runTest {
+        val withoutNote = fullBodyA.copy(description = null)
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(withoutNote))
+        val viewModel = EditPlanViewModel(withoutNote.id, repository, backgroundScope)
+
+        viewModel.uiState.first { it != null }
+        viewModel.onAction(EditPlanAction.OnUpdateNote("Easy day"))
+
+        val updated = viewModel.uiState.first { it?.plan?.description == "Easy day" }!!
+        assert(updated.plan.description == "Easy day")
+        assert(updated.canSave)
+        assert(updated.loadedPlan == withoutNote)
+        assert(repository.workoutPlans().first().single() == withoutNote)
     }
 
     @Test
@@ -317,16 +395,16 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
 
-        viewModel.onAction(EditPlanAction.OnNameChanged("Push A"))
+        viewModel.onAction(EditPlanAction.OnRenamePlan("Push A"))
         viewModel.uiState.first { it?.plan?.name == "Push A" }
-        viewModel.onAction(EditPlanAction.OnNameChanged(fullBodyA.name))
+        viewModel.onAction(EditPlanAction.OnRenamePlan(fullBodyA.name))
         val restored = viewModel.uiState.first { it?.plan?.name == fullBodyA.name }!!
         assert(!restored.canSave)
         assert(restored.plan == fullBodyA)
         assert(repository.workoutPlans().first().first() == fullBodyA)
 
-        viewModel.onAction(EditPlanAction.OnNameChanged("Push A"))
-        viewModel.onAction(EditPlanAction.OnNoteChanged("Heavier bench"))
+        viewModel.onAction(EditPlanAction.OnRenamePlan("Push A"))
+        viewModel.onAction(EditPlanAction.OnUpdateNote("Heavier bench"))
 
         val edited = viewModel.uiState.first { state ->
             val plan = state?.plan
@@ -352,7 +430,7 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
 
-        viewModel.onAction(EditPlanAction.OnNoteChanged(""))
+        viewModel.onAction(EditPlanAction.OnUpdateNote(""))
 
         val cleared = viewModel.uiState.first { it?.plan?.description == null }!!
         assert(cleared.canSave)
@@ -372,7 +450,7 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
         viewModel.onAction(EditPlanAction.OnAddSet("bench-press"))
-        viewModel.onAction(EditPlanAction.OnNameChanged("Push A"))
+        viewModel.onAction(EditPlanAction.OnRenamePlan("Push A"))
         viewModel.uiState.first { state ->
             val plan = state?.plan
             plan != null && plan.name == "Push A" && plan.sets.first().sets == 4
@@ -438,12 +516,14 @@ class EditPlanViewModelTest {
         val viewModel = EditPlanViewModel(fullBodyA.id, repository, backgroundScope)
         viewModel.uiState.first { it != null }
         viewModel.onAction(EditPlanAction.OnAddSet("bench-press"))
-        viewModel.uiState.first { it?.canSave == true }
+        val dirty = viewModel.uiState.first { it?.canSave == true }!!
+        assert(dirty.backHandlerEnabled)
 
         viewModel.onAction(EditPlanAction.OnBack)
 
         val asking = viewModel.uiState.first { it?.confirmDiscard == true }!!
         assert(asking.canSave)
+        assert(!asking.backHandlerEnabled)
         assert(asking.plan.sets.first().sets == 4)
         assert(repository.workoutPlans().first().single() == fullBodyA)
 
@@ -482,7 +562,9 @@ class EditPlanViewModelTest {
         viewModel.onAction(EditPlanAction.OnAddSet("bench-press"))
         viewModel.uiState.first { it?.canSave == true }
         viewModel.onAction(EditPlanAction.OnSave)
-        viewModel.uiState.first { it?.canSave == false }
+        val saved = viewModel.uiState.first { it?.canSave == false }!!
+        assert(saved.loadedPlan == saved.plan)
+        assert(!saved.backHandlerEnabled)
 
         viewModel.onAction(EditPlanAction.OnBack)
 
