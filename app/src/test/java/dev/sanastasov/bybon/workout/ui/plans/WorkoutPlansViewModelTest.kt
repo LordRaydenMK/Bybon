@@ -158,6 +158,48 @@ class WorkoutPlansViewModelTest {
     }
 
     @Test
+    fun `duplicating a plan copies its exercises after the original`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = plansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.unarchivedPlans.size == 2 }
+        viewModel.onAction(WorkoutPlansAction.OnDuplicatePlan(fullBodyA))
+
+        val state = viewModel.uiState.first { it.unarchivedPlans.size == 3 }
+        val plans = state.unarchivedPlans.map { it.plan }
+        val copy = plans[1]
+        assert(plans.map { it.id } == listOf(fullBodyA.id, copy.id, fullBodyB.id))
+        assert(copy.name == "Copy of ${fullBodyA.name}")
+        assert(copy.id != fullBodyA.id)
+        assert(copy.description == fullBodyA.description)
+        assert(copy.sets == fullBodyA.sets)
+        assert(!copy.isArchived)
+        assert(plans[0] == fullBodyA)
+        assert(state.unarchivedPlans[1] is WorkoutPlanUi.Idle)
+        assert(state.unarchivedPlans[1].lastExecutedLabel == null)
+    }
+
+    @Test
+    fun `duplicating an active plan does not copy its workout`() = runTest {
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB),
+            initialSessions = listOf(fullBodyA.toWorkoutSession()),
+        )
+        val viewModel = plansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { state -> state.unarchivedPlans.any { it.isActive } }
+        viewModel.onAction(WorkoutPlansAction.OnDuplicatePlan(fullBodyA))
+
+        val state = viewModel.uiState.first { it.unarchivedPlans.size == 3 }
+        assert(state.unarchivedPlans[0].isActive)
+        assert(state.unarchivedPlans[0].plan == fullBodyA)
+        assert(state.unarchivedPlans[1].plan.name == "Copy of ${fullBodyA.name}")
+        assert(!state.unarchivedPlans[1].isActive)
+        assert(!state.unarchivedPlans[1].isDraft)
+        assert(repository.workoutSessions().first().map { it.planId } == listOf(fullBodyA.id))
+    }
+
+    @Test
     fun `an active plan is listed first among unarchived plans`() = runTest {
         val repository = FakeWorkoutsRepository(
             initialPlans = listOf(fullBodyA, fullBodyB),

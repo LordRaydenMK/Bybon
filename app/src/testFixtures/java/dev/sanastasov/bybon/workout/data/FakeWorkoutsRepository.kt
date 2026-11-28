@@ -11,8 +11,10 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSession
 import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
+import dev.sanastasov.bybon.workout.domain.duplicate
 import dev.sanastasov.bybon.workout.domain.sevenDayBodyWeightAverage
 import java.time.LocalDate
+import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -65,6 +67,20 @@ class FakeWorkoutsRepository(
                 if (plan.id == planId) transform(plan) else plan
             }
         }
+    }
+
+    override suspend fun duplicatePlan(planId: WorkoutPlanId): WorkoutPlan {
+        val newId = WorkoutPlanId(UUID.randomUUID().toString())
+        var created: WorkoutPlan? = null
+        plans.update { list ->
+            val index = list.indexOfFirst { it.id == planId }
+            require(index >= 0) { "Plan ${planId.id} does not exist" }
+            require(list.none { it.id == newId }) { "Plan ${newId.id} already exists" }
+            val copy = list[index].duplicate(newId)
+            created = copy
+            list.toMutableList().apply { add(index + 1, copy) }
+        }
+        return checkNotNull(created) { "Plan ${planId.id} does not exist" }
     }
 
     override suspend fun updateWorkout(session: WorkoutSession) {

@@ -6,5 +6,10 @@ fun WorkoutPlan.rename(name: String): WorkoutPlan {
     return copy(name = trimmed)
 }
 
+fun WorkoutPlan.duplicate(newId: WorkoutPlanId): WorkoutPlan {
+    require(newId != id) { "Duplicated plan needs a new id" }
+    return copy(id = newId, name = "Copy of $name")
+}
+
 fun WorkoutPlan.withNote(note: String): WorkoutPlan =
     copy(description = note.trim().ifEmpty { null })

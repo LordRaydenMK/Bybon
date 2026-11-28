@@ -16,6 +16,7 @@ import dev.sanastasov.bybon.workout.domain.WorkoutSessionId
 import dev.sanastasov.bybon.workout.domain.WorkoutState
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
 import dev.sanastasov.bybon.workout.domain.catalogExercises
+import dev.sanastasov.bybon.workout.domain.duplicate
 import dev.sanastasov.bybon.workout.domain.fullBodyA
 import dev.sanastasov.bybon.workout.domain.fullBodyB
 import dev.sanastasov.bybon.workout.domain.repdbCatalogCommit
@@ -25,6 +26,7 @@ import dev.sanastasov.bybon.workout.domain.upperBodyA
 import dev.sanastasov.bybon.workout.domain.withPreviousBodyWeights
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.UUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -132,6 +134,31 @@ class WorkoutsRepositoryImpl internal constructor(
             }
         }
     }
+
+    override suspend fun duplicatePlan(planId: WorkoutPlanId): WorkoutPlan =
+        withContext(defaultDispatcher) {
+            seedLock.withLock {
+                seedLocked()
+                val entity = requireNotNull(workoutPlanDao.planById(planId.id)) {
+                    "Plan ${planId.id} does not exist"
+                }
+                val lines = workoutPlanDao.exercisesForPlan(planId.id)
+                val exercises = exerciseDao.observeAll().first()
+                    .map { it.toDefinition() }
+                    .associateBy { it.id }
+                val current = entity.toDomain(lines, exercises)
+                val newId = WorkoutPlanId(UUID.randomUUID().toString())
+                require(newId.id !in workoutPlanDao.ids()) {
+                    "Plan ${newId.id} already exists"
+                }
+                val copy = current.duplicate(newId)
+                workoutPlanDao.insertPlanWithExercisesAt(
+                    copy.toEntity(position = entity.position + 1),
+                    copy.toExerciseEntities(),
+                )
+                copy
+            }
+        }
 
     override suspend fun updateWorkout(session: WorkoutSession) {
         withContext(defaultDispatcher) {
