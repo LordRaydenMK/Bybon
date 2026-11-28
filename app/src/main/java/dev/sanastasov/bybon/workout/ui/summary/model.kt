@@ -4,6 +4,7 @@ import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.domain.toDisplayDateDotRelative
 import dev.sanastasov.bybon.workout.domain.CompletedExerciseOccurrence
 import dev.sanastasov.bybon.workout.domain.ExerciseAverageOneRmChange
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.ExercisePerformanceChange
 import dev.sanastasov.bybon.workout.domain.ExerciseSet
 import dev.sanastasov.bybon.workout.domain.Weight
@@ -74,6 +75,7 @@ data class WorkoutSummaryExerciseUi(
     val volumeLoadLabel: String,
     val notes: List<String> = emptyList(),
     val personalRecord: PersonalRecordUi? = null,
+    val historyWindow: ExerciseHistoryWindow = ExerciseHistoryWindow.LastThreeMonths,
     val oneRmTrend: List<ExerciseOneRmPointUi> = emptyList(),
     val previous: WorkoutSummaryPreviousUi? = null,
     val bodyWeightLabel: String? = null,
@@ -216,6 +218,7 @@ private fun WorkoutExercise.toSummaryExerciseUi(
         volumeLoadLabel = matched.sets.volumeLoad().toVolumeLoadLabel(),
         notes = notes,
         personalRecord = performance.personalRecord?.toPersonalRecordUi(),
+        historyWindow = performance.historyWindow,
         oneRmTrend = performance.recentSessions.toOneRmTrend(),
         previous = previousOccurrence?.toPreviousUi(now),
         bodyWeightLabel = bodyWeight?.kilograms?.let { "$it kg" }.takeIf { assisted },

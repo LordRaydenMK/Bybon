@@ -196,6 +196,7 @@ private fun SummaryList(
                         highlightedTopSet = exercise.topSet?.let { set ->
                             EstimatedOneRmHighlight.of(set.oneRm, set.weightKg, set.reps)
                         },
+                        historyWindow = exercise.historyWindow,
                     )
                 }
             }

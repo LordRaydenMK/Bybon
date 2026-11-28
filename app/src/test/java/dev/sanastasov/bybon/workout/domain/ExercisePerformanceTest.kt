@@ -86,9 +86,13 @@ class ExercisePerformanceTest {
         assert(performance.personalRecord?.achievedAt == olderBetter.startedAt)
         assert(performance.personalRecord?.set?.weight == Weight.kilograms(80f))
         assert(performance.personalRecord?.set?.reps == 8)
-        assert(performance.recentSessions.single().startedAt == recent.startedAt)
+        assert(performance.historyWindow == ExerciseHistoryWindow.LastTwelveSessions)
         assert(
-            performance.recentSessions.single().topSetOneRm ==
+            performance.recentSessions.map { it.startedAt } ==
+                listOf(recent.startedAt, olderBetter.startedAt),
+        )
+        assert(
+            performance.recentSessions.first().topSetOneRm ==
                 Weight.kilograms(estimateOneRmKg(60f, 8)),
         )
     }
@@ -153,15 +157,29 @@ class ExercisePerformanceTest {
             startedAt = now.minusDays(2),
             exercises = listOf(completedExercise("bench-press", 60f to 8, 60f to 7)),
         )
+        val alsoRecent = listOf(now.minusDays(10), now.minusDays(40)).map { startedAt ->
+            completedSession(
+                planId = "full-body-a",
+                planName = "Full Body A",
+                startedAt = startedAt,
+                exercises = listOf(completedExercise("bench-press", 50f to 8)),
+            )
+        }
 
-        val performance = listOf(included, excluded, newest)
+        val performance = (listOf(included, excluded, newest) + alsoRecent)
             .exercisePerformance("bench-press", now)
 
+        assert(performance.historyWindow == ExerciseHistoryWindow.LastThreeMonths)
         assert(performance.personalRecordOneRm == Weight.kilograms(estimateOneRmKg(90f, 5)))
         assert(performance.personalRecord?.achievedAt == excluded.startedAt)
         assert(
             performance.recentSessions.map { it.startedAt } ==
-                listOf(newest.startedAt, included.startedAt),
+                listOf(
+                    newest.startedAt,
+                    alsoRecent[0].startedAt,
+                    alsoRecent[1].startedAt,
+                    included.startedAt,
+                ),
         )
         assert(performance.recentSessions.first().planName == "Full Body B")
         assert(performance.recentSessions.first().workSets.map { it.reps } == listOf(8, 7))
@@ -177,6 +195,46 @@ class ExercisePerformanceTest {
             performance.recentSessions.first().averageWorkSetOneRm !=
                 performance.recentSessions.first().topSetOneRm,
         )
+    }
+
+    @Test
+    fun `no sessions uses the last twelve sessions window`() {
+        val performance = emptyList<WorkoutSession>().exercisePerformance("bench-press", now)
+
+        assert(performance.historyWindow == ExerciseHistoryWindow.LastTwelveSessions)
+        assert(performance.recentSessions.isEmpty())
+        assert(performance.personalRecord == null)
+    }
+
+    @Test
+    fun `fewer than four sessions in three months uses the last twelve sessions`() {
+        val inWindow = (0 until 3).map { index ->
+            benchSession(now.minusDays(index.toLong() + 1))
+        }
+        val older = (0 until 12).map { index ->
+            benchSession(now.minusMonths(4).minusDays(index.toLong()))
+        }
+
+        val performance = (inWindow + older).exercisePerformance("bench-press", now)
+
+        assert(performance.historyWindow == ExerciseHistoryWindow.LastTwelveSessions)
+        assert(performance.recentSessions.size == 12)
+        assert(
+            performance.recentSessions.map { it.startedAt } ==
+                (inWindow + older.take(9)).map { it.startedAt },
+        )
+    }
+
+    @Test
+    fun `history ignores sessions after now`() {
+        val future = benchSession(now.plusDays(1), weight = 100f)
+        val past = benchSession(now.minusDays(1))
+
+        val performance = listOf(future, past).exercisePerformance("bench-press", now)
+
+        assert(performance.historyWindow == ExerciseHistoryWindow.LastTwelveSessions)
+        assert(performance.recentSessions.map { it.startedAt } == listOf(past.startedAt))
+        assert(performance.personalRecord?.achievedAt == future.startedAt)
     }
 
     @Test
@@ -236,4 +294,11 @@ class ExercisePerformanceTest {
         }
         assert(error.message == "exercisePerformance requires completed sessions")
     }
+
+    private fun benchSession(startedAt: LocalDateTime, weight: Float = 60f) = completedSession(
+        planId = "full-body-a",
+        planName = "Full Body A",
+        startedAt = startedAt,
+        exercises = listOf(completedExercise("bench-press", weight to 8)),
+    )
 }

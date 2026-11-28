@@ -3,6 +3,7 @@ package dev.sanastasov.bybon.workout.ui.details
 import dev.sanastasov.bybon.domain.toDisplayDate
 import dev.sanastasov.bybon.domain.toDisplayDateDotRelative
 import dev.sanastasov.bybon.workout.domain.ExerciseDefinition
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.ExerciseImages
 import dev.sanastasov.bybon.workout.domain.ExercisePerformance
 import dev.sanastasov.bybon.workout.domain.ExerciseSessionLog
@@ -26,6 +27,7 @@ sealed class ExerciseDetailsUiState {
         val images: ExerciseImages? = null,
         val facts: List<String> = emptyList(),
         val personalRecord: PersonalRecordUi? = null,
+        val historyWindow: ExerciseHistoryWindow = ExerciseHistoryWindow.LastTwelveSessions,
         val oneRmTrend: List<ExerciseOneRmPointUi> = emptyList(),
         val recentSessions: List<ExerciseDetailsSessionUi> = emptyList(),
         val primaryMuscles: List<String> = emptyList(),
@@ -85,7 +87,11 @@ data class ExerciseDetailsSetUi(
 )
 
 internal fun ExerciseDefinition.toDetailsUi(
-    performance: ExercisePerformance = ExercisePerformance(null, emptyList()),
+    performance: ExercisePerformance = ExercisePerformance(
+        personalRecord = null,
+        recentSessions = emptyList(),
+        historyWindow = ExerciseHistoryWindow.LastTwelveSessions,
+    ),
     now: LocalDateTime = LocalDateTime.now(),
 ): ExerciseDetailsUiState.Content = ExerciseDetailsUiState.Content(
     name = name,
@@ -98,6 +104,7 @@ internal fun ExerciseDefinition.toDetailsUi(
         difficulty?.name,
     ),
     personalRecord = performance.personalRecord?.toPersonalRecordUi(now.toLocalDate()),
+    historyWindow = performance.historyWindow,
     oneRmTrend = performance.recentSessions.toOneRmTrend(),
     recentSessions = performance.recentSessions.map { it.toSessionUi() },
     primaryMuscles = primaryMuscles.map { it.toCatalogLabel() },
@@ -138,6 +145,16 @@ internal fun List<ExerciseSessionLog>.toOneRmTrend(): List<ExerciseOneRmPointUi>
             averageOneRm = averageOneRm,
         )
     }
+
+internal fun ExerciseHistoryWindow.label(): String = when (this) {
+    ExerciseHistoryWindow.LastThreeMonths -> "Last 3 months"
+    ExerciseHistoryWindow.LastTwelveSessions -> "Last 12 sessions"
+}
+
+internal fun ExerciseHistoryWindow.emptyHistoryMessage(): String = when (this) {
+    ExerciseHistoryWindow.LastThreeMonths -> "No working sets in the last 3 months."
+    ExerciseHistoryWindow.LastTwelveSessions -> "No working sets in the last 12 sessions."
+}
 
 internal fun oneRmTrendPopupText(points: List<ExerciseOneRmPointUi>, index: Int): String {
     val point = points.getOrNull(index) ?: return ""

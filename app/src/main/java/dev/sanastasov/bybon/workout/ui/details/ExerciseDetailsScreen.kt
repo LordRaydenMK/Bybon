@@ -21,6 +21,7 @@ import dev.marcellogalhardo.retained.compose.retain
 import dev.sanastasov.bybon.ui.components.BybonTopAppBar
 import dev.sanastasov.bybon.ui.defaultScope
 import dev.sanastasov.bybon.workout.WorkoutModule
+import dev.sanastasov.bybon.workout.domain.ExerciseHistoryWindow
 import dev.sanastasov.bybon.workout.domain.Weight
 import dev.sanastasov.bybon.workout.domain.catalogExercise
 
@@ -82,9 +83,13 @@ private fun DetailsList(state: ExerciseDetailsUiState.Content) {
         detailsChips("facts", state.facts)
         state.personalRecord?.let { detailsPersonalRecord(it) }
         if (state.oneRmTrend.isNotEmpty()) {
-            detailsOneRmTrend(state.oneRmTrend, state.personalRecord?.oneRm)
+            detailsOneRmTrend(
+                state.oneRmTrend,
+                state.personalRecord?.oneRm,
+                state.historyWindow,
+            )
         }
-        detailsRecentSessions(state.recentSessions)
+        detailsRecentSessions(state.recentSessions, state.historyWindow)
         detailsMuscleGroup("Primary muscles", state.primaryMuscles)
         detailsMuscleGroup("Secondary muscles", state.secondaryMuscles)
         state.description?.let { description ->
@@ -106,6 +111,7 @@ private fun ExerciseDetailsContentPreview() {
     Surface {
         ExerciseDetailsContent(
             catalogExercise("bench-press").toDetailsUi().copy(
+                historyWindow = ExerciseHistoryWindow.LastThreeMonths,
                 personalRecord = PersonalRecordUi(
                     Weight.kilograms(78f),
                     "20 Sep 2026",
