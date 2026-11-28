@@ -40,6 +40,12 @@ class FakeWorkoutPlanDao : WorkoutPlanDao {
         }
     }
 
+    override suspend fun shiftPositionsFrom(position: Int) {
+        plans.value = plans.value.map { plan ->
+            if (plan.position >= position) plan.copy(position = plan.position + 1) else plan
+        }
+    }
+
     override suspend fun insertPlans(plans: List<WorkoutPlanEntity>) {
         if (plans.isEmpty()) return
         val existing = this.plans.value.map { it.id }.toSet()

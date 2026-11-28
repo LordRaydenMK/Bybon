@@ -25,6 +25,47 @@ class WorkoutPlanEditingTest {
     }
 
     @Test
+    fun `duplicate assigns a new id and prefixes the name`() {
+        val source = fullBodyA.copy(
+            description = null,
+            isArchived = true,
+            sets = fullBodyA.sets.mapIndexed { index, planned ->
+                if (index == 0) planned.copy(notes = listOf("Pause")) else planned
+            },
+        )
+
+        val actual = source.duplicate(WorkoutPlanId("full-body-a-copy"))
+
+        assert(actual.id == WorkoutPlanId("full-body-a-copy"))
+        assert(actual.name == "Copy of Full Body A")
+        assert(actual.description == null)
+        assert(actual.isArchived)
+        assert(actual.sets == source.sets)
+        assert(source.id == fullBodyA.id)
+        assert(source.name == fullBodyA.name)
+    }
+
+    @Test
+    fun `duplicating a copy prefixes that copy name`() {
+        val copy = fullBodyA.duplicate(WorkoutPlanId("copy"))
+
+        val again = copy.duplicate(WorkoutPlanId("copy-2"))
+
+        assert(again.name == "Copy of Copy of Full Body A")
+        assert(again.id == WorkoutPlanId("copy-2"))
+        assert(again.sets == fullBodyA.sets)
+        assert(again.description == fullBodyA.description)
+    }
+
+    @Test
+    fun `duplicate rejects reusing the plan id`() {
+        val error = assertFailsWith<IllegalArgumentException> {
+            fullBodyA.duplicate(fullBodyA.id)
+        }
+        assert(error.message == "Duplicated plan needs a new id")
+    }
+
+    @Test
     fun `withNote stores a trimmed note`() {
         val actual = fullBodyA.withNote("  Morning session  ")
 

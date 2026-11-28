@@ -56,6 +56,10 @@ class WorkoutPlansViewModel(
                 _effects.trySend(WorkoutPlanEffect.OpenEditPlan(action.plan))
             }
 
+            is WorkoutPlansAction.OnDuplicatePlan -> coroutineScope.launch {
+                repository.duplicatePlan(action.plan.id)
+            }
+
             is WorkoutPlansAction.OnArchivePlan -> coroutineScope.launch {
                 repository.archivePlan(action.plan.id, archived = true)
             }

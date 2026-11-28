@@ -74,4 +74,18 @@ interface WorkoutPlanDao {
         insertPlans(plans)
         insertPlanExercises(exercises)
     }
+
+    @Query("UPDATE workout_plan SET position = position + 1 WHERE position >= :position")
+    suspend fun shiftPositionsFrom(position: Int)
+
+    @Transaction
+    suspend fun insertPlanWithExercisesAt(
+        plan: WorkoutPlanEntity,
+        exercises: List<WorkoutPlanExerciseEntity>,
+    ) {
+        require(exercises.isNotEmpty()) { "Plan ${plan.id} must contain at least one exercise" }
+        shiftPositionsFrom(plan.position)
+        insertPlans(listOf(plan))
+        insertPlanExercises(exercises)
+    }
 }

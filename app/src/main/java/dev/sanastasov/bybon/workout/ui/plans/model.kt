@@ -100,6 +100,10 @@ sealed class WorkoutPlansAction {
         val plan: WorkoutPlan,
     ) : WorkoutPlansAction()
 
+    data class OnDuplicatePlan(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
+
     data class OnArchivePlan(
         val plan: WorkoutPlan,
     ) : WorkoutPlansAction()

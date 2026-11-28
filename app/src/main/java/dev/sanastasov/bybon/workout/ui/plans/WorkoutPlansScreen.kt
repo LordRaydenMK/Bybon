@@ -166,11 +166,7 @@ private fun WorkoutPlanCard(
                             plan,
                             canDiscardDraft = planUi is WorkoutPlanUi.Draft,
                             move = move,
-                            onEditClicked = { onAction(WorkoutPlansAction.OnEditPlan(it)) },
-                            onArchiveClicked = { onAction(WorkoutPlansAction.OnArchivePlan(it)) },
-                            onDiscardDraftClicked = {
-                                onAction(WorkoutPlansAction.OnDiscardDraft(it))
-                            },
+                            onAction = onAction,
                         )
                     }
                 },
@@ -227,9 +223,7 @@ private fun PlanOverflowMenu(
     plan: WorkoutPlan,
     canDiscardDraft: Boolean,
     move: PlanMove?,
-    onEditClicked: (WorkoutPlan) -> Unit,
-    onArchiveClicked: (WorkoutPlan) -> Unit,
-    onDiscardDraftClicked: (WorkoutPlan) -> Unit,
+    onAction: (WorkoutPlansAction) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -250,14 +244,21 @@ private fun PlanOverflowMenu(
                 text = { Text("Edit Plan") },
                 onClick = {
                     expanded = false
-                    onEditClicked(plan)
+                    onAction(WorkoutPlansAction.OnEditPlan(plan))
+                },
+            )
+            DropdownMenuItem(
+                text = { Text("Duplicate Plan") },
+                onClick = {
+                    expanded = false
+                    onAction(WorkoutPlansAction.OnDuplicatePlan(plan))
                 },
             )
             DropdownMenuItem(
                 text = { Text("Archive Plan") },
                 onClick = {
                     expanded = false
-                    onArchiveClicked(plan)
+                    onAction(WorkoutPlansAction.OnArchivePlan(plan))
                 },
             )
             if (canDiscardDraft) {
@@ -265,7 +266,7 @@ private fun PlanOverflowMenu(
                     text = { Text("Discard Draft") },
                     onClick = {
                         expanded = false
-                        onDiscardDraftClicked(plan)
+                        onAction(WorkoutPlansAction.OnDiscardDraft(plan))
                     },
                 )
             }

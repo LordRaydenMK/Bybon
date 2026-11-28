@@ -3,9 +3,7 @@ package dev.sanastasov.bybon.workout.domain
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
-interface WorkoutsRepository {
-
-    fun exercises(): Flow<List<ExerciseDefinition>>
+interface WorkoutPlanRepository {
 
     fun workoutPlans(
         filter: WorkoutPlansFilter = WorkoutPlansFilter.UnarchivedPlans,
@@ -16,6 +14,13 @@ interface WorkoutsRepository {
     suspend fun reorderPlans(planIds: List<WorkoutPlanId>)
 
     suspend fun updatePlan(planId: WorkoutPlanId, transform: (WorkoutPlan) -> WorkoutPlan)
+
+    suspend fun duplicatePlan(planId: WorkoutPlanId): WorkoutPlan
+}
+
+interface WorkoutsRepository : WorkoutPlanRepository {
+
+    fun exercises(): Flow<List<ExerciseDefinition>>
 
     suspend fun updateWorkout(session: WorkoutSession)
 
