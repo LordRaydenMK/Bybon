@@ -68,10 +68,10 @@ class EditPlanViewModel(
 
                     else -> {
                         val state = requireState()
-                        publish(
-                            state.plan.applyEdit(action),
-                            state.loadedPlan,
-                            state.confirmDiscard,
+                        _uiState.value = EditPlanUiState(
+                            plan = state.plan.applyEdit(action),
+                            loadedPlan = state.loadedPlan,
+                            confirmDiscard = state.confirmDiscard,
                         )
                     }
                 }
@@ -82,7 +82,11 @@ class EditPlanViewModel(
     private fun handleBack() {
         val state = _uiState.value
         if (state != null && state.plan != state.loadedPlan) {
-            publish(state.plan, state.loadedPlan, confirmDiscard = true)
+            _uiState.value = EditPlanUiState(
+                plan = state.plan,
+                loadedPlan = state.loadedPlan,
+                confirmDiscard = true,
+            )
         } else {
             _effects.trySend(EditPlanEffect.NavigateBack)
         }
@@ -93,13 +97,21 @@ class EditPlanViewModel(
         if (state.plan != state.loadedPlan) {
             val saved = state.plan.copy(id = planId)
             repository.updatePlan(planId) { _ -> saved }
-            publish(saved, saved, confirmDiscard = false)
+            _uiState.value = EditPlanUiState(
+                plan = saved,
+                loadedPlan = saved,
+                confirmDiscard = false,
+            )
         }
     }
 
     private fun dismissDiscard() {
         _uiState.value?.let { state ->
-            publish(state.plan, state.loadedPlan, confirmDiscard = false)
+            _uiState.value = EditPlanUiState(
+                plan = state.plan,
+                loadedPlan = state.loadedPlan,
+                confirmDiscard = false,
+            )
         }
     }
 
@@ -113,10 +125,10 @@ class EditPlanViewModel(
     private suspend fun addPickedExercise(exerciseId: String) {
         val exercise = repository.requireExercise(exerciseId)
         val state = requireState()
-        publish(
-            state.plan.addExercise(exercise),
-            state.loadedPlan,
-            state.confirmDiscard,
+        _uiState.value = EditPlanUiState(
+            plan = state.plan.addExercise(exercise),
+            loadedPlan = state.loadedPlan,
+            confirmDiscard = state.confirmDiscard,
         )
     }
 
@@ -124,7 +136,11 @@ class EditPlanViewModel(
         if (_uiState.value == null) {
             val plan = repository.workoutPlans().first().firstOrNull { it.id == planId }
             if (plan != null && _uiState.value == null) {
-                publish(plan, plan, confirmDiscard = false)
+                _uiState.value = EditPlanUiState(
+                    plan = plan,
+                    loadedPlan = plan,
+                    confirmDiscard = false,
+                )
             }
         }
     }
@@ -134,14 +150,6 @@ class EditPlanViewModel(
         return checkNotNull(_uiState.value) {
             "Plan $planId is not in the repository"
         }
-    }
-
-    private fun publish(draft: WorkoutPlan, loadedPlan: WorkoutPlan, confirmDiscard: Boolean) {
-        _uiState.value = EditPlanUiState(
-            plan = draft,
-            loadedPlan = loadedPlan,
-            confirmDiscard = confirmDiscard,
-        )
     }
 }
 
