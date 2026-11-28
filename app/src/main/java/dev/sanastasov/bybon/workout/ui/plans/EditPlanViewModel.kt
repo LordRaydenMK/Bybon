@@ -1,6 +1,5 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
-import dev.sanastasov.bybon.ui.stateInWhileInForeground
 import dev.sanastasov.bybon.workout.domain.WorkoutPlan
 import dev.sanastasov.bybon.workout.domain.WorkoutPlanId
 import dev.sanastasov.bybon.workout.domain.WorkoutsRepository
@@ -18,11 +17,13 @@ import dev.sanastasov.bybon.workout.domain.withNote
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class EditPlanViewModel(
     private val planId: WorkoutPlanId,
@@ -30,62 +31,153 @@ class EditPlanViewModel(
     private val coroutineScope: CoroutineScope,
 ) {
 
+    private val edits = Mutex()
     private val _effects = Channel<EditPlanEffect>(Channel.BUFFERED)
     val effects: Flow<EditPlanEffect> = _effects.receiveAsFlow()
 
-    val uiState: StateFlow<WorkoutPlan?> = repository.workoutPlans()
-        .map { plans -> plans.firstOrNull { it.id == planId } }
-        .stateInWhileInForeground(coroutineScope, null)
+    private val _uiState = MutableStateFlow<EditPlanUiState?>(null)
+    val uiState: StateFlow<EditPlanUiState?> = _uiState
+
+    init {
+        coroutineScope.launch {
+            edits.withLock { ensureLoaded() }
+        }
+    }
 
     fun onAction(action: EditPlanAction) {
         coroutineScope.launch {
-            when (action) {
-                EditPlanAction.OnArchivePlan -> {
-                    repository.archivePlan(planId, archived = true)
-                    _effects.trySend(EditPlanEffect.NavigateBack)
-                }
+            edits.withLock {
+                when (action) {
+                    EditPlanAction.OnBack -> handleBack()
 
-                is EditPlanAction.OnRenamePlan ->
-                    repository.updatePlan(planId) { it.rename(action.name) }
+                    EditPlanAction.OnSave -> handleSave()
 
-                is EditPlanAction.OnUpdateNote ->
-                    repository.updatePlan(planId) { it.withNote(action.note) }
+                    EditPlanAction.OnDiscardConfirmed ->
+                        _effects.trySend(EditPlanEffect.NavigateBack)
 
-                is EditPlanAction.OnAddSet ->
-                    repository.updatePlan(planId) { it.addWorkSet(action.exerciseId) }
+                    EditPlanAction.OnDiscardDismissed -> dismissDiscard()
 
-                is EditPlanAction.OnRemoveLastSet ->
-                    repository.updatePlan(planId) { it.removeLastWorkSet(action.exerciseId) }
+                    EditPlanAction.OnArchivePlan -> {
+                        repository.archivePlan(planId, archived = true)
+                        _effects.trySend(EditPlanEffect.NavigateBack)
+                    }
 
-                is EditPlanAction.OnAddWarmupSet ->
-                    repository.updatePlan(planId) { it.addWarmupSet(action.exerciseId) }
+                    EditPlanAction.OnAddExercise -> openLibrary()
 
-                is EditPlanAction.OnRemoveLastWarmupSet ->
-                    repository.updatePlan(planId) { it.removeLastWarmupSet(action.exerciseId) }
+                    is EditPlanAction.OnExercisePicked -> addPickedExercise(action.exerciseId)
 
-                is EditPlanAction.OnRemoveExercise ->
-                    repository.updatePlan(planId) { it.removeExercise(action.exerciseId) }
-
-                is EditPlanAction.OnMoveExerciseUp ->
-                    repository.updatePlan(planId) { it.moveExerciseUp(action.exerciseId) }
-
-                is EditPlanAction.OnMoveExerciseDown ->
-                    repository.updatePlan(planId) { it.moveExerciseDown(action.exerciseId) }
-
-                EditPlanAction.OnAddExercise -> {
-                    val plan = checkNotNull(
-                        repository.workoutPlans().first().firstOrNull { it.id == planId },
-                    ) { "Plan $planId is not in the repository" }
-                    _effects.trySend(
-                        EditPlanEffect.OpenExerciseLibrary(plan.sets.map { it.exercise.id }),
-                    )
-                }
-
-                is EditPlanAction.OnExercisePicked -> {
-                    val exercise = repository.requireExercise(action.exerciseId)
-                    repository.updatePlan(planId) { it.addExercise(exercise) }
+                    else -> {
+                        val state = requireState()
+                        _uiState.value = EditPlanUiState(
+                            plan = state.plan.applyEdit(action),
+                            loadedPlan = state.loadedPlan,
+                            confirmDiscard = state.confirmDiscard,
+                        )
+                    }
                 }
             }
         }
     }
+
+    private fun handleBack() {
+        val state = _uiState.value
+        if (state != null && state.plan != state.loadedPlan) {
+            _uiState.value = EditPlanUiState(
+                plan = state.plan,
+                loadedPlan = state.loadedPlan,
+                confirmDiscard = true,
+            )
+        } else {
+            _effects.trySend(EditPlanEffect.NavigateBack)
+        }
+    }
+
+    private suspend fun handleSave() {
+        val state = requireState()
+        if (state.plan != state.loadedPlan) {
+            val saved = state.plan.copy(id = planId)
+            repository.updatePlan(planId) { _ -> saved }
+            _uiState.value = EditPlanUiState(
+                plan = saved,
+                loadedPlan = saved,
+                confirmDiscard = false,
+            )
+        }
+    }
+
+    private fun dismissDiscard() {
+        _uiState.value?.let { state ->
+            _uiState.value = EditPlanUiState(
+                plan = state.plan,
+                loadedPlan = state.loadedPlan,
+                confirmDiscard = false,
+            )
+        }
+    }
+
+    private suspend fun openLibrary() {
+        val plan = requireState().plan
+        _effects.trySend(
+            EditPlanEffect.OpenExerciseLibrary(plan.sets.map { it.exercise.id }),
+        )
+    }
+
+    private suspend fun addPickedExercise(exerciseId: String) {
+        val exercise = repository.requireExercise(exerciseId)
+        val state = requireState()
+        _uiState.value = EditPlanUiState(
+            plan = state.plan.addExercise(exercise),
+            loadedPlan = state.loadedPlan,
+            confirmDiscard = state.confirmDiscard,
+        )
+    }
+
+    private suspend fun ensureLoaded() {
+        if (_uiState.value == null) {
+            val plan = repository.workoutPlans().first().firstOrNull { it.id == planId }
+            if (plan != null && _uiState.value == null) {
+                _uiState.value = EditPlanUiState(
+                    plan = plan,
+                    loadedPlan = plan,
+                    confirmDiscard = false,
+                )
+            }
+        }
+    }
+
+    private suspend fun requireState(): EditPlanUiState {
+        ensureLoaded()
+        return checkNotNull(_uiState.value) {
+            "Plan $planId is not in the repository"
+        }
+    }
+}
+
+private fun WorkoutPlan.applyEdit(action: EditPlanAction): WorkoutPlan = when (action) {
+    is EditPlanAction.OnRenamePlan -> rename(action.name)
+
+    is EditPlanAction.OnUpdateNote -> withNote(action.note)
+
+    is EditPlanAction.OnAddSet -> addWorkSet(action.exerciseId)
+
+    is EditPlanAction.OnRemoveLastSet -> removeLastWorkSet(action.exerciseId)
+
+    is EditPlanAction.OnAddWarmupSet -> addWarmupSet(action.exerciseId)
+
+    is EditPlanAction.OnRemoveLastWarmupSet -> removeLastWarmupSet(action.exerciseId)
+
+    is EditPlanAction.OnRemoveExercise -> removeExercise(action.exerciseId)
+
+    is EditPlanAction.OnMoveExerciseUp -> moveExerciseUp(action.exerciseId)
+
+    is EditPlanAction.OnMoveExerciseDown -> moveExerciseDown(action.exerciseId)
+
+    EditPlanAction.OnAddExercise,
+    EditPlanAction.OnArchivePlan,
+    EditPlanAction.OnBack,
+    EditPlanAction.OnDiscardConfirmed,
+    EditPlanAction.OnDiscardDismissed,
+    is EditPlanAction.OnExercisePicked,
+    EditPlanAction.OnSave,
+    -> error("Not a draft edit: $action")
 }

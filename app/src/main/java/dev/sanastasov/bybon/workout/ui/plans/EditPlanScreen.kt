@@ -1,5 +1,6 @@
 package dev.sanastasov.bybon.workout.ui.plans
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -71,94 +73,90 @@ fun WorkoutModule.EditPlanScreen(
                 onNavigateToExerciseLibrary(effect.existingExerciseIds)
         }
     }
-    EditPlanContent(uiState, viewModel::onAction, onNavigateBack)
+    BackHandler(enabled = uiState?.backHandlerEnabled == true) {
+        viewModel.onAction(EditPlanAction.OnBack)
+    }
+    EditPlanContent(uiState, viewModel::onAction)
 }
 
 @Composable
-internal fun EditPlanContent(
-    plan: WorkoutPlan?,
-    onAction: (EditPlanAction) -> Unit,
-    onNavigateBack: () -> Unit,
-) {
+internal fun EditPlanContent(state: EditPlanUiState?, onAction: (EditPlanAction) -> Unit) {
     Scaffold(
         Modifier.fillMaxSize(),
-        topBar = { BybonTopAppBar("Edit plan", onNavigateBack) },
+        topBar = { EditPlanTopBar(state?.canSave == true, onAction) },
     ) { contentPadding ->
-        plan?.let { currentPlan ->
-            LazyColumn(
-                Modifier
-                    .padding(contentPadding)
-                    .padding(horizontal = 16.dp, vertical = 24.dp)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                item(key = "header") {
-                    EditPlanHeader(currentPlan, onAction)
-                }
-                itemsIndexed(
-                    currentPlan.sets,
-                    key = { _, exercise -> exercise.exercise.id },
-                ) { index, exercise ->
-                    EditPlanExerciseCard(
-                        exercise,
-                        currentPlan.exerciseOverflow(index, onAction),
-                        onAction,
-                        canRemoveExercise = currentPlan.sets.size > 1,
-                    )
-                }
-                item(key = "add-exercise") {
-                    Box(
-                        Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Button({ onAction(EditPlanAction.OnAddExercise) }) {
-                            Text("Add Exercise")
-                        }
-                    }
-                }
-                item(key = "archive") {
-                    Box(
-                        Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        TextButton({ onAction(EditPlanAction.OnArchivePlan) }) {
-                            Text("Archive Plan")
-                        }
-                    }
-                }
-            }
+        state?.let { current ->
+            EditPlanList(current, onAction, Modifier.padding(contentPadding))
         }
+    }
+    if (state?.confirmDiscard == true) {
+        DiscardPlanEditsDialog(onAction)
     }
 }
 
 @Composable
-private fun LazyItemScope.EditPlanExerciseCard(
-    exercise: PlanedExercise,
-    overflow: ExerciseOverflow?,
+private fun EditPlanTopBar(canSave: Boolean, onAction: (EditPlanAction) -> Unit) {
+    BybonTopAppBar(
+        "Edit plan",
+        { onAction(EditPlanAction.OnBack) },
+        actions = {
+            TextButton(
+                { onAction(EditPlanAction.OnSave) },
+                enabled = canSave,
+            ) {
+                Text("Save")
+            }
+        },
+    )
+}
+
+@Composable
+private fun EditPlanList(
+    state: EditPlanUiState,
     onAction: (EditPlanAction) -> Unit,
-    canRemoveExercise: Boolean,
+    modifier: Modifier = Modifier,
 ) {
-    Card(
-        Modifier
-            .fillMaxWidth()
-            .animateItem(),
+    val plan = state.plan
+    LazyColumn(
+        modifier
+            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        PlannedExerciseCard(
-            exercise,
-            overflow = overflow,
-            onAddSet = { onAction(EditPlanAction.OnAddSet(exercise.exercise.id)) },
-            onRemoveLastSet = {
-                onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
-            },
-            onAddWarmupSet = { onAction(EditPlanAction.OnAddWarmupSet(exercise.exercise.id)) },
-            onRemoveLastWarmupSet = {
-                onAction(EditPlanAction.OnRemoveLastWarmupSet(exercise.exercise.id))
-            },
-            onRemoveExercise = {
-                onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
-            },
-            canRemoveExercise = canRemoveExercise,
-        )
+        item(key = "header") {
+            EditPlanHeader(plan, onAction)
+        }
+        itemsIndexed(
+            plan.sets,
+            key = { _, exercise -> exercise.exercise.id },
+        ) { index, exercise ->
+            EditPlanExerciseCard(
+                exercise,
+                plan.exerciseOverflow(index, onAction),
+                onAction,
+                canRemoveExercise = plan.sets.size > 1,
+            )
+        }
+        item(key = "add-exercise") {
+            Box(
+                Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Button({ onAction(EditPlanAction.OnAddExercise) }) {
+                    Text("Add Exercise")
+                }
+            }
+        }
+        item(key = "archive") {
+            Box(
+                Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                TextButton({ onAction(EditPlanAction.OnArchivePlan) }) {
+                    Text("Archive Plan")
+                }
+            }
+        }
     }
 }
 
@@ -229,11 +227,61 @@ private fun EditPlanTextField(
     )
 }
 
+@Composable
+private fun DiscardPlanEditsDialog(onAction: (EditPlanAction) -> Unit) {
+    AlertDialog(
+        onDismissRequest = { onAction(EditPlanAction.OnDiscardDismissed) },
+        title = { Text("Discard changes?") },
+        text = { Text("Unsaved edits to this plan will be lost.") },
+        confirmButton = {
+            TextButton({ onAction(EditPlanAction.OnDiscardConfirmed) }) {
+                Text("Discard")
+            }
+        },
+        dismissButton = {
+            TextButton({ onAction(EditPlanAction.OnDiscardDismissed) }) {
+                Text("Keep editing")
+            }
+        },
+    )
+}
+
+@Composable
+private fun LazyItemScope.EditPlanExerciseCard(
+    exercise: PlanedExercise,
+    overflow: ExerciseOverflow?,
+    onAction: (EditPlanAction) -> Unit,
+    canRemoveExercise: Boolean,
+) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .animateItem(),
+    ) {
+        PlannedExerciseCard(
+            exercise,
+            overflow = overflow,
+            onAddSet = { onAction(EditPlanAction.OnAddSet(exercise.exercise.id)) },
+            onRemoveLastSet = {
+                onAction(EditPlanAction.OnRemoveLastSet(exercise.exercise.id))
+            },
+            onAddWarmupSet = { onAction(EditPlanAction.OnAddWarmupSet(exercise.exercise.id)) },
+            onRemoveLastWarmupSet = {
+                onAction(EditPlanAction.OnRemoveLastWarmupSet(exercise.exercise.id))
+            },
+            onRemoveExercise = {
+                onAction(EditPlanAction.OnRemoveExercise(exercise.exercise.id))
+            },
+            canRemoveExercise = canRemoveExercise,
+        )
+    }
+}
+
 @Preview
 @Composable
 private fun EditPlanContentPreview() {
     Surface {
-        EditPlanContent(fullBodyA, {}, {})
+        EditPlanContent(EditPlanUiState(plan = fullBodyA, loadedPlan = fullBodyA), {})
     }
 }
 
@@ -241,6 +289,7 @@ private fun EditPlanContentPreview() {
 @Composable
 private fun EditPlanContentSingleExercisePreview() {
     Surface {
-        EditPlanContent(fullBodyA.copy(sets = listOf(fullBodyA.sets.first())), {}, {})
+        val plan = fullBodyA.copy(sets = listOf(fullBodyA.sets.first()))
+        EditPlanContent(EditPlanUiState(plan = plan, loadedPlan = plan), {})
     }
 }

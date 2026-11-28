@@ -137,7 +137,23 @@ sealed class WorkoutPlanEffect {
     ) : WorkoutPlanEffect()
 }
 
+data class EditPlanUiState(
+    val plan: WorkoutPlan,
+    val loadedPlan: WorkoutPlan,
+    val confirmDiscard: Boolean = false,
+) {
+    val canSave: Boolean
+        get() = plan != loadedPlan
+
+    val backHandlerEnabled: Boolean
+        get() = canSave && !confirmDiscard
+}
+
 sealed class EditPlanAction {
+    data object OnBack : EditPlanAction()
+    data object OnSave : EditPlanAction()
+    data object OnDiscardConfirmed : EditPlanAction()
+    data object OnDiscardDismissed : EditPlanAction()
     data object OnArchivePlan : EditPlanAction()
     data class OnRenamePlan(
         val name: String,

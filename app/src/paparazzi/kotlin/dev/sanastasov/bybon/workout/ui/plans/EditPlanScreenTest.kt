@@ -18,16 +18,40 @@ class EditPlanScreenTest {
     @Test
     fun fullPlan() {
         paparazzi.bybonSnapshot {
-            EditPlanContent(fullBodyA, {}, {})
+            EditPlanContent(EditPlanUiState(plan = fullBodyA, loadedPlan = fullBodyA), {})
         }
     }
 
     @Test
     fun singleExercise() {
         paparazzi.bybonSnapshot {
+            val plan = fullBodyA.copy(sets = listOf(fullBodyA.sets.first()))
+            EditPlanContent(EditPlanUiState(plan = plan, loadedPlan = plan), {})
+        }
+    }
+
+    @Test
+    fun unsavedChanges() {
+        paparazzi.bybonSnapshot {
             EditPlanContent(
-                fullBodyA.copy(sets = listOf(fullBodyA.sets.first())),
+                EditPlanUiState(
+                    plan = fullBodyA,
+                    loadedPlan = fullBodyA.copy(name = "Saved"),
+                ),
                 {},
+            )
+        }
+    }
+
+    @Test
+    fun discardChanges() {
+        paparazzi.bybonSnapshot {
+            EditPlanContent(
+                EditPlanUiState(
+                    plan = fullBodyA,
+                    loadedPlan = fullBodyA.copy(name = "Saved"),
+                    confirmDiscard = true,
+                ),
                 {},
             )
         }
@@ -36,27 +60,21 @@ class EditPlanScreenTest {
     @Test
     fun noNote() {
         paparazzi.bybonSnapshot {
-            EditPlanContent(
-                fullBodyA.copy(
-                    description = null,
-                    sets = listOf(fullBodyA.sets.first()),
-                ),
-                {},
-                {},
+            val plan = fullBodyA.copy(
+                description = null,
+                sets = listOf(fullBodyA.sets.first()),
             )
+            EditPlanContent(EditPlanUiState(plan = plan, loadedPlan = plan), {})
         }
     }
 
     @Test
     fun noWarmups() {
         paparazzi.bybonSnapshot {
-            EditPlanContent(
-                fullBodyA.copy(
-                    sets = listOf(fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }),
-                ),
-                {},
-                {},
+            val plan = fullBodyA.copy(
+                sets = listOf(fullBodyA.sets.first { it.exercise.id == "seated-leg-curl" }),
             )
+            EditPlanContent(EditPlanUiState(plan = plan, loadedPlan = plan), {})
         }
     }
 }
