@@ -13,8 +13,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface WorkoutPlanDao {
 
-    // rowid keeps seed order and appends later imports.
-    @Query("SELECT * FROM workout_plan ORDER BY rowid")
+    @Query("SELECT * FROM workout_plan ORDER BY position")
     fun observePlans(): Flow<List<WorkoutPlanEntity>>
 
     @Query("SELECT * FROM workout_plan_exercise ORDER BY rowid")
@@ -31,6 +30,19 @@ interface WorkoutPlanDao {
 
     @Query("UPDATE workout_plan SET is_archived = :archived WHERE id = :planId")
     suspend fun setArchived(planId: String, archived: Boolean)
+
+    @Query("SELECT MAX(position) FROM workout_plan")
+    suspend fun maxPosition(): Int?
+
+    @Query("UPDATE workout_plan SET position = :position WHERE id = :planId")
+    suspend fun setPosition(planId: String, position: Int)
+
+    @Transaction
+    suspend fun setPositions(idsInOrder: List<String>) {
+        idsInOrder.forEachIndexed { index, id ->
+            setPosition(id, index)
+        }
+    }
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPlans(plans: List<WorkoutPlanEntity>)

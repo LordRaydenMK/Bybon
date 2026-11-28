@@ -2,6 +2,7 @@ package dev.sanastasov.bybon.workout.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeWorkoutPlanDao : WorkoutPlanDao {
 
@@ -9,7 +10,8 @@ class FakeWorkoutPlanDao : WorkoutPlanDao {
     private val exercises = MutableStateFlow<List<WorkoutPlanExerciseEntity>>(emptyList())
     private var nextExerciseId = 1L
 
-    override fun observePlans(): Flow<List<WorkoutPlanEntity>> = plans
+    override fun observePlans(): Flow<List<WorkoutPlanEntity>> =
+        plans.map { list -> list.sortedBy { it.position } }
 
     override fun observePlanExercises(): Flow<List<WorkoutPlanExerciseEntity>> = exercises
 
@@ -20,6 +22,14 @@ class FakeWorkoutPlanDao : WorkoutPlanDao {
 
     override suspend fun exercisesForPlan(planId: String): List<WorkoutPlanExerciseEntity> =
         exercises.value.filter { it.planId == planId }.sortedBy { it.position }
+
+    override suspend fun maxPosition(): Int? = plans.value.maxOfOrNull { it.position }
+
+    override suspend fun setPosition(planId: String, position: Int) {
+        plans.value = plans.value.map { plan ->
+            if (plan.id == planId) plan.copy(position = position) else plan
+        }
+    }
 
     override suspend fun setArchived(planId: String, archived: Boolean) {
         val current = plans.value

@@ -258,4 +258,62 @@ class WorkoutPlansViewModelTest {
                 listOf(fullBodyA, upperBodyA.copy(isArchived = false)),
         )
     }
+
+    @Test
+    fun `move plan up swaps idle plans`() = runTest {
+        val repository = FakeWorkoutsRepository(initialPlans = listOf(fullBodyA, fullBodyB))
+        val viewModel = plansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.unarchivedPlans.size == 2 }
+        viewModel.onAction(WorkoutPlansAction.OnMovePlanUp(fullBodyB))
+        val state = viewModel.uiState.first { current ->
+            current.unarchivedPlans.map { it.plan.id } == listOf(fullBodyB.id, fullBodyA.id)
+        }
+
+        assert(state.unarchivedPlans.map { it.plan.id } == listOf(fullBodyB.id, fullBodyA.id))
+    }
+
+    @Test
+    fun `moving an idle plan keeps the active plan on top`() = runTest {
+        val legacy = upperBodyA.copy(isArchived = false)
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB, legacy),
+            initialSessions = listOf(fullBodyA.toWorkoutSession()),
+        )
+        val viewModel = plansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.unarchivedPlans.any { plan -> plan.isActive } }
+        viewModel.onAction(WorkoutPlansAction.OnMovePlanUp(legacy))
+        val state = viewModel.uiState.first { current ->
+            current.unarchivedPlans.map { it.plan.id } ==
+                listOf(fullBodyA.id, legacy.id, fullBodyB.id)
+        }
+
+        val order = listOf(fullBodyA.id, legacy.id, fullBodyB.id)
+        assert(state.unarchivedPlans.first() is WorkoutPlanUi.Active)
+        assert(state.unarchivedPlans.map { it.plan.id } == order)
+    }
+
+    @Test
+    fun `a draft stays above idle plans when an idle plan moves`() = runTest {
+        val legacy = upperBodyA.copy(isArchived = false)
+        val repository = FakeWorkoutsRepository(
+            initialPlans = listOf(fullBodyA, fullBodyB, legacy),
+            initialSessions = listOf(fullBodyA.toOverviewSession()),
+        )
+        val viewModel = plansViewModel(repository, backgroundScope)
+
+        viewModel.uiState.first { it.unarchivedPlans.any { plan -> plan.isDraft } }
+        viewModel.onAction(WorkoutPlansAction.OnMovePlanUp(legacy))
+        val state = viewModel.uiState.first { current ->
+            current.unarchivedPlans.map { it.plan.id } ==
+                listOf(fullBodyA.id, legacy.id, fullBodyB.id)
+        }
+
+        assert(state.unarchivedPlans.first() is WorkoutPlanUi.Draft)
+        assert(
+            state.unarchivedPlans.map { it.plan.id } ==
+                listOf(fullBodyA.id, legacy.id, fullBodyB.id),
+        )
+    }
 }

@@ -350,10 +350,38 @@ class BybonDatabaseMigrationTest {
         }
     }
 
+    @Test
+    fun migrateFrom7To8AssignsPlanPositionFromRowIdOrder() = runBlocking {
+        helper.createDatabase(7).use { connection ->
+            connection.execSQL(
+                """
+                INSERT INTO workout_plan (id, name, description, is_archived)
+                VALUES ('full-body-b', 'Full Body B', NULL, 0)
+                """.trimIndent(),
+            )
+            connection.execSQL(
+                """
+                INSERT INTO workout_plan (id, name, description, is_archived)
+                VALUES ('full-body-a', 'Full Body A', NULL, 0)
+                """.trimIndent(),
+            )
+        }
+        helper.runMigrationsAndValidate(8, listOf(Migration7To8)).close()
+
+        val db = openMigratedDatabase()
+        try {
+            val plans = db.workoutPlanDao().observePlans().first()
+            assert(plans.map { it.id } == listOf("full-body-b", "full-body-a"))
+            assert(plans.map { it.position } == listOf(0, 1))
+        } finally {
+            db.close()
+        }
+    }
+
     private fun openMigratedDatabase(): BybonDatabase =
         Room.databaseBuilder<BybonDatabase>(instrumentation.targetContext, TEST_DB)
             .setDriver(AndroidSQLiteDriver())
-            .addMigrations(Migration5To6)
+            .addMigrations(Migration5To6, Migration7To8)
             .addCallback(OpenSessionIndexCallback())
             .build()
 

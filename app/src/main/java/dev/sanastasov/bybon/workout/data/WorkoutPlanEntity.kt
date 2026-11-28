@@ -17,6 +17,7 @@ data class WorkoutPlanEntity(
     val name: String,
     val description: String?,
     @ColumnInfo(name = "is_archived", defaultValue = "0") val isArchived: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val position: Int = 0,
 )
 
 @Entity(

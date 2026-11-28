@@ -8,7 +8,7 @@ class WorkoutPlanMappingTest {
 
     @Test
     fun `round trip keeps header rest seconds notes and live exercise rows`() {
-        val entity = fullBodyA.toEntity()
+        val entity = fullBodyA.toEntity(position = 0)
         val lines = fullBodyA.toExerciseEntities()
         val exercises = fullBodyA.sets.map {
             it.exercise.toEntity(source = ExerciseSource.SHIPPED)
@@ -19,6 +19,7 @@ class WorkoutPlanMappingTest {
         assert(restored == fullBodyA)
         assert(entity.id == "full-body-a")
         assert(entity.isArchived == false)
+        assert(entity.position == 0)
         assert(lines.first().position == 0)
         assert(lines.first().exerciseId == "bench-press")
         assert(lines.first().warmupSets == 3)
@@ -33,7 +34,7 @@ class WorkoutPlanMappingTest {
 
     @Test
     fun `incomplete plan snapshots are omitted until children exist`() {
-        val entity = fullBodyA.toEntity()
+        val entity = fullBodyA.toEntity(position = 0)
         val exercises = fullBodyA.sets.map {
             it.exercise.toEntity(source = ExerciseSource.SHIPPED)
         }

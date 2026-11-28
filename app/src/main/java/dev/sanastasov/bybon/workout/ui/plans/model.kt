@@ -16,10 +16,7 @@ data class WorkoutPlansUiState(
     val showArchived: Boolean = false,
 ) {
     val unarchivedPlans: List<WorkoutPlanUi>
-        get() = plans.filter { !it.plan.isArchived }.sortedWith(
-            compareByDescending<WorkoutPlanUi> { it is WorkoutPlanUi.Active }
-                .thenByDescending { it is WorkoutPlanUi.Draft },
-        )
+        get() = plans.filter { !it.plan.isArchived }
 
     val archivedPlans: List<WorkoutPlanUi> get() = plans.filter { it.plan.isArchived }
 
@@ -116,6 +113,14 @@ sealed class WorkoutPlansAction {
     data object OnHideArchivedPlans : WorkoutPlansAction()
 
     data class OnDiscardDraft(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
+
+    data class OnMovePlanUp(
+        val plan: WorkoutPlan,
+    ) : WorkoutPlansAction()
+
+    data class OnMovePlanDown(
         val plan: WorkoutPlan,
     ) : WorkoutPlansAction()
 }
